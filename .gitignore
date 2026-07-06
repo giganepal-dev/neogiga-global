@@ -1,0 +1,18 @@
+# dependencies
+giga-nepal-backend/vendor/
+giga-nepal-backend/node_modules/
+# secrets & env
+**/.env
+**/.env.*
+!**/.env.example
+giga-nepal-backend/storage/*.key
+# runtime
+giga-nepal-backend/storage/logs/*
+giga-nepal-backend/storage/framework/cache/*
+giga-nepal-backend/storage/framework/sessions/*
+giga-nepal-backend/storage/framework/views/*
+giga-nepal-backend/bootstrap/cache/*.php
+giga-nepal-backend/public/build/
+*.sqlite
+.phpunit.result.cache
+.DS_Store

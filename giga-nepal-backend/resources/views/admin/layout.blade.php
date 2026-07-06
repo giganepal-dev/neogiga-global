@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>@yield('title', 'Dashboard') · NeoGiga Admin</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230F172A'/><path d='M9 22V10l14 12V10' stroke='%2319D3F5' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <style>
+        :root{
+            --navy:#0F172A;--navy-2:#111f38;--slate:#334155;--line:#E2E8F0;
+            --bg:#F8FAFC;--surface:#FFFFFF;--fg:#020617;--muted:#64748B;
+            --primary:#0369A1;--primary-600:#075985;--cyan:#19D3F5;--gold:#F5B928;
+            --ok:#059669;--warn:#D97706;--danger:#DC2626;
+            --r:10px;--r-sm:7px;--sb:248px;
+            --shadow:0 1px 2px rgba(2,6,23,.06),0 1px 3px rgba(2,6,23,.08);
+        }
+        *{box-sizing:border-box}
+        html{-webkit-text-size-adjust:100%}
+        body{margin:0;background:var(--bg);color:var(--fg);
+            font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+            font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+        a{color:inherit;text-decoration:none}
+        .tnum{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+        .mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace}
+
+        /* Layout shell */
+        .app{display:grid;grid-template-columns:var(--sb) 1fr;min-height:100dvh}
+        .sidebar{background:var(--navy);color:#CBD5E1;position:sticky;top:0;height:100dvh;
+            display:flex;flex-direction:column;overflow-y:auto}
+        .brand{display:flex;align-items:center;gap:11px;padding:18px 18px;border-bottom:1px solid rgba(148,163,184,.14)}
+        .brand .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#0b1d38,#12304f);
+            display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(25,211,245,.35)}
+        .brand b{color:#fff;font-size:1.02rem;letter-spacing:-.01em}
+        .brand small{display:block;color:var(--gold);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;margin-top:1px}
+        .nav{padding:12px 10px;display:flex;flex-direction:column;gap:2px;flex:1}
+        .nav .lbl{color:#64748B;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;padding:14px 12px 6px}
+        .nav a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:8px;color:#CBD5E1;
+            font-weight:500;font-size:.9rem;transition:background .15s,color .15s}
+        .nav a svg{width:18px;height:18px;flex:none;opacity:.85}
+        .nav a:hover{background:rgba(148,163,184,.10);color:#fff}
+        .nav a.active{background:rgba(25,211,245,.14);color:#fff;box-shadow:inset 2px 0 0 var(--cyan)}
+        .nav a.active svg{opacity:1;color:var(--cyan)}
+        .sidebar .foot{padding:12px;border-top:1px solid rgba(148,163,184,.14);font-size:.78rem;color:#64748B}
+
+        .main{min-width:0;display:flex;flex-direction:column}
+        .topbar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);
+            border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 22px}
+        .topbar h1{font-size:1.05rem;margin:0;font-weight:700;letter-spacing:-.01em}
+        .crumb{color:var(--muted);font-size:.8rem}
+        .who{display:flex;align-items:center;gap:10px}
+        .who .av{width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:700}
+        .content{padding:22px;max-width:1280px;width:100%}
+
+        /* Buttons */
+        .btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border-radius:var(--r-sm);
+            font-weight:600;font-size:.86rem;border:1px solid transparent;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+        .btn svg{width:16px;height:16px}
+        .btn-primary{background:var(--primary);color:#fff}
+        .btn-primary:hover{background:var(--primary-600)}
+        .btn-ghost{background:#fff;border-color:var(--line);color:var(--slate)}
+        .btn-ghost:hover{border-color:#cbd5e1;background:#f8fafc}
+        .btn:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+        /* Cards / KPIs */
+        .grid{display:grid;gap:14px}
+        .kpis{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));margin-bottom:18px}
+        .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+        .kpi .t{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+        .kpi .t svg{width:16px;height:16px;color:var(--primary)}
+        .kpi .v{font-size:1.8rem;font-weight:800;letter-spacing:-.02em;margin-top:8px}
+        .kpi .s{color:var(--muted);font-size:.78rem;margin-top:2px}
+
+        .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+        .card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+        .card-h h2{margin:0;font-size:.98rem;font-weight:700}
+        .card-h .sub{color:var(--muted);font-size:.8rem}
+
+        /* Table */
+        .tbl{width:100%;border-collapse:collapse;font-size:.88rem}
+        .tbl th{text-align:left;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;
+            padding:10px 16px;border-bottom:1px solid var(--line);background:#fbfdff;position:sticky;top:0}
+        .tbl td{padding:11px 16px;border-bottom:1px solid #eef2f6;vertical-align:middle}
+        .tbl tr:last-child td{border-bottom:0}
+        .tbl tbody tr{transition:background .12s}
+        .tbl tbody tr:hover{background:#f6fafe}
+        .tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+        .scroll-x{overflow-x:auto}
+
+        /* Badges */
+        .badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:700;line-height:1.7}
+        .b-ok{background:#dcfce7;color:#166534}.b-muted{background:#eef2f6;color:#475569}
+        .b-warn{background:#fef3c7;color:#92400e}.b-info{background:#e0f2fe;color:#075985}
+        .b-danger{background:#fee2e2;color:#991b1b}
+
+        /* Empty state */
+        .empty{padding:44px 20px;text-align:center;color:var(--muted)}
+        .empty svg{width:38px;height:38px;color:#cbd5e1;margin-bottom:10px}
+        .empty h3{margin:0 0 4px;color:var(--slate);font-size:1rem}
+        .empty p{margin:0 auto;max-width:430px;font-size:.88rem}
+
+        /* Category tree */
+        .tree{list-style:none;margin:0;padding:8px 4px}
+        .tree li{padding:0}
+        .tree .row{display:flex;align-items:center;gap:9px;padding:7px 12px;border-radius:7px}
+        .tree .row:hover{background:#f6fafe}
+        .tree .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);flex:none}
+        .tree .kids{list-style:none;margin:0;padding-left:22px;border-left:1px dashed #dbe4ec;margin-left:15px}
+        .tree .cnt{margin-left:auto;color:var(--muted);font-size:.75rem}
+
+        .note{background:#eff6ff;border:1px solid #dbeafe;color:#1e3a8a;border-radius:var(--r-sm);padding:11px 14px;font-size:.84rem;margin-bottom:16px}
+
+        @media (max-width:900px){
+            .app{grid-template-columns:1fr}
+            .sidebar{position:fixed;left:0;top:0;width:82%;max-width:300px;transform:translateX(-100%);transition:transform .22s;z-index:60;box-shadow:0 20px 60px rgba(2,6,23,.4)}
+            .app.open .sidebar{transform:none}
+            .app.open .scrim{position:fixed;inset:0;background:rgba(2,6,23,.5);z-index:50}
+            .burger{display:inline-flex !important}
+        }
+        .burger{display:none;background:none;border:1px solid var(--line);border-radius:7px;width:38px;height:38px;align-items:center;justify-content:center;cursor:pointer}
+        @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+    </style>
+</head>
+<body>
+<div class="app" id="app">
+    <div class="scrim" data-close></div>
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="mark">
+                <svg width="20" height="20" viewBox="0 0 32 32" fill="none"><path d="M9 22V10l14 12V10" stroke="#19D3F5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span><b>NeoGiga</b><small>Admin Console</small></span>
+        </div>
+        <nav class="nav" aria-label="Primary">
+            <span class="lbl">Overview</span>
+            @php $r = request()->path(); @endphp
+            <a href="/admin" class="{{ $r==='admin' ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+                Dashboard
+            </a>
+            <span class="lbl">Catalog</span>
+            <a href="/admin/categories" class="{{ str_starts_with($r,'admin/categories') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h12" stroke-linecap="round"/></svg>
+                Categories
+            </a>
+            <a href="/admin/products" class="{{ str_starts_with($r,'admin/products') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8" stroke-linejoin="round"/></svg>
+                Products
+            </a>
+            <a href="/admin/marketplaces" class="{{ str_starts_with($r,'admin/marketplaces') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>
+                Marketplaces
+            </a>
+            <span class="lbl">Network</span>
+            <a href="/admin/vendors" class="{{ str_starts_with($r,'admin/vendors') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" stroke-linecap="round"/><circle cx="9" cy="7" r="4"/><path d="M17 11a4 4 0 000-8" stroke-linecap="round"/></svg>
+                Vendors
+            </a>
+            <a href="/admin/users" class="{{ str_starts_with($r,'admin/users') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1" stroke-linecap="round"/></svg>
+                Users &amp; Roles
+            </a>
+        </nav>
+        <div class="foot">v0.1 · {{ config('app.env') }}</div>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <div style="display:flex;align-items:center;gap:12px">
+                <button class="burger" data-open aria-label="Open menu">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
+                </button>
+                <div>
+                    <h1>@yield('title','Dashboard')</h1>
+                    <div class="crumb">@yield('crumb','NeoGiga Admin')</div>
+                </div>
+            </div>
+            <div class="who">
+                <span style="text-align:right;line-height:1.2">
+                    <strong style="font-size:.86rem">{{ auth()->user()->name ?? 'Admin' }}</strong><br>
+                    <span style="color:var(--muted);font-size:.74rem">{{ ucfirst(str_replace('_',' ', auth()->user()->role->name ?? 'admin')) }}</span>
+                </span>
+                <span class="av">{{ strtoupper(substr(auth()->user()->name ?? 'A',0,1)) }}</span>
+                <form method="post" action="/admin/logout">@csrf
+                    <button class="btn btn-ghost" type="submit" title="Sign out">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 12H3m0 0l4-4m-4 4l4 4M13 4h6a1 1 0 011 1v14a1 1 0 01-1 1h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </form>
+            </div>
+        </header>
+        <main class="content">
+            @yield('content')
+        </main>
+    </div>
+</div>
+<script>
+(function(){
+    var app=document.getElementById('app');
+    document.querySelectorAll('[data-open]').forEach(function(b){b.addEventListener('click',function(){app.classList.add('open')})});
+    document.querySelectorAll('[data-close]').forEach(function(b){b.addEventListener('click',function(){app.classList.remove('open')})});
+})();
+</script>
+</body>
+</html>

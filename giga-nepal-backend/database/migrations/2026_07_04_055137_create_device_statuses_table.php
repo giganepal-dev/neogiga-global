@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('device_statuses', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->unique(); // pending, installed, active, offline, maintenance, damaged, replaced, retired
+            $table->string('display_name');
+            $table->string('color_code')->nullable()->comment('Hex color for UI display');
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('device_statuses');
+    }
+};

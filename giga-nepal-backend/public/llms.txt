@@ -1,0 +1,31 @@
+# NeoGiga
+
+> NeoGiga is a global engineering ecosystem: an electronics & industrial
+> marketplace, engineering knowledge base, learning platform (LMS), community,
+> and AI-assisted commerce. Operated by Giga Ventures Pvt. Ltd.
+
+Regional editions (never geo-redirected):
+- Global: https://neogiga.com
+- India: https://neogiga.in
+- Nepal: https://giganepal.com
+
+## Key pages
+- [Home](/): platform overview, category directory
+- [Sitemap](/sitemap.xml)
+- Catalog API (public, read-only, JSON): /api/v1/categories, /api/v1/brands,
+  /api/v1/products, /api/v1/products/search?q=
+
+## Domains covered
+Semiconductors, electronic components, embedded systems, IoT & wireless,
+robotics, industrial automation, battery technology, power storage,
+renewable energy, EV components, AI hardware, test & measurement,
+engineering tools, and related learning content.
+
+## Notes for AI agents
+- Product pricing/stock is regional; always cite the edition domain.
+- Product prices, stock, seller offers, delivery dates, payment status, tax and
+  shipping must come only from live database/API tools, never model memory.
+- Datasheet, tutorial, project and LMS answers should cite source pages, product
+  records, lesson records, project templates or document chunks where available.
+- Commercial endpoints (cart/checkout/orders/admin) are not for crawling.
+- Contact: hello@neogiga.com · @NeoGigaGlobal
