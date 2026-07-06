@@ -13,6 +13,9 @@ use App\Http\Controllers\Api\Order\OrderController;
 use App\Http\Controllers\Api\AI\AiCommerceController;
 use App\Http\Controllers\Api\POS\PosController;
 use App\Http\Controllers\Api\LMS\LmsController;
+use App\Http\Controllers\Api\Admin\AdminConsoleController;
+use App\Http\Controllers\Api\Admin\InventoryAdminController;
+use App\Http\Controllers\Api\Admin\LmsAdminController;
 use App\Http\Controllers\Api\Admin\ImportExportController;
 
 /*
@@ -112,22 +115,30 @@ Route::prefix('v1')->group(function () {
 
     // POS (contract stable; 501 until device auth + payments)
     Route::prefix('pos')->group(function () {
-        Route::post('/sessions/open', [PosController::class, 'openSession']);
-        Route::post('/sessions/close', [PosController::class, 'closeSession']);
         Route::get('/products/search', [PosController::class, 'searchProducts']);
-        Route::post('/sales', [PosController::class, 'createSale']);
-        Route::get('/sales/{sale}', [PosController::class, 'showSale'])->whereNumber('sale');
-        Route::post('/sales/{sale}/payment', [PosController::class, 'processPayment'])->whereNumber('sale');
-        Route::post('/sales/{sale}/refund', [PosController::class, 'processRefund'])->whereNumber('sale');
+        Route::middleware('api.token')->group(function () {
+            Route::post('/sessions/open', [PosController::class, 'openSession']);
+            Route::post('/sessions/close', [PosController::class, 'closeSession']);
+            Route::post('/sales', [PosController::class, 'createSale']);
+            Route::get('/sales/{sale}', [PosController::class, 'showSale'])->whereNumber('sale');
+            Route::post('/sales/{sale}/payment', [PosController::class, 'processPayment'])->whereNumber('sale');
+            Route::post('/sales/{sale}/refund', [PosController::class, 'processRefund'])->whereNumber('sale');
+        });
     });
 
     // LMS (501 until schema reconciliation)
     Route::prefix('lms')->group(function () {
         Route::get('/courses', [LmsController::class, 'courses']);
+        Route::get('/courses/{course}/modules', [LmsController::class, 'courseModules'])->whereNumber('course');
         Route::get('/projects', [LmsController::class, 'projects']);
         Route::get('/projects/{slug}', [LmsController::class, 'showProject']);
         Route::get('/projects/{slug}/components', [LmsController::class, 'projectComponents']);
         Route::get('/projects/{slug}/code-samples', [LmsController::class, 'projectCodeSamples']);
+        Route::middleware('api.token')->group(function () {
+            Route::post('/enrollments', [LmsController::class, 'enroll'])->middleware('throttle:writes');
+            Route::get('/my-enrollments', [LmsController::class, 'myEnrollments']);
+            Route::post('/progress', [LmsController::class, 'progress'])->middleware('throttle:writes');
+        });
     });
 
     // Admin (fail-closed token gate; replace with Sanctum + RBAC in Phase 1)
@@ -142,5 +153,103 @@ Route::prefix('v1')->group(function () {
         Route::prefix('admin/exports')->group(function () {
             Route::post('/create', [ImportExportController::class, 'createExport']);
         });
+
+        Route::prefix('admin/console')->group(function () {
+            Route::get('/overview', [AdminConsoleController::class, 'overview']);
+            Route::get('/navigation', [AdminConsoleController::class, 'navigation']);
+            Route::get('/settings', [AdminConsoleController::class, 'settings']);
+            Route::post('/settings', [AdminConsoleController::class, 'storeSetting'])->middleware('throttle:writes');
+            Route::get('/media', [AdminConsoleController::class, 'media']);
+            Route::post('/media', [AdminConsoleController::class, 'storeMedia'])->middleware('throttle:writes');
+            Route::get('/seo', [AdminConsoleController::class, 'seo']);
+            Route::post('/seo/pages', [AdminConsoleController::class, 'storeSeoPage'])->middleware('throttle:writes');
+            Route::post('/seo/redirects', [AdminConsoleController::class, 'storeRedirect'])->middleware('throttle:writes');
+            Route::get('/permissions', [AdminConsoleController::class, 'permissions']);
+            Route::get('/approvals', [AdminConsoleController::class, 'approvals']);
+        });
+
+        Route::prefix('admin/inventory')->group(function () {
+            Route::get('/overview', [InventoryAdminController::class, 'overview']);
+            Route::get('/stocks', [InventoryAdminController::class, 'stocks']);
+            Route::get('/movements', [InventoryAdminController::class, 'movements']);
+            Route::get('/low-stock', [InventoryAdminController::class, 'lowStock']);
+            Route::post('/adjust', [InventoryAdminController::class, 'adjust'])->middleware('throttle:writes');
+            Route::post('/transfer', [InventoryAdminController::class, 'transfer'])->middleware('throttle:writes');
+            Route::post('/receive', [InventoryAdminController::class, 'receive'])->middleware('throttle:writes');
+        });
+
+        Route::prefix('admin/lms')->group(function () {
+            Route::get('/overview', [LmsAdminController::class, 'overview']);
+            Route::get('/courses', [LmsAdminController::class, 'courses']);
+            Route::post('/courses', [LmsAdminController::class, 'storeCourse'])->middleware('throttle:writes');
+            Route::get('/projects', [LmsAdminController::class, 'projects']);
+            Route::post('/projects', [LmsAdminController::class, 'storeProject'])->middleware('throttle:writes');
+            Route::post('/lessons', [LmsAdminController::class, 'storeLesson'])->middleware('throttle:writes');
+            Route::get('/enrollments', [LmsAdminController::class, 'enrollments']);
+            Route::get('/certificates', [LmsAdminController::class, 'certificates']);
+        });
     });
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| Marketing Phase 2 Foundation
+|--------------------------------------------------------------------------
+| Additive CRM/newsletter/email/WhatsApp/analytics endpoints. Public writes
+| are throttled; admin routes keep the existing fail-closed admin.token gate.
+*/
+use App\Http\Controllers\Api\Marketing\CustomerProfileController as MarketingCustomerProfileController;
+use App\Http\Controllers\Api\Marketing\NewsletterController as MarketingNewsletterController;
+use App\Http\Controllers\Api\Marketing\AuthEmailOtpController as MarketingAuthEmailOtpController;
+use App\Http\Controllers\Api\Marketing\WhatsappOptInController as MarketingWhatsappOptInController;
+use App\Http\Controllers\Api\Marketing\AnalyticsController as MarketingAnalyticsController;
+use App\Http\Controllers\Api\Admin\Marketing\CrmController as MarketingCrmController;
+use App\Http\Controllers\Api\Admin\Marketing\NewsletterAdminController as MarketingNewsletterAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\EmailAdminController as MarketingEmailAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\WhatsappAdminController as MarketingWhatsappAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\AbandonedCartAdminController as MarketingAbandonedCartAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\CampaignAdminController as MarketingCampaignAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\AnalyticsAdminController as MarketingAnalyticsAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\DashboardAdminController as MarketingDashboardAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\SettingsAdminController as MarketingSettingsAdminController;
+
+$marketingPublic = function () {
+    Route::post('/newsletter/subscribe', [MarketingNewsletterController::class, 'subscribe'])->middleware('throttle:writes');
+    Route::post('/newsletter/confirm', [MarketingNewsletterController::class, 'confirm'])->middleware('throttle:writes');
+    Route::post('/newsletter/unsubscribe', [MarketingNewsletterController::class, 'unsubscribe'])->middleware('throttle:writes');
+    Route::get('/newsletter/preferences', [MarketingNewsletterController::class, 'preferences']);
+    Route::patch('/newsletter/preferences', [MarketingNewsletterController::class, 'updatePreferences'])->middleware('throttle:writes');
+    Route::post('/unsubscribe', [MarketingCustomerProfileController::class, 'unsubscribe'])->middleware('throttle:writes');
+    Route::post('/auth/email-otp/request', [MarketingAuthEmailOtpController::class, 'request'])->middleware('throttle:writes');
+    Route::post('/auth/email-otp/verify', [MarketingAuthEmailOtpController::class, 'verify'])->middleware('throttle:writes');
+    Route::post('/whatsapp/opt-in', [MarketingWhatsappOptInController::class, 'optIn'])->middleware('throttle:writes');
+    Route::post('/whatsapp/opt-out', [MarketingWhatsappOptInController::class, 'optOut'])->middleware('throttle:writes');
+    Route::post('/analytics/event', [MarketingAnalyticsController::class, 'event'])->middleware('throttle:writes');
+    Route::post('/analytics/product-view', [MarketingAnalyticsController::class, 'productView'])->middleware('throttle:writes');
+    Route::post('/analytics/search', [MarketingAnalyticsController::class, 'search'])->middleware('throttle:writes');
+    Route::middleware('api.token')->group(function () {
+        Route::get('/customer/profile', [MarketingCustomerProfileController::class, 'profile']);
+        Route::patch('/customer/profile', [MarketingCustomerProfileController::class, 'update'])->middleware('throttle:writes');
+        Route::patch('/customer/preferences', [MarketingCustomerProfileController::class, 'preferences'])->middleware('throttle:writes');
+        Route::post('/customer/marketing-consent', [MarketingCustomerProfileController::class, 'consent'])->middleware('throttle:writes');
+    });
+};
+
+$marketingAdmin = function () {
+    Route::get('/customers', [MarketingCrmController::class, 'customers']); Route::get('/customers/{customer}', [MarketingCrmController::class, 'customer'])->whereNumber('customer');
+    Route::get('/customer-segments', [MarketingCrmController::class, 'segments']); Route::post('/customer-segments', [MarketingCrmController::class, 'storeSegment']); Route::post('/customer-segments/{segment}/refresh', [MarketingCrmController::class, 'refreshSegment'])->whereNumber('segment');
+    Route::get('/contact-lists', [MarketingCrmController::class, 'contactLists']); Route::post('/contact-lists', [MarketingCrmController::class, 'storeContactList']); Route::post('/contact-lists/{list}/members', [MarketingCrmController::class, 'addMembers'])->whereNumber('list');
+    Route::get('/newsletter/subscribers', [MarketingNewsletterAdminController::class, 'subscribers']); Route::get('/newsletter/templates', [MarketingNewsletterAdminController::class, 'templates']); Route::post('/newsletter/templates', [MarketingNewsletterAdminController::class, 'storeTemplate']); Route::get('/newsletter/campaigns', [MarketingNewsletterAdminController::class, 'campaigns']); Route::post('/newsletter/campaigns', [MarketingNewsletterAdminController::class, 'storeCampaign']); Route::post('/newsletter/campaigns/{campaign}/preview', [MarketingNewsletterAdminController::class, 'preview'])->whereNumber('campaign'); Route::post('/newsletter/campaigns/{campaign}/schedule', [MarketingNewsletterAdminController::class, 'schedule'])->whereNumber('campaign'); Route::post('/newsletter/campaigns/{campaign}/send-test', [MarketingNewsletterAdminController::class, 'sendTest'])->whereNumber('campaign'); Route::post('/newsletter/campaigns/{campaign}/send-now', [MarketingNewsletterAdminController::class, 'sendNow'])->whereNumber('campaign');
+    Route::get('/email/templates', [MarketingEmailAdminController::class, 'templates']); Route::post('/email/templates', [MarketingEmailAdminController::class, 'storeTemplate']); Route::patch('/email/templates/{template}', [MarketingEmailAdminController::class, 'updateTemplate'])->whereNumber('template'); Route::get('/email/campaigns', [MarketingEmailAdminController::class, 'campaigns']); Route::post('/email/campaigns', [MarketingEmailAdminController::class, 'storeCampaign']); Route::post('/email/campaigns/{campaign}/preview', [MarketingEmailAdminController::class, 'preview'])->whereNumber('campaign'); Route::post('/email/campaigns/{campaign}/schedule', [MarketingEmailAdminController::class, 'schedule'])->whereNumber('campaign'); Route::post('/email/campaigns/{campaign}/send-test', [MarketingEmailAdminController::class, 'sendTest'])->whereNumber('campaign'); Route::post('/email/campaigns/{campaign}/send-now', [MarketingEmailAdminController::class, 'sendNow'])->whereNumber('campaign'); Route::get('/email/events', [MarketingEmailAdminController::class, 'events']); Route::get('/email/automation-rules', [MarketingEmailAdminController::class, 'automationRules']); Route::post('/email/automation-rules', [MarketingEmailAdminController::class, 'storeAutomationRule']); Route::patch('/email/automation-rules/{rule}', [MarketingEmailAdminController::class, 'updateAutomationRule'])->whereNumber('rule');
+    Route::get('/abandoned-carts', [MarketingAbandonedCartAdminController::class, 'index']); Route::get('/abandoned-carts/recovery-report', [MarketingAbandonedCartAdminController::class, 'report']); Route::get('/abandoned-carts/{cart}', [MarketingAbandonedCartAdminController::class, 'show'])->whereNumber('cart'); Route::post('/abandoned-carts/{cart}/send-reminder', [MarketingAbandonedCartAdminController::class, 'sendReminder'])->whereNumber('cart');
+    Route::get('/whatsapp/templates', [MarketingWhatsappAdminController::class, 'templates']); Route::post('/whatsapp/templates', [MarketingWhatsappAdminController::class, 'storeTemplate']); Route::get('/whatsapp/campaigns', [MarketingWhatsappAdminController::class, 'campaigns']); Route::post('/whatsapp/campaigns', [MarketingWhatsappAdminController::class, 'storeCampaign']); Route::post('/whatsapp/campaigns/{campaign}/preview', [MarketingWhatsappAdminController::class, 'preview'])->whereNumber('campaign'); Route::post('/whatsapp/campaigns/{campaign}/schedule', [MarketingWhatsappAdminController::class, 'schedule'])->whereNumber('campaign'); Route::post('/whatsapp/campaigns/{campaign}/send-test', [MarketingWhatsappAdminController::class, 'sendTest'])->whereNumber('campaign'); Route::post('/whatsapp/campaigns/{campaign}/send-now', [MarketingWhatsappAdminController::class, 'sendNow'])->whereNumber('campaign'); Route::get('/whatsapp/events', [MarketingWhatsappAdminController::class, 'events']); Route::post('/whatsapp/export-recipients', [MarketingWhatsappAdminController::class, 'exportRecipients']);
+    Route::post('/campaigns/audience-preview', [MarketingCampaignAdminController::class, 'audiencePreview']); Route::get('/campaigns/audience-count', [MarketingCampaignAdminController::class, 'audienceCount']); Route::post('/campaigns/create-multi-channel', [MarketingCampaignAdminController::class, 'createMultiChannel']);
+    Route::get('/analytics/dashboard', [MarketingAnalyticsAdminController::class, 'dashboard']); Route::get('/analytics/trending-products', [MarketingAnalyticsAdminController::class, 'trendingProducts']); Route::get('/analytics/trending-categories', [MarketingAnalyticsAdminController::class, 'trendingCategories']); Route::get('/analytics/top-searches', [MarketingAnalyticsAdminController::class, 'topSearches']); Route::get('/analytics/regional-orders', [MarketingAnalyticsAdminController::class, 'regionalOrders']); Route::get('/analytics/country-sales', [MarketingAnalyticsAdminController::class, 'countrySales']); Route::get('/analytics/campaign-performance', [MarketingAnalyticsAdminController::class, 'campaignPerformance']);
+    Route::get('/dashboard/overview', [MarketingDashboardAdminController::class, 'overview']); Route::get('/dashboard/{type}', [MarketingDashboardAdminController::class, 'proxy']);
+    Route::get('/settings/marketing', [MarketingSettingsAdminController::class, 'marketing']); Route::patch('/settings/marketing', [MarketingSettingsAdminController::class, 'updateMarketing']); Route::get('/settings/analytics', [MarketingSettingsAdminController::class, 'analytics']); Route::patch('/settings/analytics', [MarketingSettingsAdminController::class, 'updateAnalytics']);
+};
+
+$marketingPublic();
+Route::middleware('admin.token')->prefix('admin')->group($marketingAdmin);
+Route::prefix('v1')->group(function () use ($marketingPublic, $marketingAdmin) { $marketingPublic(); Route::middleware('admin.token')->prefix('admin')->group($marketingAdmin); });

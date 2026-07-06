@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Inventory;
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\InventoryStock;
+use App\Services\Inventory\ReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,9 +13,6 @@ class InventoryController extends Controller
 {
     use ApiResponses;
 
-    /**
-     * Availability summary for a product (never expose cost data).
-     */
     public function byProduct(int $product): JsonResponse
     {
         $stocks = InventoryStock::query()
@@ -31,9 +29,7 @@ class InventoryController extends Controller
 
     public function byMarketplace(Request $request, int $marketplace): JsonResponse
     {
-        $validated = $request->validate([
-            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
-        ]);
+        $validated = $request->validate(['per_page' => ['sometimes', 'integer', 'min:1', 'max:100']]);
 
         $stocks = InventoryStock::query()
             ->where('marketplace_id', $marketplace)
@@ -45,9 +41,7 @@ class InventoryController extends Controller
 
     public function byWarehouse(Request $request, int $warehouse): JsonResponse
     {
-        $validated = $request->validate([
-            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
-        ]);
+        $validated = $request->validate(['per_page' => ['sometimes', 'integer', 'min:1', 'max:100']]);
 
         $stocks = InventoryStock::query()
             ->where('warehouse_id', $warehouse)
@@ -56,16 +50,34 @@ class InventoryController extends Controller
         return $this->success($stocks);
     }
 
-    /**
-     * Soft-reserve with TTL + oversell guard — Phase 1 (Blueprint §18).
-     */
-    public function reserve(): JsonResponse
+    public function reserve(Request $request, ReservationService $reservations): JsonResponse
     {
-        return $this->notImplemented('Inventory reservation');
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'variant_id' => ['nullable', 'integer'],
+            'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
+            'quantity' => ['required', 'integer', 'min:1'],
+            'reference_type' => ['nullable', 'string', 'max:80'],
+            'reference_id' => ['nullable', 'integer'],
+            'ttl_minutes' => ['nullable', 'integer', 'min:1', 'max:10080'],
+            'idempotency_key' => ['nullable', 'string', 'max:190'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            return $this->success($reservations->reserve($data), 201);
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 422);
+        }
     }
 
-    public function releaseReservation(): JsonResponse
+    public function releaseReservation(Request $request, ReservationService $reservations): JsonResponse
     {
-        return $this->notImplemented('Inventory reservation release');
+        $data = $request->validate([
+            'reservation_id' => ['required', 'integer', 'exists:reserved_stocks,id'],
+            'reason' => ['nullable', 'string', 'max:190'],
+        ]);
+
+        return $this->success($reservations->release((int) $data['reservation_id'], $data['reason'] ?? 'api_release'));
     }
 }

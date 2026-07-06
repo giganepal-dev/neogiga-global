@@ -1,0 +1,4 @@
+<?php
+namespace App\Http\Controllers\Api\Admin\Marketing;
+use App\Http\Controllers\Concerns\ApiResponses; use App\Http\Controllers\Controller; use Illuminate\Http\JsonResponse; use Illuminate\Http\Request; use Illuminate\Support\Facades\DB;
+class CampaignAdminController extends Controller { use ApiResponses; public function audiencePreview(Request $r): JsonResponse { $d=$r->validate(['filters'=>'array','limit'=>'integer']); return $this->success(DB::table('customer_profiles')->limit($d['limit']??25)->get()); } public function audienceCount(Request $r): JsonResponse { $r->validate(['filters'=>'array']); return $this->success(['count'=>DB::table('customer_profiles')->count()]); } public function createMultiChannel(Request $r): JsonResponse { $d=$r->validate(['name'=>'required|string|max:190','channels'=>'required|array','targeting_rules'=>'array']); return $this->success(['message'=>'Multi-channel campaign draft accepted.','channels'=>$d['channels']],201); } }

@@ -199,11 +199,11 @@
             <p class="sec-sub">A global product master, localized inventory. Explore the core domains of the NeoGiga catalog.</p>
             <div class="grid">
                 @foreach ($categories as $category)
-                    <a class="card" href="/api/v1/categories/{{ $category['slug'] }}" aria-label="{{ $category['name'] }}">
+                    <article class="card" aria-label="{{ $category['name'] }}">
                         <div class="ic" aria-hidden="true">{{ $category['icon'] }}</div>
                         <h3>{{ $category['name'] }}</h3>
                         <p>{{ $category['blurb'] }}</p>
-                    </a>
+                    </article>
                 @endforeach
             </div>
         </div>
@@ -233,7 +233,7 @@
                     <h3>Sell on NeoGiga</h3>
                     <p>Distributors, manufacturers and local shops: reach engineers across South Asia with
                        per-marketplace approval, transparent settlement and stock sync.
-                       <a href="/api/v1/vendors/register">Apply via the vendor API</a> — seller portal coming.</p>
+                       Vendor onboarding opens when the seller portal launches. <span class="chip">Coming soon</span></p>
                 </article>
                 <article class="card" id="b2b">
                     <div class="ic" aria-hidden="true">🏭</div>
