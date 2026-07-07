@@ -22,9 +22,15 @@ All notable changes to the NeoGiga platform.
 - **Affiliate wired into checkout + auth** (guarded, additive): `OrderController@checkout` → `recordConversion`; `AuthController` register/login → `bindReferral`/`attributeUser`; `AffiliateSeeder` default 5% rule.
 - **ERP procurement foundation** (additive): migration `2026_07_07_130000_create_erp_procurement_tables` — `document_number_sequences`, `suppliers`, `purchase_orders`, `purchase_order_items`; models `App\Models\Erp\*`; services `App\Services\Erp\{DocumentNumberService,PurchaseOrderService}` (server-side totals, race-safe PO numbering, receive with over-receive cap); `Api\Admin\ProcurementAdminController` + admin routes. Verified on `neogiga_test`.
 
+- **Coupon + Gift Card foundation** (additive): migration `2026_07_07_140000_create_coupon_giftcard_tables` — `coupons`, `coupon_redemptions`, `gift_cards`, `gift_card_transactions`; models `App\Models\Promotion\*`; services `App\Services\Promotion\{CouponService,GiftCardService}` (server-side discount, usage/min-order/expiry guards, row-locked non-overspendable gift cards, append-only ledger); public validate/check (`/api/v1/coupons/validate`, `/api/v1/gift-cards/check` — validate only, use server cart subtotal) + admin CRUD. Verified on `neogiga_test`. NOT wired into cart/checkout consumption yet.
+
 ### Notes
-- Gift-card/Coupon and Payments-abstraction remain the genuine gaps (next cycles).
+- Payments-abstraction remains the genuine gap (NEEDS HUMAN REVIEW — overlaps existing `payments`/`refunds`).
+- Coupon/gift-card consumption (redeem at checkout) is built in the services but not yet called from OrderController (deferred, like affiliate wiring was).
 - PO receiving does not yet post into inventory stock (documented hook to existing StockMovement service).
+
+### Ops
+- **Deploy rule added:** `php artisan config:cache` MUST be the last deploy step — `composer dump-autoload` clears the config cache and Laravel 11 then falls back to sqlite → site-wide 500. (Caused a brief prod outage 2026-07-07, fixed immediately.)
 
 ## [0.2.0] — 2026-07-06 — Phase 0-R "Repair & Foundation"
 

@@ -304,3 +304,28 @@ $procurementAdmin = function () {
 };
 Route::middleware('admin.token')->prefix('admin')->group($procurementAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($procurementAdmin);
+
+/*
+|--------------------------------------------------------------------------
+| Coupons + Gift cards (2026-07-07 adaptation — additive)
+|--------------------------------------------------------------------------
+| Customer validate/check (api.token) — validate only, never mutate cart.
+| Admin management (admin.token). Discounts computed server-side.
+*/
+Route::prefix('v1')->middleware('api.token')->group(function () {
+    Route::post('/coupons/validate', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'validateCoupon'])->middleware('throttle:writes');
+    Route::post('/gift-cards/check', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'checkGiftCard'])->middleware('throttle:writes');
+});
+
+$promotionAdmin = function () {
+    Route::get('/coupons', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'coupons']);
+    Route::post('/coupons', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'storeCoupon']);
+    Route::patch('/coupons/{coupon}', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'updateCoupon'])->whereNumber('coupon');
+    Route::get('/coupons/{coupon}/redemptions', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'couponRedemptions'])->whereNumber('coupon');
+    Route::get('/gift-cards', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'giftCards']);
+    Route::post('/gift-cards', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'storeGiftCard']);
+    Route::post('/gift-cards/{giftCard}/disable', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'disableGiftCard'])->whereNumber('giftCard');
+    Route::get('/gift-cards/{giftCard}/transactions', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'giftCardTransactions'])->whereNumber('giftCard');
+};
+Route::middleware('admin.token')->prefix('admin')->group($promotionAdmin);
+Route::middleware('admin.token')->prefix('v1/admin')->group($promotionAdmin);
