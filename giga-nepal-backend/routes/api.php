@@ -315,6 +315,9 @@ Route::middleware('admin.token')->prefix('v1/admin')->group($procurementAdmin);
 Route::prefix('v1')->middleware('api.token')->group(function () {
     Route::post('/coupons/validate', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'validateCoupon'])->middleware('throttle:writes');
     Route::post('/gift-cards/check', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'checkGiftCard'])->middleware('throttle:writes');
+    Route::post('/cart/apply-coupon', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'applyCoupon'])->middleware('throttle:writes');
+    Route::delete('/cart/coupon', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'removeCoupon']);
+    Route::post('/cart/apply-gift-card', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'applyGiftCard'])->middleware('throttle:writes');
 });
 
 $promotionAdmin = function () {

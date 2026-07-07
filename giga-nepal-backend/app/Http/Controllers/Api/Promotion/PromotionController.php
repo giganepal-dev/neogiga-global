@@ -61,4 +61,70 @@ class PromotionController extends Controller
 
         return response()->json(['success' => $result['found'], 'data' => $result], $result['found'] ? 200 : 404);
     }
+
+    /** POST /api/v1/cart/apply-coupon — validate + attach a coupon code to the active cart. */
+    public function applyCoupon(Request $request): JsonResponse
+    {
+        $data = $request->validate(['code' => ['required', 'string', 'max:60']]);
+
+        $cart = $this->activeCart($request);
+        if (!$cart) {
+            return response()->json(['success' => false, 'message' => 'No active cart.'], 422);
+        }
+
+        $result = $this->coupons->validate($data['code'], (float) $cart->subtotal, $request->user()->id, $cart->marketplace_id);
+        if (!$result['valid']) {
+            return response()->json(['success' => false, 'message' => $result['reason']], 422);
+        }
+
+        $meta = $cart->metadata ?? [];
+        $meta['coupon_code'] = $result['coupon']->code;
+        $cart->update(['metadata' => $meta]);
+
+        return response()->json(['success' => true, 'data' => [
+            'coupon_code' => $result['coupon']->code,
+            'discount' => $result['discount'],
+            'free_shipping' => $result['free_shipping'],
+        ]]);
+    }
+
+    /** DELETE /api/v1/cart/coupon — detach the coupon from the active cart. */
+    public function removeCoupon(Request $request): JsonResponse
+    {
+        $cart = $this->activeCart($request);
+        if ($cart) {
+            $meta = $cart->metadata ?? [];
+            unset($meta['coupon_code']);
+            $cart->update(['metadata' => $meta]);
+        }
+
+        return response()->json(['success' => true, 'data' => ['coupon_code' => null]]);
+    }
+
+    /** POST /api/v1/cart/apply-gift-card — attach a spendable gift card to the active cart (redeemed at checkout). */
+    public function applyGiftCard(Request $request): JsonResponse
+    {
+        $data = $request->validate(['code' => ['required', 'string', 'max:60']]);
+
+        $cart = $this->activeCart($request);
+        if (!$cart) {
+            return response()->json(['success' => false, 'message' => 'No active cart.'], 422);
+        }
+
+        $check = $this->giftCards->check($data['code']);
+        if (!$check['found'] || !$check['spendable']) {
+            return response()->json(['success' => false, 'message' => 'Gift card is not usable.'], 422);
+        }
+
+        $meta = $cart->metadata ?? [];
+        $meta['gift_card_code'] = $data['code'];
+        $cart->update(['metadata' => $meta]);
+
+        return response()->json(['success' => true, 'data' => ['balance' => $check['balance'], 'currency' => $check['currency']]]);
+    }
+
+    private function activeCart(Request $request): ?Cart
+    {
+        return Cart::query()->active()->where('user_id', $request->user()->id)->latest()->first();
+    }
 }

@@ -8,7 +8,10 @@ use App\Models\Marketplace\Cart;
 use App\Models\Marketplace\InventoryStock;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Marketplace\Cart as CartModel;
 use App\Services\Affiliate\AffiliateService;
+use App\Services\Promotion\CouponService;
+use App\Services\Promotion\GiftCardService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,8 +21,11 @@ class OrderController extends Controller
 {
     use ApiResponses;
 
-    public function __construct(private readonly AffiliateService $affiliates)
-    {
+    public function __construct(
+        private readonly AffiliateService $affiliates,
+        private readonly CouponService $coupons,
+        private readonly GiftCardService $giftCards,
+    ) {
     }
 
     public function checkout(Request $request): JsonResponse
@@ -53,6 +59,11 @@ class OrderController extends Controller
             $cart->calculateTotal();
             $cart->refresh()->load(['items.product']);
 
+            // Server-side promotions (re-validated from cart metadata; never trusted from client).
+            $promo = $this->resolvePromotions($cart, $request->user()->id);
+            $orderDiscount = round((float) $cart->discount_total + $promo['coupon_discount'], 2);
+            $orderGrand = max(0.0, round((float) $cart->grand_total - $promo['coupon_discount'], 2));
+
             $order = Order::create([
                 'order_number' => 'NG-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6)),
                 'user_id' => $request->user()->id,
@@ -61,11 +72,11 @@ class OrderController extends Controller
                 'currency_code' => $cart->currency_code,
                 'subtotal' => $cart->subtotal,
                 'tax_total' => $cart->tax_total,
-                'discount_total' => $cart->discount_total,
+                'discount_total' => $orderDiscount,
                 'shipping_total' => $cart->shipping_total,
-                'grand_total' => $cart->grand_total,
+                'grand_total' => $orderGrand,
                 'amount_paid' => 0,
-                'amount_due' => $cart->grand_total,
+                'amount_due' => $orderGrand,
                 'payment_method' => $validated['payment_method'],
                 'payment_status' => 'pending',
                 'billing_address' => $validated['billing_address'] ?? null,
@@ -92,20 +103,62 @@ class OrderController extends Controller
                 ]);
             }
 
-            Payment::create([
-                'payment_number' => 'PAY-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6)),
-                'order_id' => $order->id,
-                'marketplace_id' => $order->marketplace_id,
-                'payment_method' => $validated['payment_method'],
-                'payment_gateway' => 'manual',
-                'amount' => $order->grand_total,
-                'currency_code' => $order->currency_code,
-                'status' => 'pending',
-                'payment_details' => [
-                    'requires_manual_confirmation' => true,
-                    'provider_call_made' => false,
-                ],
-            ]);
+            // Redeem coupon (records redemption + increments usage; server-side amount).
+            if ($promo['coupon'] && $promo['coupon_discount'] > 0) {
+                try {
+                    $this->coupons->redeem($promo['coupon'], $promo['coupon_discount'], $order->currency_code, $request->user()->id, $order->id);
+                } catch (\Throwable) {
+                    // non-critical: coupon logging failure does not affect the order
+                }
+            }
+
+            // Redeem gift card up to the amount due (row-locked, server-side).
+            $amountDue = (float) $order->grand_total;
+            if (!empty($promo['gift_card_code'])) {
+                try {
+                    $gc = $this->giftCards->redeem($promo['gift_card_code'], $amountDue, $request->user()->id, $order->id);
+                    if (($gc['applied'] ?? 0) > 0) {
+                        Payment::create([
+                            'payment_number' => 'PAY-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6)),
+                            'order_id' => $order->id,
+                            'marketplace_id' => $order->marketplace_id,
+                            'payment_method' => 'gift_card',
+                            'payment_gateway' => 'wallet',
+                            'amount' => $gc['applied'],
+                            'currency_code' => $order->currency_code,
+                            'status' => 'captured',
+                            'paid_at' => now(),
+                            'payment_details' => ['gift_card' => true],
+                        ]);
+                        $amountDue = max(0.0, round($amountDue - (float) $gc['applied'], 2));
+                        $order->forceFill([
+                            'amount_paid' => $gc['applied'],
+                            'amount_due' => $amountDue,
+                            'payment_status' => $amountDue <= 0 ? 'paid' : 'pending',
+                        ])->save();
+                    }
+                } catch (\Throwable) {
+                    // gift card not redeemable — proceed without it
+                }
+            }
+
+            // Remaining balance due -> pending payment via the chosen method.
+            if ($amountDue > 0) {
+                Payment::create([
+                    'payment_number' => 'PAY-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6)),
+                    'order_id' => $order->id,
+                    'marketplace_id' => $order->marketplace_id,
+                    'payment_method' => $validated['payment_method'],
+                    'payment_gateway' => 'manual',
+                    'amount' => $amountDue,
+                    'currency_code' => $order->currency_code,
+                    'status' => 'pending',
+                    'payment_details' => [
+                        'requires_manual_confirmation' => true,
+                        'provider_call_made' => false,
+                    ],
+                ]);
+            }
 
             $cart->forceFill(['is_active' => false])->save();
 
@@ -148,6 +201,34 @@ class OrderController extends Controller
     public function invoice(int $order): JsonResponse
     {
         return $this->notImplemented('Invoice generation', 'Phase 2');
+    }
+
+    /**
+     * Resolve server-side promotions from the cart metadata. The coupon is
+     * re-validated (never trusting a stored discount); the gift-card code is
+     * carried through for row-locked redemption after the order is created.
+     *
+     * @return array{coupon:?\App\Models\Promotion\Coupon, coupon_discount:float, gift_card_code:?string}
+     */
+    private function resolvePromotions(CartModel $cart, int $userId): array
+    {
+        $meta = $cart->metadata ?? [];
+
+        $couponDiscount = 0.0;
+        $coupon = null;
+        if (!empty($meta['coupon_code'])) {
+            $res = $this->coupons->validate($meta['coupon_code'], (float) $cart->subtotal, $userId, $cart->marketplace_id);
+            if ($res['valid']) {
+                $couponDiscount = (float) $res['discount'];
+                $coupon = $res['coupon'];
+            }
+        }
+
+        return [
+            'coupon' => $coupon,
+            'coupon_discount' => $couponDiscount,
+            'gift_card_code' => $meta['gift_card_code'] ?? null,
+        ];
     }
 
     private function hasStock(int $productId, ?int $marketplaceId, int $quantity, ?int $variantId = null): bool

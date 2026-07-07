@@ -4,6 +4,9 @@ All notable changes to the NeoGiga platform.
 
 ## [Unreleased] — 2026-07-07 — Affiliate/Referral foundation
 
+### Wired
+- **Coupon + Gift Card consumption wired into checkout** (server-side): `OrderController@checkout` re-validates the cart's coupon (from `carts.metadata`) and reduces the order total, redeems the coupon (usage logged), and redeems a gift card up to the amount due (creating a `captured` gift_card payment + a `pending` payment for the remainder). Public `POST /api/v1/cart/apply-coupon`, `DELETE /api/v1/cart/coupon`, `POST /api/v1/cart/apply-gift-card` (api.token). No-promo checkout unchanged (Phase1CheckoutTest still passes). New `Phase1PromoCheckoutTest` (coupon+gift-card → discount_total 4.00, grand 35.98, amount_due 15.98).
+
 ### Added (adaptation cycle — Affiliate only; all other command modules already existed)
 - **Affiliate/referral module** (additive, verified on `neogiga_test`, not yet deployed/wired):
   - Migration `2026_07_07_120000_create_affiliate_foundation_tables` — 7 tables:
