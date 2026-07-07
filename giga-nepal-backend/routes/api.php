@@ -356,3 +356,21 @@ $salesAdmin = function () {
 };
 Route::middleware('admin.token')->prefix('admin')->group($salesAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($salesAdmin);
+
+/*
+|--------------------------------------------------------------------------
+| ERP finance: expenses + back-office reports (2026-07-07 — additive, admin)
+|--------------------------------------------------------------------------
+| Expense tracking + read-only procurement/quotation/expense/supplier reports.
+*/
+$financeAdmin = function () {
+    Route::get('/expenses', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'expenses']);
+    Route::post('/expenses', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'storeExpense']);
+    Route::patch('/expenses/{expense}', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'updateExpense'])->whereNumber('expense');
+    Route::get('/reports/procurement', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'reportProcurement']);
+    Route::get('/reports/supplier-spend', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'reportSupplierSpend']);
+    Route::get('/reports/quotations', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'reportQuotations']);
+    Route::get('/reports/expenses', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'reportExpenses']);
+};
+Route::middleware('admin.token')->prefix('admin')->group($financeAdmin);
+Route::middleware('admin.token')->prefix('v1/admin')->group($financeAdmin);
