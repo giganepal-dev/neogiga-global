@@ -8,6 +8,7 @@ use App\Models\Marketplace\Cart;
 use App\Models\Marketplace\InventoryStock;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\Affiliate\AffiliateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,10 @@ use Illuminate\Support\Str;
 class OrderController extends Controller
 {
     use ApiResponses;
+
+    public function __construct(private readonly AffiliateService $affiliates)
+    {
+    }
 
     public function checkout(Request $request): JsonResponse
     {
@@ -103,6 +108,14 @@ class OrderController extends Controller
             ]);
 
             $cart->forceFill(['is_active' => false])->save();
+
+            // Affiliate: record a PENDING commission if this order was referred.
+            // Guarded — referral attribution must never break checkout.
+            try {
+                $this->affiliates->recordConversion($order);
+            } catch (\Throwable) {
+                // non-critical: referral tracking failure does not affect the order
+            }
 
             return $this->success($order->fresh()->load(['items', 'payments']), 201);
         });

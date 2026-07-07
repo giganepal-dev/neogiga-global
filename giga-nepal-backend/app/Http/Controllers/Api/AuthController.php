@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Affiliate\AffiliateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -40,6 +41,8 @@ class AuthController extends Controller
             'role_id' => $role->id,
         ]);
 
+        $this->bindReferral($user, $request);
+
         return $this->success([
             'user' => $this->userPayload($user),
             'token' => $this->issueToken($user),
@@ -59,6 +62,8 @@ class AuthController extends Controller
             return $this->error('Invalid credentials.', 422);
         }
 
+        $this->bindReferral($user, $request);
+
         return $this->success([
             'user' => $this->userPayload($user),
             'token' => $this->issueToken($user),
@@ -75,6 +80,23 @@ class AuthController extends Controller
         $request->user()->forceFill(['api_token_hash' => null])->save();
 
         return $this->success(['message' => 'Logged out.']);
+    }
+
+    /**
+     * Bind a pending referral attribution to the authenticated user, if a
+     * visitor token was carried from the frontend. Guarded — never blocks auth.
+     */
+    private function bindReferral(User $user, Request $request): void
+    {
+        $token = $request->input('visitor_token') ?? $request->cookie('ng_ref');
+
+        if (is_string($token) && $token !== '') {
+            try {
+                app(AffiliateService::class)->attributeUser(mb_substr($token, 0, 80), $user->id);
+            } catch (\Throwable) {
+                // referral binding is non-critical to authentication
+            }
+        }
     }
 
     private function issueToken(User $user): string
