@@ -19,9 +19,12 @@ All notable changes to the NeoGiga platform.
   `NEOGIGA_ADAPTATION_IMPLEMENTATION_REPORT`, `NEOGIGA_ADAPTATION_VERIFICATION_REPORT`,
   `NEOGIGA_NEXT_IMPLEMENTATION_COMMAND`.
 
+- **Affiliate wired into checkout + auth** (guarded, additive): `OrderController@checkout` → `recordConversion`; `AuthController` register/login → `bindReferral`/`attributeUser`; `AffiliateSeeder` default 5% rule.
+- **ERP procurement foundation** (additive): migration `2026_07_07_130000_create_erp_procurement_tables` — `document_number_sequences`, `suppliers`, `purchase_orders`, `purchase_order_items`; models `App\Models\Erp\*`; services `App\Services\Erp\{DocumentNumberService,PurchaseOrderService}` (server-side totals, race-safe PO numbering, receive with over-receive cap); `Api\Admin\ProcurementAdminController` + admin routes. Verified on `neogiga_test`.
+
 ### Notes
-- Not wired into checkout yet (`recordConversion` call deferred — touches OrderController).
-- ERP, Gift-card/Coupon, and Payments-abstraction remain the genuine gaps (next cycles).
+- Gift-card/Coupon and Payments-abstraction remain the genuine gaps (next cycles).
+- PO receiving does not yet post into inventory stock (documented hook to existing StockMovement service).
 
 ## [0.2.0] — 2026-07-06 — Phase 0-R "Repair & Foundation"
 

@@ -284,3 +284,23 @@ $affiliateAdmin = function () {
 };
 Route::middleware('admin.token')->prefix('admin')->group($affiliateAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($affiliateAdmin);
+
+/*
+|--------------------------------------------------------------------------
+| ERP procurement (2026-07-07 adaptation — additive, admin-only)
+|--------------------------------------------------------------------------
+| Suppliers + Purchase Orders. All PO totals server-computed. admin.token gated.
+*/
+$procurementAdmin = function () {
+    Route::get('/suppliers', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'suppliers']);
+    Route::post('/suppliers', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'storeSupplier']);
+    Route::patch('/suppliers/{supplier}', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'updateSupplier'])->whereNumber('supplier');
+    Route::get('/purchase-orders', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'purchaseOrders']);
+    Route::post('/purchase-orders', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'storePurchaseOrder']);
+    Route::get('/purchase-orders/{order}', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'showPurchaseOrder'])->whereNumber('order');
+    Route::post('/purchase-orders/{order}/place', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'placePurchaseOrder'])->whereNumber('order');
+    Route::post('/purchase-orders/{order}/receive', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'receivePurchaseOrder'])->whereNumber('order');
+    Route::post('/purchase-orders/{order}/cancel', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'cancelPurchaseOrder'])->whereNumber('order');
+};
+Route::middleware('admin.token')->prefix('admin')->group($procurementAdmin);
+Route::middleware('admin.token')->prefix('v1/admin')->group($procurementAdmin);
