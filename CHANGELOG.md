@@ -2,6 +2,27 @@
 
 All notable changes to the NeoGiga platform.
 
+## [Unreleased] — 2026-07-07 — Affiliate/Referral foundation
+
+### Added (adaptation cycle — Affiliate only; all other command modules already existed)
+- **Affiliate/referral module** (additive, verified on `neogiga_test`, not yet deployed/wired):
+  - Migration `2026_07_07_120000_create_affiliate_foundation_tables` — 7 tables:
+    `affiliates`, `referral_codes`, `referral_attributions`, `commission_rules`,
+    `commission_ledger`, `affiliate_payout_requests`, `affiliate_payout_batches`.
+  - Models `App\Models\Affiliate\*` (6); services `App\Services\Affiliate\{AffiliateService,CommissionCalculationService}`.
+  - Controllers `Api\Affiliate\AffiliateController` (apply/dashboard/track) and
+    `Api\Admin\AffiliateAdminController` (affiliates/commissions/payouts/rules).
+  - Routes appended to `routes/api.php` (public api.token / admin admin.token).
+  - Safety: server-side amounts, self-referral guard, idempotent (unique order+affiliate),
+    commissions pending until order paid/delivered, no auto-payout, hashed IP/UA, immutable ledger amounts.
+- Audit docs: `NEOGIGA_ADAPTATION_COMMANDS_SUMMARY`, `NEOGIGA_PRE_ADAPTATION_AUDIT`,
+  `NEOGIGA_ADAPTATION_IMPLEMENTATION_REPORT`, `NEOGIGA_ADAPTATION_VERIFICATION_REPORT`,
+  `NEOGIGA_NEXT_IMPLEMENTATION_COMMAND`.
+
+### Notes
+- Not wired into checkout yet (`recordConversion` call deferred — touches OrderController).
+- ERP, Gift-card/Coupon, and Payments-abstraction remain the genuine gaps (next cycles).
+
 ## [0.2.0] — 2026-07-06 — Phase 0-R "Repair & Foundation"
 
 ### Audit (Phase A)

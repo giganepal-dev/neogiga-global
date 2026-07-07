@@ -253,3 +253,34 @@ $marketingAdmin = function () {
 $marketingPublic();
 Route::middleware('admin.token')->prefix('admin')->group($marketingAdmin);
 Route::prefix('v1')->group(function () use ($marketingPublic, $marketingAdmin) { $marketingPublic(); Route::middleware('admin.token')->prefix('admin')->group($marketingAdmin); });
+
+/*
+|--------------------------------------------------------------------------
+| Affiliate / referral (2026-07-07 adaptation — additive, self-contained)
+|--------------------------------------------------------------------------
+| Public track is rate-limited; apply/dashboard require api.token; all admin
+| endpoints require admin.token. No monetary field is client-trusted.
+*/
+Route::prefix('v1/affiliate')->group(function () {
+    Route::post('/track', [\App\Http\Controllers\Api\Affiliate\AffiliateController::class, 'track'])->middleware('throttle:writes');
+    Route::middleware('api.token')->group(function () {
+        Route::post('/apply', [\App\Http\Controllers\Api\Affiliate\AffiliateController::class, 'apply'])->middleware('throttle:writes');
+        Route::get('/dashboard', [\App\Http\Controllers\Api\Affiliate\AffiliateController::class, 'dashboard']);
+    });
+});
+
+$affiliateAdmin = function () {
+    Route::get('/affiliates', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'index']);
+    Route::get('/affiliates/{affiliate}', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'show'])->whereNumber('affiliate');
+    Route::post('/affiliates/{affiliate}/approve', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'approve'])->whereNumber('affiliate');
+    Route::post('/affiliates/{affiliate}/suspend', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'suspend'])->whereNumber('affiliate');
+    Route::get('/affiliate-commissions', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'commissions']);
+    Route::post('/affiliate-commissions/{entry}/approve', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'approveCommission'])->whereNumber('entry');
+    Route::post('/affiliate-commissions/{entry}/reverse', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'reverseCommission'])->whereNumber('entry');
+    Route::get('/affiliate-payouts', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'payouts']);
+    Route::post('/affiliate-payouts/{payout}/mark-paid', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'markPayoutPaid'])->whereNumber('payout');
+    Route::get('/commission-rules', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'rules']);
+    Route::post('/commission-rules', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'storeRule']);
+};
+Route::middleware('admin.token')->prefix('admin')->group($affiliateAdmin);
+Route::middleware('admin.token')->prefix('v1/admin')->group($affiliateAdmin);
