@@ -329,3 +329,30 @@ $promotionAdmin = function () {
 };
 Route::middleware('admin.token')->prefix('admin')->group($promotionAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($promotionAdmin);
+
+/*
+|--------------------------------------------------------------------------
+| ERP B2B: RFQ + Quotations (2026-07-07 adaptation — additive)
+|--------------------------------------------------------------------------
+| Customer RFQ submit + quote accept (api.token, ownership-checked).
+| Admin RFQ review + quotation issue/send (admin.token). Totals server-side.
+*/
+Route::prefix('v1')->middleware('api.token')->group(function () {
+    Route::post('/rfq', [\App\Http\Controllers\Api\Sales\RfqController::class, 'submit'])->middleware('throttle:writes');
+    Route::get('/rfq', [\App\Http\Controllers\Api\Sales\RfqController::class, 'index']);
+    Route::get('/quotations', [\App\Http\Controllers\Api\Sales\RfqController::class, 'quotes']);
+    Route::get('/quotations/{quotation}', [\App\Http\Controllers\Api\Sales\RfqController::class, 'showQuote'])->whereNumber('quotation');
+    Route::post('/quotations/{quotation}/accept', [\App\Http\Controllers\Api\Sales\RfqController::class, 'acceptQuote'])->whereNumber('quotation')->middleware('throttle:writes');
+});
+
+$salesAdmin = function () {
+    Route::get('/rfq', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'rfqs']);
+    Route::get('/rfq/{rfq}', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'showRfq'])->whereNumber('rfq');
+    Route::get('/quotations', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'quotations']);
+    Route::post('/quotations', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'storeQuotation']);
+    Route::get('/quotations/{quotation}', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'showQuotation'])->whereNumber('quotation');
+    Route::post('/quotations/{quotation}/send', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'sendQuotation'])->whereNumber('quotation');
+    Route::post('/quotations/{quotation}/reject', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'rejectQuotation'])->whereNumber('quotation');
+};
+Route::middleware('admin.token')->prefix('admin')->group($salesAdmin);
+Route::middleware('admin.token')->prefix('v1/admin')->group($salesAdmin);
