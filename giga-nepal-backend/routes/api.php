@@ -2,10 +2,14 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Auth\PublicAuthController;
+use App\Http\Controllers\Api\Auth\SellerAuthController;
+use App\Http\Controllers\Api\Auth\DistributorAuthController;
 use App\Http\Controllers\Api\Marketplace\MarketplaceController;
 use App\Http\Controllers\Api\Product\CategoryController;
 use App\Http\Controllers\Api\Product\BrandController;
 use App\Http\Controllers\Api\Product\ProductController;
+use App\Http\Controllers\Api\Product\ProductCommerceController;
 use App\Http\Controllers\Api\Vendor\VendorController;
 use App\Http\Controllers\Api\Inventory\InventoryController;
 use App\Http\Controllers\Api\Cart\CartController;
@@ -14,10 +18,12 @@ use App\Http\Controllers\Api\AI\AiCommerceController;
 use App\Http\Controllers\Api\POS\PosController;
 use App\Http\Controllers\Api\LMS\LmsController;
 use App\Http\Controllers\Api\Admin\AdminConsoleController;
+use App\Http\Controllers\Api\Admin\ProductAdminController;
 use App\Http\Controllers\Api\Admin\VendorAdminController;
 use App\Http\Controllers\Api\Admin\DistributorAdminController;
 use App\Http\Controllers\Api\Admin\B2BAdminController;
 use App\Http\Controllers\Api\Admin\BomAdminController;
+use App\Http\Controllers\Api\Admin\OnboardingAdminController;
 use App\Http\Controllers\Api\Admin\InventoryAdminController;
 use App\Http\Controllers\Api\Admin\LmsAdminController;
 use App\Http\Controllers\Api\Admin\ImportExportController;
@@ -36,6 +42,9 @@ use App\Http\Controllers\Api\B2B\B2BAccountController;
 use App\Http\Controllers\Api\B2B\B2BRfqController;
 use App\Http\Controllers\Api\B2B\B2BQuotationController;
 use App\Http\Controllers\Api\Bom\BomProjectController;
+use App\Http\Controllers\Api\CommerceAi\CommerceAiDemoController;
+use App\Http\Controllers\Api\Onboarding\SellerApplicationController;
+use App\Http\Controllers\Api\Onboarding\DistributorApplicationController as PublicDistributorApplicationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +56,15 @@ use App\Http\Controllers\Api\Bom\BomProjectController;
 */
 
 Route::prefix('v1')->group(function () {
+    Route::post('/seller-applications', [SellerApplicationController::class, 'store'])->middleware('throttle:writes');
+    Route::post('/distributor-applications', [PublicDistributorApplicationController::class, 'store'])->middleware('throttle:writes');
+
+    Route::prefix('commerce-ai')->group(function () {
+        Route::get('/examples', [CommerceAiDemoController::class, 'examples']);
+        Route::post('/session', [CommerceAiDemoController::class, 'session'])->middleware('throttle:writes');
+        Route::post('/message', [CommerceAiDemoController::class, 'message'])->middleware('throttle:writes');
+        Route::post('/build-bom', [CommerceAiDemoController::class, 'buildBom'])->middleware('throttle:writes');
+    });
 
     // Auth (Phase 1 foundation): first-party bearer token auth.
     Route::prefix('auth')->group(function () {
@@ -55,6 +73,24 @@ Route::prefix('v1')->group(function () {
         Route::middleware('api.token')->group(function () {
             Route::get('/me', [AuthController::class, 'me']);
             Route::post('/logout', [AuthController::class, 'logout']);
+        });
+    });
+
+    Route::prefix('seller')->group(function () {
+        Route::post('/register', [SellerAuthController::class, 'register'])->middleware('throttle:writes');
+        Route::post('/login', [SellerAuthController::class, 'login'])->middleware('throttle:writes');
+        Route::middleware(['api.token', 'permission:seller.access'])->group(function () {
+            Route::get('/me', [SellerAuthController::class, 'me']);
+            Route::post('/logout', [SellerAuthController::class, 'logout']);
+        });
+    });
+
+    Route::prefix('distributor')->group(function () {
+        Route::post('/register', [DistributorAuthController::class, 'register'])->middleware('throttle:writes');
+        Route::post('/login', [DistributorAuthController::class, 'login'])->middleware('throttle:writes');
+        Route::middleware(['api.token', 'permission:distributor.access'])->group(function () {
+            Route::get('/me', [DistributorAuthController::class, 'me']);
+            Route::post('/logout', [DistributorAuthController::class, 'logout']);
         });
     });
 
@@ -83,6 +119,18 @@ Route::prefix('v1')->group(function () {
         Route::get('/search', [ProductController::class, 'search']);
         Route::get('/category/{slug}', [ProductController::class, 'byCategory']);
         Route::get('/brand/{slug}', [ProductController::class, 'byBrand']);
+        Route::get('/{product}/attributes', [ProductCommerceController::class, 'attributes']);
+        Route::get('/{product}/specs', [ProductCommerceController::class, 'specs']);
+        Route::get('/{product}/variants', [ProductCommerceController::class, 'variants']);
+        Route::get('/{product}/datasheets', [ProductCommerceController::class, 'datasheets']);
+        Route::get('/{product}/warranty', [ProductCommerceController::class, 'warranty']);
+        Route::get('/{product}/generic-suggestions', [ProductCommerceController::class, 'genericSuggestions']);
+        Route::get('/{product}/compatible', [ProductCommerceController::class, 'compatible']);
+        Route::get('/{product}/related', [ProductCommerceController::class, 'related']);
+        Route::get('/{product}/accessories', [ProductCommerceController::class, 'accessories']);
+        Route::get('/{product}/stock', [ProductCommerceController::class, 'stock']);
+        Route::get('/{product}/stock/marketplace/{marketplace}', [ProductCommerceController::class, 'stockMarketplace'])->whereNumber('marketplace');
+        Route::get('/{product}/stock/region/{region}', [ProductCommerceController::class, 'stockRegion'])->whereNumber('region');
         Route::get('/{slug}', [ProductController::class, 'show']);
     });
 
@@ -117,6 +165,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/products/{product}', [SellerProductController::class, 'show'])->whereNumber('product')->middleware('permission:seller.products.manage');
         Route::patch('/products/{product}', [SellerProductController::class, 'update'])->whereNumber('product')->middleware(['permission:seller.products.manage', 'throttle:writes']);
         Route::post('/products/{product}/submit-review', [SellerProductController::class, 'submitReview'])->whereNumber('product')->middleware(['permission:seller.products.manage', 'throttle:writes']);
+        Route::post('/products/{product}/documents', [SellerProductController::class, 'storeDocument'])->whereNumber('product')->middleware(['permission:seller.products.manage', 'throttle:writes']);
+        Route::post('/products/{product}/datasheets', [SellerProductController::class, 'storeDocument'])->whereNumber('product')->middleware(['permission:seller.products.manage', 'throttle:writes']);
+        Route::post('/products/{product}/variants', [SellerProductController::class, 'storeVariant'])->whereNumber('product')->middleware(['permission:seller.products.manage', 'throttle:writes']);
+        Route::post('/products/{product}/attributes', [SellerProductController::class, 'storeAttributes'])->whereNumber('product')->middleware(['permission:seller.products.manage', 'throttle:writes']);
+        Route::post('/products/{product}/specs', [SellerProductController::class, 'storeSpec'])->whereNumber('product')->middleware(['permission:seller.products.manage', 'throttle:writes']);
+        Route::post('/products/{product}/warranty', [SellerProductController::class, 'storeWarranty'])->whereNumber('product')->middleware(['permission:seller.products.manage', 'throttle:writes']);
 
         Route::get('/inventory', [SellerInventoryController::class, 'index'])->middleware('permission:seller.inventory.manage');
         Route::post('/inventory/adjust', [SellerInventoryController::class, 'adjust'])->middleware(['permission:seller.inventory.manage', 'throttle:writes']);
@@ -135,8 +189,14 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('distributor')->middleware(['api.token', 'permission:distributor.access'])->group(function () {
         Route::get('/dashboard', [DistributorDashboardController::class, 'dashboard']);
+        Route::get('/dashboard/overview', [DistributorDashboardController::class, 'overview']);
+        Route::get('/dashboard/territory-stock', [DistributorDashboardController::class, 'territoryStock']);
+        Route::get('/dashboard/leads-summary', [DistributorDashboardController::class, 'leadsSummary']);
+        Route::get('/dashboard/customer-summary', [DistributorDashboardController::class, 'customerSummary']);
         Route::get('/profile', [DistributorResourceController::class, 'profile']);
         Route::get('/territories', [DistributorResourceController::class, 'territories']);
+        Route::get('/products/territory', [DistributorResourceController::class, 'territoryProducts']);
+        Route::get('/vendors/territory', [DistributorResourceController::class, 'territoryVendors']);
         Route::get('/leads', [DistributorResourceController::class, 'leads']);
         Route::post('/leads', [DistributorResourceController::class, 'storeLead'])->middleware(['permission:distributor.leads.manage', 'throttle:writes']);
         Route::get('/customers', [DistributorResourceController::class, 'table'])->defaults('table', 'distributor_customers');
@@ -281,6 +341,17 @@ Route::prefix('v1')->group(function () {
         });
 
         Route::prefix('admin')->group(function () {
+            Route::get('/seller-applications', [OnboardingAdminController::class, 'sellerApplications']);
+            Route::get('/seller-applications/{application}', [OnboardingAdminController::class, 'sellerApplication'])->whereNumber('application');
+            Route::patch('/seller-applications/{application}/status', [OnboardingAdminController::class, 'updateSellerStatus'])->whereNumber('application')->middleware('throttle:writes');
+            Route::post('/seller-applications/{application}/convert-to-vendor', [OnboardingAdminController::class, 'convertSellerToVendor'])->whereNumber('application')->middleware('throttle:writes');
+            Route::get('/distributor-applications', [OnboardingAdminController::class, 'distributorApplications']);
+            Route::get('/distributor-applications/{application}', [OnboardingAdminController::class, 'distributorApplication'])->whereNumber('application');
+            Route::patch('/distributor-applications/{application}/status', [OnboardingAdminController::class, 'updateDistributorStatus'])->whereNumber('application')->middleware('throttle:writes');
+            Route::post('/distributor-applications/{application}/convert-to-distributor', [OnboardingAdminController::class, 'convertDistributor'])->whereNumber('application')->middleware('throttle:writes');
+            Route::get('/dashboard/seller-onboarding-summary', [OnboardingAdminController::class, 'sellerOnboardingSummary']);
+            Route::get('/dashboard/ai-commerce-summary', [OnboardingAdminController::class, 'aiCommerceSummary']);
+
             Route::get('/vendors', [VendorAdminController::class, 'index']);
             Route::get('/vendors/{vendor}', [VendorAdminController::class, 'show'])->whereNumber('vendor');
             Route::post('/vendors/{vendor}/approve', [VendorAdminController::class, 'approve'])->whereNumber('vendor')->middleware('throttle:writes');
@@ -292,6 +363,16 @@ Route::prefix('v1')->group(function () {
             Route::get('/vendor-products/pending', [VendorAdminController::class, 'pendingProducts']);
             Route::post('/vendor-products/{product}/approve', [VendorAdminController::class, 'approveProduct'])->whereNumber('product')->middleware('throttle:writes');
             Route::post('/vendor-products/{product}/reject', [VendorAdminController::class, 'rejectProduct'])->whereNumber('product')->middleware('throttle:writes');
+            Route::get('/products', [ProductAdminController::class, 'index']);
+            Route::get('/products/pending', [ProductAdminController::class, 'pending']);
+            Route::get('/products/{product}', [ProductAdminController::class, 'show'])->whereNumber('product');
+            Route::post('/products/{product}/approve', [ProductAdminController::class, 'approve'])->whereNumber('product')->middleware('throttle:writes');
+            Route::post('/products/{product}/reject', [ProductAdminController::class, 'reject'])->whereNumber('product')->middleware('throttle:writes');
+            Route::get('/product-generic-groups', [ProductAdminController::class, 'genericGroups']);
+            Route::post('/product-generic-groups', [ProductAdminController::class, 'storeGenericGroup'])->middleware('throttle:writes');
+            Route::post('/products/{product}/generic-suggestions', [ProductAdminController::class, 'storeGenericSuggestion'])->whereNumber('product')->middleware('throttle:writes');
+            Route::patch('/product-generic-suggestions/{suggestion}', [ProductAdminController::class, 'updateGenericSuggestion'])->whereNumber('suggestion')->middleware('throttle:writes');
+            Route::delete('/product-generic-suggestions/{suggestion}', [ProductAdminController::class, 'deleteGenericSuggestion'])->whereNumber('suggestion')->middleware('throttle:writes');
             Route::get('/vendor-payouts', [VendorAdminController::class, 'payouts']);
             Route::post('/vendor-payouts/{payout}/mark-paid', [VendorAdminController::class, 'markPayoutPaid'])->whereNumber('payout')->middleware('throttle:writes');
 
@@ -514,6 +595,80 @@ $financeAdmin = function () {
 };
 Route::middleware('admin.token')->prefix('admin')->group($financeAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($financeAdmin);
+
+/*
+|--------------------------------------------------------------------------
+| Public seller onboarding + commerce AI aliases
+|--------------------------------------------------------------------------
+| Exact /api/* paths requested by the public site brief. Versioned /api/v1/*
+| routes above remain canonical for existing API clients.
+*/
+Route::post('/seller-applications', [SellerApplicationController::class, 'store'])->middleware('throttle:writes');
+Route::post('/distributor-applications', [PublicDistributorApplicationController::class, 'store'])->middleware('throttle:writes');
+
+Route::prefix('commerce-ai')->group(function () {
+    Route::get('/examples', [CommerceAiDemoController::class, 'examples']);
+    Route::post('/session', [CommerceAiDemoController::class, 'session'])->middleware('throttle:writes');
+    Route::post('/message', [CommerceAiDemoController::class, 'message'])->middleware('throttle:writes');
+    Route::post('/build-bom', [CommerceAiDemoController::class, 'buildBom'])->middleware('throttle:writes');
+});
+
+Route::middleware('admin.token')->prefix('admin')->group(function () {
+    Route::get('/seller-applications', [OnboardingAdminController::class, 'sellerApplications']);
+    Route::get('/seller-applications/{application}', [OnboardingAdminController::class, 'sellerApplication'])->whereNumber('application');
+    Route::patch('/seller-applications/{application}/status', [OnboardingAdminController::class, 'updateSellerStatus'])->whereNumber('application')->middleware('throttle:writes');
+    Route::post('/seller-applications/{application}/convert-to-vendor', [OnboardingAdminController::class, 'convertSellerToVendor'])->whereNumber('application')->middleware('throttle:writes');
+    Route::get('/distributor-applications', [OnboardingAdminController::class, 'distributorApplications']);
+    Route::get('/distributor-applications/{application}', [OnboardingAdminController::class, 'distributorApplication'])->whereNumber('application');
+    Route::patch('/distributor-applications/{application}/status', [OnboardingAdminController::class, 'updateDistributorStatus'])->whereNumber('application')->middleware('throttle:writes');
+    Route::post('/distributor-applications/{application}/convert-to-distributor', [OnboardingAdminController::class, 'convertDistributor'])->whereNumber('application')->middleware('throttle:writes');
+    Route::get('/dashboard/seller-onboarding-summary', [OnboardingAdminController::class, 'sellerOnboardingSummary']);
+    Route::get('/dashboard/ai-commerce-summary', [OnboardingAdminController::class, 'aiCommerceSummary']);
+    Route::get('/products', [ProductAdminController::class, 'index']);
+    Route::get('/products/pending', [ProductAdminController::class, 'pending']);
+    Route::get('/products/{product}', [ProductAdminController::class, 'show'])->whereNumber('product');
+    Route::post('/products/{product}/approve', [ProductAdminController::class, 'approve'])->whereNumber('product')->middleware('throttle:writes');
+    Route::post('/products/{product}/reject', [ProductAdminController::class, 'reject'])->whereNumber('product')->middleware('throttle:writes');
+    Route::get('/product-generic-groups', [ProductAdminController::class, 'genericGroups']);
+    Route::post('/product-generic-groups', [ProductAdminController::class, 'storeGenericGroup'])->middleware('throttle:writes');
+    Route::post('/products/{product}/generic-suggestions', [ProductAdminController::class, 'storeGenericSuggestion'])->whereNumber('product')->middleware('throttle:writes');
+    Route::patch('/product-generic-suggestions/{suggestion}', [ProductAdminController::class, 'updateGenericSuggestion'])->whereNumber('suggestion')->middleware('throttle:writes');
+    Route::delete('/product-generic-suggestions/{suggestion}', [ProductAdminController::class, 'deleteGenericSuggestion'])->whereNumber('suggestion')->middleware('throttle:writes');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Auth aliases for public/customer/seller/distributor portals
+|--------------------------------------------------------------------------
+| Exact /api/* paths requested by the commerce foundation brief. The
+| versioned /api/v1/* routes remain active above.
+*/
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [PublicAuthController::class, 'register'])->middleware('throttle:writes');
+    Route::post('/login', [PublicAuthController::class, 'login'])->middleware('throttle:writes');
+    Route::middleware('api.token')->group(function () {
+        Route::get('/me', [PublicAuthController::class, 'me']);
+        Route::post('/logout', [PublicAuthController::class, 'logout']);
+    });
+});
+
+Route::prefix('seller')->group(function () {
+    Route::post('/register', [SellerAuthController::class, 'register'])->middleware('throttle:writes');
+    Route::post('/login', [SellerAuthController::class, 'login'])->middleware('throttle:writes');
+    Route::middleware(['api.token', 'permission:seller.access'])->group(function () {
+        Route::get('/me', [SellerAuthController::class, 'me']);
+        Route::post('/logout', [SellerAuthController::class, 'logout']);
+    });
+});
+
+Route::prefix('distributor')->group(function () {
+    Route::post('/register', [DistributorAuthController::class, 'register'])->middleware('throttle:writes');
+    Route::post('/login', [DistributorAuthController::class, 'login'])->middleware('throttle:writes');
+    Route::middleware(['api.token', 'permission:distributor.access'])->group(function () {
+        Route::get('/me', [DistributorAuthController::class, 'me']);
+        Route::post('/logout', [DistributorAuthController::class, 'logout']);
+    });
+});
 
 /*
 |--------------------------------------------------------------------------
