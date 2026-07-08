@@ -30,7 +30,7 @@
     </div>
 @endif
 
-<div class="grid" style="grid-template-columns:1.4fr 1fr;align-items:start">
+<div class="grid dashboard-split">
     <div class="card">
         <div class="card-h"><h2>Marketplaces</h2><a class="btn btn-ghost" href="/admin/marketplaces">View all</a></div>
         <div class="scroll-x">

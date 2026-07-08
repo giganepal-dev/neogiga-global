@@ -68,3 +68,69 @@
 - Added admin API `send-now` endpoints and web admin queue/test actions for email and newsletter campaigns.
 - Updated campaign queue jobs to use the execution service instead of placeholder logging.
 - Recorded campaign queue/test actions in the marketing admin audit log.
+# 2026-07-08 - BOM Project Commerce Foundation
+
+- Added additive BOM project-commerce migration for project categories, projects, project items, tools, LMS links, code samples, alternatives, price snapshots, build guides, user builds, and cart conversions.
+- Added BOM project, category, and item models plus pricing, availability, custom-build, cart-conversion, alternatives, and LMS-link services.
+- Added public BOM project read, item/availability, and server-side pricing APIs.
+- Added authenticated BOM add-to-cart conversion, custom build, and user build APIs.
+- Added protected admin BOM project and project-item management APIs.
+- Added `NEOGIGA_BOM_FOUNDATION_REPORT.md` and `NEOGIGA_BOM_PROJECT_COMMERCE_GUIDE.md`.
+- Did not run production migrations, seeders, or `.env` changes.
+
+# 2026-07-08 - B2B Commerce Foundation
+
+- Added additive B2B foundation migration for accounts, users, price lists, RFQs, quotations, purchase orders, credit terms, approval workflow, and activity logs.
+- Added B2B API controllers, services, validation requests, models, and protected route groups.
+- Added admin B2B account approval, RFQ, quotation, purchase-order, and price-list endpoints.
+- Added B2B buyer role permissions to `RoleSeeder`.
+- Added `NEOGIGA_B2B_FOUNDATION_REPORT.md` and `NEOGIGA_B2B_COMMERCE_API.md`.
+- Did not run production migrations, seeders, or `.env` changes.
+
+# 2026-07-08 - Distributor Foundation
+
+- Added additive distributor foundation migration for distributor accounts, profiles, territories, staff, hierarchy/downlines, leads, customers, orders, commissions, payouts, and activity logs.
+- Added distributor API controllers, services, validation requests, models, and protected route groups.
+- Added admin distributor approval, territory assignment, commission approval, and payout marking endpoints.
+- Added distributor role permissions to `RoleSeeder`.
+- Added `NEOGIGA_DISTRIBUTOR_FOUNDATION_REPORT.md` and `NEOGIGA_DISTRIBUTOR_PANEL_API.md`.
+- Did not run production migrations, seeders, or `.env` changes.
+
+# 2026-07-07 - Multi-Vendor Seller Phase B Foundation
+
+- Added additive Phase B migration for vendor roles, permissions, branches, seller products, vendor orders, payouts, commissions, reviews, and support tickets.
+- Added seller API controllers, services, policies, and form requests for dashboard, profile, marketplace approvals, products, inventory, orders, payouts, performance, and support tickets.
+- Implemented admin vendor APIs for vendor approval, rejection, suspension, marketplace approvals, product review, and payout marking.
+- Added seller role permissions in `RoleSeeder` idempotently.
+- Added `NEOGIGA_MULTIVENDOR_SELLER_PHASE_B_REPORT.md` and `NEOGIGA_SELLER_PANEL_API.md`.
+- Did not run production migrations or modify `.env`.
+
+# 2026-07-07 - Multi-Vendor B2B BOM AI Pre-Audit
+
+- Added `NEOGIGA_MULTIVENDOR_B2B_AI_PRE_AUDIT.md` before implementation, per advanced commerce foundation safety instructions.
+- Audited existing vendor, marketplace, inventory, POS, LMS, ERP/RFQ, AI, marketing, affiliate, role/permission, route, admin, and frontend structures.
+- Identified missing seller, distributor, B2B, BOM project-commerce, commerce AI, and visibility-rule layers with duplicate/conflict risks.
+
+# 2026-07-07 - Admin UI Responsive Polish
+
+- Replaced brittle admin inline grid definitions with shared responsive layout classes across dashboard, LMS, inventory, POS, settings, and marketing pages.
+- Added shared admin form-control styling and applied it to email, newsletter, and WhatsApp campaign forms.
+- Verified all admin pages render without server errors before this follow-up patch.
+
+# 2026-07-07 - Admin UI Shell Fix
+
+- Fixed the admin console shell so the sidebar remains constrained to a desktop rail and the main content area renders visibly.
+- Added defensive responsive layout rules for admin cards, tables, topbar, and mobile navigation.
+
+# 2026-07-07 - Admin Access Recovery
+
+- Reset the existing `admin@neogiga.com` super admin password at owner request.
+- Created private server-side rollback backups under `/home/neogiga/backups/` before changing the credential hash.
+
+# 2026-07-07 - Critical Hardening Start
+
+- Added a public-safe `/health` endpoint for app, database, cache, queue, and writable-storage checks.
+- Added `php artisan neogiga:smoke` as a production-safe smoke test command because production does not include PHPUnit dev dependencies.
+- Protected incomplete `/api/v1/ai/*` POST endpoints with the existing API token middleware.
+- Added optional hashed admin token support via `ADMIN_API_TOKEN_HASH` while preserving current `ADMIN_API_TOKEN` behavior.
+- Updated `.env.example` for `neogiga_prod` and documented a safe production DB cutover plan without modifying live `.env` or data.

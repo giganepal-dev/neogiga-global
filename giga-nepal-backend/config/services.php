@@ -16,7 +16,9 @@ return [
 
     // Interim admin API gate (see App\Http\Middleware\EnsureAdminToken).
     // Unset = admin routes refuse all requests (fail closed).
+    // Prefer ADMIN_API_TOKEN_HASH=sha256(token) in production.
     'admin_api_token' => env('ADMIN_API_TOKEN'),
+    'admin_api_token_hash' => env('ADMIN_API_TOKEN_HASH'),
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),

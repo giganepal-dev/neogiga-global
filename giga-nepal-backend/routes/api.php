@@ -14,9 +14,26 @@ use App\Http\Controllers\Api\AI\AiCommerceController;
 use App\Http\Controllers\Api\POS\PosController;
 use App\Http\Controllers\Api\LMS\LmsController;
 use App\Http\Controllers\Api\Admin\AdminConsoleController;
+use App\Http\Controllers\Api\Admin\VendorAdminController;
+use App\Http\Controllers\Api\Admin\DistributorAdminController;
+use App\Http\Controllers\Api\Admin\B2BAdminController;
 use App\Http\Controllers\Api\Admin\InventoryAdminController;
 use App\Http\Controllers\Api\Admin\LmsAdminController;
 use App\Http\Controllers\Api\Admin\ImportExportController;
+use App\Http\Controllers\Api\Seller\SellerDashboardController;
+use App\Http\Controllers\Api\Seller\SellerInventoryController;
+use App\Http\Controllers\Api\Seller\SellerOrderController;
+use App\Http\Controllers\Api\Seller\SellerPayoutController;
+use App\Http\Controllers\Api\Seller\SellerPerformanceController;
+use App\Http\Controllers\Api\Seller\SellerProductController;
+use App\Http\Controllers\Api\Seller\SellerProfileController;
+use App\Http\Controllers\Api\Seller\SellerSupportTicketController;
+use App\Http\Controllers\Api\Distributor\DistributorApplicationController;
+use App\Http\Controllers\Api\Distributor\DistributorDashboardController;
+use App\Http\Controllers\Api\Distributor\DistributorResourceController;
+use App\Http\Controllers\Api\B2B\B2BAccountController;
+use App\Http\Controllers\Api\B2B\B2BRfqController;
+use App\Http\Controllers\Api\B2B\B2BQuotationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,6 +95,65 @@ Route::prefix('v1')->group(function () {
             ->middleware('throttle:writes');
     });
 
+    Route::prefix('seller')->middleware(['api.token', 'permission:seller.access'])->group(function () {
+        Route::get('/dashboard', [SellerDashboardController::class, 'dashboard']);
+        Route::get('/dashboard/overview', [SellerDashboardController::class, 'overview']);
+        Route::get('/dashboard/sales-summary', [SellerDashboardController::class, 'salesSummary']);
+        Route::get('/dashboard/order-summary', [SellerDashboardController::class, 'orderSummary']);
+        Route::get('/dashboard/product-summary', [SellerDashboardController::class, 'productSummary']);
+        Route::get('/dashboard/inventory-summary', [SellerDashboardController::class, 'inventorySummary']);
+        Route::get('/dashboard/payout-summary', [SellerDashboardController::class, 'payoutSummary']);
+        Route::get('/dashboard/alerts', [SellerDashboardController::class, 'alerts']);
+
+        Route::get('/profile', [SellerProfileController::class, 'profile']);
+        Route::patch('/profile', [SellerProfileController::class, 'update'])->middleware(['permission:seller.profile.manage', 'throttle:writes']);
+        Route::get('/marketplace-approvals', [SellerProfileController::class, 'marketplaceApprovals']);
+        Route::post('/marketplace-approvals', [SellerProfileController::class, 'applyMarketplace'])->middleware(['permission:seller.profile.manage', 'throttle:writes']);
+
+        Route::get('/products', [SellerProductController::class, 'index'])->middleware('permission:seller.products.manage');
+        Route::post('/products', [SellerProductController::class, 'store'])->middleware(['permission:seller.products.manage', 'throttle:writes']);
+        Route::get('/products/{product}', [SellerProductController::class, 'show'])->whereNumber('product')->middleware('permission:seller.products.manage');
+        Route::patch('/products/{product}', [SellerProductController::class, 'update'])->whereNumber('product')->middleware(['permission:seller.products.manage', 'throttle:writes']);
+        Route::post('/products/{product}/submit-review', [SellerProductController::class, 'submitReview'])->whereNumber('product')->middleware(['permission:seller.products.manage', 'throttle:writes']);
+
+        Route::get('/inventory', [SellerInventoryController::class, 'index'])->middleware('permission:seller.inventory.manage');
+        Route::post('/inventory/adjust', [SellerInventoryController::class, 'adjust'])->middleware(['permission:seller.inventory.manage', 'throttle:writes']);
+
+        Route::get('/orders', [SellerOrderController::class, 'index'])->middleware('permission:seller.orders.view');
+        Route::get('/orders/{order}', [SellerOrderController::class, 'show'])->whereNumber('order')->middleware('permission:seller.orders.view');
+        Route::patch('/orders/{order}/status', [SellerOrderController::class, 'updateStatus'])->whereNumber('order')->middleware(['permission:seller.orders.manage', 'throttle:writes']);
+
+        Route::get('/payouts', [SellerPayoutController::class, 'index'])->middleware('permission:seller.payouts.view');
+        Route::get('/performance', [SellerPerformanceController::class, 'show']);
+        Route::get('/support-tickets', [SellerSupportTicketController::class, 'index'])->middleware('permission:seller.support.manage');
+        Route::post('/support-tickets', [SellerSupportTicketController::class, 'store'])->middleware(['permission:seller.support.manage', 'throttle:writes']);
+    });
+
+    Route::post('/distributors/apply', [DistributorApplicationController::class, 'apply'])->middleware('throttle:writes');
+
+    Route::prefix('distributor')->middleware(['api.token', 'permission:distributor.access'])->group(function () {
+        Route::get('/dashboard', [DistributorDashboardController::class, 'dashboard']);
+        Route::get('/profile', [DistributorResourceController::class, 'profile']);
+        Route::get('/territories', [DistributorResourceController::class, 'territories']);
+        Route::get('/leads', [DistributorResourceController::class, 'leads']);
+        Route::post('/leads', [DistributorResourceController::class, 'storeLead'])->middleware(['permission:distributor.leads.manage', 'throttle:writes']);
+        Route::get('/customers', [DistributorResourceController::class, 'table'])->defaults('table', 'distributor_customers');
+        Route::get('/orders', [DistributorResourceController::class, 'table'])->defaults('table', 'distributor_orders');
+        Route::get('/commissions', [DistributorResourceController::class, 'table'])->defaults('table', 'distributor_commissions');
+        Route::get('/payouts', [DistributorResourceController::class, 'table'])->defaults('table', 'distributor_payouts');
+        Route::get('/downlines', [DistributorResourceController::class, 'table'])->defaults('table', 'distributor_downlines');
+    });
+
+    Route::post('/b2b/apply', [B2BAccountController::class, 'apply'])->middleware('throttle:writes');
+    Route::prefix('b2b')->middleware(['api.token', 'permission:b2b.access'])->group(function () {
+        Route::get('/account', [B2BAccountController::class, 'show']);
+        Route::patch('/account', [B2BAccountController::class, 'update'])->middleware('throttle:writes');
+        Route::post('/rfq', [B2BRfqController::class, 'store'])->middleware('throttle:writes');
+        Route::get('/rfq', [B2BRfqController::class, 'index']);
+        Route::get('/quotations', [B2BQuotationController::class, 'index']);
+        Route::post('/quotations/{quotation}/accept', [B2BQuotationController::class, 'accept'])->whereNumber('quotation')->middleware('throttle:writes');
+    });
+
     // Inventory (availability reads public; mutations Phase 1)
     Route::prefix('inventory')->group(function () {
         Route::get('/product/{product}', [InventoryController::class, 'byProduct'])->whereNumber('product');
@@ -104,8 +180,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/{order}/invoice', [OrderController::class, 'invoice'])->whereNumber('order');
     });
 
-    // AI Commerce (contract stable; 501 until Phase 2 orchestrator)
-    Route::prefix('ai')->group(function () {
+    // AI Commerce (contract stable; protected while Phase 2 orchestrator is incomplete)
+    Route::prefix('ai')->middleware('api.token')->group(function () {
         Route::post('/session', [AiCommerceController::class, 'createSession']);
         Route::post('/message', [AiCommerceController::class, 'sendMessage']);
         Route::post('/build-bom', [AiCommerceController::class, 'buildBom']);
@@ -187,6 +263,45 @@ Route::prefix('v1')->group(function () {
             Route::post('/lessons', [LmsAdminController::class, 'storeLesson'])->middleware('throttle:writes');
             Route::get('/enrollments', [LmsAdminController::class, 'enrollments']);
             Route::get('/certificates', [LmsAdminController::class, 'certificates']);
+        });
+
+        Route::prefix('admin')->group(function () {
+            Route::get('/vendors', [VendorAdminController::class, 'index']);
+            Route::get('/vendors/{vendor}', [VendorAdminController::class, 'show'])->whereNumber('vendor');
+            Route::post('/vendors/{vendor}/approve', [VendorAdminController::class, 'approve'])->whereNumber('vendor')->middleware('throttle:writes');
+            Route::post('/vendors/{vendor}/reject', [VendorAdminController::class, 'reject'])->whereNumber('vendor')->middleware('throttle:writes');
+            Route::post('/vendors/{vendor}/suspend', [VendorAdminController::class, 'suspend'])->whereNumber('vendor')->middleware('throttle:writes');
+            Route::get('/vendor-approvals', [VendorAdminController::class, 'approvals']);
+            Route::post('/vendor-approvals/{approval}/approve', [VendorAdminController::class, 'approveMarketplace'])->whereNumber('approval')->middleware('throttle:writes');
+            Route::post('/vendor-approvals/{approval}/reject', [VendorAdminController::class, 'rejectMarketplace'])->whereNumber('approval')->middleware('throttle:writes');
+            Route::get('/vendor-products/pending', [VendorAdminController::class, 'pendingProducts']);
+            Route::post('/vendor-products/{product}/approve', [VendorAdminController::class, 'approveProduct'])->whereNumber('product')->middleware('throttle:writes');
+            Route::post('/vendor-products/{product}/reject', [VendorAdminController::class, 'rejectProduct'])->whereNumber('product')->middleware('throttle:writes');
+            Route::get('/vendor-payouts', [VendorAdminController::class, 'payouts']);
+            Route::post('/vendor-payouts/{payout}/mark-paid', [VendorAdminController::class, 'markPayoutPaid'])->whereNumber('payout')->middleware('throttle:writes');
+
+            Route::get('/distributors', [DistributorAdminController::class, 'index']);
+            Route::get('/distributors/{distributor}', [DistributorAdminController::class, 'show'])->whereNumber('distributor');
+            Route::post('/distributors/{distributor}/approve', [DistributorAdminController::class, 'approve'])->whereNumber('distributor')->middleware('throttle:writes');
+            Route::post('/distributors/{distributor}/reject', [DistributorAdminController::class, 'reject'])->whereNumber('distributor')->middleware('throttle:writes');
+            Route::post('/distributors/{distributor}/suspend', [DistributorAdminController::class, 'suspend'])->whereNumber('distributor')->middleware('throttle:writes');
+            Route::post('/distributors/{distributor}/assign-territory', [DistributorAdminController::class, 'assignTerritory'])->whereNumber('distributor')->middleware('throttle:writes');
+            Route::get('/distributor-commissions', [DistributorAdminController::class, 'commissions']);
+            Route::post('/distributor-commissions/{commission}/approve', [DistributorAdminController::class, 'approveCommission'])->whereNumber('commission')->middleware('throttle:writes');
+            Route::get('/distributor-payouts', [DistributorAdminController::class, 'payouts']);
+            Route::post('/distributor-payouts/{payout}/mark-paid', [DistributorAdminController::class, 'markPayoutPaid'])->whereNumber('payout')->middleware('throttle:writes');
+
+            Route::get('/b2b/accounts', [B2BAdminController::class, 'accounts']);
+            Route::get('/b2b/accounts/{account}', [B2BAdminController::class, 'account'])->whereNumber('account');
+            Route::post('/b2b/accounts/{account}/approve', [B2BAdminController::class, 'approve'])->whereNumber('account')->middleware('throttle:writes');
+            Route::post('/b2b/accounts/{account}/reject', [B2BAdminController::class, 'reject'])->whereNumber('account')->middleware('throttle:writes');
+            Route::get('/b2b/rfq', [B2BAdminController::class, 'rfqs']);
+            Route::get('/b2b/rfq/{rfq}', [B2BAdminController::class, 'rfq'])->whereNumber('rfq');
+            Route::post('/b2b/rfq/{rfq}/create-quotation', [B2BAdminController::class, 'createQuotation'])->whereNumber('rfq')->middleware('throttle:writes');
+            Route::get('/b2b/quotations', [B2BAdminController::class, 'quotations']);
+            Route::post('/b2b/quotations', [B2BAdminController::class, 'createQuotation'])->middleware('throttle:writes');
+            Route::get('/b2b/purchase-orders', [B2BAdminController::class, 'purchaseOrders']);
+            Route::get('/b2b/price-lists', [B2BAdminController::class, 'priceLists']);
         });
     });
 });

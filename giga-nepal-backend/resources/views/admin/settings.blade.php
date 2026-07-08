@@ -13,7 +13,7 @@
 
 <div class="note">Settings writes are exposed through protected API endpoints so changes can be audited and validated. Public pages should not expose raw source links or internal configuration.</div>
 
-<div class="grid" style="grid-template-columns:1.2fr .8fr">
+<div class="grid dashboard-split">
     <section class="card">
         <div class="card-h"><h2>Admin Settings</h2><span class="sub">API: /api/v1/admin/console/settings</span></div>
         <div class="scroll-x">
@@ -73,4 +73,3 @@
     </div>
 </section>
 @endsection
-

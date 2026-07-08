@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
 use App\Http\Controllers\Admin\DashboardController as AdminDash;
 use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\LmsPageController;
@@ -15,6 +16,12 @@ use Illuminate\Support\Facades\Route;
 | landing route so the admin host resolves to the console, not the landing.
 */
 Route::domain('admin.neogiga.com')->get('/', fn () => redirect('/admin'));
+
+Route::get('/health', HealthController::class)->withoutMiddleware([
+    \Illuminate\Session\Middleware\StartSession::class,
+    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+    \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+]);
 
 Route::prefix('admin')->group(function () {
     Route::get('login', [AdminAuth::class, 'showLogin'])->name('admin.login');

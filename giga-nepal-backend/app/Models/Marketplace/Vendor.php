@@ -89,4 +89,24 @@ class Vendor extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    public function submittedProducts(): HasMany
+    {
+        return $this->hasMany(VendorProduct::class);
+    }
+
+    public function vendorOrders(): HasMany
+    {
+        return $this->hasMany(VendorOrder::class);
+    }
+
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(VendorPayout::class);
+    }
+
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(VendorSupportTicket::class);
+    }
 }

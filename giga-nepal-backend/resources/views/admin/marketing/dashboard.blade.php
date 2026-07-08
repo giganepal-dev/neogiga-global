@@ -8,7 +8,7 @@
 @endforeach
 </div>
 <div class="note"><strong>Provider-safe mode.</strong> Email uses the log provider and WhatsApp uses placeholder/manual export until credentials and explicit enablement are configured.</div>
-<div class="grid" style="grid-template-columns:1fr 1fr;align-items:start">
+<div class="grid split">
     <div class="card"><div class="card-h"><h2>Marketing Workflows</h2></div><div class="scroll-x"><table class="tbl"><tbody>
         @foreach ([['CRM & Segments','/admin/marketing/crm'],['Newsletter','/admin/marketing/newsletter'],['Email Campaigns','/admin/marketing/email'],['Automation Rules','/admin/marketing/automation'],['Abandoned Carts','/admin/marketing/abandoned-carts'],['WhatsApp','/admin/marketing/whatsapp'],['Analytics','/admin/marketing/analytics'],['Settings','/admin/marketing/settings']] as [$name,$href])
             <tr><td><strong>{{ $name }}</strong></td><td class="num"><a class="btn btn-ghost" href="{{ $href }}">Open</a></td></tr>
