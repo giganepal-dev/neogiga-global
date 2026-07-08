@@ -360,12 +360,45 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function applications(): View
+    {
+        return view('admin.applications', [
+            'stats' => [
+                'sellerTotal' => $this->safeCount('seller_applications'),
+                'sellerPending' => $this->safeWhereCount('seller_applications', 'status', 'pending'),
+                'distributorTotal' => $this->safeCount('distributor_applications'),
+                'distributorPending' => $this->safeWhereCount('distributor_applications', 'status', 'pending'),
+                'aiSessions' => $this->safeCount('commerce_ai_sessions'),
+            ],
+            'sellerApps' => $this->safeRows('seller_applications'),
+            'distributorApps' => $this->safeRows('distributor_applications'),
+        ]);
+    }
+
     private function safeCount(string $table): int
     {
         try {
             return DB::table($table)->count();
         } catch (\Throwable) {
             return 0;
+        }
+    }
+
+    private function safeWhereCount(string $table, string $column, string $value): int
+    {
+        try {
+            return DB::table($table)->where($column, $value)->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function safeRows(string $table, int $limit = 20): \Illuminate\Support\Collection
+    {
+        try {
+            return DB::table($table)->orderByDesc('id')->limit($limit)->get();
+        } catch (\Throwable) {
+            return collect();
         }
     }
 }

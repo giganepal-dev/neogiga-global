@@ -78,6 +78,7 @@ Route::prefix('admin')->group(function () {
         Route::get('quotations', [AdminDash::class, 'quotations']);
         Route::get('expenses', [AdminDash::class, 'expenses']);
         Route::get('payments', [AdminDash::class, 'payments']);
+        Route::get('applications', [AdminDash::class, 'applications']);
 
         // Commerce ops — guarded config actions (server-side; no live gateways)
         Route::post('payments/providers/{provider}/toggle', [AdminCommerce::class, 'toggleProvider'])->whereNumber('provider')->middleware('throttle:20,1');
@@ -88,6 +89,7 @@ Route::prefix('admin')->group(function () {
         Route::post('affiliate/{affiliate}/approve', [AdminCommerce::class, 'approveAffiliate'])->whereNumber('affiliate')->middleware('throttle:20,1');
         Route::post('affiliate/commissions/{commission}/approve', [AdminCommerce::class, 'approveCommission'])->whereNumber('commission')->middleware('throttle:20,1');
         Route::post('expenses', [AdminCommerce::class, 'storeExpense'])->middleware('throttle:20,1');
+        Route::post('applications/{type}/{id}/status', [AdminCommerce::class, 'updateApplicationStatus'])->whereNumber('id')->middleware('throttle:20,1');
     });
 });
 
