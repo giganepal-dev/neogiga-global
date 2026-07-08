@@ -11,6 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // GUARD: prod already has seller_applications (created 2026-07-07 by
+        // create_vendor_seller_phase_b_tables with a different schema, owned by
+        // the live Api\Onboarding module). This duplicate from PR#2 must never
+        // clobber or crash a deploy — skip when the table exists.
+        if (Schema::hasTable('seller_applications')) {
+            return;
+        }
+
         Schema::create('seller_applications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();

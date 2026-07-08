@@ -11,6 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // GUARD: prod already has distributor_applications (owned by the live
+        // Api\Onboarding module, different schema). This duplicate from PR#2
+        // must never clobber or crash a deploy — skip when the table exists.
+        if (Schema::hasTable('distributor_applications')) {
+            return;
+        }
+
         Schema::create('distributor_applications', function (Blueprint $table) {
             $table->id();
             
