@@ -3,64 +3,32 @@
 vendor/
 composer.lock
 .env
-.env.local
 .env.*
 !.env.example
 
-# PHP
-*.php~
-*.php.bak
-*.phtml~
-
-# Laravel application
+# Build and compiled files
 bootstrap/cache/
 storage/logs/
 storage/framework/
-public/storage/
 
-# IDE
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
 # Logs
 *.log
 
-# Temp files
-*.tmp
-*~
-
-# Coverage
-.coverage
+# Coverage reports
 coverage/
 htmlcov/
+.coverage
 
-# Build artifacts
-build/
-dist/
-target/
-
-# Dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Database
-database/seeds/
-database/factories/
-
-# Compiled Binary files
-*.o
-*.obj
-*.exe
-*.dll
-*.so
-*.a
-*.out
+# Temporary files
+*.tmp
 ```
