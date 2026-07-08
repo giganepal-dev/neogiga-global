@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SellerApplicationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Auth\PublicAuthController;
 use App\Http\Controllers\Api\Auth\SellerAuthController;
@@ -186,6 +187,20 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::post('/distributors/apply', [DistributorApplicationController::class, 'apply'])->middleware('throttle:writes');
+
+    // Seller Applications (Public form submission + Admin review)
+    Route::prefix('seller-applications')->group(function () {
+        Route::post('/', [SellerApplicationController::class, 'store'])->middleware('throttle:writes'); // Public
+        Route::get('/stats', [SellerApplicationController::class, 'stats'])->middleware(['api.token', 'permission:seller_applications.view']);
+        
+        // Admin only routes
+        Route::middleware(['api.token', 'permission:seller_applications.manage'])->group(function () {
+            Route::get('/', [SellerApplicationController::class, 'index']);
+            Route::get('/{id}', [SellerApplicationController::class, 'show'])->whereNumber('id');
+            Route::patch('/{id}', [SellerApplicationController::class, 'update'])->whereNumber('id');
+            Route::delete('/{id}', [SellerApplicationController::class, 'destroy'])->whereNumber('id');
+        });
+    });
 
     Route::prefix('distributor')->middleware(['api.token', 'permission:distributor.access'])->group(function () {
         Route::get('/dashboard', [DistributorDashboardController::class, 'dashboard']);
