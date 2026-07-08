@@ -11,6 +11,8 @@ class ProductCategory extends Model
 {
     use HasFactory;
 
+    protected $table = 'product_categories';
+
     protected $fillable = [
         'parent_id',
         'name',
@@ -29,7 +31,6 @@ class ProductCategory extends Model
         'sort_order' => 'integer',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
-        'marketplace_visibility' => 'array',
         'seo_meta' => 'array',
     ];
 
@@ -43,14 +44,9 @@ class ProductCategory extends Model
         return $this->hasMany(ProductCategory::class, 'parent_id');
     }
 
-    public function translations(): HasMany
-    {
-        return $this->hasMany(ProductCategoryTranslation::class);
-    }
-
     public function products(): HasMany
     {
-        return $this->hasMany(Product::class);
+        return $this->hasMany(Product::class, 'category_id');
     }
 
     public function scopeActive($query)
@@ -63,8 +59,8 @@ class ProductCategory extends Model
         return $query->where('is_featured', true);
     }
 
-    public function scopeRoot($query)
+    public function scopeOrdered($query)
     {
-        return $query->whereNull('parent_id');
+        return $query->orderBy('sort_order');
     }
 }
