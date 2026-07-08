@@ -694,3 +694,43 @@ $paymentsAdmin = function () {
 };
 Route::middleware('admin.token')->prefix('admin')->group($paymentsAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($paymentsAdmin);
+
+/*
+|--------------------------------------------------------------------------
+| Region Stock Visibility & Territory Allocation (2026-07-08)
+|--------------------------------------------------------------------------
+| Territory-based stock visibility, allocations, reservations, and alerts.
+| Admin manages rules; sellers see their stock; distributors see territory stock.
+*/
+$regionStockAdmin = function () {
+    // Region stock visibility rules
+    Route::apiResource('region-stock-visibilities', \App\Http\Controllers\RegionStockVisibilityController::class);
+    
+    // Territory stock allocations
+    Route::get('/territory-allocations', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'index']);
+    Route::post('/territory-allocations', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'store']);
+    Route::get('/territory-allocations/{id}', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'show'])->whereNumber('id');
+    Route::put('/territory-allocations/{id}', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'update'])->whereNumber('id');
+    Route::delete('/territory-allocations/{id}', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'destroy'])->whereNumber('id');
+    
+    // Stock reservations
+    Route::get('/stock-reservations', [\App\Http\Controllers\StockReservationController::class, 'index']);
+    Route::post('/stock-reservations', [\App\Http\Controllers\StockReservationController::class, 'store']);
+    Route::get('/stock-reservations/{id}', [\App\Http\Controllers\StockReservationController::class, 'show'])->whereNumber('id');
+    Route::patch('/stock-reservations/{id}/confirm', [\App\Http\Controllers\StockReservationController::class, 'confirm'])->whereNumber('id');
+    Route::patch('/stock-reservations/{id}/cancel', [\App\Http\Controllers\StockReservationController::class, 'cancel'])->whereNumber('id');
+    
+    // Low stock alerts
+    Route::get('/low-stock-alerts', [\App\Http\Controllers\LowStockAlertController::class, 'index']);
+    Route::post('/low-stock-alerts', [\App\Http\Controllers\LowStockAlertController::class, 'store']);
+    Route::get('/low-stock-alerts/{id}', [\App\Http\Controllers\LowStockAlertController::class, 'show'])->whereNumber('id');
+    Route::patch('/low-stock-alerts/{id}', [\App\Http\Controllers\LowStockAlertController::class, 'update'])->whereNumber('id');
+    Route::delete('/low-stock-alerts/{id}', [\App\Http\Controllers\LowStockAlertController::class, 'destroy'])->whereNumber('id');
+};
+Route::middleware('admin.token')->prefix('v1/admin')->group($regionStockAdmin);
+
+// Public/Authenticated: Get visible stock for current marketplace/region
+Route::middleware('api.token')->prefix('v1')->group(function () {
+    Route::get('/stock/visible', [\App\Http\Controllers\RegionStockVisibilityController::class, 'visibleStock']);
+    Route::get('/stock/territory/{distributorId}', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'territoryStock']);
+});
