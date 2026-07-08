@@ -5,6 +5,17 @@ All notable changes to the NeoGiga platform.
 ## [Unreleased] — 2026-07-07 — Affiliate/Referral foundation
 
 ### Added
+- **Admin dashboard UI for the adaptation modules** — the payments/promotions/affiliate/ERP modules
+  were previously API-only (`/api/admin/*`, `admin.token`) with no presence in the server-rendered admin
+  console. Added a **Commerce** sidebar section and six session-authed (`admin.web`) pages:
+  Payments & Wallet, Coupons & Gift Cards, Affiliates, Suppliers & POs, RFQ & Quotations, Expenses & Reports.
+  `Admin\DashboardController` gained six read methods (read-only aggregations); new
+  `Admin\CommerceOpsController` handles guarded config actions — toggle payment provider (sandbox on/off
+  only; never edits credentials or `is_live`), approve/mark-paid vendor payouts, create/toggle coupons,
+  approve affiliates & commissions, record expenses. Views reuse the existing admin design system; all
+  mutations are server-side and CSRF-protected. Verified on `neogiga_test` (all six render; provider toggle,
+  coupon insert, expense numbering round-trip). No new tables/migrations.
+
 - **Payments abstraction layer** (additive; WRAPS existing `payments`/`refunds`, no parallel ledger): migration `2026_07_07_170000_create_payments_abstraction_tables` — `payment_providers`, `payment_transaction_events`, `wallets`, `wallet_ledger_entries`, `vendor_payouts`, `vendor_payout_items`. Models `App\Models\Payments\*`; services `App\Services\Payments\{PaymentProviderManager,WalletService,VendorPayoutService}` + gateway contract `Contracts\PaymentGateway` and safe `Gateways\PlaceholderGateway` (no live calls, no credentials). Public read-only wallet (`GET /api/v1/wallet`, `/wallet/ledger`); admin providers/events/wallet-adjust/vendor-payouts (`admin.token`). `PaymentProviderSeeder` registers eSewa/Khalti/Fonepay/Stripe/PayPal/bank/COD/wallet as DISABLED sandbox. Wallet is row-locked, non-overspendable, append-only. Verified on `neogiga_test`. Gateway adapters + checkout integration are a later reviewed step.
 
 ### Wired

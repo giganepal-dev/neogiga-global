@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
+use App\Http\Controllers\Admin\CommerceOpsController as AdminCommerce;
 use App\Http\Controllers\Admin\DashboardController as AdminDash;
 use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\LmsPageController;
+use App\Http\Controllers\Web\SellOnNeoGigaController;
 use App\Http\Controllers\Web\SitemapController;
 use Illuminate\Support\Facades\Route;
 
@@ -68,6 +70,24 @@ Route::prefix('admin')->group(function () {
         Route::post('marketing/whatsapp/campaigns/{campaign}/queue', [AdminMarketing::class, 'queueWhatsappCampaign'])->whereNumber('campaign')->middleware('throttle:10,1');
         Route::post('marketing/whatsapp/campaigns/{campaign}/send-test', [AdminMarketing::class, 'sendWhatsappCampaignTest'])->whereNumber('campaign')->middleware('throttle:10,1');
         Route::post('marketing/settings', [AdminMarketing::class, 'updateMarketingSettings'])->middleware('throttle:10,1');
+
+        // Commerce ops (adaptation modules) — read pages
+        Route::get('affiliate', [AdminDash::class, 'affiliate']);
+        Route::get('promotions', [AdminDash::class, 'promotions']);
+        Route::get('procurement', [AdminDash::class, 'procurement']);
+        Route::get('quotations', [AdminDash::class, 'quotations']);
+        Route::get('expenses', [AdminDash::class, 'expenses']);
+        Route::get('payments', [AdminDash::class, 'payments']);
+
+        // Commerce ops — guarded config actions (server-side; no live gateways)
+        Route::post('payments/providers/{provider}/toggle', [AdminCommerce::class, 'toggleProvider'])->whereNumber('provider')->middleware('throttle:20,1');
+        Route::post('payments/payouts/{payout}/approve', [AdminCommerce::class, 'approvePayout'])->whereNumber('payout')->middleware('throttle:20,1');
+        Route::post('payments/payouts/{payout}/mark-paid', [AdminCommerce::class, 'markPayoutPaid'])->whereNumber('payout')->middleware('throttle:20,1');
+        Route::post('promotions/coupons', [AdminCommerce::class, 'storeCoupon'])->middleware('throttle:20,1');
+        Route::post('promotions/coupons/{coupon}/toggle', [AdminCommerce::class, 'toggleCoupon'])->whereNumber('coupon')->middleware('throttle:20,1');
+        Route::post('affiliate/{affiliate}/approve', [AdminCommerce::class, 'approveAffiliate'])->whereNumber('affiliate')->middleware('throttle:20,1');
+        Route::post('affiliate/commissions/{commission}/approve', [AdminCommerce::class, 'approveCommission'])->whereNumber('commission')->middleware('throttle:20,1');
+        Route::post('expenses', [AdminCommerce::class, 'storeExpense'])->middleware('throttle:20,1');
     });
 });
 
@@ -78,3 +98,9 @@ Route::get('/', LandingController::class);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{slug}', [CategoryController::class, 'show'])->where('slug', '[a-z0-9\-]+');
 Route::get('/sitemap.xml', SitemapController::class);
+
+// Public seller/partner landing pages
+Route::get('/sell-on-neogiga', [SellOnNeoGigaController::class, 'sell']);
+Route::get('/distributors', [SellOnNeoGigaController::class, 'distributors']);
+Route::get('/ai-commerce', [SellOnNeoGigaController::class, 'aiCommerce']);
+Route::get('/seller-early-access', [SellOnNeoGigaController::class, 'earlyAccess']);

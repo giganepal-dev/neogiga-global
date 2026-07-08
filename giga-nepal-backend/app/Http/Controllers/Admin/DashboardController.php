@@ -270,6 +270,96 @@ class DashboardController extends Controller
         ]);
     }
 
+    // ---- Commerce ops (adaptation modules) ---------------------------------
+
+    public function affiliate(): View
+    {
+        return view('admin.affiliate', [
+            'stats' => [
+                'affiliates' => $this->safeCount('affiliates'),
+                'pending' => (int) DB::table('affiliates')->where('status', 'pending')->count(),
+                'commissionsPending' => (float) DB::table('commission_ledger')->where('status', 'pending')->sum('commission_amount'),
+                'commissionsApproved' => (float) DB::table('commission_ledger')->where('status', 'approved')->sum('commission_amount'),
+                'payoutRequests' => $this->safeCount('affiliate_payout_requests'),
+            ],
+            'affiliates' => DB::table('affiliates')->orderByDesc('id')->limit(20)->get(),
+            'commissions' => DB::table('commission_ledger')->orderByDesc('id')->limit(20)->get(),
+            'rules' => DB::table('commission_rules')->orderBy('priority')->get(),
+        ]);
+    }
+
+    public function promotions(): View
+    {
+        return view('admin.promotions', [
+            'stats' => [
+                'coupons' => $this->safeCount('coupons'),
+                'activeCoupons' => (int) DB::table('coupons')->where('is_active', true)->count(),
+                'giftCards' => $this->safeCount('gift_cards'),
+                'giftBalance' => (float) DB::table('gift_cards')->where('status', 'active')->sum('current_balance'),
+            ],
+            'coupons' => DB::table('coupons')->orderByDesc('id')->limit(25)->get(),
+            'giftCards' => DB::table('gift_cards')->orderByDesc('id')->limit(25)->get(),
+        ]);
+    }
+
+    public function procurement(): View
+    {
+        return view('admin.procurement', [
+            'stats' => [
+                'suppliers' => $this->safeCount('suppliers'),
+                'purchaseOrders' => $this->safeCount('purchase_orders'),
+                'openValue' => (float) DB::table('purchase_orders')->whereIn('status', ['ordered', 'partially_received'])->sum('grand_total'),
+            ],
+            'suppliers' => DB::table('suppliers')->orderByDesc('id')->limit(20)->get(),
+            'purchaseOrders' => DB::table('purchase_orders as po')
+                ->leftJoin('suppliers as s', 's.id', '=', 'po.supplier_id')
+                ->select('po.*', 's.name as supplier_name')->orderByDesc('po.id')->limit(20)->get(),
+        ]);
+    }
+
+    public function quotations(): View
+    {
+        return view('admin.quotations', [
+            'stats' => [
+                'rfqTotal' => $this->safeCount('rfq_requests'),
+                'rfqOpen' => (int) DB::table('rfq_requests')->where('status', 'open')->count(),
+                'quotesSent' => (int) DB::table('quotations')->where('status', 'sent')->count(),
+                'quotesAccepted' => (int) DB::table('quotations')->where('status', 'accepted')->count(),
+            ],
+            'rfqs' => DB::table('rfq_requests')->orderByDesc('id')->limit(20)->get(),
+            'quotations' => DB::table('quotations')->orderByDesc('id')->limit(20)->get(),
+        ]);
+    }
+
+    public function expenses(): View
+    {
+        return view('admin.expenses', [
+            'stats' => [
+                'total' => (float) DB::table('expenses')->sum('amount'),
+                'count' => $this->safeCount('expenses'),
+            ],
+            'byCategory' => DB::table('expenses')->select('category', DB::raw('sum(amount) as amount'))
+                ->groupBy('category')->orderByDesc('amount')->get(),
+            'expenses' => DB::table('expenses')->orderByDesc('expense_date')->orderByDesc('id')->limit(25)->get(),
+        ]);
+    }
+
+    public function payments(): View
+    {
+        return view('admin.payments', [
+            'stats' => [
+                'providers' => $this->safeCount('payment_providers'),
+                'enabled' => (int) DB::table('payment_providers')->where('is_enabled', true)->count(),
+                'wallets' => $this->safeCount('wallets'),
+                'walletBalance' => (float) DB::table('wallets')->sum('balance'),
+                'payoutsPending' => (int) DB::table('vendor_payouts')->where('status', 'pending')->count(),
+            ],
+            'providers' => DB::table('payment_providers')->orderBy('sort_order')->get(),
+            'vendorPayouts' => DB::table('vendor_payouts')->orderByDesc('id')->limit(20)->get(),
+            'events' => DB::table('payment_transaction_events')->orderByDesc('id')->limit(15)->get(),
+        ]);
+    }
+
     private function safeCount(string $table): int
     {
         try {

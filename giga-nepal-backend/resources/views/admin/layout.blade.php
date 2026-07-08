@@ -239,6 +239,32 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3l7 3v5c0 4.5-2.8 8.5-7 10-4.2-1.5-7-5.5-7-10V6l7-3z" stroke-linejoin="round"/></svg>
                 Audit Log
             </a>
+
+            <span class="lbl">Commerce</span>
+            <a href="/admin/payments" class="{{ str_starts_with($r,'admin/payments') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h4" stroke-linecap="round"/></svg>
+                Payments &amp; Wallet
+            </a>
+            <a href="/admin/promotions" class="{{ str_starts_with($r,'admin/promotions') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9l8-5 8 5v11H4z" stroke-linejoin="round"/><path d="M9 20v-6h6v6M8 12h.01" stroke-linecap="round"/></svg>
+                Coupons &amp; Gift Cards
+            </a>
+            <a href="/admin/affiliate" class="{{ str_starts_with($r,'admin/affiliate') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="M14 7h4v4M7 10v4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Affiliates
+            </a>
+            <a href="/admin/procurement" class="{{ str_starts_with($r,'admin/procurement') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h2l2 12h11l2-8H6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+                Suppliers &amp; POs
+            </a>
+            <a href="/admin/quotations" class="{{ str_starts_with($r,'admin/quotations') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l3 3v15H6z" stroke-linejoin="round"/><path d="M9 9h6M9 13h6M9 17h4" stroke-linecap="round"/></svg>
+                RFQ &amp; Quotations
+            </a>
+            <a href="/admin/expenses" class="{{ str_starts_with($r,'admin/expenses') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2 0 015 0c0 2.5-5 1.5-5 4a2.5 2 0 005 0" stroke-linecap="round"/></svg>
+                Expenses &amp; Reports
+            </a>
         </nav>
         <div class="foot">v0.1 · {{ config('app.env') }}</div>
     </aside>
