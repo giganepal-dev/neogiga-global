@@ -1,18 +1,66 @@
-# dependencies
-giga-nepal-backend/vendor/
-giga-nepal-backend/node_modules/
-# secrets & env
-**/.env
-**/.env.*
-!**/.env.example
-giga-nepal-backend/storage/*.key
-# runtime
-giga-nepal-backend/storage/logs/*
-giga-nepal-backend/storage/framework/cache/*
-giga-nepal-backend/storage/framework/sessions/*
-giga-nepal-backend/storage/framework/views/*
-giga-nepal-backend/bootstrap/cache/*.php
-giga-nepal-backend/public/build/
-*.sqlite
-.phpunit.result.cache
+```
+# Laravel-specific ignores
+vendor/
+composer.lock
+.env
+.env.local
+.env.*
+!.env.example
+
+# PHP
+*.php~
+*.php.bak
+*.phtml~
+
+# Laravel application
+bootstrap/cache/
+storage/logs/
+storage/framework/
+public/storage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
+*~
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+target/
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+database/seeds/
+database/factories/
+
+# Compiled Binary files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.out
+```
