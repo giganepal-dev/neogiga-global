@@ -11,8 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // GUARD: prod already has 4 of these tables (product_datasheets,
+        // product_certificates, product_warranties, product_generic_suggestions
+        // — owned by the live product_stock migration, different schema).
+        // Create only tables that don't exist so migrate never crashes.
+        $create = function (string $table, \Closure $blueprint): void {
+            if (! Schema::hasTable($table)) {
+                Schema::create($table, $blueprint);
+            }
+        };
+
         // Category-specific specification templates
-        Schema::create('category_spec_templates', function (Blueprint $table) {
+        $create('category_spec_templates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained('product_categories')->cascadeOnDelete();
             $table->string('name'); // e.g., "Battery Specifications", "Solar Panel Specs"
@@ -26,7 +36,7 @@ return new class extends Migration
         });
 
         // Individual spec fields within templates
-        Schema::create('spec_template_fields', function (Blueprint $table) {
+        $create('spec_template_fields', function (Blueprint $table) {
             $table->id();
             $table->foreignId('template_id')->constrained('category_spec_templates')->cascadeOnDelete();
             $table->string('field_name'); // e.g., "voltage", "capacity", "wattage"
@@ -44,7 +54,7 @@ return new class extends Migration
         });
 
         // Product specifications (actual values stored per product)
-        Schema::create('product_specifications', function (Blueprint $table) {
+        $create('product_specifications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('template_field_id')->constrained('spec_template_fields')->cascadeOnDelete();
@@ -58,7 +68,7 @@ return new class extends Migration
         });
 
         // Specification groups for organizing specs on PDP
-        Schema::create('specification_groups', function (Blueprint $table) {
+        $create('specification_groups', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained('product_categories')->cascadeOnDelete();
             $table->string('name'); // e.g., "General", "Technical", "Physical", "Warranty"
@@ -71,7 +81,7 @@ return new class extends Migration
         });
 
         // Link spec template fields to groups
-        Schema::create('specification_group_fields', function (Blueprint $table) {
+        $create('specification_group_fields', function (Blueprint $table) {
             $table->id();
             $table->foreignId('group_id')->constrained('specification_groups')->cascadeOnDelete();
             $table->foreignId('template_field_id')->constrained('spec_template_fields')->cascadeOnDelete();
@@ -82,7 +92,7 @@ return new class extends Migration
         });
 
         // Product datasheets and documents
-        Schema::create('product_datasheets', function (Blueprint $table) {
+        $create('product_datasheets', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->string('title');
@@ -101,7 +111,7 @@ return new class extends Migration
         });
 
         // Product certificates and compliance
-        Schema::create('product_certificates', function (Blueprint $table) {
+        $create('product_certificates', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->string('certificate_name'); // e.g., "CE", "FCC", "RoHS", "ISO 9001"
@@ -118,7 +128,7 @@ return new class extends Migration
         });
 
         // Country of origin tracking
-        Schema::create('product_countries_of_origin', function (Blueprint $table) {
+        $create('product_countries_of_origin', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('country_id')->constrained('countries')->cascadeOnDelete();
@@ -135,7 +145,7 @@ return new class extends Migration
         });
 
         // Warranty information
-        Schema::create('product_warranties', function (Blueprint $table) {
+        $create('product_warranties', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->string('warranty_type')->default('manufacturer'); // manufacturer, seller, none
@@ -154,7 +164,7 @@ return new class extends Migration
         });
 
         // Generic suggestions for products (AI/manual suggestions)
-        Schema::create('product_generic_suggestions', function (Blueprint $table) {
+        $create('product_generic_suggestions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->string('suggestion_type'); // alternative, upgrade, accessory, compatible
