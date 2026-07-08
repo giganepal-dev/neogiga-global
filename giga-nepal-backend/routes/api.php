@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\Admin\AdminConsoleController;
 use App\Http\Controllers\Api\Admin\VendorAdminController;
 use App\Http\Controllers\Api\Admin\DistributorAdminController;
 use App\Http\Controllers\Api\Admin\B2BAdminController;
+use App\Http\Controllers\Api\Admin\BomAdminController;
 use App\Http\Controllers\Api\Admin\InventoryAdminController;
 use App\Http\Controllers\Api\Admin\LmsAdminController;
 use App\Http\Controllers\Api\Admin\ImportExportController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\Api\Distributor\DistributorResourceController;
 use App\Http\Controllers\Api\B2B\B2BAccountController;
 use App\Http\Controllers\Api\B2B\B2BRfqController;
 use App\Http\Controllers\Api\B2B\B2BQuotationController;
+use App\Http\Controllers\Api\Bom\BomProjectController;
 
 /*
 |--------------------------------------------------------------------------
@@ -152,6 +154,19 @@ Route::prefix('v1')->group(function () {
         Route::get('/rfq', [B2BRfqController::class, 'index']);
         Route::get('/quotations', [B2BQuotationController::class, 'index']);
         Route::post('/quotations/{quotation}/accept', [B2BQuotationController::class, 'accept'])->whereNumber('quotation')->middleware('throttle:writes');
+    });
+
+    Route::prefix('bom')->group(function () {
+        Route::get('/projects', [BomProjectController::class, 'index']);
+        Route::get('/projects/{slug}', [BomProjectController::class, 'show']);
+        Route::get('/projects/{slug}/items', [BomProjectController::class, 'items']);
+        Route::post('/projects/{slug}/price', [BomProjectController::class, 'price'])->middleware('throttle:writes');
+        Route::middleware('api.token')->group(function () {
+            Route::post('/projects/{slug}/add-to-cart', [BomProjectController::class, 'addToCart'])->middleware('throttle:writes');
+            Route::post('/build-custom', [BomProjectController::class, 'buildCustom'])->middleware('throttle:writes');
+            Route::post('/user-builds', [BomProjectController::class, 'storeUserBuild'])->middleware('throttle:writes');
+            Route::get('/user-builds/{build}', [BomProjectController::class, 'showUserBuild'])->whereNumber('build');
+        });
     });
 
     // Inventory (availability reads public; mutations Phase 1)
@@ -302,6 +317,13 @@ Route::prefix('v1')->group(function () {
             Route::post('/b2b/quotations', [B2BAdminController::class, 'createQuotation'])->middleware('throttle:writes');
             Route::get('/b2b/purchase-orders', [B2BAdminController::class, 'purchaseOrders']);
             Route::get('/b2b/price-lists', [B2BAdminController::class, 'priceLists']);
+
+            Route::get('/bom/projects', [BomAdminController::class, 'projects']);
+            Route::post('/bom/projects', [BomAdminController::class, 'storeProject'])->middleware('throttle:writes');
+            Route::patch('/bom/projects/{project}', [BomAdminController::class, 'updateProject'])->whereNumber('project')->middleware('throttle:writes');
+            Route::post('/bom/projects/{project}/items', [BomAdminController::class, 'storeItem'])->whereNumber('project')->middleware('throttle:writes');
+            Route::patch('/bom/projects/{project}/items/{item}', [BomAdminController::class, 'updateItem'])->whereNumber('project')->whereNumber('item')->middleware('throttle:writes');
+            Route::delete('/bom/projects/{project}/items/{item}', [BomAdminController::class, 'deleteItem'])->whereNumber('project')->whereNumber('item')->middleware('throttle:writes');
         });
     });
 });
