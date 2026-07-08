@@ -377,3 +377,28 @@ $financeAdmin = function () {
 };
 Route::middleware('admin.token')->prefix('admin')->group($financeAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($financeAdmin);
+
+/*
+|--------------------------------------------------------------------------
+| Payments abstraction: wallet + providers + vendor payouts (2026-07-07)
+|--------------------------------------------------------------------------
+| Additive. Customer wallet is read-only (api.token). Admin manages providers
+| (no secrets), audit events, wallet adjustments, and vendor payouts (admin.token).
+*/
+Route::prefix('v1')->middleware('api.token')->group(function () {
+    Route::get('/wallet', [\App\Http\Controllers\Api\Wallet\WalletController::class, 'show']);
+    Route::get('/wallet/ledger', [\App\Http\Controllers\Api\Wallet\WalletController::class, 'ledger']);
+});
+
+$paymentsAdmin = function () {
+    Route::get('/payment-providers', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'providers']);
+    Route::patch('/payment-providers/{provider}', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'updateProvider'])->whereNumber('provider');
+    Route::get('/payments/events', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'events']);
+    Route::post('/wallets/adjust', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'adjustWallet']);
+    Route::get('/vendor-payouts', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'vendorPayouts']);
+    Route::post('/vendor-payouts', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'storeVendorPayout']);
+    Route::post('/vendor-payouts/{vendorPayout}/approve', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'approveVendorPayout'])->whereNumber('vendorPayout');
+    Route::post('/vendor-payouts/{vendorPayout}/mark-paid', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'markVendorPayoutPaid'])->whereNumber('vendorPayout');
+};
+Route::middleware('admin.token')->prefix('admin')->group($paymentsAdmin);
+Route::middleware('admin.token')->prefix('v1/admin')->group($paymentsAdmin);

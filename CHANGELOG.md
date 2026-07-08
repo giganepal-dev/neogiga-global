@@ -4,6 +4,9 @@ All notable changes to the NeoGiga platform.
 
 ## [Unreleased] — 2026-07-07 — Affiliate/Referral foundation
 
+### Added
+- **Payments abstraction layer** (additive; WRAPS existing `payments`/`refunds`, no parallel ledger): migration `2026_07_07_170000_create_payments_abstraction_tables` — `payment_providers`, `payment_transaction_events`, `wallets`, `wallet_ledger_entries`, `vendor_payouts`, `vendor_payout_items`. Models `App\Models\Payments\*`; services `App\Services\Payments\{PaymentProviderManager,WalletService,VendorPayoutService}` + gateway contract `Contracts\PaymentGateway` and safe `Gateways\PlaceholderGateway` (no live calls, no credentials). Public read-only wallet (`GET /api/v1/wallet`, `/wallet/ledger`); admin providers/events/wallet-adjust/vendor-payouts (`admin.token`). `PaymentProviderSeeder` registers eSewa/Khalti/Fonepay/Stripe/PayPal/bank/COD/wallet as DISABLED sandbox. Wallet is row-locked, non-overspendable, append-only. Verified on `neogiga_test`. Gateway adapters + checkout integration are a later reviewed step.
+
 ### Wired
 - **Coupon + Gift Card consumption wired into checkout** (server-side): `OrderController@checkout` re-validates the cart's coupon (from `carts.metadata`) and reduces the order total, redeems the coupon (usage logged), and redeems a gift card up to the amount due (creating a `captured` gift_card payment + a `pending` payment for the remainder). Public `POST /api/v1/cart/apply-coupon`, `DELETE /api/v1/cart/coupon`, `POST /api/v1/cart/apply-gift-card` (api.token). No-promo checkout unchanged (Phase1CheckoutTest still passes). New `Phase1PromoCheckoutTest` (coupon+gift-card → discount_total 4.00, grand 35.98, amount_due 15.98).
 
