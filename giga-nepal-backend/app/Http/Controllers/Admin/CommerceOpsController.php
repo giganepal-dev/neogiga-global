@@ -112,6 +112,31 @@ class CommerceOpsController extends Controller
         return back()->with('status', "Commission #{$commission} approved.");
     }
 
+    // ---- Onboarding applications --------------------------------------------
+
+    public function updateApplicationStatus(Request $request, string $type, int $id): RedirectResponse
+    {
+        abort_unless(in_array($type, ['seller', 'distributor'], true), 404);
+        $table = $type . '_applications';
+
+        // Same whitelist as the Onboarding module's ApplicationStatusRequest.
+        $data = $request->validate([
+            'status' => ['required', 'in:pending,contacted,approved_for_onboarding,rejected,archived'],
+            'admin_notes' => ['nullable', 'string', 'max:3000'],
+        ]);
+
+        $updated = DB::table($table)->where('id', $id)->update([
+            'status' => $data['status'],
+            'admin_notes' => $data['admin_notes'] ?? DB::raw('admin_notes'),
+            'reviewed_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $updated
+            ? back()->with('status', ucfirst($type) . " application #{$id} → {$data['status']}.")
+            : back()->with('error', 'Application not found.');
+    }
+
     // ---- Expenses ----------------------------------------------------------
 
     public function storeExpense(Request $request, DocumentNumberService $docs): RedirectResponse

@@ -249,6 +249,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9l8-5 8 5v11H4z" stroke-linejoin="round"/><path d="M9 20v-6h6v6M8 12h.01" stroke-linecap="round"/></svg>
                 Coupons &amp; Gift Cards
             </a>
+            <a href="/admin/applications" class="{{ str_starts_with($r,'admin/applications') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6v4H9zM5 7h14v14H5z" stroke-linejoin="round"/><path d="M9 13l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Applications
+            </a>
             <a href="/admin/affiliate" class="{{ str_starts_with($r,'admin/affiliate') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="M14 7h4v4M7 10v4" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Affiliates
