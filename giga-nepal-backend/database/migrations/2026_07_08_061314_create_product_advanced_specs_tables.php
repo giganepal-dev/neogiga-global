@@ -14,7 +14,7 @@ return new class extends Migration
         // Category-specific specification templates
         Schema::create('category_spec_templates', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('category_id')->constrained('product_categories')->cascadeOnDelete();
             $table->string('name'); // e.g., "Battery Specifications", "Solar Panel Specs"
             $table->text('description')->nullable();
             $table->boolean('is_required')->default(false);
@@ -60,7 +60,7 @@ return new class extends Migration
         // Specification groups for organizing specs on PDP
         Schema::create('specification_groups', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('category_id')->constrained('product_categories')->cascadeOnDelete();
             $table->string('name'); // e.g., "General", "Technical", "Physical", "Warranty"
             $table->text('description')->nullable();
             $table->integer('sort_order')->default(0);
@@ -121,7 +121,7 @@ return new class extends Migration
         Schema::create('product_countries_of_origin', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('country_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('country_id')->constrained('countries')->cascadeOnDelete();
             $table->string('origin_type')->default('manufactured'); // manufactured, assembled, designed
             $table->text('manufacturer_details')->nullable();
             $table->string('manufacturer_name')->nullable();
