@@ -45,36 +45,33 @@ live path `/home/neogiga/laravel/current` (not a git checkout; file-level sync).
 | `public/storage` link | created ✓ |
 | Skipped (per plan) | `composer install`, `config:clear`, `cache:clear` — no code changed; clearing config on live is the known 500-outage vector |
 
-## Queue backlog status ⚠
-- **471 jobs in the `default` queue, oldest 2026-07-06 16:15, zero processed.**
-- **No queue worker exists for this app.** Running workers on the box belong to other apps
-  (`/var/www/preciousnepal/api`, `device.giganepal.com`) — none point at
-  `/home/neogiga/laravel/current`.
+## Queue backlog status ✓ RESOLVED (2026-07-09 13:22)
+- Found: **471 jobs** in the `default` queue (oldest 2026-07-06 16:15), zero processed —
+  no worker existed for this app (the box's workers serve other apps).
+- Payload audit before starting: all internal analytics jobs (DetectAbandonedCarts ×114,
+  CalculateTrending*/TopSearchTerms ×~84/cycle, RefreshCustomerSegment, RegionalSalesReport) —
+  **no outbound email/SMS**, safe to drain.
+- Fix applied: installed **`/etc/systemd/system/neogiga-queue.service`** (User=neogiga,
+  `queue:work database --sleep=3 --tries=3 --max-time=3600 --memory=256`, Restart=always,
+  logs → `storage/logs/queue-worker.log`), `systemctl enable --now neogiga-queue`.
+- Result: **backlog drained 471 → 0 in ~2 minutes, 0 failed jobs.** Wallet canary 401,
+  health 200 after.
 
 ## Risks
 1. **Sanctum branch** (`git-repository-access-e1d13`): if the auto-PR process merges it into
    main and it gets deployed unreviewed, live API auth breaks. Review/close it proactively.
 2. **Unpushed local commits (9):** GitHub-based PRs keep branching off stale code (this cycle's
    Sanctum branch edits files GitHub doesn't have current versions of). Push local main ASAP.
-3. **Queue backlog** grows silently (marketing/notification jobs) until a worker exists.
+3. ~~Queue backlog~~ **RESOLVED** — worker installed and backlog drained (see above).
 4. Standing: the prod-side build process edits live files directly — always re-diff before
    any deploy (union-merge procedure), wallet canary after every change.
 
 ## Next required server fix
-Create a durable queue worker for this app (systemd example):
-```
-# /etc/systemd/system/neogiga-queue.service
-[Unit]
-Description=NeoGiga queue worker
-After=network.target
-[Service]
-User=neogiga
-Restart=always
-ExecStart=/usr/bin/php /home/neogiga/laravel/current/artisan queue:work database --sleep=3 --tries=3 --max-time=3600
-[Install]
-WantedBy=multi-user.target
-```
-Then `systemctl enable --now neogiga-queue` and confirm the 471-job backlog drains.
+~~Queue worker~~ **DONE** — `neogiga-queue.service` installed, enabled, and draining.
+Remaining: (a) push local git main to GitHub (credentials needed), (b) human review of the
+`git-repository-access-e1d13` Sanctum branch before anything merges it. Note: the Laravel
+scheduler cron already exists (`* * * * * … schedule:run`, user neogiga) — it was enqueuing
+jobs all along; only the worker was missing. Pipeline is now complete: cron → queue → worker.
 
 ## Backup (rollback point)
 `/home/neogiga/backups/20260709_125406/` — code snapshot tar (excl. vendor/storage),
