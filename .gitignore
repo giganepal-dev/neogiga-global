@@ -1,1 +1,29 @@
-Nothing needs to be added to .gitignore since only a markdown file was added and no build artifacts, dependencies, or temporary files are present in the changes.
+```
+# Laravel-specific ignores
+vendor/
+composer.lock
+*.log
+.env
+.env.local
+.env.*
+!/.env.example
+
+# Build and cache directories
+bootstrap/cache/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+storage/logs/*
+```
