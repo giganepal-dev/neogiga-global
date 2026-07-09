@@ -18,6 +18,9 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
+            $table->foreignId('role_id')->nullable()->constrained('roles')->nullOnDelete();
+            $table->string('api_token_hash', 64)->nullable()->index();
+            $table->timestamp('last_login_at')->nullable();
             $table->timestamps();
         });
 
