@@ -11,10 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // GUARD: prod already has low_stock_alerts (inventory module, different
+        // schema). Create only tables that don't exist so migrate never crashes.
+        $create = function (string $table, \Closure $blueprint): void {
+            if (! Schema::hasTable($table)) {
+                Schema::create($table, $blueprint);
+            }
+        };
+
         // Region-wise stock visibility rules
-        Schema::create('region_stock_visibilities', function (Blueprint $table) {
+        $create('region_stock_visibilities', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('stock_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('stock_id')->index(); // rows live in inventory_stocks; no DB FK ('stocks' table doesn't exist on prod)
             $table->foreignId('country_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('marketplace_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('province_id')->nullable()->constrained()->nullOnDelete();
@@ -34,11 +42,11 @@ return new class extends Migration
         });
 
         // Territory-based stock allocation
-        Schema::create('territory_stock_allocations', function (Blueprint $table) {
+        $create('territory_stock_allocations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('stock_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('stock_id')->index(); // rows live in inventory_stocks; no DB FK ('stocks' table doesn't exist on prod)
             $table->foreignId('distributor_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('territory_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('territory_id')->index(); // rows live in distributor_territories; no DB FK ('territories' table doesn't exist on prod)
             $table->integer('allocated_quantity')->default(0);
             $table->integer('reserved_quantity')->default(0);
             $table->integer('sold_quantity')->default(0);
@@ -54,9 +62,9 @@ return new class extends Migration
         });
 
         // Low stock alerts configuration
-        Schema::create('low_stock_alerts', function (Blueprint $table) {
+        $create('low_stock_alerts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('stock_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('stock_id')->index(); // rows live in inventory_stocks; no DB FK ('stocks' table doesn't exist on prod)
             $table->foreignId('user_id')->constrained()->cascadeOnDelete(); // Alert recipient
             $table->integer('threshold_quantity');
             $table->enum('alert_type', ['email', 'sms', 'whatsapp', 'push', 'dashboard']);
@@ -70,9 +78,9 @@ return new class extends Migration
         });
 
         // Stock reservation system
-        Schema::create('stock_reservations', function (Blueprint $table) {
+        $create('stock_reservations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('stock_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('stock_id')->index(); // rows live in inventory_stocks; no DB FK ('stocks' table doesn't exist on prod)
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('cart_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
@@ -88,7 +96,7 @@ return new class extends Migration
         });
 
         // Inventory movement audit trail
-        Schema::create('inventory_movement_audits', function (Blueprint $table) {
+        $create('inventory_movement_audits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('movement_id')->constrained('inventory_movements')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();

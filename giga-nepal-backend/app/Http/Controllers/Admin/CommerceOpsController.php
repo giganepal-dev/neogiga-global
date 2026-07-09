@@ -112,6 +112,21 @@ class CommerceOpsController extends Controller
         return back()->with('status', "Commission #{$commission} approved.");
     }
 
+    // ---- Region stock visibility ---------------------------------------------
+
+    public function toggleStockRule(int $rule): RedirectResponse
+    {
+        $row = DB::table('region_stock_visibilities')->where('id', $rule)->first();
+        if (! $row) {
+            return back()->with('error', 'Visibility rule not found.');
+        }
+
+        DB::table('region_stock_visibilities')->where('id', $rule)
+            ->update(['is_visible' => ! $row->is_visible, 'updated_at' => now()]);
+
+        return back()->with('status', "Rule #{$rule} " . ($row->is_visible ? 'hidden' : 'visible') . '.');
+    }
+
     // ---- Onboarding applications --------------------------------------------
 
     public function updateApplicationStatus(Request $request, string $type, int $id): RedirectResponse
