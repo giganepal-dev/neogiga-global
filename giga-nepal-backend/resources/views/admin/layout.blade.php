@@ -241,6 +241,10 @@
             </a>
 
             <span class="lbl">Commerce</span>
+            <a href="/admin/orders" class="{{ str_starts_with($r,'admin/orders') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2l1.5 3M18 2l-1.5 3M3 6h18l-2 12H5L3 6z" stroke-linejoin="round"/><path d="M9 10v4m6-4v4" stroke-linecap="round"/></svg>
+                Orders
+            </a>
             <a href="/admin/payments" class="{{ str_starts_with($r,'admin/payments') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h4" stroke-linecap="round"/></svg>
                 Payments &amp; Wallet
