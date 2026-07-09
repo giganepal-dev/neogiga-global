@@ -1,68 +1,78 @@
-```
-# Laravel-specific ignores
-bootstrap/cache/
-storage/logs/
-storage/framework/
-public/storage/
+# Documentation and reports
+*.md
 
-# Dependencies
-vendor/
-node_modules/
-
-# Environment
+# Environment variables
 .env
 .env.local
-.env.*
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
+*.env.*
 
 # Logs
 *.log
 
-# Compiled/Build artifacts
-*.pyc
+# Dependencies
+node_modules/
+.venv/
+venv/
 __pycache__/
+*.egg-info/
+dist/
+build/
+target/
+.gradle/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Python specific
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Compiled files
 *.o
 *.obj
-*.exe
+*.a
+*.lib
 *.dll
 *.so
-*.a
+*.dylib
+*.exe
 *.out
 
-# Coverage
+# Coverage reports
 coverage/
 htmlcov/
 .coverage
 
-# Package managers
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Test and cache directories
+.mypy_cache/
+.pytest_cache/
+.nyc_output/
+coverage/
 
-# Testing
-.phpunit.result.cache
-
-# Backup files
-*.bak
-*.swp
-*.swo
-
-# Compressed archives
+# Archives
 *.zip
-*.gz
-*.tar
+*.tar.gz
 *.tgz
+*.tar.bz2
+*.tbz2
+*.tar.xz
+*.txz
+*.rar
+*.7z
+*.gz
 *.bz2
 *.xz
-*.7z
-*.rar
 *.zst
 *.lz4
 *.lzh
@@ -73,8 +83,3 @@ yarn-error.log*
 *.Z
 *.lz
 *.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
-```
