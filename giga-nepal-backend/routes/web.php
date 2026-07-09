@@ -8,6 +8,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\LmsPageController;
+use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Web\SellOnNeoGigaController;
 use App\Http\Controllers\Web\SitemapController;
 use Illuminate\Support\Facades\Route;
@@ -92,6 +93,7 @@ Route::prefix('admin')->group(function () {
         Route::post('expenses', [AdminCommerce::class, 'storeExpense'])->middleware('throttle:20,1');
         Route::post('applications/{type}/{id}/status', [AdminCommerce::class, 'updateApplicationStatus'])->whereNumber('id')->middleware('throttle:20,1');
         Route::post('region-stock/rules/{rule}/toggle', [AdminCommerce::class, 'toggleStockRule'])->whereNumber('rule')->middleware('throttle:20,1');
+        Route::post('users/{user}/send-reset', [AdminCommerce::class, 'sendPasswordReset'])->whereNumber('user')->middleware('throttle:20,1');
     });
 });
 
@@ -102,6 +104,12 @@ Route::get('/', LandingController::class);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{slug}', [CategoryController::class, 'show'])->where('slug', '[a-z0-9\-]+');
 Route::get('/sitemap.xml', SitemapController::class);
+
+// Password reset pages (the reset email links to the named password.reset route)
+Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequest'])->name('password.request');
+Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:6,1')->name('password.email');
+Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1')->name('password.update');
 
 // Public seller/partner landing pages
 Route::get('/sell-on-neogiga', [SellOnNeoGigaController::class, 'sell']);

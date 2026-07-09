@@ -7,7 +7,7 @@
     <div class="card-h"><div><h2>Users</h2><div class="sub">{{ number_format($users->total()) }} accounts</div></div></div>
     <div class="scroll-x">
         <table class="tbl">
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Last login</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>Last login</th><th>Action</th></tr></thead>
             <tbody>
             @forelse ($users as $u)
                 <tr>
@@ -17,10 +17,16 @@
                         @php $role = $u->role->name ?? 'customer'; $admin = in_array($role,['super_admin','admin']); @endphp
                         <span class="badge {{ $admin?'b-info':'b-muted' }}">{{ ucfirst(str_replace('_',' ',$role)) }}</span>
                     </td>
+                    <td>@if($u->email_verified_at)<span class="badge b-ok">Verified</span>@else<span class="badge b-muted">Unverified</span>@endif</td>
                     <td>{{ optional($u->last_login_at)->diffForHumans() ?? '—' }}</td>
+                    <td>
+                        <form method="post" action="/admin/users/{{ $u->id }}/send-reset">@csrf
+                            <button class="btn" type="submit">Send reset link</button>
+                        </form>
+                    </td>
                 </tr>
             @empty
-                <tr><td colspan="4"><div class="empty"><h3>No users</h3></div></td></tr>
+                <tr><td colspan="6"><div class="empty"><h3>No users</h3></div></td></tr>
             @endforelse
             </tbody>
         </table>
