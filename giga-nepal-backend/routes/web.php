@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
 use App\Http\Controllers\Admin\CommerceOpsController as AdminCommerce;
 use App\Http\Controllers\Admin\DashboardController as AdminDash;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\CategoryController;
@@ -31,7 +32,14 @@ Route::prefix('admin')->group(function () {
     Route::post('logout', [AdminAuth::class, 'logout']);
 
     Route::middleware('admin.web')->group(function () {
-        Route::get('/', [AdminDash::class, 'index']);
+        Route::get('/', [AdminDash::class, 'index']); // Dashboard
+        // Orders Management
+        Route::prefix('orders')->group(function () {
+            Route::get('/', [OrderController::class, 'index']);
+            Route::get('/{id}', [OrderController::class, 'show']);
+            Route::post('/{id}/update-status', [OrderController::class, 'updateStatus']);
+            Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
+        });
         Route::get('categories', [AdminDash::class, 'categories']);
         Route::get('products', [AdminDash::class, 'products']);
         Route::get('marketplaces', [AdminDash::class, 'marketplaces']);

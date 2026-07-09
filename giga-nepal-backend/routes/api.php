@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SellerApplicationController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Auth\ForgotPasswordController;
+use App\Http\Controllers\Api\Auth\ResetPasswordController;
+use App\Http\Controllers\Api\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\Marketplace\MarketplaceController;
 use App\Http\Controllers\Api\Product\CategoryController;
 use App\Http\Controllers\Api\Product\BrandController;
@@ -56,6 +59,21 @@ Route::prefix('v1')->group(function () {
         Route::middleware('api.token')->group(function () {
             Route::get('/me', [AuthController::class, 'me']);
             Route::post('/logout', [AuthController::class, 'logout']);
+        });
+        
+        // Password Reset
+        Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])
+            ->middleware('throttle:writes');
+        Route::post('/reset-password', [ResetPasswordController::class, 'reset'])
+            ->middleware('throttle:writes');
+        
+        // Email Verification
+        Route::middleware(['api.token', 'throttle:6,1'])->group(function () {
+            Route::post('/email/verification-notification', [EmailVerificationController::class, 'sendVerification'])
+                ->name('verification.send');
+            Route::get('/verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+                ->middleware(['signed', 'throttle:6,1'])
+                ->name('verification.verify');
         });
     });
 

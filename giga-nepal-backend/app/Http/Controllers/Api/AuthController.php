@@ -77,7 +77,10 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->forceFill(['api_token_hash' => null])->save();
+        // Revoke the current Sanctum token if using Sanctum
+        if (method_exists($request->user(), 'currentAccessToken')) {
+            $request->user()->currentAccessToken()?->delete();
+        }
 
         return $this->success(['message' => 'Logged out.']);
     }
@@ -101,13 +104,18 @@ class AuthController extends Controller
 
     private function issueToken(User $user): string
     {
-        $token = Str::random(64);
+        // Use Sanctum token creation if available
+        if (method_exists($user, 'createToken')) {
+            $token = $user->createToken('auth-token');
+            return $token->plainTextToken;
+        }
 
+        // Fallback to legacy token generation
+        $token = \Illuminate\Support\Str::random(64);
         $user->forceFill([
             'api_token_hash' => hash('sha256', $token),
             'last_login_at' => now(),
         ])->save();
-
         return $token;
     }
 
