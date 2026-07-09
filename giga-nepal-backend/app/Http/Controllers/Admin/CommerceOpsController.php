@@ -112,6 +112,20 @@ class CommerceOpsController extends Controller
         return back()->with('status', "Commission #{$commission} approved.");
     }
 
+    // ---- Users ----------------------------------------------------------------
+
+    public function sendPasswordReset(int $user): RedirectResponse
+    {
+        $email = DB::table('users')->where('id', $user)->value('email');
+        if (! $email) {
+            return back()->with('error', 'User not found.');
+        }
+
+        \Illuminate\Support\Facades\Password::sendResetLink(['email' => $email]);
+
+        return back()->with('status', "Password reset link sent to user #{$user}.");
+    }
+
     // ---- Region stock visibility ---------------------------------------------
 
     public function toggleStockRule(int $rule): RedirectResponse
