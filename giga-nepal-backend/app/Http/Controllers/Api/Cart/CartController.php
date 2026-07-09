@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api\Cart;
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Cart;
+use App\Models\Marketplace\CartItem;
+use App\Models\Marketplace\CartReservation;
 use App\Models\Marketplace\InventoryStock;
 use App\Models\Marketplace\Marketplace;
 use App\Models\Marketplace\MarketplaceProductPrice;
 use App\Models\Marketplace\Product;
+use App\Services\Inventory\InventoryReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,9 +20,44 @@ class CartController extends Controller
 {
     use ApiResponses;
 
+    protected InventoryReservationService $reservationService;
+
+    public function __construct(InventoryReservationService $reservationService)
+    {
+        $this->reservationService = $reservationService;
+    }
+
     public function index(Request $request): JsonResponse
     {
-        return $this->success($this->activeCart($request)->load(['items.product', 'items.variant']));
+        $cart = $this->activeCart($request)->load(['items.product', 'items.variant']);
+        
+        // Include reservation status and expiry info
+        $hasActiveReservations = $this->reservationService->userHasActiveReservations($request->user()->id);
+        $reservationSummary = null;
+        
+        if ($hasActiveReservations) {
+            $reservations = CartReservation::query()
+                ->whereHas('cart', function ($query) use ($request) {
+                    $query->where('user_id', $request->user()->id);
+                })
+                ->where('status', CartReservation::STATUS_ACTIVE)
+                ->where('expires_at', '>', now())
+                ->orderBy('expires_at')
+                ->first();
+            
+            if ($reservations) {
+                $reservationSummary = [
+                    'has_active_reservations' => true,
+                    'expires_at' => $reservations->expires_at,
+                    'remaining_seconds' => $reservations->remainingSeconds(),
+                ];
+            }
+        }
+        
+        return $this->success([
+            'cart' => $cart,
+            'reservation' => $reservationSummary,
+        ]);
     }
 
     public function addItem(Request $request): JsonResponse
@@ -79,7 +117,27 @@ class CartController extends Controller
 
             $cart->calculateTotal();
 
-            return $this->success($cart->fresh()->load(['items.product', 'items.variant']), 201);
+            // Create inventory reservations (15-minute soft reserve)
+            $reservationResult = $this->reservationService->reserveCartInventory($cart);
+
+            $responseData = [
+                'cart' => $cart->fresh()->load(['items.product', 'items.variant']),
+            ];
+
+            if ($reservationResult['success']) {
+                $responseData['reservation'] = [
+                    'reserved' => true,
+                    'expires_at' => $reservationResult['expires_at'],
+                    'message' => 'Inventory reserved for 15 minutes. Complete checkout before expiry.',
+                ];
+            } else {
+                $responseData['reservation'] = [
+                    'reserved' => false,
+                    'failed_items' => $reservationResult['failed_items'] ?? [],
+                ];
+            }
+
+            return $this->success($responseData, 201);
         });
     }
 
@@ -105,10 +163,33 @@ class CartController extends Controller
             return $this->error('Requested quantity is not available in regional inventory.', 422);
         }
 
-        $cartItem->forceFill(['quantity' => $validated['quantity']])->save();
-        $cart->calculateTotal();
+        return DB::transaction(function () use ($cart, $cartItem, $validated) {
+            // Release existing reservations for this item before updating
+            $this->reservationService->releaseCartReservations(
+                $cart, 
+                'Cart item quantity updated - will re-reserve'
+            );
 
-        return $this->success($cart->fresh()->load(['items.product', 'items.variant']));
+            $cartItem->forceFill(['quantity' => $validated['quantity']])->save();
+            $cart->calculateTotal();
+
+            // Re-reserve with new quantities
+            $reservationResult = $this->reservationService->reserveCartInventory($cart);
+
+            $responseData = [
+                'cart' => $cart->fresh()->load(['items.product', 'items.variant']),
+            ];
+
+            if ($reservationResult['success']) {
+                $responseData['reservation'] = [
+                    'reserved' => true,
+                    'expires_at' => $reservationResult['expires_at'],
+                    'message' => 'Inventory re-reserved for 15 minutes',
+                ];
+            }
+
+            return $this->success($responseData);
+        });
     }
 
     public function removeItem(Request $request, int $item): JsonResponse
@@ -120,9 +201,82 @@ class CartController extends Controller
             return $this->error('Cart item not found.', 404);
         }
 
-        $cart->calculateTotal();
+        return DB::transaction(function () use ($cart) {
+            // Release reservations for removed item
+            $this->reservationService->releaseCartReservations(
+                $cart,
+                'Cart item removed'
+            );
 
-        return $this->success($cart->fresh()->load(['items.product', 'items.variant']));
+            $cart->calculateTotal();
+
+            return $this->success($cart->fresh()->load(['items.product', 'items.variant']));
+        });
+    }
+
+    /**
+     * Clear entire cart and release all reservations
+     */
+    public function clear(Request $request): JsonResponse
+    {
+        $cart = $this->activeCart($request);
+
+        return DB::transaction(function () use ($cart) {
+            // Release all reservations
+            $this->reservationService->releaseCartReservations(
+                $cart,
+                'Cart cleared by user'
+            );
+
+            // Delete all cart items
+            $cart->items()->delete();
+
+            // Reset cart totals
+            $cart->update([
+                'subtotal' => 0,
+                'tax_total' => 0,
+                'discount_total' => 0,
+                'shipping_total' => 0,
+                'grand_total' => 0,
+                'item_count' => 0,
+            ]);
+
+            return $this->success($cart, 'Cart cleared successfully');
+        });
+    }
+
+    /**
+     * Get reservation status for current cart
+     */
+    public function reservationStatus(Request $request): JsonResponse
+    {
+        $cart = $this->activeCart($request);
+        
+        $reservations = CartReservation::query()
+            ->where('cart_id', $cart->id)
+            ->where('status', CartReservation::STATUS_ACTIVE)
+            ->where('expires_at', '>', now())
+            ->get();
+
+        if ($reservations->isEmpty()) {
+            return $this->success([
+                'has_active_reservations' => false,
+                'message' => 'No active inventory reservations',
+            ]);
+        }
+
+        $earliestExpiry = $reservations->min('expires_at');
+        $totalReserved = $reservations->sum('quantity_reserved');
+
+        return $this->success([
+            'has_active_reservations' => true,
+            'reservation_count' => $reservations->count(),
+            'total_units_reserved' => $totalReserved,
+            'expires_at' => $earliestExpiry,
+            'remaining_seconds' => max(0, now()->diffInSeconds($earliestExpiry)),
+            'remaining_minutes' => max(0, floor(now()->diffInSeconds($earliestExpiry) / 60)),
+            'message' => 'Complete checkout before reservation expires',
+        ]);
     }
 
     private function activeCart(Request $request, ?int $marketplaceId = null, ?string $currencyCode = null): Cart
