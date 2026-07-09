@@ -375,6 +375,22 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function regionStock(): View
+    {
+        return view('admin.region-stock', [
+            'stats' => [
+                'rules' => $this->safeCount('region_stock_visibilities'),
+                'allocations' => $this->safeCount('territory_stock_allocations'),
+                'reservations' => $this->safeWhereCount('stock_reservations', 'status', 'pending'),
+                'alerts' => $this->safeWhereCount('low_stock_alerts', 'status', 'active'),
+            ],
+            'rules' => $this->safeRows('region_stock_visibilities'),
+            'allocations' => $this->safeRows('territory_stock_allocations'),
+            'reservations' => $this->safeRows('stock_reservations'),
+            'alerts' => $this->safeRows('low_stock_alerts'),
+        ]);
+    }
+
     private function safeCount(string $table): int
     {
         try {

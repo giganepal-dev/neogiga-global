@@ -257,6 +257,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="M14 7h4v4M7 10v4" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Affiliates
             </a>
+            <a href="/admin/region-stock" class="{{ str_starts_with($r,'admin/region-stock') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 018 8c0 5-8 12-8 12S4 15 4 10a8 8 0 018-8z" stroke-linejoin="round"/></svg>
+                Region Stock
+            </a>
             <a href="/admin/procurement" class="{{ str_starts_with($r,'admin/procurement') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h2l2 12h11l2-8H6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
                 Suppliers &amp; POs
