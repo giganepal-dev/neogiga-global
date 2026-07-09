@@ -1,53 +1,53 @@
-# Documentation files (if generated)
-docs/admin/*.log
-docs/admin/*~
+# Dependencies
+node_modules/
+vendor/
 
-# Temporary files
-*.tmp
-*.swp
-*.swo
+# Build artifacts
+public/css/admin/*.css
+public/js/admin/*.js
+public/build/
+public/dist/
 
 # Logs
 *.log
 
-# Environment files
+# Environment
 .env
 .env.local
-*.env.*
+.env.*
 
-# Editor/IDE files
+# Editor
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.phpunit.result.cache
 
-# Build artifacts
+# Testing
+coverage/
+htmlcov/
+*.coverage
+
+# Distribution
 dist/
 build/
 target/
-*.o
-*.obj
-*.out
-*.exe
-*.dll
-*.so
-*.a
+.gradle/
 
-# Dependencies
-node_modules/
-venv/
-.venv/
-.mypy_cache/
-.pytest_cache/
-.coverage
-coverage/
-htmlcov/
-
-# System files
-.DS_Store
-Thumbs.db
+# Temporary files
+*.tmp
+*.temp
+*.bak
 
 # Compressed files
 *.zip
