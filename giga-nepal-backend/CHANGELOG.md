@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-09 - Complete System Audit
+
+- Added a production system audit report covering health, migrations, route protection, schema coverage, module completion state, queue status, admin/public endpoint checks, and prioritized next steps.
+- Identified the NeoGiga queue worker gap for `/home/neogiga/laravel/current`, 470 pending jobs, incomplete product extension shell tables, and missing `/admin/distributors` UI route.
+- Synced 54 local NeoGiga planning, audit, adaptation-command, and reference-map documents to the live release without overwriting existing live files.
+- No migrations, seeders, imports, data rewrites, or application behavior changes were performed.
+
 ## 2026-07-07 - Smartend-Style Admin Console Foundation
 
 - Added additive admin console foundation tables for admin settings, managed media assets, SEO pages, and SEO redirects.
@@ -68,6 +75,61 @@
 - Added admin API `send-now` endpoints and web admin queue/test actions for email and newsletter campaigns.
 - Updated campaign queue jobs to use the execution service instead of placeholder logging.
 - Recorded campaign queue/test actions in the marketing admin audit log.
+# 2026-07-08 - Distributor Territory Stock Summaries
+
+- Added protected distributor dashboard overview, territory stock, leads summary, and customer summary APIs.
+- Added protected distributor territory products and territory vendors APIs.
+- Added `DistributorTerritoryStockService` for assigned country/region/city stock filtering.
+- Kept responses aggregate/read-only without warehouse contact details or seller financial data.
+- No migration or `.env` changes required.
+
+# 2026-07-08 - Admin Product Review and Generic Suggestions
+
+- Implemented admin product listing, detail, pending review, approve, and reject APIs.
+- Added admin generic product group list/create APIs.
+- Added admin generic suggestion create/update/soft-delete APIs.
+- Added product review, generic group, and generic suggestion validation requests.
+- Added `ProductApprovalService` with server-side approval state updates and vendor audit logging.
+- Preserved existing vendor admin product review routes and admin token protection.
+
+# 2026-07-08 - Seller Product Detail Management APIs
+
+- Added protected seller product detail APIs for documents/datasheets, variants, attributes, specs, and warranty.
+- Added seller form requests for product document, variant, spec, attribute, and warranty writes.
+- Added `SellerProductDetailService` for catalog-product resolution and vendor audit logging.
+- Reused existing seller vendor ownership checks and seller product permission middleware.
+- Prevented direct detail edits on approved vendor products.
+- Did not add migrations, change `.env`, or alter existing IoT modules.
+
+# 2026-07-08 - Seller and Distributor Auth Foundation
+
+- Added non-versioned customer auth API aliases for `/api/auth/register`, `/api/auth/login`, `/api/auth/me`, and `/api/auth/logout`.
+- Added seller registration, login, logout, and me APIs under `/api/seller/*` and `/api/v1/seller/*`.
+- Added distributor registration, login, logout, and me APIs under `/api/distributor/*` and `/api/v1/distributor/*`.
+- Added auth form requests, user/seller/distributor API resources, shared auth service, and seller/distributor registration services.
+- Seller/distributor registrations create pending onboarding records only and do not auto-approve marketplace access.
+- Preserved existing token auth, seller/distributor panel protection, admin token protection, and `.env`.
+
+# 2026-07-08 - Multi-Vendor Product Stock Visibility Foundation
+
+- Added pre-audit document for current multi-vendor, product, seller, distributor, and inventory status.
+- Added guarded product/stock migration for missing product metadata, warranty, datasheet/manual/certificate, generic suggestion, marketplace visibility, and low-stock tables.
+- Added public product extension APIs for attributes, specs, variants, datasheets, warranty, generic suggestions, compatibility, related/accessories, and stock summaries.
+- Added product visibility, region stock, and generic suggestion services.
+- Added multi-vendor/product/stock implementation, verification, seller, distributor, product, warranty, generic suggestion, and stock documentation.
+- Preserved existing IoT, marketplace, vendor, distributor, seller, inventory, and auth modules.
+
+# 2026-07-08 - Sell on NeoGiga and Commerce AI Public Foundation
+
+- Added public Sell on NeoGiga, Seller Early Access, Distributor Network, and AI Commerce pages.
+- Updated the homepage Sell on NeoGiga and AI Commerce positioning with early-access CTAs.
+- Added additive seller/distributor application and commerce AI demo tables.
+- Added validated public seller and distributor application APIs with pending-only submission behavior.
+- Added protected admin application review, status update, conversion, and dashboard summary APIs.
+- Added local-rule Commerce AI demo APIs for examples, session, message, and BOM generation.
+- Added implementation, API, SEO, AI commerce, and verification documentation.
+- Did not remove existing seller, vendor, distributor, inventory, product, IoT, LMS, or admin modules.
+
 # 2026-07-08 - BOM Project Commerce Foundation
 
 - Added additive BOM project-commerce migration for project categories, projects, project items, tools, LMS links, code samples, alternatives, price snapshots, build guides, user builds, and cart conversions.
