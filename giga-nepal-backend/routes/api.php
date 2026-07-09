@@ -734,3 +734,21 @@ Route::middleware('api.token')->prefix('v1')->group(function () {
     Route::get('/stock/visible', [\App\Http\Controllers\RegionStockVisibilityController::class, 'visibleStock']);
     Route::get('/stock/territory/{distributorId}', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'territoryStock']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Password reset + email verification (2026-07-09)
+|--------------------------------------------------------------------------
+| Cherry-picked (reviewed) from the git-repository-access branch WITHOUT its
+| Sanctum parts: standard Laravel Password broker + signed verification URLs
+| against the existing custom-token auth. Additive.
+*/
+Route::prefix('v1/auth')->group(function () {
+    Route::post('/forgot-password', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'sendResetLink'])->middleware('throttle:writes');
+    Route::post('/reset-password', [\App\Http\Controllers\Api\Auth\ResetPasswordController::class, 'reset'])->middleware('throttle:writes');
+
+    Route::middleware(['api.token', 'throttle:6,1'])->group(function () {
+        Route::post('/email/verification-notification', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'sendVerification'])->name('verification.send');
+        Route::get('/verify-email/{id}/{hash}', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
+    });
+});
