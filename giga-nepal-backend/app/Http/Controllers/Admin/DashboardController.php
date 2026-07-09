@@ -360,6 +360,48 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function orders(\Illuminate\Http\Request $request): View
+    {
+        $query = \App\Models\Order::with(['user', 'marketplace'])
+            ->when($request->query('status'), fn ($q, $s) => $q->where('status', $s))
+            ->when($request->query('payment'), fn ($q, $p) => $q->where('payment_status', $p))
+            ->when($request->query('q'), fn ($q, $t) => $q->where('order_number', 'ilike', "%{$t}%"))
+            ->orderByDesc('id');
+
+        return view('admin.orders', [
+            'orders' => $query->paginate(20)->withQueryString(),
+            'stats' => [
+                'total' => $this->safeCount('orders'),
+                'pending' => $this->safeWhereCount('orders', 'status', 'pending'),
+                'processing' => $this->safeWhereCount('orders', 'status', 'processing'),
+                'delivered' => $this->safeWhereCount('orders', 'status', 'delivered'),
+                'unpaid' => $this->safeWhereCount('orders', 'payment_status', 'pending'),
+            ],
+            'filters' => [
+                'status' => (string) $request->query('status', ''),
+                'payment' => (string) $request->query('payment', ''),
+                'q' => (string) $request->query('q', ''),
+            ],
+        ]);
+    }
+
+    public function order(int $id): View
+    {
+        $order = \App\Models\Order::with(['user', 'marketplace', 'items', 'payments'])->findOrFail($id);
+
+        return view('admin.order-detail', [
+            'order' => $order,
+            'history' => \App\Models\OrderStatusHistory::where('order_id', $id)->orderByDesc('id')->get(),
+        ]);
+    }
+
+    public function invoice(int $id): View
+    {
+        return view('admin.invoice', [
+            'order' => \App\Models\Order::with(['user', 'marketplace', 'items', 'payments'])->findOrFail($id),
+        ]);
+    }
+
     public function applications(): View
     {
         return view('admin.applications', [

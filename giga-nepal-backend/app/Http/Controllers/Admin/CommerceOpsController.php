@@ -112,6 +112,43 @@ class CommerceOpsController extends Controller
         return back()->with('status', "Commission #{$commission} approved.");
     }
 
+    // ---- Orders ---------------------------------------------------------------
+
+    public function updateOrderStatus(Request $request, int $order): RedirectResponse
+    {
+        // Whitelist mirrors the orders.status DB enum exactly.
+        $data = $request->validate([
+            'status' => ['required', 'in:pending,confirmed,processing,shipped,delivered,cancelled,refunded,failed'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $row = DB::table('orders')->where('id', $order)->first();
+        if (! $row) {
+            return back()->with('error', 'Order not found.');
+        }
+        if ($row->status === $data['status']) {
+            return back()->with('error', 'Order is already ' . $data['status'] . '.');
+        }
+
+        DB::transaction(function () use ($order, $row, $data, $request) {
+            DB::table('orders')->where('id', $order)
+                ->update(['status' => $data['status'], 'updated_at' => now()]);
+
+            // Audit trail — every admin status change is recorded.
+            DB::table('order_status_histories')->insert([
+                'order_id' => $order,
+                'previous_status' => $row->status,
+                'status' => $data['status'],
+                'notes' => $data['notes'] ?? 'Changed via admin console',
+                'changed_by_user_id' => $request->user()?->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        return back()->with('status', "Order {$row->order_number}: {$row->status} → {$data['status']}.");
+    }
+
     // ---- Users ----------------------------------------------------------------
 
     public function sendPasswordReset(int $user): RedirectResponse
