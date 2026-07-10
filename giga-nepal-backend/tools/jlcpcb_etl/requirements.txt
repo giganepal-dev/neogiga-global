@@ -1,0 +1,4 @@
+psycopg[binary]==3.2.9
+requests==2.32.4
+PyYAML==6.0.2
+pytest==8.4.1

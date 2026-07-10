@@ -1,0 +1,320 @@
+mappings:
+  integrated circuits: Semiconductors/Integrated Circuits
+  power management: Semiconductors/Integrated Circuits/Power Management
+  microcontrollers: Semiconductors/Integrated Circuits/Microcontrollers
+  embedded processors controllers: Semiconductors/Integrated Circuits/Microcontrollers
+  diodes: Semiconductors/Discrete Semiconductors/Diodes
+  diodes zener diodes: Semiconductors/Discrete Semiconductors/Diodes/Zener Diodes
+  diodes bridge rectifiers: Semiconductors/Discrete Semiconductors/Diodes/Bridge Rectifiers
+  diodes schottky barrier diodes sbd: Semiconductors/Discrete Semiconductors/Diodes/Schottky Diodes
+  diodes diodes general purpose: Semiconductors/Discrete Semiconductors/Diodes/General Purpose Diodes
+  diodes diodes fast recovery rectifiers: Semiconductors/Discrete Semiconductors/Diodes/Fast Recovery Rectifiers
+  diodes switching diode: Semiconductors/Discrete Semiconductors/Diodes/Switching Diodes
+  diodes high effic rectifier: Semiconductors/Discrete Semiconductors/Diodes/High Efficiency Rectifiers
+  transistors: Semiconductors/Discrete Semiconductors/Transistors
+  mosfets: Semiconductors/Discrete Semiconductors/MOSFETs
+  transistors mosfets: Semiconductors/Discrete Semiconductors/MOSFETs
+  transistors bipolar transistors bjt: Semiconductors/Discrete Semiconductors/Bipolar Transistors
+  transistors triacs: Semiconductors/Discrete Semiconductors/Thyristors & TRIACs
+  transistors digital transistors: Semiconductors/Discrete Semiconductors/Digital Transistors
+  transistors igbts: Semiconductors/Discrete Semiconductors/IGBTs
+  transistors darlington transistors: Semiconductors/Discrete Semiconductors/Darlington Transistors
+  capacitors: Passive Components/Capacitors
+  ceramic capacitors: Passive Components/Capacitors/Ceramic Capacitors
+  capacitors multilayer ceramic capacitors mlcc smd smt: Passive Components/Capacitors/Ceramic Capacitors/MLCC SMD
+  capacitors aluminum electrolytic capacitors smd: Passive Components/Capacitors/Aluminum Electrolytic Capacitors/SMD
+  capacitors aluminum electrolytic capacitors leaded: Passive Components/Capacitors/Aluminum Electrolytic Capacitors/Leaded
+  capacitors tantalum capacitors: Passive Components/Capacitors/Tantalum Capacitors
+  capacitors horn type electrolytic capacitors: Passive Components/Capacitors/Aluminum Electrolytic Capacitors/Snap-In
+  capacitors solid polymer electrolytic capacitor: Passive Components/Capacitors/Polymer Capacitors
+  resistors: Passive Components/Resistors
+  resistors chip resistor surface mount: Passive Components/Resistors/Chip Resistors
+  resistors resistor networks arrays: Passive Components/Resistors/Resistor Networks & Arrays
+  inductors: Passive Components/Inductors
+  inductors coils transformers inductors smd: Passive Components/Inductors/SMD Inductors
+  inductors coils transformers power inductors: Passive Components/Inductors/Power Inductors
+  filters emi optimization ferrite beads: Filters & EMI/Ferrite Beads
+  filters emi optimization common mode filters: Filters & EMI/Common Mode Filters
+  filters emi optimization rf filters: Filters & EMI/RF Filters
+  connectors: Interconnect/Connectors
+  connectors pin headers: Interconnect/Connectors/Pin Headers
+  connectors wire to board wire to wire connector: Interconnect/Connectors/Wire To Board
+  connectors ic sockets: Interconnect/Connectors/IC Sockets
+  connectors usb connectors: Interconnect/Connectors/USB Connectors
+  connectors pluggable system terminal block: Interconnect/Terminal Blocks/Pluggable Terminal Blocks
+  connectors ffc fpc connectors: Interconnect/Connectors/FFC FPC Connectors
+  connectors idc connectors: Interconnect/Connectors/IDC Connectors
+  connectors rectangular connectors housings: Interconnect/Connectors/Rectangular Housings
+  connectors ffc fpc connect cables: Interconnect/Cables/FFC FPC Cables
+  connectors female headers: Interconnect/Connectors/Female Headers
+  connectors screw terminal: Interconnect/Terminal Blocks/Screw Terminals
+  connectors barrier terminal blocks: Interconnect/Terminal Blocks/Barrier Terminal Blocks
+  connectors line pressing terminals: Interconnect/Terminals/Crimp Terminals
+  connectors spring clamp system terminal block: Interconnect/Terminal Blocks/Spring Clamp Terminal Blocks
+  sensors: Sensors
+  sensors photointerrupters slot type transistor output: Sensors/Optical Sensors/Photointerrupters
+  sensors photoresistors: Sensors/Optical Sensors/Photoresistors
+  sensors ntc thermistors: Sensors/Temperature Sensors/NTC Thermistors
+  sensors temperature sensors: Sensors/Temperature Sensors
+  crystals: Timing/Crystals and Oscillators
+  crystals oscillators resonators crystals: Timing/Crystals and Oscillators/Crystals
+  crystals oscillators resonators oscillators: Timing/Crystals and Oscillators/Oscillators
+  crystals oscillators resonators pre programmed oscillators: Timing/Crystals and Oscillators/Pre-programmed Oscillators
+  oscillators: Timing/Crystals and Oscillators
+  logic ics gates: Semiconductors/Integrated Circuits/Logic/Gates
+  logic ics inverters: Semiconductors/Integrated Circuits/Logic/Inverters
+  logic ics buffers drivers: Semiconductors/Integrated Circuits/Logic/Buffers & Drivers
+  logic ics flip flops: Semiconductors/Integrated Circuits/Logic/Flip Flops
+  power management ics gate drive ics: Semiconductors/Integrated Circuits/Power Management/Gate Drivers
+  power management ics linear voltage regulators ldo: Semiconductors/Integrated Circuits/Power Management/Linear Regulators
+  power management ics ac dc controllers regulators: Semiconductors/Integrated Circuits/Power Management/AC-DC Controllers
+  power management ics voltage references: Semiconductors/Integrated Circuits/Power Management/Voltage References
+  power management ics dc dc converters: Semiconductors/Integrated Circuits/Power Management/DC-DC Converters
+  power management ics monitors reset circuits: Semiconductors/Integrated Circuits/Power Management/Supervisors & Reset ICs
+  power management ics battery management ics: Semiconductors/Integrated Circuits/Power Management/Battery Management
+  power management ics motor driver ics: Semiconductors/Integrated Circuits/Power Management/Motor Drivers
+  power management ics power distribution switches: Semiconductors/Integrated Circuits/Power Management/Power Distribution Switches
+  power management ics dc dc controllers: Semiconductors/Integrated Circuits/Power Management/DC-DC Controllers
+  amplifiers operational amplifier: Semiconductors/Integrated Circuits/Amplifiers/Operational Amplifiers
+  amplifiers precision opamps: Semiconductors/Integrated Circuits/Amplifiers/Precision Op Amps
+  amplifiers fet inputamplifiers: Semiconductors/Integrated Circuits/Amplifiers/FET Input Amplifiers
+  amplifiers comparators: Semiconductors/Integrated Circuits/Amplifiers/Comparators
+  amplifiers audio power opamps: Semiconductors/Integrated Circuits/Amplifiers/Audio Power Amplifiers
+  amplifiers instrumentation opamps: Semiconductors/Integrated Circuits/Amplifiers/Instrumentation Amplifiers
+  interface ics analog switches multiplexers: Semiconductors/Integrated Circuits/Interface/Analog Switches & Multiplexers
+  interface ics rs 485 rs 422 ics: Semiconductors/Integrated Circuits/Interface/RS-485 RS-422
+  interface ics rs232 ics: Semiconductors/Integrated Circuits/Interface/RS-232
+  interface ics digital isolators: Semiconductors/Integrated Circuits/Interface/Digital Isolators
+  interface ics usb ics: Semiconductors/Integrated Circuits/Interface/USB
+  interface ics ethernet ics: Semiconductors/Integrated Circuits/Interface/Ethernet
+  interface ics can ics: Semiconductors/Integrated Circuits/Interface/CAN
+  data converters analog to digital converters adcs: Semiconductors/Integrated Circuits/Data Converters/ADCs
+  data converters digital to analog converters dacs: Semiconductors/Integrated Circuits/Data Converters/DACs
+  optocouplers leds infrared light emitting diodes led: Optoelectronics/LEDs
+  optoelectronics light emitting diodes led: Optoelectronics/LEDs
+  optoelectronics infrared ir leds: Optoelectronics/Infrared LEDs
+  optoelectronics optocouplers phototransistor output: Optoelectronics/Optocouplers/Phototransistor Output
+  circuit protection fuses: Circuit Protection/Fuses
+  circuit protection tvs: Circuit Protection/TVS Diodes
+  circuit protection resettable fuses: Circuit Protection/Resettable Fuses
+  circuit protection esd protection devices: Circuit Protection/ESD Protection
+  circuit protection varistors: Circuit Protection/Varistors
+  circuit protection gas discharge tube gdt: Circuit Protection/Gas Discharge Tubes
+  tvs fuse board level protection fuses: Circuit Protection/Fuses
+  relays power relays: Electromechanical/Relays/Power Relays
+  audio products micromotors buzzers: Audio Products/Buzzers
+  industrial control electrical heat sink heatsink: Thermal Management/Heat Sinks
+  embedded processors controllers microchip: Semiconductors/Integrated Circuits/Microcontrollers/Microchip
+  embedded processors controllers st microelectronics: Semiconductors/Integrated Circuits/Microcontrollers/STMicroelectronics
+  embedded processors controllers microcontroller units mcus mpus socs: Semiconductors/Integrated Circuits/Microcontrollers
+  embedded processors controllers atmel avr: Semiconductors/Integrated Circuits/Microcontrollers/AVR
+  embedded processors controllers ti mcu: Semiconductors/Integrated Circuits/Microcontrollers/Texas Instruments
+  embedded processors controllers cpld fpga: Semiconductors/Integrated Circuits/Programmable Logic/CPLD FPGA
+  embedded processors controllers nxp mcu: Semiconductors/Integrated Circuits/Microcontrollers/NXP
+  embedded processors controllers silicon labs: Semiconductors/Integrated Circuits/Microcontrollers/Silicon Labs
+  memory eeprom: Semiconductors/Integrated Circuits/Memory/EEPROM
+  memory fram: Semiconductors/Integrated Circuits/Memory/FRAM
+  memory nor flash: Semiconductors/Integrated Circuits/Memory/NOR Flash
+  memory sram: Semiconductors/Integrated Circuits/Memory/SRAM
+  display modules led drivers display drivers led segment display: Optoelectronics/Displays/LED Segment Displays
+  display modules led drivers display drivers led drivers: Optoelectronics/LED Drivers
+  display modules led drivers display drivers led display drivers: Optoelectronics/Display Drivers/LED Display Drivers
+  optoelectronics optocouplers thyristor signal output: Optoelectronics/Optocouplers/Thyristor Output
+  optoelectronics optocouplers logic output: Optoelectronics/Optocouplers/Logic Output
+  rf radio rf transceiver ics: RF & Wireless/RF Transceivers
+  rf radio low noise amplifiers lna rf: RF & Wireless/RF Amplifiers/Low Noise Amplifiers
+  rf radio rf chips: RF & Wireless/RF ICs
+  clock and timing real time clocks rtc: Timing/Clock and Timing/Real-Time Clocks
+  clock and timing timers clock oscillators: Timing/Clock and Timing/Timers & Oscillators
+  capacitors polypropylene film capacitors cbb: Passive Components/Capacitors/Film Capacitors/Polypropylene
+  capacitors suppression capacitors: Passive Components/Capacitors/Safety & Suppression Capacitors
+  capacitors multilayer ceramic capacitors mlcc leaded: Passive Components/Capacitors/Ceramic Capacitors/MLCC Leaded
+  capacitors film capacitors: Passive Components/Capacitors/Film Capacitors
+  resistors through hole resistors: Passive Components/Resistors/Through Hole Resistors
+  resistors variable resistors potentiometers: Passive Components/Resistors/Potentiometers
+  resistors current sense resistors shunt resistors: Passive Components/Resistors/Current Sense Resistors
+  resistors low resistors current sense resistors surface mount: Passive Components/Resistors/Current Sense Resistors/SMD
+  connectors ethernet connectors modular connectors rj45 rj11: Interconnect/Connectors/Ethernet RJ45 RJ11
+  connectors d sub dvi hdmi connectors: Interconnect/Connectors/D-Sub DVI HDMI
+  connectors ac dc power connectors: Interconnect/Connectors/Power Connectors
+  connectors audio connectors: Interconnect/Connectors/Audio Connectors
+  connectors cold pressed terminals: Interconnect/Terminals/Cold-Pressed Terminals
+  connectors circular connectors cable connectors: Interconnect/Connectors/Circular Connectors
+  connectors mezzanine connectors board to board: Interconnect/Connectors/Board to Board
+  connectors banana connectors alligator clips: Interconnect/Connectors/Banana & Alligator Clips
+  sensors magnetic sensors: Sensors/Magnetic Sensors
+  sensors thermostat switches: Sensors/Temperature Sensors/Thermostat Switches
+  sensors touch sensors: Sensors/Touch Sensors
+  sensors current sensors: Sensors/Current Sensors
+  sensors ambient light sensors: Sensors/Optical Sensors/Ambient Light Sensors
+  sensors humidity sensors temperature and humidity sensors: Sensors/Humidity Sensors
+  sensors motion sensors accelerometers: Sensors/Motion Sensors/Accelerometers
+  crystals oscillators resonators ceramic resonators: Timing/Crystals and Oscillators/Ceramic Resonators
+  crystals smd crystal resonators: Timing/Crystals and Oscillators/SMD Crystals
+  logic ics receivers transceivers: Semiconductors/Integrated Circuits/Logic/Receivers & Transceivers
+  logic ics signal switches encoders decoders multiplexers: Semiconductors/Integrated Circuits/Logic/Signal Switches & Multiplexers
+  logic ics registers: Semiconductors/Integrated Circuits/Logic/Registers
+  logic ics latches: Semiconductors/Integrated Circuits/Logic/Latches
+  logic ics translators level shifters: Semiconductors/Integrated Circuits/Logic/Level Shifters
+  logic ics counters dividers: Semiconductors/Integrated Circuits/Logic/Counters & Dividers
+  logic ics monostable multivibrators: Semiconductors/Integrated Circuits/Logic/Monostable Multivibrators
+  power management ics power modules: Semiconductors/Integrated Circuits/Power Management/Power Modules
+  power management ics dropout regulators ldo: Semiconductors/Integrated Circuits/Power Management/Linear Regulators
+  power management ics power management specialized pmic: Semiconductors/Integrated Circuits/Power Management/Specialized PMIC
+  power supply chip dc dc converters: Semiconductors/Integrated Circuits/Power Management/DC-DC Converters
+  power supply chip linear voltage regulators ldo: Semiconductors/Integrated Circuits/Power Management/Linear Regulators
+  amplifiers current sensing amplifiers: Semiconductors/Integrated Circuits/Amplifiers/Current Sense Amplifiers
+  amplifiers differential opamps: Semiconductors/Integrated Circuits/Amplifiers/Differential Amplifiers
+  interface ics interface specialized: Semiconductors/Integrated Circuits/Interface/Specialized Interface
+  interface ics i o expanders: Semiconductors/Integrated Circuits/Interface/IO Expanders
+  interface ics audio interface ics: Semiconductors/Integrated Circuits/Interface/Audio Interface
+  interface ics lvds ics: Semiconductors/Integrated Circuits/Interface/LVDS
+  data converters digital potentiometers: Semiconductors/Integrated Circuits/Data Converters/Digital Potentiometers
+  data converters energy metering ics: Semiconductors/Integrated Circuits/Data Converters/Energy Metering
+  optoelectronics phototransistors: Optoelectronics/Phototransistors
+  optoelectronics solid state relays mos output photomos: Optoelectronics/Solid State Relays/PhotoMOS
+  optoelectronics photodiodes: Optoelectronics/Photodiodes
+  optoelectronics infrared remote receiver: Optoelectronics/Infrared Receivers
+  circuit protection thyristor surge suppressors tss: Circuit Protection/Thyristor Surge Suppressors
+  circuit protection esd and surge protection tvs esd: Circuit Protection/ESD Protection
+  circuit protection glass discharge tube: Circuit Protection/Gas Discharge Tubes
+  tvs fuse board level protection automotive fuses: Circuit Protection/Fuses/Automotive Fuses
+  tvs fuse board level protection tvs: Circuit Protection/TVS Diodes
+  relays signal relays: Electromechanical/Relays/Signal Relays
+  switches tactile switches: Electromechanical/Switches/Tactile Switches
+  switches dip switches: Electromechanical/Switches/DIP Switches
+  switches slide switches: Electromechanical/Switches/Slide Switches
+  switches microswitches: Electromechanical/Switches/Microswitches
+  switches multi directional switches: Electromechanical/Switches/Multi-Directional Switches
+  switches rotary encoders: Electromechanical/Switches/Rotary Encoders
+  switches push switches: Electromechanical/Switches/Push Switches
+  diodes super barrier rectifier sbr: Semiconductors/Discrete Semiconductors/Diodes/Super Barrier Rectifiers
+  diodes schottky diodes: Semiconductors/Discrete Semiconductors/Diodes/Schottky Diodes
+  diodes tvs: Circuit Protection/TVS Diodes
+  triode mos tube transistor mosfets: Semiconductors/Discrete Semiconductors/MOSFETs
+  triode mos tube transistor bipolar transistors bjt: Semiconductors/Discrete Semiconductors/Bipolar Transistors
+  filters emi optimization emi filters lc rc networks: Filters & EMI/EMI Filters
+  filters feed through capacitors: Filters & EMI/Feed Through Capacitors
+  bead filter emi optimization ferrite beads: Filters & EMI/Ferrite Beads
+  inductors coils transformers rj45 transformer: Passive Components/Transformers/RJ45 Transformers
+  inductors coils transformers through hole inductors: Passive Components/Inductors/Through Hole Inductors
+  rf radio rf filters: RF & Wireless/RF Filters
+  rf radio antennas: RF & Wireless/Antennas
+  rf radio rf switches: RF & Wireless/RF Switches
+  memory font chips: Semiconductors/Integrated Circuits/Memory/Font Chips
+  global sourcing parts global sourcing parts: Global Sourcing/Parts
+  transistors darlington transistor arrays: Semiconductors/Discrete Semiconductors/Darlington Transistor Arrays
+  display modules led drivers display drivers lcd drivers: Optoelectronics/Display Drivers/LCD Drivers
+  connectors sd card connectors: Interconnect/Connectors/Card Connectors/SD Card
+  single chip microcomputer microcontroller microcontroller units mcus mpus socs: Semiconductors/Integrated Circuits/Microcontrollers
+  transistors jfets: Semiconductors/Discrete Semiconductors/JFETs
+  transistors transistors npn pnp: Semiconductors/Discrete Semiconductors/Bipolar Transistors
+  rf radio balun: RF & Wireless/Baluns
+  transistors mosfet: Semiconductors/Discrete Semiconductors/MOSFETs
+  iot communication modules rf modules: IoT & Wireless/RF Modules
+  sensors pressure sensors: Sensors/Pressure Sensors
+  sensors reflective optical interrupters: Sensors/Optical Sensors/Reflective Interrupters
+  connectors sim card connectors: Interconnect/Connectors/Card Connectors/SIM Card
+  tvs fuse board level protection fuse holders: Circuit Protection/Fuse Holders
+  embedded processors controllers cypress: Semiconductors/Integrated Circuits/Microcontrollers/Cypress
+  data converters adc dac specialized: Semiconductors/Integrated Circuits/Data Converters/Specialized ADC DAC
+  embedded peripheral ics microprocessor microcontroller supervisors: Semiconductors/Integrated Circuits/Power Management/Supervisors & Reset ICs
+  optoelectronics photoelectric accessories: Optoelectronics/Accessories
+  capacitors ceramic disc capacitors: Passive Components/Capacitors/Ceramic Disc Capacitors
+  circuit protection fuse holders: Circuit Protection/Fuse Holders
+  connectors shunts jumpers: Interconnect/Connectors/Shunts & Jumpers
+  clock and timing clock generators frequency synthesizers pll: Timing/Clock and Timing/Clock Generators PLL
+  operational amplifier comparator operational amplifier: Semiconductors/Integrated Circuits/Amplifiers/Operational Amplifiers
+  interface ics signal buffers repeaters splitters: Semiconductors/Integrated Circuits/Interface/Signal Buffers & Repeaters
+  inductors coils transformers current transformers: Passive Components/Transformers/Current Transformers
+  power management pmic voltage regulators linear low drop out ldo regulators: Semiconductors/Integrated Circuits/Power Management/Linear Regulators
+  sensors angle linear position sensors: Sensors/Position Sensors
+  bead filter emi optimization filters feed through capacitors: Filters & EMI/Feed Through Capacitors
+  connectors banana connectors alligator clips test rings: Interconnect/Connectors/Banana & Alligator Clips
+  sensors ptc thermistors: Sensors/Temperature Sensors/PTC Thermistors
+  interface ics multi protocol transceivers: Semiconductors/Integrated Circuits/Interface/Multi-protocol Transceivers
+  memory ddr sdram: Semiconductors/Integrated Circuits/Memory/DDR SDRAM
+  amplifiers special purpose amplifiers: Semiconductors/Integrated Circuits/Amplifiers/Special Purpose Amplifiers
+  iot communication modules can bus modules: IoT & Wireless/CAN Bus Modules
+  power management ics switching controllers: Semiconductors/Integrated Circuits/Power Management/Switching Controllers
+  connectors battery connectors: Interconnect/Connectors/Battery Connectors
+  memory nand flash: Semiconductors/Integrated Circuits/Memory/NAND Flash
+  iot communication modules wifi modules: IoT & Wireless/WiFi Modules
+  relays automotive relays: Electromechanical/Relays/Automotive Relays
+  connectors wire to board connector: Interconnect/Connectors/Wire To Board
+  transistors thyristors mosfets: Semiconductors/Discrete Semiconductors/MOSFETs
+  inductors coils chokes power inductors: Passive Components/Inductors/Power Inductors
+  connectors housings wire to board wire to wire: Interconnect/Connectors/Rectangular Housings
+  crystal oscillator oscillator resonator crystals: Timing/Crystals and Oscillators/Crystals
+  tvs fuse board level protection esd protection devices: Circuit Protection/ESD Protection
+  interface ics pre ordered chips: Semiconductors/Integrated Circuits/Interface/Pre-ordered Interface ICs
+  power modules isolated power modules: Power Supplies/Power Modules/Isolated Power Modules
+  connectors ffc fpc flat flexible connector assemblies: Interconnect/Connectors/FFC FPC Connectors
+  connectors pre ordered connectors: Interconnect/Connectors/Pre-ordered Connectors
+  key switch tactile switches: Electromechanical/Switches/Tactile Switches
+  tvs fuse board level protection electrostatic and surge protection tvs esd: Circuit Protection/ESD Protection
+  inductors coils transformers pre ordered rlcs: Passive Components/Pre-ordered RLCs
+  inductors coils chokes inductors smd: Passive Components/Inductors/SMD Inductors
+  transistors thyristors bipolar bjt: Semiconductors/Discrete Semiconductors/Bipolar Transistors
+  connectors board to board and backplane connector: Interconnect/Connectors/Board to Board
+  optocoupler led digital tube photoelectric device light emitting diodes led: Optoelectronics/LEDs
+  capacitors polymer aluminum capacitors: Passive Components/Capacitors/Polymer Capacitors
+  connectors connector accessories: Interconnect/Connector Accessories
+  bead filter emi optimization common mode filters: Filters & EMI/Common Mode Filters
+  filters common mode filters: Filters & EMI/Common Mode Filters
+  electronic tools instruments consumables pre ordered products: Tools & Supplies/Pre-ordered Products
+  tvs fuse board level protection resettable fuses: Circuit Protection/Resettable Fuses
+  connectors automobile connectors: Interconnect/Connectors/Automotive Connectors
+  capacitors solid capacitors: Passive Components/Capacitors/Solid Capacitors
+  power supply chip power modules: Semiconductors/Integrated Circuits/Power Management/Power Modules
+  resonators oscillators crystals: Timing/Crystals and Oscillators/Crystals
+  optoelectronics led indication discrete: Optoelectronics/LEDs
+  diodes fast recovery high efficiency diodes: Semiconductors/Discrete Semiconductors/Diodes/Fast Recovery Rectifiers
+  crystal oscillator oscillator resonator oscillators: Timing/Crystals and Oscillators/Oscillators
+  embedded processors controllers pre ordered mcus: Semiconductors/Integrated Circuits/Microcontrollers/Pre-ordered MCUs
+  power management power modules: Semiconductors/Integrated Circuits/Power Management/Power Modules
+  tvs fuse board level protection varistors: Circuit Protection/Varistors
+  connectors ffc cable flexible flat cable: Interconnect/Cables/FFC FPC Cables
+  power supply chip monitors reset circuits: Semiconductors/Integrated Circuits/Power Management/Supervisors & Reset ICs
+  connectors housing contact: Interconnect/Connector Contacts
+  crystals oscillators resonators crystal oscillators: Timing/Crystals and Oscillators/Crystal Oscillators
+  circuit protection electrostatic and surge protection tvs esd: Circuit Protection/ESD Protection
+  connectors rf connectors coaxial connectors: RF & Wireless/RF Connectors
+  power supply chip voltage references: Semiconductors/Integrated Circuits/Power Management/Voltage References
+  power management linear voltage regulators ldo: Semiconductors/Integrated Circuits/Power Management/Linear Regulators
+  power management pmic dc dc converters: Semiconductors/Integrated Circuits/Power Management/DC-DC Converters
+  inductors coils chokes color ring inductors through hole inductors: Passive Components/Inductors/Through Hole Inductors
+  connectors card edge connectors: Interconnect/Connectors/Card Edge Connectors
+  connectors connector shells: Interconnect/Connector Accessories/Shells
+  resistors potentiometers variable resistors: Passive Components/Resistors/Potentiometers
+  power supply chip battery management ics: Semiconductors/Integrated Circuits/Power Management/Battery Management
+  adc dac data conversion analog to digital converters adcs: Semiconductors/Integrated Circuits/Data Converters/ADCs
+  power supply chip gate drive ics: Semiconductors/Integrated Circuits/Power Management/Gate Drivers
+  connectors coaxial connectors rf: RF & Wireless/RF Connectors
+  photoelectric devices light emitting diodes led: Optoelectronics/LEDs
+  nixie tube driver led driver led drivers: Optoelectronics/LED Drivers
+  operational amplifier comparator comparators: Semiconductors/Integrated Circuits/Amplifiers/Comparators
+  inductors coils transformers color ring inductors through hole inductors: Passive Components/Inductors/Through Hole Inductors
+  amplifiers comparators operational amplifier: Semiconductors/Integrated Circuits/Amplifiers/Operational Amplifiers
+  key switch dip switches: Electromechanical/Switches/DIP Switches
+  logic ics buffer driver transceiver: Semiconductors/Integrated Circuits/Logic/Buffers & Drivers
+  capacitors safety capacitors: Passive Components/Capacitors/Safety & Suppression Capacitors
+  audio components vibration motors microphones: Audio Products/Motors & Microphones
+  power management dc dc converters: Semiconductors/Integrated Circuits/Power Management/DC-DC Converters
+  solders accessories batteries pre ordered products: Tools & Supplies/Pre-ordered Products
+  power supply chip ac dc controllers regulators: Semiconductors/Integrated Circuits/Power Management/AC-DC Controllers
+  communication interface chip uart 485 232 analog switches multiplexers: Semiconductors/Integrated Circuits/Interface/Analog Switches & Multiplexers
+  power supply chip power distribution switches: Semiconductors/Integrated Circuits/Power Management/Power Distribution Switches
+  adc dac data conversion digital to analog converters dacs: Semiconductors/Integrated Circuits/Data Converters/DACs
+  radio frequency chip antenna antennas: RF & Wireless/Antennas
+  crystal oscillator oscillator resonator pre programmed oscillators: Timing/Crystals and Oscillators/Pre-programmed Oscillators
+  logic logic gates: Semiconductors/Integrated Circuits/Logic/Gates
+  triode mos tube transistor triacs: Semiconductors/Discrete Semiconductors/Thyristors & TRIACs
+  key switch microswitches: Electromechanical/Switches/Microswitches
+  others new arrivals: Uncategorized/Needs Review
+  power supply chip dc dc controllers: Semiconductors/Integrated Circuits/Power Management/DC-DC Controllers
+  resonators oscillators oscillators: Timing/Crystals and Oscillators/Oscillators
+  communication interface chip uart 485 232 digital isolators: Semiconductors/Integrated Circuits/Interface/Digital Isolators
+  operational amplifier comparator audio power opamps: Semiconductors/Integrated Circuits/Amplifiers/Audio Power Amplifiers
+  wireless: IoT & Wireless/Wireless Modules
+  modules: Embedded Systems/Modules

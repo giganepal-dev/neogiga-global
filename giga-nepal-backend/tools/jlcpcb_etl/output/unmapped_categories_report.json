@@ -1,0 +1,3678 @@
+[
+  {
+    "source_category": "",
+    "count": 100942
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/Microcontrollers (MCU/MPU/SOC)",
+    "count": 617
+  },
+  {
+    "source_category": "Diodes/Switching Diodes",
+    "count": 463
+  },
+  {
+    "source_category": "Circuit Protection/Disposable Fuses",
+    "count": 439
+  },
+  {
+    "source_category": "Triode/MOS Tube/Transistor/Digital Transistors",
+    "count": 377
+  },
+  {
+    "source_category": "Motor Driver ICs/Gate Drivers",
+    "count": 366
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/Precision OpAmps",
+    "count": 363
+  },
+  {
+    "source_category": "Optoisolators/Transistor, Photovoltaic Output Optoisolators",
+    "count": 359
+  },
+  {
+    "source_category": "Power Supply Chip/Motor Driver ICs",
+    "count": 353
+  },
+  {
+    "source_category": "Others/Others",
+    "count": 353
+  },
+  {
+    "source_category": "Connectors/Screw Terminal Blocks",
+    "count": 352
+  },
+  {
+    "source_category": "Sensors/Hall Sensor",
+    "count": 345
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/Current-Sensing Amplifiers",
+    "count": 337
+  },
+  {
+    "source_category": "Power Supply Chip/Power Management Specialized - PMIC",
+    "count": 327
+  },
+  {
+    "source_category": "Transistors/Thyristors/Digital Transistors",
+    "count": 325
+  },
+  {
+    "source_category": "Transistors/Thyristors/IGBT Transistors / Modules",
+    "count": 311
+  },
+  {
+    "source_category": "Connectors/DC Power Connectors",
+    "count": 309
+  },
+  {
+    "source_category": "Triode/MOS Tube/Transistor/Pre-ordered transistors",
+    "count": 304
+  },
+  {
+    "source_category": "Silicon Carbide (SiC) Devices/SiC Diodes",
+    "count": 303
+  },
+  {
+    "source_category": "Transistors/Thyristors/Thyristors (SCR)/Modules",
+    "count": 277
+  },
+  {
+    "source_category": "LED Drivers/LED Drivers",
+    "count": 270
+  },
+  {
+    "source_category": "Logic/Buffers, Drivers, Receivers, Transceivers",
+    "count": 263
+  },
+  {
+    "source_category": "Power Management (PMIC)/Voltage Reference",
+    "count": 260
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Optocouplers - Phototransistor Output",
+    "count": 256
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/RS-485/RS-422 ICs",
+    "count": 254
+  },
+  {
+    "source_category": "Key/Switch/Slide Switches",
+    "count": 253
+  },
+  {
+    "source_category": "Power Management (PMIC)/AC-DC Controllers And Regulators",
+    "count": 253
+  },
+  {
+    "source_category": "Connectors/Thimble/Copper Rod/Test Ring",
+    "count": 244
+  },
+  {
+    "source_category": "Optocoupler/Transistor Output Optocoupler",
+    "count": 240
+  },
+  {
+    "source_category": "ADC/DAC/Data Conversion/Digital Potentiometers",
+    "count": 231
+  },
+  {
+    "source_category": "Diodes/Fast Recovery/High Efficiency Diode",
+    "count": 228
+  },
+  {
+    "source_category": "Connectors/Edgeboard Connectors",
+    "count": 225
+  },
+  {
+    "source_category": "Connectors/D-Sub / VGA Connectors",
+    "count": 225
+  },
+  {
+    "source_category": "Connectors/D-Sub / VGA Connector",
+    "count": 222
+  },
+  {
+    "source_category": "Connectors/Pogo Pin Spring Probe Connector",
+    "count": 220
+  },
+  {
+    "source_category": "Filters/Ferrite Beads",
+    "count": 218
+  },
+  {
+    "source_category": "Power Management/Monitors & Reset Circuits",
+    "count": 213
+  },
+  {
+    "source_category": "TVS/Fuse/Board Level Protection/Surge Suppressors",
+    "count": 212
+  },
+  {
+    "source_category": "Audio Products/Micromotors/Microphones",
+    "count": 209
+  },
+  {
+    "source_category": "Optoelectronics/Infrared LED Emitters",
+    "count": 209
+  },
+  {
+    "source_category": "Interface/Analog Switches, Multiplexers",
+    "count": 208
+  },
+  {
+    "source_category": "RF And Wireless/Antennas",
+    "count": 207
+  },
+  {
+    "source_category": "Connectors/Button And Strip Battery Connector",
+    "count": 203
+  },
+  {
+    "source_category": "Power Modules/DC-DC Power Modules",
+    "count": 200
+  },
+  {
+    "source_category": "Interface/RS-485 / RS-422 ICs",
+    "count": 198
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/CAN ICs",
+    "count": 194
+  },
+  {
+    "source_category": "Signal Isolation Devices/Digital Isolators",
+    "count": 194
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Transceiver ICs",
+    "count": 190
+  },
+  {
+    "source_category": "Circuit Protection/Gas Discharge Tube Arresters (GDT)",
+    "count": 190
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/Programmable Logic Device (CPLDs/FPGAs)",
+    "count": 189
+  },
+  {
+    "source_category": "TVS/Fuse/Board Level Protection/Gas Discharge Tube (GDT)",
+    "count": 188
+  },
+  {
+    "source_category": "Connectors/PCB Welding Terminal",
+    "count": 187
+  },
+  {
+    "source_category": "Connectors/Connector Housings",
+    "count": 186
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Comparators",
+    "count": 184
+  },
+  {
+    "source_category": "Silicon Carbide (SiC) Devices/Silicon Carbide Field Effect Transistor (MOSFET)",
+    "count": 179
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/Pulse Transformers(LAN)",
+    "count": 179
+  },
+  {
+    "source_category": "Power Management (PMIC)/Battery Management",
+    "count": 179
+  },
+  {
+    "source_category": "Clock and Timing/Clock Buffers, Drivers",
+    "count": 178
+  },
+  {
+    "source_category": "Power Management/Gate Drive ICs",
+    "count": 178
+  },
+  {
+    "source_category": "Power Management (PMIC)/Supervisor And Reset ICs",
+    "count": 178
+  },
+  {
+    "source_category": "Magnetic Sensors/Hall Switches",
+    "count": 175
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/Balun",
+    "count": 173
+  },
+  {
+    "source_category": "Key/Switch/Rotary Encoders",
+    "count": 173
+  },
+  {
+    "source_category": "Audio Components/Vibration Motors/Buzzers",
+    "count": 170
+  },
+  {
+    "source_category": "Key/Switch/Push Switches",
+    "count": 166
+  },
+  {
+    "source_category": "Audio Components/Vibration Motors/Speakers",
+    "count": 160
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Interface - Specialized",
+    "count": 159
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Ethernet ICs",
+    "count": 158
+  },
+  {
+    "source_category": "Audio Products / Vibration Motors/Speakers",
+    "count": 157
+  },
+  {
+    "source_category": "Power Management (PMIC)/Power Distribution Switches",
+    "count": 156
+  },
+  {
+    "source_category": "Logic/Inverters",
+    "count": 155
+  },
+  {
+    "source_category": "Displays/LED Segment Displays",
+    "count": 153
+  },
+  {
+    "source_category": "RF And Wireless/RF Cables",
+    "count": 150
+  },
+  {
+    "source_category": "Single Chip Microcomputer/Microcontroller/Digital Signal Processors / Controllers (DSPs/DSCs)",
+    "count": 148
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/USB ICs",
+    "count": 147
+  },
+  {
+    "source_category": "Triode/MOS Tube/Transistor/IGBTs",
+    "count": 147
+  },
+  {
+    "source_category": "Magnetic Sensors/Current Sensors",
+    "count": 146
+  },
+  {
+    "source_category": "RTC/Clock Chip/Clock Generators / Frequency Synthesizers / PLL",
+    "count": 145
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Infrared (IR) LEDs",
+    "count": 144
+  },
+  {
+    "source_category": "Wire/Cable/DataCable/Jumper/EnameledWire/PrePressedWiring",
+    "count": 141
+  },
+  {
+    "source_category": "IoT/Communication Modules/LoRa Modules",
+    "count": 140
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/RS232 ICs",
+    "count": 139
+  },
+  {
+    "source_category": "Logic ICs/Shifting Register",
+    "count": 139
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/FET InputAmplifiers",
+    "count": 135
+  },
+  {
+    "source_category": "Connectors/SD Card / Memory Card Connector",
+    "count": 135
+  },
+  {
+    "source_category": "Optoisolators/Solid State Relays (MOS Output)",
+    "count": 133
+  },
+  {
+    "source_category": "Circuit Protection/Thermal Fuses (TCO)",
+    "count": 131
+  },
+  {
+    "source_category": "Switches/Limit Switches",
+    "count": 129
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Precision Op Amps",
+    "count": 127
+  },
+  {
+    "source_category": "RF & Radio/RF Amplifiers",
+    "count": 122
+  },
+  {
+    "source_category": "Switches/Pushbutton Switches",
+    "count": 121
+  },
+  {
+    "source_category": "Single Chip Microcomputer/Microcontroller/Programmable Logic Device (CPLDs/FPGAs)",
+    "count": 118
+  },
+  {
+    "source_category": "Switches/Rocker Switches",
+    "count": 116
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Filters",
+    "count": 116
+  },
+  {
+    "source_category": "ADC/DAC/Data Conversion/ADC/DAC - Specialized",
+    "count": 116
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Optocouplers - Logic Output",
+    "count": 115
+  },
+  {
+    "source_category": "Magnetic Sensors/Linear Hall Sensors",
+    "count": 115
+  },
+  {
+    "source_category": "Optoelectronics/RGB LEDs(Built-In IC)",
+    "count": 114
+  },
+  {
+    "source_category": "Data Acquisition/Analog To Digital Converters (ADC)",
+    "count": 111
+  },
+  {
+    "source_category": "Power Management/AC-DC Controllers & Regulators",
+    "count": 110
+  },
+  {
+    "source_category": "RF & Radio/SAW Filters",
+    "count": 109
+  },
+  {
+    "source_category": "Bead/Filter/EMI Optimization/Ceramic Filters",
+    "count": 109
+  },
+  {
+    "source_category": "Optocoupler/Logic Output Optocoupler",
+    "count": 108
+  },
+  {
+    "source_category": "Transistors/Pre-ordered transistors",
+    "count": 105
+  },
+  {
+    "source_category": "Crystals, Oscillators, Resonators/Temperature Compensated Crystal Oscillators (TCXO)",
+    "count": 105
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/I/O Expanders",
+    "count": 104
+  },
+  {
+    "source_category": "Power Modules/AC-DC Power Modules",
+    "count": 104
+  },
+  {
+    "source_category": "Switches/Toggle Switches",
+    "count": 102
+  },
+  {
+    "source_category": "Consumables/Network Cables",
+    "count": 102
+  },
+  {
+    "source_category": "Transistors/Thyristors/Bipolar Transistors - BJT",
+    "count": 101
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/Radio Frequency Cable",
+    "count": 100
+  },
+  {
+    "source_category": "RF And Wireless/RF Filters",
+    "count": 100
+  },
+  {
+    "source_category": "Connectors/Blade / Shrapnel Contact Battery Connectors",
+    "count": 99
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/Differential OpAmps",
+    "count": 98
+  },
+  {
+    "source_category": "Capacitors/Through Hole Ceramic Capacitors",
+    "count": 98
+  },
+  {
+    "source_category": "Single Chip Microcomputer/Microcontroller/Pre-ordered MCUs",
+    "count": 97
+  },
+  {
+    "source_category": "Optoisolators/Logic Output Optoisolators",
+    "count": 97
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Audio Amplifiers",
+    "count": 95
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Amplifiers",
+    "count": 94
+  },
+  {
+    "source_category": "Audio Products / Vibration Motors/Buzzers",
+    "count": 94
+  },
+  {
+    "source_category": "IoT/Communication Modules/Bluetooth Modules",
+    "count": 93
+  },
+  {
+    "source_category": "Power Management/Power Distribution Switches",
+    "count": 93
+  },
+  {
+    "source_category": "Connectors/Feed-Voltage/Radio-Frequency Insulator",
+    "count": 93
+  },
+  {
+    "source_category": "TVS/Fuse/Board Level Protection/Thyristor Surge Suppressors (TSS)",
+    "count": 92
+  },
+  {
+    "source_category": "Industrial Control Electrical/Power Supply Module",
+    "count": 92
+  },
+  {
+    "source_category": "Optocoupler/Thyristor Output Optocoupler",
+    "count": 92
+  },
+  {
+    "source_category": "Interface/RS232 ICs",
+    "count": 92
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Audio Interface ICs",
+    "count": 90
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/SMD Round Nut",
+    "count": 90
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/Other Processors and Microcontrollers (MCUs)",
+    "count": 88
+  },
+  {
+    "source_category": "RTC/Clock Chip/Real-time Clocks (RTC)",
+    "count": 88
+  },
+  {
+    "source_category": "Sensors/Position Sensor",
+    "count": 88
+  },
+  {
+    "source_category": "Logic/Counters, Dividers",
+    "count": 88
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/Instrumentation OpAmps",
+    "count": 87
+  },
+  {
+    "source_category": "Power Management (PMIC)/Power Management - Specialized",
+    "count": 86
+  },
+  {
+    "source_category": "Old Batch/Old Batch",
+    "count": 85
+  },
+  {
+    "source_category": "Optoisolators/Triac, SCR Output Optoisolators",
+    "count": 83
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Pre-ordered Chips",
+    "count": 81
+  },
+  {
+    "source_category": "Crystal Oscillator/Oscillator/Resonator/Temperature Compensated Crystal Oscillators (TCXOs)",
+    "count": 79
+  },
+  {
+    "source_category": "Inductors/Coils/Transformers/Accessories - Inductors/Transformers",
+    "count": 79
+  },
+  {
+    "source_category": "Communication Interface Chip/Analog Switches / Multiplexers",
+    "count": 79
+  },
+  {
+    "source_category": "IoT/Communication Modules/RS485 Bus Modules",
+    "count": 78
+  },
+  {
+    "source_category": "RTC/Clock Chip/Timers / Clock Oscillators",
+    "count": 77
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Chips",
+    "count": 77
+  },
+  {
+    "source_category": "Power Management/Battery Management ICs",
+    "count": 77
+  },
+  {
+    "source_category": "Power Management/Power Management Specialized - PMIC",
+    "count": 76
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/Power Transformers",
+    "count": 76
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Switches",
+    "count": 75
+  },
+  {
+    "source_category": "Connectors/DC Power Connector",
+    "count": 75
+  },
+  {
+    "source_category": "RTC/Clock Chip/Clock Buffers, Drivers",
+    "count": 74
+  },
+  {
+    "source_category": "Nixie Tube Driver/LED Driver/Led Segment Display",
+    "count": 74
+  },
+  {
+    "source_category": "RF And Wireless/Radio Frequency Cable",
+    "count": 74
+  },
+  {
+    "source_category": "Memory/SDRAM",
+    "count": 73
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Solid State Relays - MOS Output (PhotoMOS)",
+    "count": 73
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/LVDS ICs",
+    "count": 73
+  },
+  {
+    "source_category": "RF And Wireless/Balun",
+    "count": 73
+  },
+  {
+    "source_category": "Terminal/PCB Welding Terminal",
+    "count": 71
+  },
+  {
+    "source_category": "Power Management/Voltage References",
+    "count": 70
+  },
+  {
+    "source_category": "Logic/Flip Flops",
+    "count": 69
+  },
+  {
+    "source_category": "Logic/Signal Switches, Multiplexers, Decoders",
+    "count": 69
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/SAW Filters",
+    "count": 67
+  },
+  {
+    "source_category": "Logic/Translators, Level Shifters",
+    "count": 67
+  },
+  {
+    "source_category": "Nixie Tube Driver/LED Driver/LCD Drivers",
+    "count": 66
+  },
+  {
+    "source_category": "Others",
+    "count": 65
+  },
+  {
+    "source_category": "Sensors/Vibration Sensors",
+    "count": 64
+  },
+  {
+    "source_category": "Switches/Switch Accessories / Caps",
+    "count": 63
+  },
+  {
+    "source_category": "Bead/Filter/EMI Optimization/EMI Filters (LC, RC Networks)",
+    "count": 62
+  },
+  {
+    "source_category": "Clock/Timing/Real Time Clocks",
+    "count": 62
+  },
+  {
+    "source_category": "Interface/CAN Transceivers",
+    "count": 61
+  },
+  {
+    "source_category": "Diodes/Avalanche Diodes",
+    "count": 60
+  },
+  {
+    "source_category": "IoT/Communication Modules/2G/3G/4G/5G Modules",
+    "count": 60
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Video Interface ICs",
+    "count": 60
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/Current Sense Transformers",
+    "count": 60
+  },
+  {
+    "source_category": "Sensors/Gas Sensors",
+    "count": 59
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Photodiodes",
+    "count": 59
+  },
+  {
+    "source_category": "hardware/fasteners/sealing/SMD round nut",
+    "count": 59
+  },
+  {
+    "source_category": "Connectors/IC / Transistor Socket",
+    "count": 59
+  },
+  {
+    "source_category": "Motor Driver ICs/Brushed DC Motor Drivers",
+    "count": 59
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Current Sense Amplifiers",
+    "count": 59
+  },
+  {
+    "source_category": "Connectors/Audio Connectors (Headphones)",
+    "count": 59
+  },
+  {
+    "source_category": "Switches/Rotary Switches",
+    "count": 58
+  },
+  {
+    "source_category": "Triode/MOS Tube/Transistor/Darlington Transistor Arrays",
+    "count": 58
+  },
+  {
+    "source_category": "Sensors/Sensor Modules",
+    "count": 58
+  },
+  {
+    "source_category": "Terminal/Ring Terminal",
+    "count": 58
+  },
+  {
+    "source_category": "Key/Switch/Rocker Switches",
+    "count": 57
+  },
+  {
+    "source_category": "Resonators/Oscillators/Pre-Programmed Oscillators",
+    "count": 57
+  },
+  {
+    "source_category": "Communication Interface Chip/RS-485/RS-422 ICs",
+    "count": 57
+  },
+  {
+    "source_category": "Inductors/Coils/Transformers/Power Transformer",
+    "count": 55
+  },
+  {
+    "source_category": "IoT/Communication Modules/Ethernet Modules",
+    "count": 55
+  },
+  {
+    "source_category": "Key/Switch/Toggle Switches",
+    "count": 55
+  },
+  {
+    "source_category": "Interface ICs/Video Interface ICs",
+    "count": 54
+  },
+  {
+    "source_category": "Connectors/PCI / PCIe Connector",
+    "count": 54
+  },
+  {
+    "source_category": "Relays/Reed Relays",
+    "count": 53
+  },
+  {
+    "source_category": "Connectors/Audio Connector (Headphone)",
+    "count": 53
+  },
+  {
+    "source_category": "Photoelectric Devices/Infrared (IR) LEDs",
+    "count": 53
+  },
+  {
+    "source_category": "Crystals/Oscillators/Resonators/Temperature Compensated Crystal Oscillators (TCXOs)",
+    "count": 52
+  },
+  {
+    "source_category": "Optocoupler/Solid State Relay (MOS Output)",
+    "count": 52
+  },
+  {
+    "source_category": "Optoelectronics/RGB LEDs",
+    "count": 52
+  },
+  {
+    "source_category": "Industrial Control Electrical/AntennaShrapnel",
+    "count": 52
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Power Splitters / Combiners",
+    "count": 50
+  },
+  {
+    "source_category": "RF And Wireless/SAW Filters",
+    "count": 50
+  },
+  {
+    "source_category": "Connectors/Hard Disk Connector (SAS/SATA/M.2)",
+    "count": 50
+  },
+  {
+    "source_category": "Capacitors/Hybrid Aluminum Electrolytic Capacitors",
+    "count": 49
+  },
+  {
+    "source_category": "Crystals, Oscillators, Resonators/Voltage-Controlled Crystal Oscillators (VCXOs)",
+    "count": 49
+  },
+  {
+    "source_category": "Communication Interface Chip/RS232 ICs",
+    "count": 48
+  },
+  {
+    "source_category": "RF & Radio/RF Detectors",
+    "count": 47
+  },
+  {
+    "source_category": "Transistors/Thyristors/Darlington Transistor Arrays",
+    "count": 47
+  },
+  {
+    "source_category": "Logic/Shift Registers",
+    "count": 47
+  },
+  {
+    "source_category": "Audio Products / Vibration Motors/Microphones",
+    "count": 47
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Serializers / Deserializers",
+    "count": 46
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/HDSC",
+    "count": 45
+  },
+  {
+    "source_category": "Optoelectronics/Chip On Board (COB) Light Sources",
+    "count": 45
+  },
+  {
+    "source_category": "ADC/DAC/Data Conversion/Analog Front End (AFEs)",
+    "count": 45
+  },
+  {
+    "source_category": "Resistors/Aluminum Case/Porcelain Tube Resistance",
+    "count": 45
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Photoelectric Accessories",
+    "count": 44
+  },
+  {
+    "source_category": "LED Drivers/LCD Drivers",
+    "count": 43
+  },
+  {
+    "source_category": "Others/ ",
+    "count": 42
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Phototransistors",
+    "count": 42
+  },
+  {
+    "source_category": "Connectors/Radio-Frequency Insulator",
+    "count": 42
+  },
+  {
+    "source_category": "Crystals, Oscillators, Resonators/Programmable Oscillators",
+    "count": 42
+  },
+  {
+    "source_category": "Connectors/AC Power Connectors",
+    "count": 42
+  },
+  {
+    "source_category": "Resonators/Oscillators/Temperature Compensated Crystal Oscillators (TCXOs)",
+    "count": 41
+  },
+  {
+    "source_category": "RF And Wireless/RF Transceiver ICs",
+    "count": 41
+  },
+  {
+    "source_category": "Data Acquisition/ADCs/DACs - Special Purpose",
+    "count": 41
+  },
+  {
+    "source_category": "Triode/MOS Tube/Transistor/Darlington Transistors",
+    "count": 40
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Analog Switches - Special Purpose",
+    "count": 39
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Signal Buffers, Repeaters, Splitters",
+    "count": 39
+  },
+  {
+    "source_category": "Sensors/Attitude Sensor/Gyroscope",
+    "count": 39
+  },
+  {
+    "source_category": "Communication Interface Chip/CAN Transceivers",
+    "count": 39
+  },
+  {
+    "source_category": "Circuit Protection/Fuseholders",
+    "count": 39
+  },
+  {
+    "source_category": "Power Management (PMIC)/Isolators - Gate Drivers",
+    "count": 39
+  },
+  {
+    "source_category": "Diodes/Diodes - Variable Capacitance",
+    "count": 38
+  },
+  {
+    "source_category": "Relays/Relay Sockets & Accessories",
+    "count": 38
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Optocouplers - Thyristor Signal Output",
+    "count": 37
+  },
+  {
+    "source_category": "Power Management/Motor Driver ICs",
+    "count": 37
+  },
+  {
+    "source_category": "Optocouplers/Photocouplers/Transistor Output Optocoupler",
+    "count": 37
+  },
+  {
+    "source_category": "Interface ICs/Serializers / Deserializers",
+    "count": 36
+  },
+  {
+    "source_category": "Optoelectronics/Ultra Violet LEDs",
+    "count": 35
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Photoelectric Thyristor (Solid State Relays)",
+    "count": 35
+  },
+  {
+    "source_category": "RF And Wireless/RF Power Splitters / Combiners",
+    "count": 35
+  },
+  {
+    "source_category": "Connectors/HDMI Connectors",
+    "count": 35
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/RENESAS",
+    "count": 34
+  },
+  {
+    "source_category": "Circuit Protection/Thermal Cutoffs (TCO)",
+    "count": 34
+  },
+  {
+    "source_category": "RF & Radio/Diplexers",
+    "count": 34
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/Video Amplifiers",
+    "count": 34
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/LIN Transceivers",
+    "count": 34
+  },
+  {
+    "source_category": "Interface ICs/LIN Transceivers",
+    "count": 33
+  },
+  {
+    "source_category": "Audio Components/Vibration Motors/MEMS Microphones",
+    "count": 33
+  },
+  {
+    "source_category": "Key/Switch/Rotary Switches",
+    "count": 33
+  },
+  {
+    "source_category": "Triode/MOS Tube/Transistor/Intelligent Power Modules (IPM)",
+    "count": 33
+  },
+  {
+    "source_category": "Transistors/Thyristors/Darlington Transistors",
+    "count": 33
+  },
+  {
+    "source_category": "Audio Products / Vibration Motors/MEMS Microphones",
+    "count": 33
+  },
+  {
+    "source_category": "Motor Driver ICs/Brushless DC (BLDC) Motor Driver",
+    "count": 33
+  },
+  {
+    "source_category": "Motor Driver ICs/Stepper Motor Driver",
+    "count": 33
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/Digital Signal Processors (DSP/DSC)",
+    "count": 33
+  },
+  {
+    "source_category": "Inductors/Coils/Transformers/Pulse Transformers",
+    "count": 32
+  },
+  {
+    "source_category": "Display Screen/LED Segment Displays",
+    "count": 32
+  },
+  {
+    "source_category": "RF And Wireless/RF Amplifiers",
+    "count": 32
+  },
+  {
+    "source_category": "Interface/Ethernet Transceivers",
+    "count": 32
+  },
+  {
+    "source_category": "Filters/Ceramic Filters",
+    "count": 32
+  },
+  {
+    "source_category": "Circuit Protection/Semiconductor Discharge Tubes (TSS)",
+    "count": 32
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/ADI",
+    "count": 31
+  },
+  {
+    "source_category": "Logic ICs/Special Logic ICs",
+    "count": 31
+  },
+  {
+    "source_category": "Sensors/Image Sensors",
+    "count": 31
+  },
+  {
+    "source_category": "RF & Radio/RF attenuator",
+    "count": 31
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/Isolation Amplifiers",
+    "count": 31
+  },
+  {
+    "source_category": "Data Acquisition/Digital To Analog Converters (DAC)",
+    "count": 31
+  },
+  {
+    "source_category": "Circuit Protection/Surge Suppressors",
+    "count": 30
+  },
+  {
+    "source_category": "Data Converters/Analog Front End (AFEs)",
+    "count": 30
+  },
+  {
+    "source_category": "RF & Radio/RF Misc ICs and Modules",
+    "count": 30
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Coupler",
+    "count": 30
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Spring Plates Nut",
+    "count": 30
+  },
+  {
+    "source_category": "RF And Wireless/RF Switches",
+    "count": 30
+  },
+  {
+    "source_category": "Interface/Interface - Specialized",
+    "count": 30
+  },
+  {
+    "source_category": "Diodes/Super Barrier Rectifiers (SBR)",
+    "count": 30
+  },
+  {
+    "source_category": "Sensors/Ultrasonic Receivers, Transmitters",
+    "count": 29
+  },
+  {
+    "source_category": "Sensors/Proximity Sensors",
+    "count": 29
+  },
+  {
+    "source_category": "Data Converters/Touch Screen Controllers",
+    "count": 29
+  },
+  {
+    "source_category": "Audio Components/Vibration Motors/Vibration Motor",
+    "count": 29
+  },
+  {
+    "source_category": "TVS/Fuse/Board Level Protection/Glass Discharge Tube",
+    "count": 29
+  },
+  {
+    "source_category": "Industrial Control Electrical/Plug",
+    "count": 29
+  },
+  {
+    "source_category": "Optocouplers/Photocouplers/Solid State Relay (MOS Output)",
+    "count": 29
+  },
+  {
+    "source_category": "Logic/Gates",
+    "count": 29
+  },
+  {
+    "source_category": "Interface/Audio Interface ICs",
+    "count": 29
+  },
+  {
+    "source_category": "Sensors/Specialized Sensors",
+    "count": 28
+  },
+  {
+    "source_category": "RF & Radio/RF Mixers",
+    "count": 28
+  },
+  {
+    "source_category": "Sensors/Temperature and Humidity Sensor",
+    "count": 28
+  },
+  {
+    "source_category": "Key/Switch/Switch accessories or Caps",
+    "count": 28
+  },
+  {
+    "source_category": "Bead/Filter/EMI Optimization/Clamp Filters (Ferrite Core with Case)",
+    "count": 28
+  },
+  {
+    "source_category": "others/others",
+    "count": 28
+  },
+  {
+    "source_category": "Optocoupler/Solid State Relay (Thyristor Output)",
+    "count": 28
+  },
+  {
+    "source_category": "Optoelectronics/Infrared Remote Receiver (IRM)",
+    "count": 28
+  },
+  {
+    "source_category": "Optoisolators/Gate Drive Optocoupler",
+    "count": 28
+  },
+  {
+    "source_category": "Crystal Oscillator/Oscillator/Resonator/Ceramic Resonators",
+    "count": 27
+  },
+  {
+    "source_category": "Sensors/Temperature And Humidity Sensor",
+    "count": 27
+  },
+  {
+    "source_category": "Silicon Carbide (SiC) Devices/SiC MOSFETs",
+    "count": 27
+  },
+  {
+    "source_category": "Optoelectronics/Reflective Optical Interrupters",
+    "count": 27
+  },
+  {
+    "source_category": "Circuit Protection/Surge Protection Devices (SPDs)",
+    "count": 27
+  },
+  {
+    "source_category": "Power Management (PMIC)/Synchronous Rectifier Controllers",
+    "count": 27
+  },
+  {
+    "source_category": "Functional Modules/Modules",
+    "count": 26
+  },
+  {
+    "source_category": "Photoelectric Devices/RGB LEDs",
+    "count": 26
+  },
+  {
+    "source_category": "Capacitors/Capacitor Networks, Arrays",
+    "count": 25
+  },
+  {
+    "source_category": "Interface ICs/Telecommunication Interface ICs",
+    "count": 25
+  },
+  {
+    "source_category": "Data Converters/Direct Digital Synthesis (DDS)",
+    "count": 25
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/Diplexers",
+    "count": 25
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/Low Noise Amplifiers (LNA) - RF",
+    "count": 25
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/Programmable/Variable Gain Amplifiers (PGAs/VGAs)",
+    "count": 25
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Mixers",
+    "count": 25
+  },
+  {
+    "source_category": "Audio Products/Motors/Speakers",
+    "count": 24
+  },
+  {
+    "source_category": "Logic/Buffer/Driver/Transceiver",
+    "count": 24
+  },
+  {
+    "source_category": "Optoelectronics/Photointerrupters - Slot Type - Transistor Output",
+    "count": 24
+  },
+  {
+    "source_category": "Clock/Timing/Timers / Counters",
+    "count": 24
+  },
+  {
+    "source_category": "RF And Wireless/RF Directional Coupler",
+    "count": 24
+  },
+  {
+    "source_category": "Diodes/Diacs Trigger Diode",
+    "count": 23
+  },
+  {
+    "source_category": "Optoelectronics/Fiber Optical Transceivers",
+    "count": 23
+  },
+  {
+    "source_category": "Sensors/Photointerrupters - Slot Type - Logic Output",
+    "count": 23
+  },
+  {
+    "source_category": "Amplifiers/Video Amplifiers",
+    "count": 23
+  },
+  {
+    "source_category": "Interface ICs/UART",
+    "count": 23
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/Special Purpose Amplifiers",
+    "count": 23
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Ultra Violet LEDs",
+    "count": 23
+  },
+  {
+    "source_category": "Industrial Control Electrical/Fuse",
+    "count": 23
+  },
+  {
+    "source_category": "Bead/Filter/EMI Optimization/Clamp Filters (Ferrite Core With Case)",
+    "count": 23
+  },
+  {
+    "source_category": "Interface/Video Interface ICs",
+    "count": 23
+  },
+  {
+    "source_category": "Amplifiers/Comparators/FET Input Amplifiers",
+    "count": 23
+  },
+  {
+    "source_category": "Optoelectronics/Photoelectric Thyristor (Solid State Relays)",
+    "count": 22
+  },
+  {
+    "source_category": "Memory/Non-Volatile Memory (ROM)",
+    "count": 22
+  },
+  {
+    "source_category": "Nixie Tube Driver/LED Driver/LED Display Drivers",
+    "count": 22
+  },
+  {
+    "source_category": "LED/Photoelectric Devices/Light Emitting Diodes (LED)",
+    "count": 22
+  },
+  {
+    "source_category": "Logic/Latches",
+    "count": 22
+  },
+  {
+    "source_category": "Sensors/Position Sensors",
+    "count": 22
+  },
+  {
+    "source_category": "Sensors/Attitude Sensors",
+    "count": 21
+  },
+  {
+    "source_category": "Sensors/Human Body Sensing Sensor",
+    "count": 21
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Press Spring",
+    "count": 21
+  },
+  {
+    "source_category": "Gallium Nitride (GaN) Devices/GaN Transistors(GaN HEMT)",
+    "count": 21
+  },
+  {
+    "source_category": "Clock And Timing/Clock Buffers/Drivers/Distributions",
+    "count": 21
+  },
+  {
+    "source_category": "Interface/I/O Expanders",
+    "count": 21
+  },
+  {
+    "source_category": "Educational Kits/Modules",
+    "count": 21
+  },
+  {
+    "source_category": "Sensors/Accelerometers",
+    "count": 21
+  },
+  {
+    "source_category": "Industrial Control Electrical/Power Supply Module,Power Supplies",
+    "count": 21
+  },
+  {
+    "source_category": "RF And Wireless/RF Attenuators",
+    "count": 21
+  },
+  {
+    "source_category": "Relays/Magnetic Latching Relays",
+    "count": 20
+  },
+  {
+    "source_category": "Amplifiers/General Purpose Amplifiers",
+    "count": 20
+  },
+  {
+    "source_category": "Clock and Timing/Clock / Timing - Application Specific",
+    "count": 20
+  },
+  {
+    "source_category": "Power Supply Chip/Power Over Ethernet Controllers",
+    "count": 20
+  },
+  {
+    "source_category": "Functional Modules/LCD Displays Modules",
+    "count": 20
+  },
+  {
+    "source_category": "Clock And Timing/Timers",
+    "count": 20
+  },
+  {
+    "source_category": "Interface/USB Converters",
+    "count": 20
+  },
+  {
+    "source_category": "Optoisolators/Solid State Relays (Triac Output)",
+    "count": 20
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/Infineon",
+    "count": 19
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/Digital Signal Processors / Controllers (DSPs/DSCs)",
+    "count": 19
+  },
+  {
+    "source_category": "Switches/Push Switches - Horizontal Type",
+    "count": 19
+  },
+  {
+    "source_category": "Memory/eMMC",
+    "count": 19
+  },
+  {
+    "source_category": "Resonators/Oscillators/Voltage-Controlled Crystal Oscillators (VCXOs)",
+    "count": 19
+  },
+  {
+    "source_category": "Audio Products/Motors/Buzzers",
+    "count": 19
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/RJ45 Transformer",
+    "count": 19
+  },
+  {
+    "source_category": "Inductors/Coils/Transformers/Wireless Charging Coils",
+    "count": 18
+  },
+  {
+    "source_category": "Triode/MOS Tube/Transistor/JFETs",
+    "count": 18
+  },
+  {
+    "source_category": "Bead/Filter/EMI Optimization/Switched Capacitor Filters",
+    "count": 18
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Security Verification / Encryption ICs",
+    "count": 18
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Attenuator",
+    "count": 18
+  },
+  {
+    "source_category": "Communication Interface Chip/Interface - Specialized",
+    "count": 18
+  },
+  {
+    "source_category": "Isolators/Digital Isolators",
+    "count": 18
+  },
+  {
+    "source_category": "Optoelectronics/Ultraviolet LEDs (UVLED)",
+    "count": 18
+  },
+  {
+    "source_category": "RF And Wireless/RFID ICs",
+    "count": 18
+  },
+  {
+    "source_category": "Connectors/Optical Module Connector",
+    "count": 18
+  },
+  {
+    "source_category": "Terminal/SMD Quick Terminal",
+    "count": 18
+  },
+  {
+    "source_category": "IoT/Communication Modules/ZigBee Modules",
+    "count": 17
+  },
+  {
+    "source_category": "IoT/Communication Modules/Satellite Positioning Modules",
+    "count": 17
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Infrared remote receiver",
+    "count": 17
+  },
+  {
+    "source_category": "LED Drivers/Digital Tube Drivers",
+    "count": 17
+  },
+  {
+    "source_category": "Sensors/Biometric Sensors",
+    "count": 16
+  },
+  {
+    "source_category": "Interface ICs/Security Verification / Encryption ICs",
+    "count": 16
+  },
+  {
+    "source_category": "IoT/Communication Modules/RS232 Bus Modules",
+    "count": 16
+  },
+  {
+    "source_category": "ADC/DAC/Data Conversion/Energy Metering ICs",
+    "count": 16
+  },
+  {
+    "source_category": "RTC/Clock Chip/Real-Time Clocks (RTC)",
+    "count": 16
+  },
+  {
+    "source_category": "Connectors/AC Power Connector",
+    "count": 16
+  },
+  {
+    "source_category": "Transistors/Thyristors/IGBTs",
+    "count": 16
+  },
+  {
+    "source_category": "Capacitors/Trimmers, Variable Capacitors",
+    "count": 15
+  },
+  {
+    "source_category": "Optoelectronics/Laser Diodes",
+    "count": 15
+  },
+  {
+    "source_category": "Key/Switch/Push Switches - Horizontal Type",
+    "count": 15
+  },
+  {
+    "source_category": "hardware/fasteners/sealing/Spring plates nut",
+    "count": 15
+  },
+  {
+    "source_category": "Wire/Cable/DataCable/Rectangular Cable Assemblies",
+    "count": 15
+  },
+  {
+    "source_category": "Industrial Control Electrical/Cooling Fan",
+    "count": 15
+  },
+  {
+    "source_category": "Photoelectric Devices/Infrared Remote Receivers",
+    "count": 15
+  },
+  {
+    "source_category": "Communication Interface Chip/Ethernet Transceivers",
+    "count": 15
+  },
+  {
+    "source_category": "Clock And Timing/Clock / Timing - Application Specific",
+    "count": 15
+  },
+  {
+    "source_category": "Interface/RS-485/RS-422 ICs",
+    "count": 15
+  },
+  {
+    "source_category": "Audio Products/Motors/MEMS Microphones",
+    "count": 15
+  },
+  {
+    "source_category": "Interface/LVDS ICs",
+    "count": 15
+  },
+  {
+    "source_category": "IoT/Communication Modules/GNSS Modules",
+    "count": 15
+  },
+  {
+    "source_category": "Inductors/Coils/Transformers/Adjustable Inductors",
+    "count": 14
+  },
+  {
+    "source_category": "Audio Products/Micromotors/MEMS Microphones",
+    "count": 14
+  },
+  {
+    "source_category": "TVS/Fuse/Board Level Protection/Thermal Cutoffs (TCO)",
+    "count": 14
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Misc ICs And Modules",
+    "count": 14
+  },
+  {
+    "source_category": "Interface/Analog Switches / Multiplexers",
+    "count": 14
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/Pulse Transformers",
+    "count": 14
+  },
+  {
+    "source_category": "Audio Products / Vibration Motors/Vibration Motors",
+    "count": 14
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Instrumentation Amplifiers",
+    "count": 14
+  },
+  {
+    "source_category": "Optoelectronics/Optoelectronics Accessories",
+    "count": 14
+  },
+  {
+    "source_category": "Interface/Serializers, Deserializers",
+    "count": 14
+  },
+  {
+    "source_category": "Amplifiers/Isolation Amplifiers",
+    "count": 13
+  },
+  {
+    "source_category": "Data Converters/Voltage-to-Frequency / Frequency-to-Voltage Converters",
+    "count": 13
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Telecommunication Interface ICs",
+    "count": 13
+  },
+  {
+    "source_category": "Industrial Control Electrical/Power Connectors",
+    "count": 13
+  },
+  {
+    "source_category": "Signal Isolation Devices/I2C Isolators",
+    "count": 13
+  },
+  {
+    "source_category": "RF And Wireless/RF Misc ICs And Modules",
+    "count": 13
+  },
+  {
+    "source_category": "Interface/Analog Switches - Special Purpose",
+    "count": 13
+  },
+  {
+    "source_category": "Logic/Monostable Multivibrators",
+    "count": 13
+  },
+  {
+    "source_category": "Interface/USB HUB Controllers",
+    "count": 13
+  },
+  {
+    "source_category": "Power Management ICs/Power Over Ethernet Controllers",
+    "count": 12
+  },
+  {
+    "source_category": "Clock and Timing/Delay Lines",
+    "count": 12
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Detectors",
+    "count": 12
+  },
+  {
+    "source_category": "Nixie Tube Driver/LED Driver/Other Lighting Drivers",
+    "count": 12
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Modulators / Demodulator",
+    "count": 12
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Misc ICs and Modules",
+    "count": 12
+  },
+  {
+    "source_category": "Power Supply Chip/Current Source/Constant Current Source",
+    "count": 12
+  },
+  {
+    "source_category": "Crystal Oscillator/Oscillator/Resonator/Voltage-Controlled Crystal Oscillators (VCXOs)",
+    "count": 12
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Other Nuts",
+    "count": 12
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Shielding Clips",
+    "count": 12
+  },
+  {
+    "source_category": "Consumables/MetalProducts*SmtCopperSheets",
+    "count": 12
+  },
+  {
+    "source_category": "Communication Interface Chip/Audio Interface ICs",
+    "count": 12
+  },
+  {
+    "source_category": "Magnetic Sensors/Magnetic Angle Sensors",
+    "count": 12
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/ARTERY Mcu",
+    "count": 11
+  },
+  {
+    "source_category": "Power Management ICs/Linear Voltage Regulators",
+    "count": 11
+  },
+  {
+    "source_category": "Logic ICs/Digital Comparators",
+    "count": 11
+  },
+  {
+    "source_category": "Circuit Protection/Automotive Fuses",
+    "count": 11
+  },
+  {
+    "source_category": "Sensors/Force Sensors",
+    "count": 11
+  },
+  {
+    "source_category": "RF & Radio/RF Coupler",
+    "count": 11
+  },
+  {
+    "source_category": "Bead/Filter/EMI Optimization/Active Filters",
+    "count": 11
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Fiber Optical Transceivers",
+    "count": 11
+  },
+  {
+    "source_category": "Signal Isolation Devices/Isolated RS-485/422 Transceivers",
+    "count": 11
+  },
+  {
+    "source_category": "Signal Isolation Devices/Isolation Amplifiers",
+    "count": 11
+  },
+  {
+    "source_category": "Interface/LIN Transceivers",
+    "count": 11
+  },
+  {
+    "source_category": "Transistors/Thyristors/Intelligent Power Modules (IPM)",
+    "count": 11
+  },
+  {
+    "source_category": "RF And Wireless/Duplexers",
+    "count": 11
+  },
+  {
+    "source_category": "Clock/Timing/Clock Generators, PLLs, Frequency Synthesizers",
+    "count": 11
+  },
+  {
+    "source_category": "Clock/Timing/Application Specific Clock/Timing",
+    "count": 11
+  },
+  {
+    "source_category": "Interface/Telecom Interface ICs",
+    "count": 11
+  },
+  {
+    "source_category": "Power Management (PMIC)/Charge Pumps",
+    "count": 11
+  },
+  {
+    "source_category": "Consumables And Auxiliary Materials/Metal Products * SMT Copper Sheet",
+    "count": 11
+  },
+  {
+    "source_category": "Connectors/Circular Connectors",
+    "count": 10
+  },
+  {
+    "source_category": "Analog ICs/Analog To Digital Converters (ADCs)",
+    "count": 10
+  },
+  {
+    "source_category": "Functional Modules/OLED Displays Modules",
+    "count": 10
+  },
+  {
+    "source_category": "hardware/fasteners/sealing/Other nuts",
+    "count": 10
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Single-Ended Hex Stud",
+    "count": 10
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Internal Threaded Hex Stud",
+    "count": 10
+  },
+  {
+    "source_category": "Photoelectric Devices/Phototransistors",
+    "count": 10
+  },
+  {
+    "source_category": "Communication Interface Chip/LVDS ICs",
+    "count": 10
+  },
+  {
+    "source_category": "Communication Interface Chip/Serializers / Deserializers",
+    "count": 10
+  },
+  {
+    "source_category": "Filters/Clamp Filters (Ferrite Core With Case)",
+    "count": 10
+  },
+  {
+    "source_category": "Transistors/Thyristors/TRIACs",
+    "count": 10
+  },
+  {
+    "source_category": "Connectors/Circular DIN Connectors",
+    "count": 10
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Differential Amplifiers",
+    "count": 10
+  },
+  {
+    "source_category": "Connectors/Memory Connector (DDR)",
+    "count": 10
+  },
+  {
+    "source_category": "Switches/Multidirectional Switch",
+    "count": 10
+  },
+  {
+    "source_category": "Capacitors/Paper Dielectric Capacitors",
+    "count": 9
+  },
+  {
+    "source_category": "Driver ICs/LED Drivers",
+    "count": 9
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/UART",
+    "count": 9
+  },
+  {
+    "source_category": "Industrial control electrical/plug",
+    "count": 9
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Phillips Pan Head Machine Screws",
+    "count": 9
+  },
+  {
+    "source_category": "Communication Interface Chip/I/O Expanders",
+    "count": 9
+  },
+  {
+    "source_category": "Communication Interface Chip/USB Converters",
+    "count": 9
+  },
+  {
+    "source_category": "Resonators/Oscillators/Ceramic Resonators",
+    "count": 9
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Through-Hole Insert Round Nuts",
+    "count": 9
+  },
+  {
+    "source_category": "Crystals, Oscillators, Resonators/SAW Resonators",
+    "count": 9
+  },
+  {
+    "source_category": "Power Management (PMIC)/USB PD",
+    "count": 9
+  },
+  {
+    "source_category": "Diodes/Trigger Diodes",
+    "count": 9
+  },
+  {
+    "source_category": "Clock/Timing/Clock Buffers, Drivers, Distributors",
+    "count": 9
+  },
+  {
+    "source_category": "Magnetic Sensors/3D Magnetic Sensors",
+    "count": 9
+  },
+  {
+    "source_category": "Hardware Fasteners/Patch Round Nut",
+    "count": 9
+  },
+  {
+    "source_category": "Terminal/Quick Terminal",
+    "count": 9
+  },
+  {
+    "source_category": "Hardware Fasteners/Inductor Core",
+    "count": 9
+  },
+  {
+    "source_category": "Audio Products/Micromotors/Speakers",
+    "count": 8
+  },
+  {
+    "source_category": "Logic ICs/Universal Bus Function",
+    "count": 8
+  },
+  {
+    "source_category": "Sensors/Float Level Senors",
+    "count": 8
+  },
+  {
+    "source_category": "Inductors & Chokes & Transformers/Power Inductors",
+    "count": 8
+  },
+  {
+    "source_category": "old batch/old batch",
+    "count": 8
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Infrared Remote Receiver",
+    "count": 8
+  },
+  {
+    "source_category": "Industrial Control Electrical/Tact Switch",
+    "count": 8
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Phillips Pan Head Screws With Collar",
+    "count": 8
+  },
+  {
+    "source_category": "Power Management/Power Over Ethernet Controllers",
+    "count": 8
+  },
+  {
+    "source_category": "Communication Interface Chip/Video Interface ICs",
+    "count": 8
+  },
+  {
+    "source_category": "Communication Interface Chip/Security Verification / Encryption ICs",
+    "count": 8
+  },
+  {
+    "source_category": "Optocoupler/Gate Drive Optocoupler",
+    "count": 8
+  },
+  {
+    "source_category": "Signal Isolation Devices/Isolated Comparators",
+    "count": 8
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/Accessories - Inductors/Transformers",
+    "count": 8
+  },
+  {
+    "source_category": "RF And Wireless/RF Power Amplifiers",
+    "count": 8
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Special Purpose Amplifiers",
+    "count": 8
+  },
+  {
+    "source_category": "Power Management (PMIC)/Power Over Ethernet (PoE) Controllers",
+    "count": 8
+  },
+  {
+    "source_category": "Displays/LCD Screen",
+    "count": 8
+  },
+  {
+    "source_category": "Relays/Relay Sockets And Accessories",
+    "count": 8
+  },
+  {
+    "source_category": "Power Management (PMIC)/Leakage Protection ICs",
+    "count": 8
+  },
+  {
+    "source_category": "Switches/Rotary Wheel Switches",
+    "count": 8
+  },
+  {
+    "source_category": "Wires And Cables/Dupont Wire / Terminal Block Wire / Electronic Wire",
+    "count": 8
+  },
+  {
+    "source_category": "Capacitors/Aluminum Electrolytic Capacitors (Can - Screw Terminals)",
+    "count": 7
+  },
+  {
+    "source_category": "Diodes/Diodes - ESD",
+    "count": 7
+  },
+  {
+    "source_category": "Logic ICs/74 Series",
+    "count": 7
+  },
+  {
+    "source_category": "Switches/Metal Dome Pot",
+    "count": 7
+  },
+  {
+    "source_category": "Pushbutton Switches & Relays/Relays",
+    "count": 7
+  },
+  {
+    "source_category": "Amplifiers/Linear - Analog Multipliers & Dividers",
+    "count": 7
+  },
+  {
+    "source_category": "Data Converters/RMS-to-DC Converters",
+    "count": 7
+  },
+  {
+    "source_category": "Electromechanical Devices & Components/Power Connectors",
+    "count": 7
+  },
+  {
+    "source_category": "Crystal Oscillator/Oscillator/Resonator/SAW Resonators",
+    "count": 7
+  },
+  {
+    "source_category": "ADC/DAC/Data Conversion/Direct Digital Synthesis (DDS)",
+    "count": 7
+  },
+  {
+    "source_category": "IoT/Communication Modules/RFID Modules",
+    "count": 7
+  },
+  {
+    "source_category": "ADC/DAC/Data Conversion/Touch Screen Controllers",
+    "count": 7
+  },
+  {
+    "source_category": "ADC/DAC/Data Conversion/Voltage-to-Frequency / Frequency-to-Voltage Converters",
+    "count": 7
+  },
+  {
+    "source_category": "Power Supply Chip/Wireless Charge-Discharge ICs",
+    "count": 7
+  },
+  {
+    "source_category": "Filters/EMI/RFI Filters (LC, RC Networks)",
+    "count": 7
+  },
+  {
+    "source_category": "Consumables/Heat Shrink Tubing",
+    "count": 7
+  },
+  {
+    "source_category": "Signal Isolation Devices/Digital Isolators With Power",
+    "count": 7
+  },
+  {
+    "source_category": "Photoelectric Devices/Fiber Optical Transceivers",
+    "count": 7
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Deep Groove Ball Bearings",
+    "count": 7
+  },
+  {
+    "source_category": "Logic/Shifting Register",
+    "count": 7
+  },
+  {
+    "source_category": "Industrial Control Electrical/BatteryConnector",
+    "count": 7
+  },
+  {
+    "source_category": "Connectors/Pin / Jack",
+    "count": 7
+  },
+  {
+    "source_category": "Displays/OLED Display",
+    "count": 7
+  },
+  {
+    "source_category": "Interface/Ethernet Controllers",
+    "count": 7
+  },
+  {
+    "source_category": "Wire/Cable/DataCable/Network Cables",
+    "count": 7
+  },
+  {
+    "source_category": "Transistors/Intelligent Power Modules",
+    "count": 6
+  },
+  {
+    "source_category": "Power Management ICs/Current Source/Constant Current Source",
+    "count": 6
+  },
+  {
+    "source_category": "Power Management ICs/Low Dropout Regulators(LDO)",
+    "count": 6
+  },
+  {
+    "source_category": "Optoelectronics/IRDA - Infrared Transceivers",
+    "count": 6
+  },
+  {
+    "source_category": "Sensors/Fiber Optic/Laser Sensors",
+    "count": 6
+  },
+  {
+    "source_category": "IoT/Communication Modules/USB Modules",
+    "count": 6
+  },
+  {
+    "source_category": "Electronic Tools/Instruments/Consumables/Contacts / Springs",
+    "count": 6
+  },
+  {
+    "source_category": "RTC/Clock Chip/Delay Lines",
+    "count": 6
+  },
+  {
+    "source_category": "Power Supply Chip/Laser Drivers",
+    "count": 6
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Front End Circuits",
+    "count": 6
+  },
+  {
+    "source_category": "ADC/DAC/Data Conversion/RMS-to-DC Converters",
+    "count": 6
+  },
+  {
+    "source_category": "hardware/fasteners/sealing/Shielding clips",
+    "count": 6
+  },
+  {
+    "source_category": "Memory/EMMC",
+    "count": 6
+  },
+  {
+    "source_category": "Photoelectric Devices/Ultra Violet LEDs",
+    "count": 6
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Current-Sensing Amplifiers",
+    "count": 6
+  },
+  {
+    "source_category": "Interface/Security Verification / Encryption ICs",
+    "count": 6
+  },
+  {
+    "source_category": "RF And Wireless/RF Mixers",
+    "count": 6
+  },
+  {
+    "source_category": "Logic/Translators / Level Shifters",
+    "count": 6
+  },
+  {
+    "source_category": "Data Acquisition/Analog Front End (AFE)",
+    "count": 6
+  },
+  {
+    "source_category": "Interface/Ethernet Switches",
+    "count": 6
+  },
+  {
+    "source_category": "Industrial Control Electrical/Tact Switchs,Keypad Switches",
+    "count": 6
+  },
+  {
+    "source_category": "Logic/Specialty Logic",
+    "count": 6
+  },
+  {
+    "source_category": "Other",
+    "count": 6
+  },
+  {
+    "source_category": "Power Management (PMIC)/Transformer Drivers",
+    "count": 6
+  },
+  {
+    "source_category": "Signal Isolation Devices/Optocoupler Emulator (Optocoupler Replacement)",
+    "count": 6
+  },
+  {
+    "source_category": "Hardware Fasteners/Spring",
+    "count": 6
+  },
+  {
+    "source_category": "Power Management ICs/PMIC - Battery Management",
+    "count": 5
+  },
+  {
+    "source_category": "Power Management ICs/Wireless Charge-Discharge ICs",
+    "count": 5
+  },
+  {
+    "source_category": "Optocouplers & LEDs & Infrared/Optocouplers",
+    "count": 5
+  },
+  {
+    "source_category": "Circuit Protection/LED Protection",
+    "count": 5
+  },
+  {
+    "source_category": "Pushbutton Switches & Relays/Tactile Switches",
+    "count": 5
+  },
+  {
+    "source_category": "Memory/DRAM",
+    "count": 5
+  },
+  {
+    "source_category": "Others/No specification for star making plan",
+    "count": 5
+  },
+  {
+    "source_category": "Functional Modules/Sensor Modules",
+    "count": 5
+  },
+  {
+    "source_category": "Battery Products/Battery Holders, Clips & Contacts",
+    "count": 5
+  },
+  {
+    "source_category": "Development Boards & Tools/Development Boards & Kits",
+    "count": 5
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/Sample-and-Hold Amplifiers",
+    "count": 5
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF Power Amplifiers",
+    "count": 5
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/RF attenuator",
+    "count": 5
+  },
+  {
+    "source_category": "Nixie Tube Driver/LED Driver/OLED Drivers",
+    "count": 5
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Chip On Board (COB) Light Sources",
+    "count": 5
+  },
+  {
+    "source_category": "Power Management ICs",
+    "count": 5
+  },
+  {
+    "source_category": "Crystal Oscillator/Oscillator/Resonator/SAW Oscillators",
+    "count": 5
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Interface - PCIs / PCIEs",
+    "count": 5
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Phillips Recessed Countersunk Machine Screws",
+    "count": 5
+  },
+  {
+    "source_category": "Display Screen/Liquid Crystal Display Screen",
+    "count": 5
+  },
+  {
+    "source_category": "Photoelectric Devices/Photodiodes",
+    "count": 5
+  },
+  {
+    "source_category": "Photoelectric Devices/Photoelectric Accessories",
+    "count": 5
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Hex Nut",
+    "count": 5
+  },
+  {
+    "source_category": "Signal Isolation Devices/Isolated CAN Transceivers",
+    "count": 5
+  },
+  {
+    "source_category": "Industrial Control Electrical/Terminal Fittings",
+    "count": 5
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/Current Transformers",
+    "count": 5
+  },
+  {
+    "source_category": "RF And Wireless/RF Coupler",
+    "count": 5
+  },
+  {
+    "source_category": "Power Management ICs/Isolated Gate Drivers",
+    "count": 5
+  },
+  {
+    "source_category": "RF And Wireless/RF Front End Circuits",
+    "count": 5
+  },
+  {
+    "source_category": "Crystals, Oscillators, Resonators/Oven Controlled Crystal Oscillators (OCXOs)",
+    "count": 5
+  },
+  {
+    "source_category": "IoT/Communication Modules/USB Conversion Modules",
+    "count": 5
+  },
+  {
+    "source_category": "Power Management (PMIC)/Motor Driver ICs",
+    "count": 5
+  },
+  {
+    "source_category": "Clock/Timing/555 Timers / Counters",
+    "count": 5
+  },
+  {
+    "source_category": "Data Acquisition/V/F And F/V Converters",
+    "count": 5
+  },
+  {
+    "source_category": "Crystals, Oscillators, Resonators/Spread Spectrum Oscillators(SSOs)",
+    "count": 5
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/Wireless Charging Coils",
+    "count": 5
+  },
+  {
+    "source_category": "Magnetic Sensors/Reed Switches",
+    "count": 5
+  },
+  {
+    "source_category": "Connectors/Micro-Match Connector",
+    "count": 5
+  },
+  {
+    "source_category": "Inductors/Coils/Transformers/Audio Transformers",
+    "count": 4
+  },
+  {
+    "source_category": "Capacitors/Niobium Oxide Capacitors",
+    "count": 4
+  },
+  {
+    "source_category": "Power Management ICs/PMIC - Power Distribution Switches",
+    "count": 4
+  },
+  {
+    "source_category": "Diodes/Diodes Rectifiers Fast Recovery",
+    "count": 4
+  },
+  {
+    "source_category": "Crystals/Oscillators/Resonators/SAW Resonators",
+    "count": 4
+  },
+  {
+    "source_category": "Connectors/Backplane Connector",
+    "count": 4
+  },
+  {
+    "source_category": "Connectors/Connectors - Housings",
+    "count": 4
+  },
+  {
+    "source_category": "Connectors/D-Sub Connectors",
+    "count": 4
+  },
+  {
+    "source_category": "Display Modules / LED Drivers / Display Drivers/LED Displays - Dot Matrix",
+    "count": 4
+  },
+  {
+    "source_category": "Switches/Mechanical Keyboard Shaft",
+    "count": 4
+  },
+  {
+    "source_category": "Amplifiers/Analog Comparators",
+    "count": 4
+  },
+  {
+    "source_category": "RF & Radio/RF Front End Circuits",
+    "count": 4
+  },
+  {
+    "source_category": "Driver ICs/Motor Drivers",
+    "count": 4
+  },
+  {
+    "source_category": "Driver ICs/MOS Drivers",
+    "count": 4
+  },
+  {
+    "source_category": "Analog ICs/Analog Switches",
+    "count": 4
+  },
+  {
+    "source_category": "Filters/SAW Filters",
+    "count": 4
+  },
+  {
+    "source_category": "Hardware Fasteners/Seals/Nuts",
+    "count": 4
+  },
+  {
+    "source_category": "RTC/Clock Chip/Clock Jitter Cleaners & Synchronizers",
+    "count": 4
+  },
+  {
+    "source_category": "RTC/Clock Chip/Clock / Timing - Application Specific",
+    "count": 4
+  },
+  {
+    "source_category": "Operational Amplifier/Comparator/Linear - Analog Multipliers & Dividers",
+    "count": 4
+  },
+  {
+    "source_category": "Inductors & Chokes & Transformers",
+    "count": 4
+  },
+  {
+    "source_category": "Key/Switch/Multi-Directional Switches",
+    "count": 4
+  },
+  {
+    "source_category": "Functional Modules/Wireless Modules",
+    "count": 4
+  },
+  {
+    "source_category": "hardware/fasteners/sealing/Press spring",
+    "count": 4
+  },
+  {
+    "source_category": "Crystals, Oscillators, Resonators/Temperature Compensated Crystal Oscillators (TCXOs)",
+    "count": 4
+  },
+  {
+    "source_category": "Clock/Timing/Timers",
+    "count": 4
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/Pre-Ordered RLCs",
+    "count": 4
+  },
+  {
+    "source_category": "Displays/Organic Light Emitting Diode Display Screen",
+    "count": 4
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Audio Power OpAmps",
+    "count": 4
+  },
+  {
+    "source_category": "Optoelectronics/Infrared Remote Receivers",
+    "count": 4
+  },
+  {
+    "source_category": "Filters/Switched Capacitor Filters",
+    "count": 4
+  },
+  {
+    "source_category": "Transistors/Thyristors/JFETs",
+    "count": 4
+  },
+  {
+    "source_category": "Power Management ICs/Voltage Regulators - DC DC Switching Regulators",
+    "count": 4
+  },
+  {
+    "source_category": "Crystals, Oscillators, Resonators/Voltage Controlled Oscillators (VCOs)",
+    "count": 4
+  },
+  {
+    "source_category": "Connectors/Wiring Quick-Connect Terminals",
+    "count": 4
+  },
+  {
+    "source_category": "Power Management (PMIC)/Wireless Charge-Discharge ICs",
+    "count": 4
+  },
+  {
+    "source_category": "Logic/Parity Generators And Checkers",
+    "count": 4
+  },
+  {
+    "source_category": "Switches/Keylock Switches",
+    "count": 4
+  },
+  {
+    "source_category": "Signal Isolation Devices/Digital Isolators (With Power)",
+    "count": 4
+  },
+  {
+    "source_category": "Filters/Crystal Filters",
+    "count": 4
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Springs",
+    "count": 4
+  },
+  {
+    "source_category": "Connectors/XLR (Cannon) Connectors",
+    "count": 4
+  },
+  {
+    "source_category": "Connectors/DisplayPort (DP) Connector",
+    "count": 4
+  },
+  {
+    "source_category": "Terminal/Spade Terminal",
+    "count": 4
+  },
+  {
+    "source_category": "Power Management (PMIC)/PFC Controllers",
+    "count": 4
+  },
+  {
+    "source_category": "Hardware Fasteners/TapeMagneticBeads",
+    "count": 4
+  },
+  {
+    "source_category": "Filters/EMI Optimization/Switched Capacitor Filters",
+    "count": 3
+  },
+  {
+    "source_category": "Filters/EMI Optimization/Active Filters",
+    "count": 3
+  },
+  {
+    "source_category": "Filters/EMI Optimization/SAW Filters",
+    "count": 3
+  },
+  {
+    "source_category": "Inductors/Coils/Transformers/Balun",
+    "count": 3
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/STC",
+    "count": 3
+  },
+  {
+    "source_category": "Diodes/Diodes - Rectifiers - Fast Recovery",
+    "count": 3
+  },
+  {
+    "source_category": "Connectors/Card Sockets Connectors",
+    "count": 3
+  },
+  {
+    "source_category": "Logic ICs/Timer",
+    "count": 3
+  },
+  {
+    "source_category": "Logic ICs/Logic-Buffers, Drivers, Receivers, Transceivers",
+    "count": 3
+  },
+  {
+    "source_category": "Logic ICs/Level Translators,  Shifters",
+    "count": 3
+  },
+  {
+    "source_category": "Logic ICs/Signal Switches, Multiplexers, Decoders",
+    "count": 3
+  },
+  {
+    "source_category": "Display Modules / LED Drivers / Display Drivers/Other Lighting Drivers",
+    "count": 3
+  },
+  {
+    "source_category": "Fuses/Surface Mount Fuses",
+    "count": 3
+  },
+  {
+    "source_category": "Sensors/Angular Velocity Sensors",
+    "count": 3
+  },
+  {
+    "source_category": "Solders / Accessories / Batteries/Accessories",
+    "count": 3
+  },
+  {
+    "source_category": "Interface ICs/Analog Switches - Special Purpose",
+    "count": 3
+  },
+  {
+    "source_category": "Data Converters/Analog Switches & Multiplexers",
+    "count": 3
+  },
+  {
+    "source_category": "RF & Radio/Voltage Controlled Oscillators (VCO)",
+    "count": 3
+  },
+  {
+    "source_category": "Functional Modules/V-Audio Modules",
+    "count": 3
+  },
+  {
+    "source_category": "Development Boards & Tools/Raspberry Pi",
+    "count": 3
+  },
+  {
+    "source_category": "Single Chip Microcomputer/Microcontroller/ST Microelectronics",
+    "count": 3
+  },
+  {
+    "source_category": "TVS/Fuse/Board Level Protection/LED Protection",
+    "count": 3
+  },
+  {
+    "source_category": "Bead/Filter/EMI Optimization/EMC Filters",
+    "count": 3
+  },
+  {
+    "source_category": "Key/Switch/Special switch",
+    "count": 3
+  },
+  {
+    "source_category": "Memory/Memory Controllers",
+    "count": 3
+  },
+  {
+    "source_category": "Nixie Tube Driver/LED Driver/LED Displays - Dot Matrix",
+    "count": 3
+  },
+  {
+    "source_category": "hardware/fasteners/sealing/SMT hex nut post",
+    "count": 3
+  },
+  {
+    "source_category": "Industrial Control Electrical/Switching Power Supply",
+    "count": 3
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Other Hardware",
+    "count": 3
+  },
+  {
+    "source_category": "LED/Photoelectric Devices/Infrared (IR) LEDs",
+    "count": 3
+  },
+  {
+    "source_category": "Signal Isolation Devices/Isolated ADCs",
+    "count": 3
+  },
+  {
+    "source_category": "Photoelectric Devices/Photointerrupters - Slot Type - Transistor Output",
+    "count": 3
+  },
+  {
+    "source_category": "Key/Switch/Switch Accessories Or Caps",
+    "count": 3
+  },
+  {
+    "source_category": "Clock And Timing/Time Delay",
+    "count": 3
+  },
+  {
+    "source_category": "Signal Isolation Devices/Isolated ADCs With Power",
+    "count": 3
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Precision OpAmps",
+    "count": 3
+  },
+  {
+    "source_category": "Optocouplers/Photocouplers/Logic Output Optocoupler",
+    "count": 3
+  },
+  {
+    "source_category": "Filters/Filters - Feed Through Capacitors",
+    "count": 3
+  },
+  {
+    "source_category": "Educational Kits/V-Audio Modules",
+    "count": 3
+  },
+  {
+    "source_category": "Interface/Signal Buffers, Repeaters, Splitters",
+    "count": 3
+  },
+  {
+    "source_category": "Logic/Signal Switches / Encoders & Decoders / Multiplexers",
+    "count": 3
+  },
+  {
+    "source_category": "Optocouplers/Photocouplers/Thyristor Output Optocoupler",
+    "count": 3
+  },
+  {
+    "source_category": "Isolators/Digital Isolators With Power",
+    "count": 3
+  },
+  {
+    "source_category": "Industrial Control Electrical/Terminal Strips",
+    "count": 3
+  },
+  {
+    "source_category": "Power Management ICs/Leakage Protection ICs",
+    "count": 3
+  },
+  {
+    "source_category": "Crystals, Oscillators, Resonators/Temperature Sensing Resonators",
+    "count": 3
+  },
+  {
+    "source_category": "RF And Wireless/Low Noise Amplifiers (LNA) - RF",
+    "count": 3
+  },
+  {
+    "source_category": "Data Acquisition/Energy Metering",
+    "count": 3
+  },
+  {
+    "source_category": "Data Acquisition/Touch Screen Controllers",
+    "count": 3
+  },
+  {
+    "source_category": "Power Management (PMIC)/Isolated DC/DC Converters",
+    "count": 3
+  },
+  {
+    "source_category": "Interface/CAN Controllers",
+    "count": 3
+  },
+  {
+    "source_category": "Connectors/DIN41612 Connectors",
+    "count": 3
+  },
+  {
+    "source_category": "Filters/EMI Optimization/Filters - Feed Through Capacitors",
+    "count": 2
+  },
+  {
+    "source_category": "Resistors/Varistors",
+    "count": 2
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/NUVOTON",
+    "count": 2
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/Fortior Technol",
+    "count": 2
+  },
+  {
+    "source_category": "Transistors/Transistors - Special Purpose",
+    "count": 2
+  },
+  {
+    "source_category": "Power Management ICs/Laser Drivers",
+    "count": 2
+  },
+  {
+    "source_category": "Power Management ICs/ ",
+    "count": 2
+  },
+  {
+    "source_category": "Diodes/ESD Protection Devices",
+    "count": 2
+  },
+  {
+    "source_category": "Crystals/Crystals",
+    "count": 2
+  },
+  {
+    "source_category": "Connectors/Pin Header & Female Header",
+    "count": 2
+  },
+  {
+    "source_category": "Connectors/Audio & Video Connectors",
+    "count": 2
+  },
+  {
+    "source_category": "Connectors/Terminals",
+    "count": 2
+  },
+  {
+    "source_category": "Audio Products/Micromotors/Micro Motor & Motor",
+    "count": 2
+  },
+  {
+    "source_category": "Display Modules / LED Drivers / Display Drivers/Driver ICs",
+    "count": 2
+  },
+  {
+    "source_category": "Display Modules / LED Drivers / Display Drivers/VFD Drivers",
+    "count": 2
+  },
+  {
+    "source_category": "Pushbutton Switches & Relays/DIP Switches",
+    "count": 2
+  },
+  {
+    "source_category": "Solders / Accessories / Batteries/Heat Sinks",
+    "count": 2
+  },
+  {
+    "source_category": "Amplifiers/Low Noise OpAmps",
+    "count": 2
+  },
+  {
+    "source_category": "Amplifiers/Low Power OpAmps",
+    "count": 2
+  },
+  {
+    "source_category": "Amplifiers/Programmable/Variable Gain Amplifiers (PGAs/VGAs)",
+    "count": 2
+  },
+  {
+    "source_category": "Interface ICs/RS-485 & RS-422",
+    "count": 2
+  },
+  {
+    "source_category": "Interface ICs/ ",
+    "count": 2
+  },
+  {
+    "source_category": "Memory/FLASH",
+    "count": 2
+  },
+  {
+    "source_category": "Memory/Random Access Memory (RAM)",
+    "count": 2
+  },
+  {
+    "source_category": "Others/Uncategorized",
+    "count": 2
+  },
+  {
+    "source_category": "RF & Radio/Radio Frequency Cable",
+    "count": 2
+  },
+  {
+    "source_category": "Embedded Peripheral ICs/Clock Generators, PLLs, Frequency Synthesizers",
+    "count": 2
+  },
+  {
+    "source_category": "Driver ICs/Darlington transistor array driver",
+    "count": 2
+  },
+  {
+    "source_category": "Driver ICs/Driver ICs",
+    "count": 2
+  },
+  {
+    "source_category": "Driver ICs/IGBT",
+    "count": 2
+  },
+  {
+    "source_category": "Driver ICs/LCD Drivers",
+    "count": 2
+  },
+  {
+    "source_category": "Inductors & Chokes & Transformers/ ",
+    "count": 2
+  },
+  {
+    "source_category": "Buzzers & Speakers & Microphones/Buzzers",
+    "count": 2
+  },
+  {
+    "source_category": "Communication Interface Chip/UART/485/232/Multi-protocol Transceivers",
+    "count": 2
+  },
+  {
+    "source_category": "RTC/Clock Chip/Clock and Data Recovery / Retiming",
+    "count": 2
+  },
+  {
+    "source_category": "RF & Radio",
+    "count": 2
+  },
+  {
+    "source_category": "Amplifiers",
+    "count": 2
+  },
+  {
+    "source_category": "Sensors/Optical Sensors",
+    "count": 2
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Hex Socket Cylindrical Head Screw",
+    "count": 2
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/SMT Hex Nut Post",
+    "count": 2
+  },
+  {
+    "source_category": "Industrial Control Electrical/Pushbutton Switch",
+    "count": 2
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Knurled Studs",
+    "count": 2
+  },
+  {
+    "source_category": "Industrial Control Electrical/Cold-Pressed Terminals",
+    "count": 2
+  },
+  {
+    "source_category": "Industrial Control Electrical/Other Industrial Control Products",
+    "count": 2
+  },
+  {
+    "source_category": "Signal Isolation Devices/Digital Isolators With Iso-Power",
+    "count": 2
+  },
+  {
+    "source_category": "Photoelectric Devices/Reflective Optical Interrupters",
+    "count": 2
+  },
+  {
+    "source_category": "Communication Interface Chip/Interface - PCIs / PCIEs",
+    "count": 2
+  },
+  {
+    "source_category": "Power Management/Wireless Charge-Discharge ICs",
+    "count": 2
+  },
+  {
+    "source_category": "Signal Isolation Devices/Isolated USB ICs",
+    "count": 2
+  },
+  {
+    "source_category": "Communication Interface Chip/UART",
+    "count": 2
+  },
+  {
+    "source_category": "Signal Isolation Devices/Isolated RS-232 Transceivers",
+    "count": 2
+  },
+  {
+    "source_category": "Photoelectric Devices/RGB LEDs(Built-In IC)",
+    "count": 2
+  },
+  {
+    "source_category": "Wire/Cable/DataCable/Flat Flex Ribbon Jumpers, Cables",
+    "count": 2
+  },
+  {
+    "source_category": "Audio Products/Motors/Microphones",
+    "count": 2
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Instrumentation OpAmps",
+    "count": 2
+  },
+  {
+    "source_category": "Interface/UART",
+    "count": 2
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Phillips Pan Head Machine Screws Tri-Combination",
+    "count": 2
+  },
+  {
+    "source_category": "Data Acquisition/Digital Potentiometers",
+    "count": 2
+  },
+  {
+    "source_category": "RF And Wireless/RF Attenuator",
+    "count": 2
+  },
+  {
+    "source_category": "Isolators/Isolated ADCs",
+    "count": 2
+  },
+  {
+    "source_category": "Isolators/Isolated RS-485/422 Transceivers",
+    "count": 2
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/Audio Transformers",
+    "count": 2
+  },
+  {
+    "source_category": "RF And Wireless/Diplexers",
+    "count": 2
+  },
+  {
+    "source_category": "Logic/Counters / Dividers",
+    "count": 2
+  },
+  {
+    "source_category": "Consumables/Thermal Sheets/Caps",
+    "count": 2
+  },
+  {
+    "source_category": "Wire/Cable/DataCable/Jumper Wire/EnameledWire/Pre-Crimped Leads",
+    "count": 2
+  },
+  {
+    "source_category": "Filters/Active Filters",
+    "count": 2
+  },
+  {
+    "source_category": "LED Drivers/Lighting Drivers & Controllers",
+    "count": 2
+  },
+  {
+    "source_category": "Industrial Control Electrical/Pushbutton Switches",
+    "count": 2
+  },
+  {
+    "source_category": "Transistors/Thyristors/Pre-Ordered Transistors",
+    "count": 2
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Video Amplifiers",
+    "count": 2
+  },
+  {
+    "source_category": "Logic/Digital Comparators",
+    "count": 2
+  },
+  {
+    "source_category": "Connectors/Test Points / Test Rings",
+    "count": 2
+  },
+  {
+    "source_category": "Motor Driver ICs/Relay / Coil Drivers",
+    "count": 2
+  },
+  {
+    "source_category": "Optoelectronics/IrDA Transceiver Modules",
+    "count": 2
+  },
+  {
+    "source_category": "Hardware Fasteners/Studs & Screws",
+    "count": 2
+  },
+  {
+    "source_category": "Switches/Navigation Switches, Joystick",
+    "count": 2
+  },
+  {
+    "source_category": "Industrial Control Electrical/Power Module/Power Supply",
+    "count": 2
+  },
+  {
+    "source_category": "Industrial Control Electrical/Battery Connector",
+    "count": 2
+  },
+  {
+    "source_category": "Industrial Control Electrical/Antenna Spring",
+    "count": 2
+  },
+  {
+    "source_category": "Industrial Control Electrical/Heat Sink / Cooling Fin",
+    "count": 2
+  },
+  {
+    "source_category": "Consumables And Auxiliary Materials/Thermal Conductive Sheet/Thermal Conductive Cap",
+    "count": 2
+  },
+  {
+    "source_category": "Hardware Fasteners/Shielding Clip",
+    "count": 2
+  },
+  {
+    "source_category": "Sensors/Capacitive Sensor IC",
+    "count": 2
+  },
+  {
+    "source_category": "Terminal/Square Copper Terminal",
+    "count": 2
+  },
+  {
+    "source_category": "Terminal/SC Terminal",
+    "count": 2
+  },
+  {
+    "source_category": "Memory/IButton Memory",
+    "count": 2
+  },
+  {
+    "source_category": "Terminal/Wire Pin Terminal",
+    "count": 2
+  },
+  {
+    "source_category": "Terminal/BV Terminal",
+    "count": 2
+  },
+  {
+    "source_category": "Filters/EMI Optimization/EMC Filters",
+    "count": 1
+  },
+  {
+    "source_category": "Capacitors/horn-type electrolytic capacitor",
+    "count": 1
+  },
+  {
+    "source_category": "Resistors/High Precision & Low TCR SMD Resistors",
+    "count": 1
+  },
+  {
+    "source_category": "Resistors/NTC Thermistors",
+    "count": 1
+  },
+  {
+    "source_category": "Resistors/Fusible Chip Resistor",
+    "count": 1
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/Cmsemicon",
+    "count": 1
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/Artery Mcu",
+    "count": 1
+  },
+  {
+    "source_category": "Transistors/Junction Field-Effect Transistor\uff0cJFET",
+    "count": 1
+  },
+  {
+    "source_category": "Power Management ICs/Power Module AC-DC",
+    "count": 1
+  },
+  {
+    "source_category": "Diodes/Diodes - Rectifiers - Hyperfast",
+    "count": 1
+  },
+  {
+    "source_category": "Diodes/Discharge Tubes (GDT/TSS)",
+    "count": 1
+  },
+  {
+    "source_category": "Optoelectronics/Solid State Relays",
+    "count": 1
+  },
+  {
+    "source_category": "Optocouplers & LEDs & Infrared/Infrared (IR) LEDs",
+    "count": 1
+  },
+  {
+    "source_category": "Connectors/Power Connectors",
+    "count": 1
+  },
+  {
+    "source_category": "Connectors/AC/DC Power Plugs & Receptacles",
+    "count": 1
+  },
+  {
+    "source_category": "Logic ICs/4000 Series",
+    "count": 1
+  },
+  {
+    "source_category": "Logic ICs/Codec ICs",
+    "count": 1
+  },
+  {
+    "source_category": "Logic ICs/Gates and Inverters",
+    "count": 1
+  },
+  {
+    "source_category": "Logic ICs/FIFO Memory",
+    "count": 1
+  },
+  {
+    "source_category": "Logic ICs/Buffers, Drivers, Receivers, Transceivers",
+    "count": 1
+  },
+  {
+    "source_category": "Logic ICs/Parity Generators & Checkers",
+    "count": 1
+  },
+  {
+    "source_category": "Display Modules / LED Drivers / Display Drivers/LCD Displays Modules",
+    "count": 1
+  },
+  {
+    "source_category": "Fuses/Cartridge Fuses",
+    "count": 1
+  },
+  {
+    "source_category": "Fuses/PTC Resettable Fuses",
+    "count": 1
+  },
+  {
+    "source_category": "Pushbutton Switches & Relays/Slide Switches",
+    "count": 1
+  },
+  {
+    "source_category": "Pushbutton Switches & Relays/Rocker Switches",
+    "count": 1
+  },
+  {
+    "source_category": "Sensors/Angle Sensors",
+    "count": 1
+  },
+  {
+    "source_category": "Sensors/Flow Sensors",
+    "count": 1
+  },
+  {
+    "source_category": "Amplifiers/Operational Amplifiers",
+    "count": 1
+  },
+  {
+    "source_category": "Amplifiers/Sample-and-Hold Amplifiers",
+    "count": 1
+  },
+  {
+    "source_category": "Amplifiers/ ",
+    "count": 1
+  },
+  {
+    "source_category": "Clock and Timing/Clock and Data Recovery / Retiming",
+    "count": 1
+  },
+  {
+    "source_category": "Interface ICs/Interface - Direct Digital Synthesis (DDS)",
+    "count": 1
+  },
+  {
+    "source_category": "Interface ICs/Sensor Interface ICs",
+    "count": 1
+  },
+  {
+    "source_category": "Interface ICs/Interface - PCIs / PCIEs",
+    "count": 1
+  },
+  {
+    "source_category": "RF & Radio/Tunable Filters",
+    "count": 1
+  },
+  {
+    "source_category": "Embedded Peripheral ICs/I/O Expansion",
+    "count": 1
+  },
+  {
+    "source_category": "Embedded Peripheral ICs/Real-time Clocks",
+    "count": 1
+  },
+  {
+    "source_category": "Analog ICs/Digital To Analog Converters (DACs)",
+    "count": 1
+  },
+  {
+    "source_category": "Inductors & Chokes & Transformers/Common Mode Chokes / Filters",
+    "count": 1
+  },
+  {
+    "source_category": "Inductors & Chokes & Transformers/Inductors (SMD)",
+    "count": 1
+  },
+  {
+    "source_category": "Electromechanical Devices & Components/Electromechanical Switches",
+    "count": 1
+  },
+  {
+    "source_category": "Functional Modules/WIFI Modules",
+    "count": 1
+  },
+  {
+    "source_category": "Hardwares/Solders/Accessories/Batteries/Accessories",
+    "count": 1
+  },
+  {
+    "source_category": "Electromechanical Devices & Components/Rail Terminal Blocks",
+    "count": 1
+  },
+  {
+    "source_category": "Memory/Memory - Serial MCP (Multi Chip Package)",
+    "count": 1
+  },
+  {
+    "source_category": "Solders / Accessories / Batteries/Spacers",
+    "count": 1
+  },
+  {
+    "source_category": "Nixie Tube Driver/LED Driver/OLED Displays Modules",
+    "count": 1
+  },
+  {
+    "source_category": "Optocouplers & LEDs & Infrared/ ",
+    "count": 1
+  },
+  {
+    "source_category": "Key/Switch/Metal Dome Pot",
+    "count": 1
+  },
+  {
+    "source_category": "Crystal Oscillator/Oscillator/Resonator/Oven Controlled Crystal Oscillators (OCXOs)",
+    "count": 1
+  },
+  {
+    "source_category": "Functional Modules",
+    "count": 1
+  },
+  {
+    "source_category": "Optocoupler/LED/Digital Tube/Photoelectric Device/Laser Diodes",
+    "count": 1
+  },
+  {
+    "source_category": "Single Chip Microcomputer/Microcontroller",
+    "count": 1
+  },
+  {
+    "source_category": "audio products/micromotors/MEMS Microphones",
+    "count": 1
+  },
+  {
+    "source_category": "Bead/Filter/EMI Optimization/Noise Suppressors",
+    "count": 1
+  },
+  {
+    "source_category": "Radio Frequency Chip/Antenna/Voltage Controlled Oscillators (VCO)",
+    "count": 1
+  },
+  {
+    "source_category": "Capacitors/Silicon Capacitors",
+    "count": 1
+  },
+  {
+    "source_category": "Sensors/Heart Rate Sensor",
+    "count": 1
+  },
+  {
+    "source_category": "Embedded Processors & Controllers/Microprocessor & Microcontroller",
+    "count": 1
+  },
+  {
+    "source_category": "Consumables/Network cables",
+    "count": 1
+  },
+  {
+    "source_category": "Connectors/Global Sourcing Parts",
+    "count": 1
+  },
+  {
+    "source_category": "hardware/fasteners/sealing/Hex nut",
+    "count": 1
+  },
+  {
+    "source_category": "test/PreSaleOfNewProducts",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial control electrical/Interface relays",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Other Sensors",
+    "count": 1
+  },
+  {
+    "source_category": "Test/Button/Signal Lamp/Main Switch",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Other Studs",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Safety Relays",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Buzzer",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Intermediate Relays",
+    "count": 1
+  },
+  {
+    "source_category": "Wire/Cable/DataCable/CoaxialCable(Rf)",
+    "count": 1
+  },
+  {
+    "source_category": "Test/Other",
+    "count": 1
+  },
+  {
+    "source_category": "Sensors/Flow Sensor",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Limit Switch/Travel Switch",
+    "count": 1
+  },
+  {
+    "source_category": "ADC/DAC/Data Conversion/Voltage-To-Frequency / Frequency-To-Voltage Converters",
+    "count": 1
+  },
+  {
+    "source_category": "ADC/DAC/Data Conversion/RMS-To-DC Converters",
+    "count": 1
+  },
+  {
+    "source_category": "Single Chip Microcomputer/Microcontroller/Pre-Ordered MCUs",
+    "count": 1
+  },
+  {
+    "source_category": "Power Management/Current Source/Constant Current Source",
+    "count": 1
+  },
+  {
+    "source_category": "Connectors/RCA Connector",
+    "count": 1
+  },
+  {
+    "source_category": "Communication Interface Chip/Analog Switches - Special Purpose",
+    "count": 1
+  },
+  {
+    "source_category": "Communication Interface Chip/USB HUB Controllers",
+    "count": 1
+  },
+  {
+    "source_category": "Communication Interface Chip/Signal Buffers, Repeaters, Splitters",
+    "count": 1
+  },
+  {
+    "source_category": "Communication Interface Chip/LIN Transceivers",
+    "count": 1
+  },
+  {
+    "source_category": "Communication Interface Chip/Telecommunication Interface ICs",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Proximity Sensors",
+    "count": 1
+  },
+  {
+    "source_category": "Clock And Timing/Jitter Attenuators",
+    "count": 1
+  },
+  {
+    "source_category": "Wire/Cable/DataCable/Labels, Labeling",
+    "count": 1
+  },
+  {
+    "source_category": "Wire/Cable/DataCable/CablesAndClamps",
+    "count": 1
+  },
+  {
+    "source_category": "Connectors/XLR (Cannon) Connector",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Self-Clinching Studs",
+    "count": 1
+  },
+  {
+    "source_category": "Photoelectric Devices/Laser Diodes",
+    "count": 1
+  },
+  {
+    "source_category": "Connectors/IEEE 1394 / Firewire Connector",
+    "count": 1
+  },
+  {
+    "source_category": "Display Screen/LED Dot Matrix Screen",
+    "count": 1
+  },
+  {
+    "source_category": "Signal Isolation Devices/Isolated RS-485/422 Transceivers With Power",
+    "count": 1
+  },
+  {
+    "source_category": "Clock And Timing/Clock And Data Recovery/Retiming",
+    "count": 1
+  },
+  {
+    "source_category": "Wire/Cable/DataCable/Specialized Cable Assemblies",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Electromechanical Contactors",
+    "count": 1
+  },
+  {
+    "source_category": "Consumables/Holders/Clips",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Phillips Pan Head Self-Tapping Screws",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Phillips Round-Headed, Flat-Tailed Self-Tapping Screws",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Phillips Large Flat Head Machine Screws",
+    "count": 1
+  },
+  {
+    "source_category": "Displays/Liquid Crystal Display Screen",
+    "count": 1
+  },
+  {
+    "source_category": "Optocouplers/Photocouplers/Solid State Relay (Thyristor Output)",
+    "count": 1
+  },
+  {
+    "source_category": "Switches/Global Sourcing Parts",
+    "count": 1
+  },
+  {
+    "source_category": "Interface ICs/Interface -LIN Transceiver",
+    "count": 1
+  },
+  {
+    "source_category": "RF And Wireless/RF Chips",
+    "count": 1
+  },
+  {
+    "source_category": "Data Acquisition/Analog To Digital Converters (ADCs)",
+    "count": 1
+  },
+  {
+    "source_category": "Data Acquisition/ADC/DAC - Specialized",
+    "count": 1
+  },
+  {
+    "source_category": "Isolators/Isolation Amplifiers",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Flat Washers",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Phillips Pan Head Screw And Bounce Pad Combination",
+    "count": 1
+  },
+  {
+    "source_category": "Inductors, Coils, Chokes/Power Transformer",
+    "count": 1
+  },
+  {
+    "source_category": "Amplifiers/Comparators/FET InputAmplifiers",
+    "count": 1
+  },
+  {
+    "source_category": "Filters/EMC Filters",
+    "count": 1
+  },
+  {
+    "source_category": "Optocouplers/Photocouplers/Gate Drive Optocoupler",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Micro Switch",
+    "count": 1
+  },
+  {
+    "source_category": "Clock/Timing/Real-Time Clocks(RTC)",
+    "count": 1
+  },
+  {
+    "source_category": "Data Acquisition/Voltage-To-Frequency / Frequency-To-Voltage Converters",
+    "count": 1
+  },
+  {
+    "source_category": "Connectors/Blade / Shrapnel Contact Battery Connector",
+    "count": 1
+  },
+  {
+    "source_category": "Power Management (PMIC)/Current Source / Constant Current Source",
+    "count": 1
+  },
+  {
+    "source_category": "RF And Wireless/RF Modulators And Demodulators",
+    "count": 1
+  },
+  {
+    "source_category": "Amplifiers/Comparators/Programmable / Variable Gain Amplifiers (PGA/VGA)",
+    "count": 1
+  },
+  {
+    "source_category": "RF And Wireless/Tunable Filters",
+    "count": 1
+  },
+  {
+    "source_category": "RF And Wireless/RF Detectors",
+    "count": 1
+  },
+  {
+    "source_category": "LED Drivers/Laser Drivers",
+    "count": 1
+  },
+  {
+    "source_category": "Interface/Interface - PCIs / PCIEs",
+    "count": 1
+  },
+  {
+    "source_category": "Clock/Timing/Jitter Attenuators",
+    "count": 1
+  },
+  {
+    "source_category": "Switches/Specialty Switches",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Interface Relays",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Studs & Screws",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Washers & Retaining Rings",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Hex Socket Cylindrical Head Tri-Combination",
+    "count": 1
+  },
+  {
+    "source_category": "Connectors/Fiber Optic Connectors",
+    "count": 1
+  },
+  {
+    "source_category": "Clock And Timing/Clock Buffers, Drivers",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Antenna",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Phillips Countersunk Flat Tail Self-Tapping Screws",
+    "count": 1
+  },
+  {
+    "source_category": "Development Boards & Tools/Programmers, Emulators, And Debuggers",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Connecting Accessories",
+    "count": 1
+  },
+  {
+    "source_category": "Industrial Control Electrical/Power Connector / Plug Connector",
+    "count": 1
+  },
+  {
+    "source_category": "Signal Isolation Devices/Isolation Amplifiers With Power",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware Fasteners/LED Isolation Column",
+    "count": 1
+  },
+  {
+    "source_category": "Terminal/Magnetic Wire Terminal",
+    "count": 1
+  },
+  {
+    "source_category": "Terminal/Knife Terminal",
+    "count": 1
+  },
+  {
+    "source_category": "Terminal/EN Terminal",
+    "count": 1
+  },
+  {
+    "source_category": "Switches/Rotary Coding Switch",
+    "count": 1
+  },
+  {
+    "source_category": "Wires And Cables/Cables And Wire Clips",
+    "count": 1
+  },
+  {
+    "source_category": "Connectors/DVI Connectors",
+    "count": 1
+  },
+  {
+    "source_category": "Hardware/Fasteners/Sealing/Phillips Half Round Head Self-Tapping Screws",
+    "count": 1
+  }
+]

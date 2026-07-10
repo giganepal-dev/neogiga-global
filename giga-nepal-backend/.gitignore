@@ -21,3 +21,9 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/tools/jlcpcb_etl/.venv/
+/tools/jlcpcb_etl/checkpoints/*.json
+/tools/jlcpcb_etl/output/*.sqlite3
+/tools/jlcpcb_etl/output/*.sqlite3-*
+/tools/jlcpcb_etl/output/*.jsonl
+!/tools/jlcpcb_etl/.env.example
