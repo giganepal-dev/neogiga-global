@@ -154,6 +154,42 @@ class CentralPricingEngineTest extends TestCase
         $this->assertSame(1, PriceCalculationLog::count(), 'every calculation must be logged');
     }
 
+    public function test_calculate_applies_import_duty_on_customs_value(): void
+    {
+        $this->seedPricingBaseline();
+        app(ExchangeRateService::class)->record('USD', 'NPR', 133.0, 'test');
+
+        DB::table('import_duty_rules')->insert([
+            'country_id' => $this->nepal->country_id,
+            'marketplace_id' => null, // country-level catch-all
+            'hs_code' => null,
+            'duty_rate' => 10.00,
+            'duty_type' => 'percentage',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $log = app(CentralPricingService::class)->calculate($this->product->id, $this->nepal);
+
+        $this->assertNotNull($log);
+        // duty 10% of 100 USD = 10 USD; landed 110 USD * 133 = 14630 (no margin/tax)
+        $this->assertEqualsWithDelta(1330.0, (float) $log->duty_amount, 0.01, 'duty stored in local currency');
+        $this->assertEqualsWithDelta(14630.0, (float) $log->final_price, 0.01);
+    }
+
+    public function test_duty_is_zero_without_a_matching_rule(): void
+    {
+        $this->seedPricingBaseline();
+        app(ExchangeRateService::class)->record('USD', 'NPR', 133.0, 'test');
+
+        $log = app(CentralPricingService::class)->calculate($this->product->id, $this->nepal);
+
+        $this->assertNotNull($log);
+        $this->assertEqualsWithDelta(0.0, (float) $log->duty_amount, 0.0001, 'no rule -> no duty');
+        $this->assertEqualsWithDelta(13300.0, (float) $log->final_price, 0.01);
+    }
+
     public function test_calculate_in_base_currency_needs_no_rate_row(): void
     {
         $this->seedPricingBaseline();

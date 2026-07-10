@@ -13,22 +13,27 @@ use Illuminate\Support\Facades\DB;
  * Central pricing engine v1 (see CENTRAL_PRICING_ENGINE_GUIDE.md).
  *
  * Spec formula, restricted to the data that exists today:
- *   local_cost    = base_cost_usd * exchange_rate
- *   pre_tax_price = local_cost + margin           (duty/freight = 0 in v1 —
- *                                                  no HS-code or rate-card
- *                                                  tables exist yet)
- *   final_price   = pre_tax_price + tax            (existing tax_rules table)
+ *   duty_usd      = base_cost_usd * duty_percent   (existing import_duty_rules)
+ *   landed_usd    = base_cost_usd + duty_usd       (freight = 0 — no rate-card
+ *                                                   tables exist yet)
+ *   local_cost    = landed_usd * exchange_rate
+ *   pre_tax_price = local_cost + margin
+ *   final_price   = pre_tax_price + tax             (existing tax_rules table)
  *
- * calculate() only computes and logs; it never touches live prices.
- * apply() creates a marketplace_product_prices row ONLY when none exists —
- * every existing row is treated as manually managed and is never overwritten.
+ * Duty stays 0 until an operator enters import_duty_rules, so this is inert
+ * by default. calculate() only computes and logs; it never touches live
+ * prices. apply() creates a marketplace_product_prices row ONLY when none
+ * exists — every existing row is treated as manually managed and never
+ * overwritten.
  */
 class CentralPricingService
 {
     public const VERSION = 'v1';
 
-    public function __construct(private readonly ExchangeRateService $rates)
-    {
+    public function __construct(
+        private readonly ExchangeRateService $rates,
+        private readonly DutyService $duty,
+    ) {
     }
 
     /**
@@ -60,7 +65,13 @@ class CentralPricingService
             $exchangeRate = (float) $fresh->rate;
         }
 
-        $localCost = $baseCost * $exchangeRate;
+        // Duty is levied on the USD customs value before FX conversion.
+        $hsCode = $this->duty->hsCodeForProduct($productId);
+        $dutyPercent = $this->duty->dutyPercent($hsCode, $marketplace);
+        $dutyUsd = $baseCost * $dutyPercent / 100;
+        $landedUsd = $baseCost + $dutyUsd;
+
+        $localCost = $landedUsd * $exchangeRate;
         $marginPercent = $this->marginPercent($marketplace);
         $marginAmount = round($localCost * $marginPercent / 100, 4);
         $preTax = $localCost + $marginAmount;
@@ -73,7 +84,9 @@ class CentralPricingService
             'marketplace_id' => $marketplace->id,
             'base_cost_usd' => $baseCost,
             'exchange_rate' => $exchangeRate,
-            'duty_amount' => 0,
+            // Stored in the marketplace currency, consistent with the other
+            // *_amount columns (base_cost_usd is the only USD field).
+            'duty_amount' => round($dutyUsd * $exchangeRate, 4),
             'tax_amount' => $taxAmount,
             'freight_amount' => 0,
             'margin_amount' => $marginAmount,
