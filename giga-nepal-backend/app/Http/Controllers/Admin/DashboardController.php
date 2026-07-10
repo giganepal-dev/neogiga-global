@@ -8,6 +8,7 @@ use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
 use App\Models\Marketplace\Vendor;
 use App\Models\User;
+use App\Services\Catalog\CatalogSearchService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -169,6 +170,7 @@ class DashboardController extends Controller
 
     public function products(\Illuminate\Http\Request $request): View
     {
+        $indexSummary = app(CatalogSearchService::class)->indexedSummary();
         $products = Product::query()
             ->leftJoin('product_categories as c', 'c.id', '=', 'products.category_id')
             ->leftJoin('product_brands as b', 'b.id', '=', 'products.brand_id')
@@ -227,6 +229,8 @@ class DashboardController extends Controller
                         ->whereNotIn('cps.review_status', ['approved', 'rejected'])
                         ->count()
                     : 0,
+                'indexed' => $indexSummary['approved_documents'],
+                'indexFacets' => $indexSummary['facets'],
             ],
         ]);
     }

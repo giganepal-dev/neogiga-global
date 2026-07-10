@@ -30,6 +30,7 @@
     <div class="kpi"><div class="t">Draft</div><div class="v tnum">{{ number_format($stats['draft']) }}</div><div class="s">needs work</div></div>
     <div class="kpi"><div class="t">Low stock</div><div class="v tnum">{{ number_format($stats['lowStock']) }}</div><div class="s">review reorder</div></div>
     <div class="kpi"><div class="t">Import Review</div><div class="v tnum">{{ number_format($stats['importPending']) }}</div><div class="s"><a href="/admin/imports/jlcpcb">pending JLCPCB</a></div></div>
+    <div class="kpi"><div class="t">Search Index</div><div class="v tnum">{{ number_format($stats['indexed']) }}</div><div class="s">{{ number_format($stats['indexFacets']) }} facet values</div></div>
 </div>
 
 <section class="card">
