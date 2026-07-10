@@ -1,19 +1,25 @@
 ```
-# Laravel-specific ignores
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+dist/
+build/
+target/
+
+# Dependencies
+node_modules/
 vendor/
 composer.lock
-*.log
-bootstrap/cache/
-storage/logs/
-storage/framework/
-
-# Environment
 .env
 .env.local
 .env.*
 
-# Dependencies
-node_modules/
+# Logs and temp files
+*.log
+*.tmp
+*.swp
 
 # Editors
 .vscode/
@@ -21,18 +27,16 @@ node_modules/
 *.swp
 *.swo
 
-# OS
+# OS specific
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-
-# Coverage
+# Coverage and testing
+.coverage
 coverage/
 htmlcov/
-.coverage
 
-# Temp files
-*.tmp
+# PHP specific
+*.php~
+.htaccess
 ```
