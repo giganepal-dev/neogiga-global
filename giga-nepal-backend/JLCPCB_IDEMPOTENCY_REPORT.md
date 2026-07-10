@@ -1,11 +1,25 @@
 # JLCPCB Idempotency Report
 
-Status: pending live pilot rerun.
+Status: passed on 2026-07-10.
 
-Expected proof:
+Idempotency rerun command was the same capped 1,000-row pilot command.
 
-- second 1,000-row pilot does not create duplicate products
-- second run updates existing `catalog_product_sources`
-- product specs are updated by `product_id + name`
-- datasheets are updated by `product_id + document_type + source_url`
-- offers are updated by `distributor + sku`
+## Idempotency batch
+
+- Import batch id: `5e397f0f-e279-4a21-b49f-adeb74f27ee8`
+- Rows read: 1,000
+- Products inserted: 0
+- Products updated: 1,000
+- Source links created: 0
+- Source links updated: 1,000
+- Offers created: 0
+- Offers updated: 1,000
+- Skipped rows: 0
+
+## Counts
+
+- Products stayed at 1,001 after rerun.
+- Source links stayed at 1,000 after rerun.
+- Offers stayed at 1,000 after rerun.
+
+The first idempotency attempt exposed a duplicate slug lookup bug and stopped. The adapter was patched to resolve products first by `catalog_product_sources`, then stable SKU, then brand + normalized MPN. The passing rerun above validates that fix.

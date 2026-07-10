@@ -18,3 +18,15 @@ Date: 2026-07-10
 - NeoGiga pilot writes require `--limit <= 1000`.
 - Rollback defaults to dry-run unless `--publish` is passed.
 - Connection source printing never prints the DSN.
+
+## Live execution result
+
+- Source-controlled commits deployed:
+  - `d34bcf2` Add JLCPCB canonical import safety gate
+  - `bf680e5` Fix JLCPCB pilot UUID serialization
+  - `e89ac7b` Fix JLCPCB metadata quality score serialization
+  - `b0fc3e7` Fix JLCPCB canonical idempotency lookup
+- Additive migration applied successfully.
+- Controlled 1,000-row pilot completed successfully.
+- Idempotency rerun completed successfully.
+- Full import was not run.
