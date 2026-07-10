@@ -247,3 +247,10 @@ Route::get('/ai-commerce', [AiCommercePageController::class, 'index']);
 Route::post('/ai-commerce/build', [AiCommercePageController::class, 'build'])->middleware('throttle:12,1');
 Route::post('/ai-commerce/save', [AiCommercePageController::class, 'save'])->middleware('throttle:8,1');
 Route::get('/seller-early-access', [SellOnNeoGigaController::class, 'earlyAccess']);
+
+// Global Commerce Stage 1: marketplace country selector / landing page.
+// Constrained to the 25 seeded url_prefix codes only — cannot collide with
+// any existing top-level route above (none of them are 2-8 letter codes).
+Route::get('/{prefix}', [\App\Http\Controllers\Web\MarketplaceLandingController::class, 'show'])
+    ->whereIn('prefix', ['in', 'np', 'bd', 'lk', 'pk', 'bt', 'mv', 'ae', 'sa', 'qa', 'om', 'kw', 'us', 'ca', 'uk', 'de', 'fr', 'it', 'es', 'nl', 'au', 'nz', 'br', 'za', 'ke'])
+    ->name('marketplace.landing');

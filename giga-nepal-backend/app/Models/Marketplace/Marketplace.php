@@ -27,6 +27,16 @@ class Marketplace extends Model
         'tax_rate',
         'supported_languages',
         'settings',
+        'url_prefix',
+        'regional_brand_name',
+        'default_language',
+        'launch_status',
+        'global_fallback',
+        'checkout_enabled',
+        'redirect_enabled',
+        'local_seller_support',
+        'local_warehouse_support',
+        'local_payment_support',
     ];
 
     protected $casts = [
@@ -37,6 +47,12 @@ class Marketplace extends Model
         'tax_rate' => 'decimal:5',
         'supported_languages' => 'array',
         'settings' => 'array',
+        'global_fallback' => 'boolean',
+        'checkout_enabled' => 'boolean',
+        'redirect_enabled' => 'boolean',
+        'local_seller_support' => 'boolean',
+        'local_warehouse_support' => 'boolean',
+        'local_payment_support' => 'boolean',
     ];
 
     public function country(): BelongsTo
