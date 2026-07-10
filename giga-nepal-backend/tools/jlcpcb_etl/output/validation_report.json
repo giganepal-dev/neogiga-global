@@ -1,6 +1,6 @@
 {
   "source_repository": "https://github.com/CDFER/jlcpcb-parts-database",
-  "source_download_url": "file:///private/var/folders/6_/ybcn7jfd6txbf9dbdbd6mhb40000gn/T/pytest-of-ashokdhamala/pytest-12/test_dry_run_does_not_write_ca0/parts.sqlite3",
+  "source_download_url": "file:///private/var/folders/6_/ybcn7jfd6txbf9dbdbd6mhb40000gn/T/pytest-of-ashokdhamala/pytest-16/test_dry_run_does_not_write_ca0/parts.sqlite3",
   "source_checksum": "30a547df58f859f6d1675052dc6ba51e8fc6e3588f2f25503be2e792a1e385d0",
   "source_schema_summary": {
     "tables": [
@@ -20,8 +20,8 @@
       "price_breaks": "prices"
     }
   },
-  "started_at": "2026-07-10T09:23:36.943169+00:00",
-  "finished_at": "2026-07-10T09:23:36.958589+00:00",
+  "started_at": "2026-07-10T09:33:30.358815+00:00",
+  "finished_at": "2026-07-10T09:33:30.373126+00:00",
   "total_source_rows": 1,
   "total_rows_processed": 1,
   "total_manufacturers_created_or_matched": 1,
@@ -43,6 +43,6 @@
   "attribute_normalization_success_count": 0,
   "attribute_normalization_failure_count": 0,
   "duplicate_mpn_conflicts": 0,
-  "rows_per_second": 66.67,
-  "total_runtime_seconds": 0.015
+  "rows_per_second": 71.43,
+  "total_runtime_seconds": 0.014
 }
