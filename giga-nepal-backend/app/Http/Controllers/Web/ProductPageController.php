@@ -45,6 +45,7 @@ class ProductPageController extends Controller
         $products = Product::with(['brand', 'category'])
             ->withSum(['inventoryStocks as regional_available' => fn ($query) => $countryId > 0 ? $query->where('country_id', $countryId) : $query], 'quantity_available')
             ->whereIn('status', self::VISIBLE)
+            ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->when($category, fn ($query) => $query->where('category_id', $category->id))
             ->when($brandId > 0, fn ($query) => $query->where('brand_id', $brandId))
             ->when($manufacturer !== '', fn ($query) => $query->where(function ($w) use ($manufacturer) {
@@ -56,7 +57,12 @@ class ProductPageController extends Controller
             ->when($datasheet === '1' && Schema::hasTable('product_documents'), fn ($query) => $query->whereExists(function ($sub) {
                 $sub->selectRaw('1')->from('product_documents')->whereColumn('product_documents.product_id', 'products.id')->where('document_type', 'datasheet');
             }))
-            ->tap(fn ($query) => $catalogSearch->applyPublicFilters($query, compact('q', 'stock', 'package', 'quality')))
+            ->tap(fn ($query) => $catalogSearch->applyPublicFilters($query, [
+                'q' => $q,
+                'stock' => $stock,
+                'package' => $package,
+                'quality' => $quality,
+            ]))
             ->when($sort === 'newest', fn ($query) => $query->orderByDesc('id'))
             ->when($sort === 'price', fn ($query) => $query->orderBy('base_price'))
             ->when($sort === 'stock', fn ($query) => $query->orderByDesc('stock_quantity'))
@@ -85,10 +91,12 @@ class ProductPageController extends Controller
         $product = Product::with(['brand', 'category', 'specs', 'images'])
             ->where('slug', $slug)
             ->whereIn('status', self::VISIBLE)
+            ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->firstOrFail();
 
         $related = Product::with('brand')
             ->whereIn('status', self::VISIBLE)
+            ->when(Schema::hasColumn('products', 'visibility_status'), fn ($q) => $q->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->where('id', '!=', $product->id)
             ->when($product->category_id, fn ($q) => $q->where('category_id', $product->category_id))
             ->limit(6)
@@ -112,7 +120,10 @@ class ProductPageController extends Controller
 
     public function storeReview(Request $request, string $slug): RedirectResponse
     {
-        $product = Product::where('slug', $slug)->whereIn('status', self::VISIBLE)->firstOrFail();
+        $product = Product::where('slug', $slug)
+            ->whereIn('status', self::VISIBLE)
+            ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
+            ->firstOrFail();
 
         if (! Schema::hasTable('product_reviews')) {
             return back()->with('error', 'Product reviews are not enabled yet.');

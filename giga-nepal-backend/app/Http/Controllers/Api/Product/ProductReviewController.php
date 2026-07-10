@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Product;
 
 use App\Http\Controllers\Controller;
+use App\Models\Marketplace\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -54,7 +55,7 @@ class ProductReviewController extends Controller
             'use_case' => ['nullable', 'string', 'max:190'],
         ]);
 
-        abort_unless(DB::table('products')->where('id', $product)->exists(), 404);
+        abort_unless(Product::published()->where('id', $product)->exists(), 404);
 
         $user = $request->user();
 

@@ -40,7 +40,7 @@ class CategoryController extends Controller
 
         $products = Product::query()
             ->where('category_id', $category->id)
-            ->where('status', 'approved')
+            ->published()
             ->latest('id')
             ->limit(24)
             ->get();

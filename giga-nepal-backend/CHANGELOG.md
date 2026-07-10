@@ -16,6 +16,7 @@
 - Added Phase 3C approved-import search integration: public/API product search now consults approved `product_search_documents`, exposes package/quality/stock facets, and keeps pending JLCPCB imports hidden until reviewed.
 - Added Phase 3D review-to-index workflow: JLCPCB single/bulk approval can queue a search/facet rebuild, and bulk selection now covers all non-final pending source statuses.
 - Switched JLCPCB canonical product SKU generation from `JLCPCB-*` to NeoGiga `NG-*` and added a dry-run-first `jlcpcb:repair-skus` command for existing linked imports.
+- Hardened public/API product visibility so approved-but-hidden imported products remain excluded from listing, detail, category, SEO landing, cart, and review submission flows.
 
 ## 2026-07-09 - Complete System Audit
 
