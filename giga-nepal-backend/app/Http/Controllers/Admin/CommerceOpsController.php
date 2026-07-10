@@ -1105,6 +1105,27 @@ class CommerceOpsController extends Controller
         return back()->with('status', "Order {$row->order_number} tracking updated.");
     }
 
+    public function moderateReview(Request $request, int $review): RedirectResponse
+    {
+        $data = $request->validate([
+            'status' => ['required', 'in:approved,rejected,pending'],
+        ]);
+
+        $row = DB::table('product_reviews')->where('id', $review)->first();
+        if (! $row) {
+            return back()->with('error', 'Review not found.');
+        }
+
+        DB::table('product_reviews')->where('id', $review)->update([
+            'status' => $data['status'],
+            'moderated_by' => $request->user()?->id,
+            'moderated_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return back()->with('status', "Review #{$review} → {$data['status']}.");
+    }
+
     public function updateRfqStatus(Request $request, int $rfq): RedirectResponse
     {
         $data = $request->validate([

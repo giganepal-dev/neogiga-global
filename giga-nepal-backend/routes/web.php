@@ -137,6 +137,8 @@ Route::prefix('admin')->group(function () {
         Route::post('users/{user}/send-reset', [AdminCommerce::class, 'sendPasswordReset'])->whereNumber('user')->middleware('throttle:20,1');
         Route::post('orders/{order}/status', [AdminCommerce::class, 'updateOrderStatus'])->whereNumber('order')->middleware('throttle:20,1');
         Route::post('orders/{order}/tracking', [AdminCommerce::class, 'updateOrderTracking'])->whereNumber('order')->middleware('throttle:20,1');
+        Route::get('reviews', [AdminDash::class, 'reviews']);
+        Route::post('reviews/{review}/moderate', [AdminCommerce::class, 'moderateReview'])->whereNumber('review')->middleware('throttle:20,1');
         Route::get('rfqs', [AdminDash::class, 'rfqs']);
         Route::get('rfqs/{id}', [AdminDash::class, 'rfq'])->whereNumber('id');
         Route::post('rfqs/{rfq}/status', [AdminCommerce::class, 'updateRfqStatus'])->whereNumber('rfq')->middleware('throttle:20,1');

@@ -94,6 +94,20 @@
         </div>
     </div>
 
+    @if (isset($reviews) && ($reviewAgg->count ?? 0) > 0)
+        <div class="rel">
+            <h2 style="font-size:1.1rem">Customer reviews · {{ number_format((float) $reviewAgg->avg_rating, 1) }}/5 <span style="color:#64748B;font-size:.85rem">({{ $reviewAgg->count }})</span></h2>
+            @foreach ($reviews as $rv)
+                <div style="border:1px solid rgba(15,23,42,.12);border-radius:10px;padding:14px;background:#fff;margin-top:10px">
+                    <strong>{{ str_repeat('★', (int) $rv->rating) }}{{ str_repeat('☆', 5 - (int) $rv->rating) }}</strong>
+                    @if($rv->title) <strong>{{ $rv->title }}</strong>@endif
+                    <div style="margin-top:4px">{{ $rv->body }}</div>
+                    <div style="color:#64748B;font-size:.8rem;margin-top:6px">{{ $rv->reviewer }} · {{ \Illuminate\Support\Carbon::parse($rv->created_at)->format('Y-m-d') }}</div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     @if ($related->count())
         <div class="rel">
             <h2 style="font-size:1.1rem">Related products</h2>

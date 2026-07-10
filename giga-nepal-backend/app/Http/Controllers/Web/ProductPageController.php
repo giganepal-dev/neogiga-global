@@ -64,9 +64,29 @@ class ProductPageController extends Controller
             ->limit(6)
             ->get();
 
+        $reviews = collect();
+        $reviewAgg = (object) ['count' => 0, 'avg_rating' => 0];
+        try {
+            $reviews = \Illuminate\Support\Facades\DB::table('product_reviews as r')
+                ->join('users as u', 'u.id', '=', 'r.user_id')
+                ->where('r.product_id', $product->id)
+                ->where('r.status', 'approved')
+                ->orderByDesc('r.id')
+                ->limit(10)
+                ->get(['r.rating', 'r.title', 'r.body', 'r.created_at', 'u.name as reviewer']);
+            $reviewAgg = \Illuminate\Support\Facades\DB::table('product_reviews')
+                ->where('product_id', $product->id)->where('status', 'approved')
+                ->selectRaw('count(*) as count, coalesce(avg(rating),0) as avg_rating')
+                ->first();
+        } catch (\Throwable) {
+            // table may not exist yet in some environments — page stays functional
+        }
+
         return view('frontend.products.show', [
             'product' => $product,
             'related' => $related,
+            'reviews' => $reviews,
+            'reviewAgg' => $reviewAgg,
         ]);
     }
 }
