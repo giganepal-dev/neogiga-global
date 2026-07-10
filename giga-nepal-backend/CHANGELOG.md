@@ -13,6 +13,7 @@
 - Added a local/live/GitHub audit and deploy report with done, pending, and next phase status.
 - Added Phase 3A JLCPCB admin import review workflow: protected `/admin/imports/jlcpcb` queue, filters, source snapshot view, approve, approve-and-publish, reject, bulk approve, source/offer/document status updates, and audit logging.
 - Added Phase 3B internal search/facet rebuild foundation for approved JLCPCB imports: additive index tables, queued rebuild job, rebuild service, admin queue action, and rebuild status table.
+- Added Phase 3C approved-import search integration: public/API product search now consults approved `product_search_documents`, exposes package/quality/stock facets, and keeps pending JLCPCB imports hidden until reviewed.
 
 ## 2026-07-09 - Complete System Audit
 
