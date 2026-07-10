@@ -6,19 +6,14 @@ return [
     |--------------------------------------------------------------------------
     | Third Party Services
     |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
     */
 
-    // Interim admin API gate (see App\Http\Middleware\EnsureAdminToken).
-    // Unset = admin routes refuse all requests (fail closed).
-    // Prefer ADMIN_API_TOKEN_HASH=sha256(token) in production.
-    'admin_api_token' => env('ADMIN_API_TOKEN'),
-    'admin_api_token_hash' => env('ADMIN_API_TOKEN_HASH'),
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme' => 'https',
+    ],
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
@@ -30,15 +25,22 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'resend' => [
-        'key' => env('RESEND_KEY'),
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
-    'slack' => [
-        'notifications' => [
-            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
-        ],
+    'esewa' => [
+        'endpoint' => env('ESEWA_ENDPOINT', 'https://rc-processor.esewa.com.np/api/'),
+        'merchant_code' => env('ESEWA_MERCHANT_CODE'),
+        'secret_key' => env('ESEWA_SECRET_KEY'),
+    ],
+
+    'khalti' => [
+        'endpoint' => env('KHALTI_ENDPOINT', 'https://a.khalti.com/api/v2/'),
+        'public_key' => env('KHALTI_PUBLIC_KEY'),
+        'secret_key' => env('KHALTI_SECRET_KEY'),
     ],
 
 ];

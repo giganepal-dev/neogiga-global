@@ -55,3 +55,6 @@ Schedule::job(new CalculateTrendingCategoriesJob)->hourly();
 Schedule::job(new CalculateTopSearchTermsJob)->hourly();
 Schedule::job(new RefreshCustomerSegmentJob)->daily();
 Schedule::job(new GenerateRegionalSalesReportJob)->daily();
+
+// Inventory reservation cleanup - runs every minute to release expired 15-minute reservations
+Schedule::job(new \App\Jobs\ProcessStockReservation())->everyMinute();

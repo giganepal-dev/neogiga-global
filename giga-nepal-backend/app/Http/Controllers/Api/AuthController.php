@@ -43,9 +43,13 @@ class AuthController extends Controller
 
         $this->bindReferral($user, $request);
 
+        // Create Sanctum token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return $this->success([
             'user' => $this->userPayload($user),
-            'token' => $this->issueToken($user),
+            'token' => $token,
+            'token_type' => 'Bearer',
         ], 201);
     }
 
@@ -64,9 +68,14 @@ class AuthController extends Controller
 
         $this->bindReferral($user, $request);
 
+        // Update last login and create Sanctum token
+        $user->update(['last_login_at' => now()]);
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return $this->success([
             'user' => $this->userPayload($user),
-            'token' => $this->issueToken($user),
+            'token' => $token,
+            'token_type' => 'Bearer',
         ]);
     }
 
@@ -77,7 +86,8 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->forceFill(['api_token_hash' => null])->save();
+        // Delete current Sanctum token
+        $request->user()->currentAccessToken()->delete();
 
         return $this->success(['message' => 'Logged out.']);
     }
@@ -97,18 +107,6 @@ class AuthController extends Controller
                 // referral binding is non-critical to authentication
             }
         }
-    }
-
-    private function issueToken(User $user): string
-    {
-        $token = Str::random(64);
-
-        $user->forceFill([
-            'api_token_hash' => hash('sha256', $token),
-            'last_login_at' => now(),
-        ])->save();
-
-        return $token;
     }
 
     private function userPayload(User $user): array

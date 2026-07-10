@@ -27,6 +27,8 @@ use App\Http\Controllers\Api\Admin\OnboardingAdminController;
 use App\Http\Controllers\Api\Admin\InventoryAdminController;
 use App\Http\Controllers\Api\Admin\LmsAdminController;
 use App\Http\Controllers\Api\Admin\ImportExportController;
+use App\Http\Controllers\Admin\WarehouseController;
+use App\Http\Controllers\Admin\WarehouseShipmentController;
 use App\Http\Controllers\Api\Seller\SellerDashboardController;
 use App\Http\Controllers\Api\Seller\SellerInventoryController;
 use App\Http\Controllers\Api\Seller\SellerOrderController;
@@ -38,6 +40,7 @@ use App\Http\Controllers\Api\Seller\SellerSupportTicketController;
 use App\Http\Controllers\Api\Distributor\DistributorApplicationController;
 use App\Http\Controllers\Api\Distributor\DistributorDashboardController;
 use App\Http\Controllers\Api\Distributor\DistributorResourceController;
+use App\Http\Controllers\Payment\PaymentCallbackController;
 use App\Http\Controllers\Api\B2B\B2BAccountController;
 use App\Http\Controllers\Api\B2B\B2BRfqController;
 use App\Http\Controllers\Api\B2B\B2BQuotationController;
@@ -245,6 +248,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/add-bom', [CartController::class, 'addBom']);
         Route::patch('/items/{item}', [CartController::class, 'updateItem'])->whereNumber('item');
         Route::delete('/items/{item}', [CartController::class, 'removeItem'])->whereNumber('item');
+        Route::post('/clear', [CartController::class, 'clear']);
+        Route::get('/reservation-status', [CartController::class, 'reservationStatus']);
     });
 
     Route::post('/checkout', [OrderController::class, 'checkout'])->middleware(['api.token', 'permission:checkout.create']);
@@ -275,6 +280,13 @@ Route::prefix('v1')->group(function () {
             Route::post('/sales/{sale}/payment', [PosController::class, 'processPayment'])->whereNumber('sale');
             Route::post('/sales/{sale}/refund', [PosController::class, 'processRefund'])->whereNumber('sale');
         });
+    });
+
+    // Payment Gateway Callbacks
+    Route::prefix('payment')->group(function () {
+        Route::any('/callback/{gateway}', [PaymentCallbackController::class, 'handleCallback'])
+            ->where(['gateway' => 'esewa|khalti|stripe|cod']);
+        Route::post('/failure', [PaymentCallbackController::class, 'handleFailure']);
     });
 
     // LMS (501 until schema reconciliation)
@@ -405,6 +417,18 @@ Route::prefix('v1')->group(function () {
             Route::post('/bom/projects/{project}/items', [BomAdminController::class, 'storeItem'])->whereNumber('project')->middleware('throttle:writes');
             Route::patch('/bom/projects/{project}/items/{item}', [BomAdminController::class, 'updateItem'])->whereNumber('project')->whereNumber('item')->middleware('throttle:writes');
             Route::delete('/bom/projects/{project}/items/{item}', [BomAdminController::class, 'deleteItem'])->whereNumber('project')->whereNumber('item')->middleware('throttle:writes');
+
+            // Warehouse Management Routes
+            Route::get('/warehouses/stats', [WarehouseController::class, 'stats']);
+            Route::get('/warehouses/distribution-centers', [WarehouseController::class, 'distributionCenters']);
+            Route::get('/warehouses/by-country/{country}', [WarehouseController::class, 'byCountry']);
+            Route::apiResource('warehouses', WarehouseController::class);
+            
+            Route::get('/warehouse-shipments', [WarehouseShipmentController::class, 'index']);
+            Route::post('/warehouse-shipments', [WarehouseShipmentController::class, 'store'])->middleware('throttle:writes');
+            Route::get('/warehouse-shipments/{shipment}', [WarehouseShipmentController::class, 'show']);
+            Route::post('/warehouse-shipments/{shipment}/status', [WarehouseShipmentController::class, 'updateStatus'])->middleware('throttle:writes');
+            Route::delete('/warehouse-shipments/{shipment}', [WarehouseShipmentController::class, 'destroy']);
         });
     });
 });
