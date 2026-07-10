@@ -1,26 +1,5 @@
-```
-# Dependencies
-vendor/
-
-# Environment
-.env
-.env.local
-.env.*
-
-# Logs
-*.log
-
-# Compiled PHP
-*.php~
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Cache
-.cache/
-```
+# Documentation and planning files
+FRONTEND_FUNCTIONALITY_GAP_REPORT.md
+FRONTEND_REDESIGN_PLAN.md
+FRONTEND_REFERENCE_AUDIT.md
+FRONTEND_UI_INSPIRATION_MAP.md
