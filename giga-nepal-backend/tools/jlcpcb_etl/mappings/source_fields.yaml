@@ -1,0 +1,12 @@
+tables:
+  components:
+    source_id: lcsc
+    mpn: mfr
+    manufacturer: manufacturer_id
+    category: category_id
+    description: description
+    package: package
+    datasheet_url: datasheet
+    sku: lcsc
+    stock: stock
+    price_breaks: price

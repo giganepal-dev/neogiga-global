@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-07-10 - JLCPCB Canonical Import Safety Gate
+
+- Added the JLCPCB/LCSC ETL as a source-controlled Laravel tool with tests, mappings, validation reports, and production run documentation.
+- Added a safe PostgreSQL connection resolver that prefers `DATABASE_URL`, falls back to Laravel `.env` DB settings, rejects non-PostgreSQL production drivers, and redacts credentials.
+- Added an explicit NeoGiga canonical adapter targeting existing brands, categories, products, specs, documents, and additive source-scoped offer/provenance tables.
+- Added additive catalog provenance migration for sources, import batches, source product links, import errors, and distributor offers.
+- Added CLI guardrails so NeoGiga writes require `--target neogiga --publish --pilot` and are capped at 1,000 rows for this execution.
+- Added canonical schema, field map, write plan, blocker resolution, pilot, idempotency, rollback dry-run, and next-scale gate reports.
+
 ## 2026-07-09 - Complete System Audit
 
 - Added a production system audit report covering health, migrations, route protection, schema coverage, module completion state, queue status, admin/public endpoint checks, and prioritized next steps.

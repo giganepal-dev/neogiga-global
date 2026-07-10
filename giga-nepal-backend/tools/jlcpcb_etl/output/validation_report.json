@@ -1,0 +1,48 @@
+{
+  "source_repository": "https://github.com/CDFER/jlcpcb-parts-database",
+  "source_download_url": "file:///private/var/folders/6_/ybcn7jfd6txbf9dbdbd6mhb40000gn/T/pytest-of-ashokdhamala/pytest-12/test_dry_run_does_not_write_ca0/parts.sqlite3",
+  "source_checksum": "30a547df58f859f6d1675052dc6ba51e8fc6e3588f2f25503be2e792a1e385d0",
+  "source_schema_summary": {
+    "tables": [
+      "components"
+    ],
+    "detected_mapping": {
+      "parts_table": "components",
+      "source_id": "lcsc",
+      "mpn": "mpn",
+      "manufacturer": "manufacturer",
+      "category": "category",
+      "description": "description",
+      "package": "package",
+      "datasheet_url": "datasheet",
+      "sku": "lcsc",
+      "stock": "stock",
+      "price_breaks": "prices"
+    }
+  },
+  "started_at": "2026-07-10T09:23:36.943169+00:00",
+  "finished_at": "2026-07-10T09:23:36.958589+00:00",
+  "total_source_rows": 1,
+  "total_rows_processed": 1,
+  "total_manufacturers_created_or_matched": 1,
+  "total_categories_created_or_matched": 1,
+  "total_parts_inserted": 0,
+  "total_parts_updated": 0,
+  "total_offers_inserted_or_updated": 1,
+  "total_skipped": 0,
+  "skipped_grouped_by_reason": {},
+  "parts_per_category": {
+    "Passive Components/Capacitors/Ceramic Capacitors": 1
+  },
+  "parts_per_manufacturer": {
+    "texas instruments": 1
+  },
+  "records_without_category": 0,
+  "records_without_datasheet": 1,
+  "records_without_package": 0,
+  "attribute_normalization_success_count": 0,
+  "attribute_normalization_failure_count": 0,
+  "duplicate_mpn_conflicts": 0,
+  "rows_per_second": 66.67,
+  "total_runtime_seconds": 0.015
+}
