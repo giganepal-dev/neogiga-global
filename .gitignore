@@ -1,39 +1,47 @@
-```
-# Laravel-specific ignores
-bootstrap/cache/
-storage/logs/
-storage/framework/
-public/storage/
+# Documentation artifacts
+docs/audit/*.md
 
 # Dependencies
-vendor/
 node_modules/
+.venv/
+venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+dist/
+build/
+target/
+.gradle/
 
 # Environment
 .env
 .env.local
-.env.*
+*.env.*
 
-# IDE
+# Editors
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# OS
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+
+# System
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-
-# Compiled/Build artifacts
+# Compiled files
 *.pyc
-__pycache__/
+*.class
 *.o
-*.obj
 *.exe
 *.dll
 *.so
 *.a
+*.obj
 *.out
 
 # Coverage
@@ -41,20 +49,7 @@ coverage/
 htmlcov/
 .coverage
 
-# Package managers
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Testing
-.phpunit.result.cache
-
-# Backup files
-*.bak
-*.swp
-*.swo
-
-# Compressed archives
+# Compressed files
 *.zip
 *.gz
 *.tar
@@ -77,4 +72,3 @@ yarn-error.log*
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```
