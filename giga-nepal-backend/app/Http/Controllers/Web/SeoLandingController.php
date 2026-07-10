@@ -10,8 +10,6 @@ use Illuminate\View\View;
 
 class SeoLandingController extends Controller
 {
-    private const VISIBLE = ['active', 'approved', 'published'];
-
     public function manufacturer(string $slug): View
     {
         $name = $this->titleFromSlug($slug);
@@ -122,7 +120,7 @@ class SeoLandingController extends Controller
     {
         return Product::query()
             ->with(['brand', 'category'])
-            ->whereIn('status', self::VISIBLE)
+            ->published()
             ->orderByDesc('is_featured')
             ->orderByDesc('id');
     }

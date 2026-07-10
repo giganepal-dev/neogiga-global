@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Schema;
 
 class Product extends Model
 {
@@ -137,7 +138,13 @@ class Product extends Model
 
     public function scopePublished($query)
     {
-        return $query->where('status', 'approved');
+        $query->whereIn('status', ['active', 'approved', 'published']);
+
+        if (Schema::hasColumn('products', 'visibility_status')) {
+            $query->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']);
+        }
+
+        return $query;
     }
 
     public function scopeFeatured($query)

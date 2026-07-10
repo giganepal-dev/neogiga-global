@@ -35,7 +35,7 @@ class CartPageController extends Controller
             'quantity' => ['required', 'integer', 'min:1', 'max:500'],
         ]);
 
-        $product = Product::whereIn('status', ['active', 'approved', 'published'])->find($data['product_id']);
+        $product = Product::published()->find($data['product_id']);
         if (! $product) {
             return back()->with('error', 'Product is not available for cart.');
         }
