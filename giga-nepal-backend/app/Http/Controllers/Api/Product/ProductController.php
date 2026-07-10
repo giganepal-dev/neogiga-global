@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductBrand;
 use App\Models\Marketplace\ProductCategory;
+use App\Services\Catalog\CatalogSearchService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -90,14 +91,27 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'q' => ['required', 'string', 'min:2', 'max:120'],
+            'stock' => ['sometimes', 'in:in,low,out'],
+            'package' => ['sometimes', 'string', 'max:120'],
+            'quality' => ['sometimes', 'in:high,needs_review'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
+        $catalogSearch = app(CatalogSearchService::class);
 
         $products = $this->baseQuery()
-            ->search($validated['q'])
+            ->tap(fn ($query) => $catalogSearch->applyPublicFilters($query, [
+                'q' => $validated['q'],
+                'stock' => $validated['stock'] ?? '',
+                'package' => $validated['package'] ?? '',
+                'quality' => $validated['quality'] ?? '',
+            ]))
             ->paginate($validated['per_page'] ?? 24);
 
-        return $this->success($products, meta: ['query' => $validated['q']]);
+        return $this->success($products, meta: [
+            'query' => $validated['q'],
+            'facets' => $catalogSearch->publicFacetGroups(['q' => $validated['q']]),
+            'index' => $catalogSearch->indexedSummary(),
+        ]);
     }
 
     private function baseQuery(): Builder

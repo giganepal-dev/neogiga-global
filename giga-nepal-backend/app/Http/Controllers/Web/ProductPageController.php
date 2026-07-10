@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
+use App\Services\Catalog\CatalogSearchService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -32,7 +33,10 @@ class ProductPageController extends Controller
         $stock = (string) $request->query('stock', '');
         $countryId = (int) $request->query('country_id', $marketplaceContext['country_id'] ?: 0);
         $datasheet = (string) $request->query('datasheet', '');
+        $package = trim((string) $request->query('package', ''));
+        $quality = trim((string) $request->query('quality', ''));
         $sort = (string) $request->query('sort', 'relevance');
+        $catalogSearch = app(CatalogSearchService::class);
 
         $category = $categorySlug !== ''
             ? ProductCategory::where('slug', $categorySlug)->first()
@@ -47,19 +51,17 @@ class ProductPageController extends Controller
                 $w->where('manufacturer_name', 'ilike', "%{$manufacturer}%")
                     ->orWhere('mpn', 'ilike', "%{$manufacturer}%");
             }))
-            ->when($stock === 'in', fn ($query) => $query->where('stock_quantity', '>', 0))
             ->when($stock === 'low', fn ($query) => $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold'))
             ->when($stock === 'out', fn ($query) => $query->where('stock_quantity', '<=', 0))
             ->when($datasheet === '1' && Schema::hasTable('product_documents'), fn ($query) => $query->whereExists(function ($sub) {
                 $sub->selectRaw('1')->from('product_documents')->whereColumn('product_documents.product_id', 'products.id')->where('document_type', 'datasheet');
             }))
-            ->when($q !== '', function ($query) use ($q) {
-                $query->where(fn ($w) => $w
-                    ->where('name', 'ilike', "%{$q}%")
-                    ->orWhere('sku', 'ilike', "%{$q}%")
-                    ->orWhere('mpn', 'ilike', "%{$q}%")
-                    ->orWhere('manufacturer_name', 'ilike', "%{$q}%"));
-            })
+            ->tap(fn ($query) => $catalogSearch->applyPublicFilters($query, [
+                'q' => $q,
+                'stock' => $stock,
+                'package' => $package,
+                'quality' => $quality,
+            ]))
             ->when($sort === 'newest', fn ($query) => $query->orderByDesc('id'))
             ->when($sort === 'price', fn ($query) => $query->orderBy('base_price'))
             ->when($sort === 'stock', fn ($query) => $query->orderByDesc('stock_quantity'))
@@ -72,7 +74,9 @@ class ProductPageController extends Controller
             'products' => $products,
             'q' => $q,
             'category' => $category,
-            'filters' => compact('brandId', 'manufacturer', 'stock', 'countryId', 'datasheet', 'sort'),
+            'filters' => compact('brandId', 'manufacturer', 'stock', 'countryId', 'datasheet', 'package', 'quality', 'sort'),
+            'facetGroups' => $catalogSearch->publicFacetGroups(compact('q')),
+            'indexedSummary' => $catalogSearch->indexedSummary(),
             'rootCategories' => ProductCategory::whereNull('parent_id')
                 ->orderBy('sort_order')->orderBy('name')->limit(80)->get(),
             'brands' => DB::table('product_brands')->orderBy('name')->limit(120)->get(['id', 'name']),
