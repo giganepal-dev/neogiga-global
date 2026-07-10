@@ -1,2 +1,38 @@
-# Documentation and reports
-*.md
+```
+# Laravel-specific ignores
+vendor/
+composer.lock
+*.log
+bootstrap/cache/
+storage/logs/
+storage/framework/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Dependencies
+node_modules/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Temp files
+*.tmp
+```
