@@ -98,7 +98,8 @@ class NeoGigaCanonicalAdapter:
                 result.import_batch_id = batch_id
                 for part in parts:
                     try:
-                        self._publish_part(conn, part, source_id, batch_id, result)
+                        with conn.transaction():
+                            self._publish_part(conn, part, source_id, batch_id, result)
                     except Exception as exc:
                         result.skipped += 1
                         result.errors.append({"source_part_id": part.source_part_id, "reason": str(exc)})
@@ -183,7 +184,7 @@ class NeoGigaCanonicalAdapter:
         category_id, inserted_categories = self._category(conn, part)
         result.categories_inserted += inserted_categories
         result.categories_matched += max(0, len(CategoryMapper.ancestors(part.category.path)) - inserted_categories)
-        product_id, inserted_product = self._product(conn, part, brand_id, category_id, batch_id)
+        product_id, inserted_product = self._product(conn, part, brand_id, category_id, source_id, batch_id)
         result.products_inserted += int(inserted_product)
         result.products_updated += int(not inserted_product)
         created_link = self._source_link(conn, part, product_id, source_id, batch_id)
@@ -252,12 +253,28 @@ class NeoGigaCanonicalAdapter:
             inserted += 1
         return parent_id, inserted
 
-    def _product(self, conn, part: TransformedPart, brand_id: int, category_id: int | None, batch_id: str) -> tuple[int, bool]:
+    def _product(self, conn, part: TransformedPart, brand_id: int, category_id: int | None, source_id: int, batch_id: str) -> tuple[int, bool]:
         normalized_mpn = part.normalized_mpn
         existing = conn.execute(
-            r"SELECT id, name, short_description, description, metadata FROM products WHERE brand_id = %s AND upper(regexp_replace(coalesce(mpn,''), '\s+', '', 'g')) = %s LIMIT 1",
-            (brand_id, normalized_mpn),
+            """
+            SELECT p.id, p.name, p.short_description, p.description, p.metadata
+            FROM catalog_product_sources cps
+            JOIN products p ON p.id = cps.product_id
+            WHERE cps.source_id = %s AND cps.source_part_id = %s
+            LIMIT 1
+            """,
+            (source_id, part.source_part_id),
         ).fetchone()
+        if not existing:
+            existing = conn.execute(
+                "SELECT id, name, short_description, description, metadata FROM products WHERE sku = %s LIMIT 1",
+                (stable_sku(part.source_part_id),),
+            ).fetchone()
+        if not existing:
+            existing = conn.execute(
+                r"SELECT id, name, short_description, description, metadata FROM products WHERE brand_id = %s AND upper(regexp_replace(coalesce(mpn,''), '\s+', '', 'g')) = %s LIMIT 1",
+                (brand_id, normalized_mpn),
+            ).fetchone()
         metadata = {
             "source": SOURCE_CODE,
             "source_part_id": part.source_part_id,
