@@ -1,64 +1,29 @@
 ```
-# Compiled and build artifacts
-*.pyc
-__pycache__/
+# Laravel-specific ignores
+/vendor/
+/storage/logs/*
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/bootstrap/cache/*
 
-# Dependencies
-vendor/
-node_modules/
+# Environment
 .env
 .env.local
-*.env.*
+.env.*
 
-# Logs and temp files
+# Dependencies
+node_modules/
+composer.lock
+
+# Logs
 *.log
-*.tmp
 
-# Editors
+# IDE
 .vscode/
 .idea/
 
-# OS generated files
+# OS
 .DS_Store
 Thumbs.db
-
-# Laravel specific
-bootstrap/cache/
-storage/logs/
-storage/framework/cache/
-storage/framework/sessions/
-storage/framework/views/
-public/storage
-
-# Database
-*.sqlite
-*.db
-
-# Backup files
-*.bak
-*.backup
-
-# Compression
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
 ```

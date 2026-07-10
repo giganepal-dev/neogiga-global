@@ -245,6 +245,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/add-bom', [CartController::class, 'addBom']);
         Route::patch('/items/{item}', [CartController::class, 'updateItem'])->whereNumber('item');
         Route::delete('/items/{item}', [CartController::class, 'removeItem'])->whereNumber('item');
+        Route::post('/clear', [CartController::class, 'clear']);
+        Route::get('/reservation-status', [CartController::class, 'reservationStatus']);
     });
 
     Route::post('/checkout', [OrderController::class, 'checkout'])->middleware(['api.token', 'permission:checkout.create']);

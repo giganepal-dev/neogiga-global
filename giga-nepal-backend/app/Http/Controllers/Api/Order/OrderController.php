@@ -59,6 +59,10 @@ class OrderController extends Controller
             $cart->calculateTotal();
             $cart->refresh()->load(['items.product']);
 
+            // Convert active reservations to permanent (order placed successfully)
+            $reservationService = app(\App\Services\Inventory\InventoryReservationService::class);
+            $reservationService->convertCartReservations($cart);
+
             // Server-side promotions (re-validated from cart metadata; never trusted from client).
             $promo = $this->resolvePromotions($cart, $request->user()->id);
             $orderDiscount = round((float) $cart->discount_total + $promo['coupon_discount'], 2);
