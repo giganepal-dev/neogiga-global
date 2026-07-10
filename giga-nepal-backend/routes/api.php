@@ -776,3 +776,15 @@ Route::prefix('v1/auth')->group(function () {
         Route::get('/verify-email/{id}/{hash}', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
     });
 });
+
+// Warehouse Management Routes (Admin Only)
+Route::middleware(['auth:sanctum', 'permission:manage_warehouses'])->prefix('warehouses')->group(function () {
+    Route::get('/', [WarehouseController::class, 'index']); // List all warehouses
+    Route::get('/statistics', [WarehouseController::class, 'statistics']); // Get warehouse statistics
+    Route::get('/region/{region}', [WarehouseController::class, 'byRegion']); // Get warehouses by region
+    Route::post('/', [WarehouseController::class, 'store']); // Create new warehouse
+    Route::get('/{warehouse}', [WarehouseController::class, 'show']); // Get warehouse details
+    Route::put('/{warehouse}', [WarehouseController::class, 'update']); // Update warehouse
+    Route::delete('/{warehouse}', [WarehouseController::class, 'destroy']); // Delete warehouse
+    Route::post('/transfer', [WarehouseController::class, 'transferInventory']); // Transfer inventory between warehouses
+});
