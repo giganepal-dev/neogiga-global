@@ -9,6 +9,8 @@
 - Added CLI guardrails so NeoGiga writes require `--target neogiga --publish --pilot` and are capped at 1,000 rows for this execution.
 - Added canonical schema, field map, write plan, blocker resolution, pilot, idempotency, rollback dry-run, and next-scale gate reports.
 - Deployed the additive ETL/provenance changes to production and completed the controlled 1,000-row canonical pilot plus idempotency rerun; imported products remain `draft`/`hidden`/`pending_review`.
+- Synced the Global Commerce pricing service/model/config layer that was present locally but missing from the live release, matching the already-applied pricing foundation tables.
+- Added a local/live/GitHub audit and deploy report with done, pending, and next phase status.
 
 ## 2026-07-09 - Complete System Audit
 
