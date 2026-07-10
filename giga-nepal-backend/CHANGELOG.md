@@ -12,6 +12,7 @@
 - Synced the Global Commerce pricing service/model/config layer that was present locally but missing from the live release, matching the already-applied pricing foundation tables.
 - Added a local/live/GitHub audit and deploy report with done, pending, and next phase status.
 - Added Phase 3A JLCPCB admin import review workflow: protected `/admin/imports/jlcpcb` queue, filters, source snapshot view, approve, approve-and-publish, reject, bulk approve, source/offer/document status updates, and audit logging.
+- Added Phase 3B internal search/facet rebuild foundation for approved JLCPCB imports: additive index tables, queued rebuild job, rebuild service, admin queue action, and rebuild status table.
 
 ## 2026-07-09 - Complete System Audit
 

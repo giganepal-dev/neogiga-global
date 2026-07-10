@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\RebuildApprovedImportSearchIndexJob;
 use App\Models\Marketplace\VendorProduct;
 use App\Services\Erp\DocumentNumberService;
 use App\Services\Inventory\TransferService;
+use App\Services\Catalog\CatalogSearchRebuildService;
 use App\Services\Product\ProductApprovalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -1320,6 +1322,21 @@ class CommerceOpsController extends Controller
         });
 
         return back()->with('status', 'Imported product rejected and hidden.');
+    }
+
+    public function queueJlcpcbSearchRebuild(Request $request, CatalogSearchRebuildService $rebuilds): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('catalog_index_rebuild_jobs'), 404);
+
+        $jobId = $rebuilds->createJob($request->user()?->id, 'jlcpcb_parts_database');
+        RebuildApprovedImportSearchIndexJob::dispatch($jobId, 'jlcpcb_parts_database');
+
+        $this->auditAdminAction($request, 'jlcpcb_search_rebuild_queued', 'catalog_index_rebuild_jobs', $jobId, [
+            'source_code' => 'jlcpcb_parts_database',
+            'scope' => 'approved_imports',
+        ]);
+
+        return back()->with('status', "Search/facet rebuild queued as job #{$jobId}.");
     }
 
     private function jlcpcbSourceRow(int $sourceId): ?object

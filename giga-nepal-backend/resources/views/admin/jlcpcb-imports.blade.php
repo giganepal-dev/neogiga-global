@@ -11,7 +11,7 @@
     <div class="kpi"><div class="t">Imported</div><div class="v tnum">{{ number_format($stats['total']) }}</div><div class="s">JLCPCB source links</div></div>
     <div class="kpi"><div class="t">Pending</div><div class="v tnum">{{ number_format($stats['pending']) }}</div><div class="s">needs admin review</div></div>
     <div class="kpi"><div class="t">Approved</div><div class="v tnum">{{ number_format($stats['approved']) }}</div><div class="s">catalog accepted</div></div>
-    <div class="kpi"><div class="t">Rejected</div><div class="v tnum">{{ number_format($stats['rejected']) }}</div><div class="s">hidden / not used</div></div>
+    <div class="kpi"><div class="t">Search Docs</div><div class="v tnum">{{ number_format($stats['indexed']) }}</div><div class="s">{{ number_format($stats['facets']) }} facet values</div></div>
 </div>
 
 <section class="card">
@@ -129,6 +129,34 @@
             </tbody>
         </table></div>
     @if($imports->hasPages())<div style="padding:12px 16px;border-top:1px solid var(--line)">{{ $imports->links() }}</div>@endif
+</section>
+
+<section class="card" style="margin-top:16px">
+    <div class="card-h">
+        <div><h2>Search / Facet Rebuild</h2><div class="sub">Indexes approved JLCPCB imports into internal search/facet tables. Public search integration remains a later gate.</div></div>
+        <form method="post" action="/admin/imports/jlcpcb/search-rebuild">@csrf
+            <button class="btn btn-primary" type="submit" onclick="return confirm('Queue search/facet rebuild for approved imported products?')">Queue Rebuild</button>
+        </form>
+    </div>
+    <div class="scroll-x"><table class="tbl">
+        <thead><tr><th>Job</th><th>Status</th><th class="num">Products</th><th class="num">Indexed</th><th class="num">Facets</th><th>Started</th><th>Completed</th><th>Error</th></tr></thead>
+        <tbody>
+        @forelse($indexJobs as $job)
+            <tr>
+                <td class="mono">#{{ $job->id }}</td>
+                <td><span class="badge {{ $job->status === 'completed' ? 'b-ok' : ($job->status === 'failed' ? 'b-warn' : 'b-muted') }}">{{ $job->status }}</span></td>
+                <td class="num tnum">{{ number_format($job->product_count) }}</td>
+                <td class="num tnum">{{ number_format($job->indexed_count) }}</td>
+                <td class="num tnum">{{ number_format($job->facet_count) }}</td>
+                <td>{{ $job->started_at ?: '—' }}</td>
+                <td>{{ $job->completed_at ?: '—' }}</td>
+                <td class="sub">{{ $job->error ? \Illuminate\Support\Str::limit($job->error, 120) : '—' }}</td>
+            </tr>
+        @empty
+            <tr><td colspan="8"><div class="empty"><h3>No rebuild jobs yet</h3></div></td></tr>
+        @endforelse
+        </tbody>
+    </table></div>
 </section>
 
 @endsection
