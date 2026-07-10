@@ -752,3 +752,19 @@ Route::prefix('v1/auth')->group(function () {
         Route::get('/verify-email/{id}/{hash}', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Customer support / chat (2026-07-10)
+|--------------------------------------------------------------------------
+| Customer side of the existing support module (admin inbox: /admin/support;
+| seller side: SellerSupportTicketController). Ownership-checked, append-only
+| transcript, AI-handoff placeholder via metadata.needs_human.
+*/
+Route::prefix('v1/support')->middleware('api.token')->group(function () {
+    Route::get('/tickets', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'index']);
+    Route::post('/tickets', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'store'])->middleware('throttle:writes');
+    Route::get('/tickets/{id}', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'show'])->whereNumber('id');
+    Route::post('/tickets/{id}/messages', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'reply'])->whereNumber('id')->middleware('throttle:writes');
+    Route::post('/tickets/{id}/request-human', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'requestHuman'])->whereNumber('id')->middleware('throttle:writes');
+});
