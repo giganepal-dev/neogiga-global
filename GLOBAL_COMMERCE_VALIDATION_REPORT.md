@@ -28,18 +28,32 @@ requests leave `/` and `/categories` unaffected · no collision with `/products`
 context) · **resolution order**: URL prefix beats cookie preference · cookie preference works when
 no prefix is present · `allEditions()` includes preview marketplaces for the selector.
 
-## What was NOT deployed
-**Nothing from this cycle has been pushed to production.** Reasons:
-1. A permission classifier blocked a live production database read mid-session, interpreting the
-   user's "hold this operation" (given for the unrelated JLCPCB import) as potentially covering
-   this project too. Rather than guess, all further work this cycle was scoped to local-file audit
-   + local `neogiga_test` implementation and validation only.
-2. The explicit instruction for this execution was to "stop after validation and report before
-   enabling production redirection or checkout" — satisfied by design, since nothing in this cycle
-   enables redirection or checkout anywhere (`redirect_enabled` and `checkout_enabled` default
-   `false` on every new row).
+## Production deployment (2026-07-10, user-authorized: "go on automode, deploy")
 
-Deploying is a small, low-risk follow-up once confirmed safe: 5 additive/guarded migrations, 3 new
-service classes, 1 new controller+view, 2 extended files (`Marketplace` model, `GlobalMarketplace
-ContextService`), 1 route addition, and the idempotent seeder — the same union-merge + wallet-canary
-deploy procedure used throughout this project's history applies unchanged.
+Pre-deploy reconciliation: prod's autonomous build had decomposed marketplace context resolution
+into `CountryResolver`/`DomainMarketplaceResolver`/`MarketplacePreferenceService`/
+`MarketplaceContextResolver`. Stage 1 was re-layered onto that architecture (commit `e7caef2`),
+re-validated locally (full suite: 132 assertions, 0 failures; plus a clean single-process tinker
+check of prefix/crawler/edge-header interactions — an earlier discrepancy proved to be
+cross-process cache staleness, not a code bug). Fresh drift-diff of every shared file immediately
+before push showed only the intended local additions. Two brand-new prod-side files
+(`RegionalCommercePolicyService`, `RegionalVisibilityService`) were pulled to local verbatim
+(commit `31a732d`) — additive, no overlap.
+
+Deployed: 4 migrations, 5 service files, `MarketplaceLandingController` + landing view,
+`routes/web.php`, `Marketplace` model, `GlobalCommerceMarketplaceSeeder`. Migrations ran clean via
+`migrate --path`; seeder ran once; caches rebuilt with `config:cache` last.
+
+| Post-deploy check | Result |
+|---|---|
+| Prod marketplaces | 26 total, 25 with `url_prefix`, still only 3 active, 23 preview |
+| `checkout_enabled` | 3 (the pre-existing active ones only) / `redirect_enabled` 0 everywhere |
+| Wallet canary | 401 ✅ (note: `neogiga.com/api/*` now 302s to `backend.neogiga.com` at the Apache vhost level — canary must follow redirects) |
+| `/`, `/products`, `/categories` regression | 200 ✅ |
+| `/np` (active) | 200, "Live" badge ✅ |
+| `/bd`, `/de` (preview) | 200, "Coming soon" + `noindex,follow` ✅ |
+| `/xx` (unknown prefix) | 404 ✅ |
+| Branded domains | `neogiga.in` and `giganepal.com` are **WordPress vhosts**, not the Laravel app — their `/products` 404s are pre-existing vhost facts, not regressions. The Laravel branded-domain resolution path is currently only exercised on `neogiga.com`/`backend.neogiga.com`. |
+
+Per the execution instruction, redirection and checkout remain disabled on every new marketplace;
+stopping here before enabling either.
