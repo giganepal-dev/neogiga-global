@@ -26,14 +26,16 @@ Ordered by dependency, continuing from GLOBAL_COMMERCE_IMPLEMENTATION_PLAN.md's 
    Still needed: a proper HS-code data model + duty seed data (operational). See
    TAX_AND_DUTY_ENGINE_GUIDE.md.
 
-### Undeployed local commits awaiting review before prod push
-- 717c6e8 central pricing engine v1
-- d81fef0 import-duty wiring
-Deploy target files: `app/Services/Pricing/CentralPricingService.php`,
-`app/Services/Pricing/DutyService.php`, `app/Models/Marketplace/ImportDutyRule.php`,
-`app/Console/Commands/RefreshExchangeRates.php` (the exchange-rate services + models + config are
-already live on prod via bb4b4b3). All tables already exist on prod. Low risk: nothing is wired to
-run automatically.
+### ✅ DEPLOYED to prod 2026-07-10 ("push them live server")
+- 717c6e8 central pricing engine v1, d81fef0 import-duty wiring — both on GitHub origin/main.
+- Deployed to prod: `CentralPricingService.php`, `DutyService.php`, `ImportDutyRule.php`,
+  `RefreshExchangeRates.php` (had to `mkdir app/Console/Commands` — Laravel 11 omits it).
+  Exchange-rate services + models + config were already live via bb4b4b3.
+- Verified: all classes autoload, `pricing:refresh-exchange-rates` discovered + runs as a
+  correct no-op (0 rows), wallet=401, home/products/np all 200. Inert until an operator sets
+  `pricing.manual_rates` and enters `import_duty_rules`.
+- GitHub: code commits pushed by external sync; local docs commit 5eb6128 not yet on origin
+  (no push creds on this machine — standing item). Will sync via the same external path.
 
 ## Stage 3 (sellers, warehouses, freight, payments)
 7. `seller_marketplace_approvals` + related tables (see REGIONAL_SELLER_GUIDE.md) — needs at least
