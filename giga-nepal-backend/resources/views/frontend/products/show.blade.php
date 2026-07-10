@@ -1,9 +1,9 @@
 @extends('frontend.layout')
-@section('title', $product->name.' — NeoGiga')
-@section('description', \Illuminate\Support\Str::limit(strip_tags($product->short_description ?: ($product->description ?: 'Technical specifications, stock and RFQ for '.$product->name.' on NeoGiga.')), 155))
+@section('title', $product->name.' - NeoGiga')
+@section('description', \Illuminate\Support\Str::limit(strip_tags($product->short_description ?: ($product->description ?: 'Datasheet, technical specifications, stock and RFQ for '.$product->name.' on NeoGiga.')), 155))
+@section('og_type','product')
 
 @push('head')
-<link rel="canonical" href="{{ url('/products/'.$product->slug) }}">
 <script type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
@@ -14,112 +14,191 @@
     'brand' => $product->brand?->name ? ['@type' => 'Brand', 'name' => $product->brand->name] : null,
     'category' => $product->category?->name,
     'url' => url('/products/'.$product->slug),
-], JSON_UNESCAPED_SLASHES) !!}
+    'description' => strip_tags($product->short_description ?: $product->description ?: $product->name),
+    'aggregateRating' => ($reviewSummary->count ?? 0) > 0 ? [
+        '@type' => 'AggregateRating',
+        'ratingValue' => $reviewSummary->average,
+        'reviewCount' => $reviewSummary->count,
+    ] : null,
+], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
+</script>
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'BreadcrumbList',
+    'itemListElement' => array_values(array_filter([
+        ['@type'=>'ListItem','position'=>1,'name'=>'Home','item'=>url('/')],
+        ['@type'=>'ListItem','position'=>2,'name'=>'Products','item'=>url('/products')],
+        $product->category ? ['@type'=>'ListItem','position'=>3,'name'=>$product->category->name,'item'=>url('/categories/'.$product->category->slug)] : null,
+        ['@type'=>'ListItem','position'=>4,'name'=>$product->name,'item'=>url('/products/'.$product->slug)],
+    ])),
+], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
 @endpush
 
 @section('content')
-<style>
-    .pd{display:grid;grid-template-columns:2fr 1fr;gap:24px;margin:24px 0}
-    @media(max-width:820px){.pd{grid-template-columns:1fr}}
-    .pd-card{border:1px solid rgba(15,23,42,.12);border-radius:12px;background:#fff;padding:24px}
-    .pd h1{margin:0 0 6px;font-size:1.45rem}
-    .pd-meta{color:#64748B;font-size:.9rem;margin-bottom:16px}
-    .pd-meta strong{color:#0F172A}
-    .spec-tbl{width:100%;border-collapse:collapse;margin-top:8px}
-    .spec-tbl th,.spec-tbl td{text-align:left;padding:9px 12px;border-bottom:1px solid rgba(15,23,42,.08);font-size:.92rem}
-    .spec-tbl th{width:40%;color:#475569;font-weight:600;background:#F8FAFC}
-    .pstock{font-weight:700}.in{color:#065F46}.out{color:#991B1B}
-    .cta-stack{display:flex;flex-direction:column;gap:10px}
-    .cta-note{color:#64748B;font-size:.82rem}
-    .rel{margin:8px 0 32px}
-    .rel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
-    .rel-card{border:1px solid rgba(15,23,42,.12);border-radius:10px;padding:14px;background:#fff}
-    .rel-card a{color:#0F172A;text-decoration:none;font-weight:600}.rel-card a:hover{color:#0369A1}
-    .badge-soft{display:inline-block;background:#FEF9C3;color:#854D0E;border-radius:999px;padding:2px 10px;font-size:.75rem;font-weight:700}
-</style>
-
-<div class="wrap">
-    <nav class="crumbs" aria-label="Breadcrumb">
-        <a href="/">Home</a> › <a href="/products">Products</a>
-        @if($product->category) › <a href="/products?category={{ $product->category->slug }}">{{ $product->category->name }}</a>@endif
-        › <span>{{ $product->name }}</span>
-    </nav>
-
-    <div class="pd">
-        <div class="pd-card">
-            <h1>{{ $product->name }}</h1>
-            <div class="pd-meta">
-                @if($product->brand)Brand: <strong>{{ $product->brand->name }}</strong> · @endif
-                @if($product->mpn)MPN: <strong class="mono">{{ $product->mpn }}</strong> · @endif
-                SKU: <strong class="mono">{{ $product->sku ?? '—' }}</strong>
-                @if($product->track_inventory)
-                    · <span class="pstock {{ $product->stock_quantity > 0 ? 'in' : 'out' }}">{{ $product->stock_quantity > 0 ? 'In stock ('.number_format($product->stock_quantity).')' : 'Out of stock' }}</span>
-                @endif
-            </div>
-
-            @if($product->short_description || $product->description)
-                <p>{{ strip_tags($product->short_description ?: \Illuminate\Support\Str::limit(strip_tags($product->description), 500)) }}</p>
-            @endif
-
-            <h2 style="font-size:1.05rem;margin:20px 0 4px">Technical specifications</h2>
-            @if ($product->specs->count())
-                <table class="spec-tbl">
-                    @foreach ($product->specs->sortBy('sort_order') as $s)
-                        <tr><th>{{ $s->name }}</th><td>{{ $s->value }}{{ $s->unit ? ' '.$s->unit : '' }}</td></tr>
+@php
+    $reviewCount = (int) ($reviewSummary->count ?? 0);
+    $reviewAverage = $reviewSummary->average ?? null;
+    $reviewBadge = $reviewCount > 0 ? number_format((float) $reviewAverage, 1).'/5' : 'No approved reviews yet';
+    $productMeta = [];
+    if ($product->brand) {
+        $productMeta[] = 'Manufacturer: '.$product->brand->name;
+    }
+    if ($product->mpn) {
+        $productMeta[] = 'MPN: '.$product->mpn;
+    }
+    $productMeta[] = 'NeoGiga SKU: '.($product->sku ?? 'TBA');
+    if ($reviewCount > 0) {
+        $productMeta[] = 'Rating: '.number_format((float) $reviewAverage, 1).'/5 from '.$reviewCount.' reviews';
+    }
+    $priceCurrency = $marketplacePrice?->currency_native_symbol ?: ($marketplacePrice?->currency_symbol ?: ($marketplacePrice?->currency_code ?: ($marketplaceContext['currency_code'] ?? 'USD')));
+    $displayPrice = $marketplacePrice ? ($marketplacePrice->sale_price ?: $marketplacePrice->base_price) : ($product->sale_price ?: $product->base_price);
+    $displayCurrency = $marketplacePrice ? $priceCurrency : ($marketplaceContext['currency_code'] ?? 'USD');
+@endphp
+<section class="section" style="padding-top:18px">
+    <div class="wrap">
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/products">Products</a>@if($product->category)<span>/</span><a href="/categories/{{ $product->category->slug }}">{{ $product->category->name }}</a>@endif<span>/</span><strong>{{ $product->name }}</strong></nav>
+        <div class="grid" style="grid-template-columns:minmax(300px,.9fr) minmax(0,1.4fr) 340px;align-items:start">
+            <section class="panel" style="padding:18px">
+                <div class="product-img" style="min-height:330px">{{ $product->brand->name ?? 'NeoGiga' }}</div>
+                <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">
+                    @for($i=1;$i<=4;$i++)<div class="product-img" style="aspect-ratio:1">{{ $i }}</div>@endfor
+                </div>
+            </section>
+            <section class="panel" style="padding:22px">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><span class="badge b-info">{{ $product->category->name ?? 'Engineering part' }}</span><span class="badge {{ ($product->stock_quantity ?? 0) > 0 ? 'b-ok' : 'b-warn' }}">{{ ($product->stock_quantity ?? 0) > 0 ? 'In stock' : 'RFQ only' }}</span></div>
+                <h1 style="font-size:clamp(1.8rem,4vw,3.1rem);line-height:1.05;margin:0 0 10px">{{ $product->name }}</h1>
+                <p class="sub">{{ implode(' · ', $productMeta) }}</p>
+                @if($product->short_description || $product->description)<p>{{ strip_tags($product->short_description ?: \Illuminate\Support\Str::limit(strip_tags($product->description), 540)) }}</p>@endif
+                <h2 style="font-size:1.2rem;margin-top:24px">Technical Specifications</h2>
+                <table class="spec-table">
+                    @foreach($advancedSpecs->groupBy(fn($s) => $s->group_name ?: ($s->template_name ?: 'Advanced Specifications')) as $groupName => $rows)
+                        <tr><th colspan="2" style="background:#eef9ff;color:#075985">{{ $groupName }}</th></tr>
+                        @foreach($rows as $s)
+                            <tr><th>{{ $s->field_label }}</th><td>{{ $s->value }}{{ $s->unit_override ? ' '.$s->unit_override : ($s->unit ? ' '.$s->unit : '') }}</td></tr>
+                        @endforeach
                     @endforeach
+                    @forelse($product->specs->sortBy('sort_order') as $s)
+                        <tr><th>{{ $s->name }}</th><td>{{ $s->value }}{{ $s->unit ? ' '.$s->unit : '' }}</td></tr>
+                    @empty
+                        @if($product->mpn)<tr><th>Manufacturer Part Number</th><td>{{ $product->mpn }}</td></tr>@endif
+                        @if($product->brand)<tr><th>Manufacturer</th><td>{{ $product->brand->name }}</td></tr>@endif
+                        @if($product->category)<tr><th>Category</th><td>{{ $product->category->name }}</td></tr>@endif
+                        <tr><th>Datasheet</th><td>Available on request</td></tr>
+                    @endforelse
                 </table>
-            @else
-                <table class="spec-tbl">
-                    @if($product->mpn)<tr><th>Manufacturer Part Number</th><td class="mono">{{ $product->mpn }}</td></tr>@endif
-                    @if($product->brand)<tr><th>Brand / Manufacturer</th><td>{{ $product->brand->name }}</td></tr>@endif
-                    @if($product->category)<tr><th>Category</th><td>{{ $product->category->name }}</td></tr>@endif
-                    @if($product->weight)<tr><th>Weight</th><td>{{ $product->weight }} {{ $product->weight_unit }}</td></tr>@endif
-                    <tr><th>Datasheet</th><td>Available on request</td></tr>
+            </section>
+            <aside class="panel" style="padding:18px">
+                <h2 style="margin-top:0">Get this part</h2>
+                <div style="padding:12px;border:1px solid #dbeafe;background:#f8fbff;margin-bottom:12px">
+                    <div class="sub">Regional price</div>
+                    @if($displayPrice)
+                        <strong style="font-size:1.7rem">{{ $displayCurrency }} {{ number_format((float) $displayPrice, 2) }}</strong>
+                        <div class="sub">{{ $marketplacePrice?->marketplace_name ?: ($marketplaceContext['current']?->name ?? 'Current marketplace') }} @if($marketplacePrice?->is_tax_inclusive) · tax inclusive @endif</div>
+                    @else
+                        <strong>RFQ pricing</strong>
+                        <div class="sub">Regional price is not published yet. Request quote for contract, bulk, or import pricing.</div>
+                    @endif
+                </div>
+                <div class="grid">
+                    <a class="btn btn-primary" href="/rfq?product={{ $product->slug }}">Request Bulk Quote</a>
+                    <a class="btn btn-gold" href="/ai-commerce?part={{ urlencode($product->mpn ?: $product->sku ?: $product->name) }}">Ask AI Engineer</a>
+                    <form method="post" action="/cart/items" style="display:grid;grid-template-columns:86px 1fr;gap:8px">@csrf<input type="hidden" name="product_id" value="{{ $product->id }}"><input class="control" type="number" name="quantity" min="1" max="500" value="1" aria-label="Quantity"><button class="btn btn-ghost" type="submit">Add to Cart</button></form>
+                    <a class="btn btn-ghost" href="/sell-on-neogiga">Chat with Seller Soon</a>
+                </div>
+                <p class="sub">B2B pricing, contract offers, regional warehouse stock and delivery dates are handled through RFQ until checkout is fully opened.</p>
+                <h3>Stock by warehouse</h3>
+                <table class="spec-table">
+                    @forelse($stockRows as $row)
+                        <tr><th>{{ $row->warehouse_name ?? 'Warehouse' }}<br><small>{{ $row->country_name ?? 'Global' }}</small></th><td><strong>{{ number_format((int) $row->quantity_available) }}</strong><br><span class="sub">{{ $row->quote_only ? 'Quote only' : 'Available' }}</span></td></tr>
+                    @empty
+                        <tr><td colspan="2">Regional stock is being loaded. Use RFQ for availability.</td></tr>
+                    @endforelse
                 </table>
-                <p class="cta-note">Full specification sheet is being loaded for this part.</p>
-            @endif
-        </div>
-
-        <div class="pd-card">
-            <h2 style="font-size:1.05rem;margin:0 0 12px">Get this part</h2>
-            <div class="cta-stack">
-                <a class="btn btn-primary" href="/rfq?product={{ $product->slug }}">Request bulk quote (RFQ)</a>
-                <span class="cta-note">B2B RFQs are answered with a formal quotation (RFQ → QUO workflow).</span>
-                <a class="btn btn-ghost" href="/learn">Related tutorials on NeoGiga Learn</a>
-                <span class="badge-soft">Ask AI Engineer — coming soon</span>
-                <span class="cta-note">Sign in for B2B/wholesale pricing and regional warehouse stock. Regional availability follows your marketplace (Global · India · Nepal).</span>
-                <a class="btn btn-ghost" href="/sell-on-neogiga">Sell a compatible part</a>
-            </div>
+            </aside>
         </div>
     </div>
+</section>
 
-    @if (isset($reviews) && ($reviewAgg->count ?? 0) > 0)
-        <div class="rel">
-            <h2 style="font-size:1.1rem">Customer reviews · {{ number_format((float) $reviewAgg->avg_rating, 1) }}/5 <span style="color:#64748B;font-size:.85rem">({{ $reviewAgg->count }})</span></h2>
-            @foreach ($reviews as $rv)
-                <div style="border:1px solid rgba(15,23,42,.12);border-radius:10px;padding:14px;background:#fff;margin-top:10px">
-                    <strong>{{ str_repeat('★', (int) $rv->rating) }}{{ str_repeat('☆', 5 - (int) $rv->rating) }}</strong>
-                    @if($rv->title) <strong>{{ $rv->title }}</strong>@endif
-                    <div style="margin-top:4px">{{ $rv->body }}</div>
-                    <div style="color:#64748B;font-size:.8rem;margin-top:6px">{{ $rv->reviewer }} · {{ \Illuminate\Support\Carbon::parse($rv->created_at)->format('Y-m-d') }}</div>
-                </div>
-            @endforeach
-        </div>
-    @endif
-
-    @if ($related->count())
-        <div class="rel">
-            <h2 style="font-size:1.1rem">Related products</h2>
-            <div class="rel-grid">
-                @foreach ($related as $r)
-                    <div class="rel-card">
-                        <a href="/products/{{ $r->slug }}">{{ $r->name }}</a>
-                        <div class="cta-note">{{ $r->brand->name ?? '' }} {{ $r->mpn ? '· '.$r->mpn : '' }}</div>
+<section class="section" style="background:#fff">
+    <div class="wrap">
+        <div class="section-head"><div><p class="eyebrow">Seller offers</p><h2>Regional sourcing options</h2></div><a class="btn btn-ghost" href="/rfq?product={{ $product->slug }}">Request better quote</a></div>
+        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+            @forelse($sellerOffers as $offer)
+                @php
+                    $offerCurrency = $offer->currency_native_symbol ?: ($offer->currency_symbol ?: $offer->currency_code);
+                    $offerStatus = $offer->vendor_product_status ?: ($offer->vendor_status ?: 'active');
+                @endphp
+                <article class="info-card">
+                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:start">
+                        <h3 style="margin-top:0">{{ $offer->vendor_name ?: 'NeoGiga seller' }}</h3>
+                        <span class="badge {{ $offer->is_verified ? 'b-ok' : 'b-muted' }}">{{ $offer->is_verified ? 'Verified' : $offerStatus }}</span>
                     </div>
-                @endforeach
-            </div>
+                    <p class="sub">{{ $offer->marketplace_name ?: ($marketplaceContext['current']?->name ?? 'Global marketplace') }}</p>
+                    <p style="font-size:1.35rem;margin:8px 0"><strong>{{ $offerCurrency }} {{ number_format((float) $offer->selling_price, 2) }}</strong></p>
+                    @if($offer->min_price)<p class="sub">Negotiated floor from {{ $offerCurrency }} {{ number_format((float) $offer->min_price, 2) }}</p>@endif
+                    <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-primary" href="/rfq?product={{ $product->slug }}&seller={{ $offer->vendor_slug }}">RFQ seller</a>@if($offer->vendor_slug)<span class="badge b-muted">{{ $offer->vendor_slug }}</span>@endif</div>
+                </article>
+            @empty
+                <div class="panel" style="padding:24px">
+                    <h3>No public seller offers yet</h3>
+                    <p class="sub">NeoGiga can still source this part through RFQ. Seller-specific offers will appear here when vendor pricing is published.</p>
+                    <a class="btn btn-primary" href="/rfq?product={{ $product->slug }}">Start RFQ</a>
+                </div>
+            @endforelse
         </div>
-    @endif
-</div>
+    </div>
+</section>
+
+<section class="section" style="background:#fff">
+    <div class="wrap grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+        <div class="info-card"><h2>Datasheets & Downloads</h2>@forelse($documents as $doc)<p><strong>{{ $doc->title ?? ucfirst($doc->document_type ?? 'Document') }}</strong><br><a href="{{ $doc->file_url ?: $doc->source_url }}" rel="nofollow">Download {{ $doc->document_type ?? 'file' }}</a></p>@empty<p class="sub">Datasheet, CAD, firmware and compliance assets are being loaded.</p>@endforelse</div>
+        <div class="info-card"><h2>Alternatives & Accessories</h2>@forelse($alternatives as $alt)<p><a href="{{ $alt->slug ? '/products/'.$alt->slug : '#' }}"><strong>{{ $alt->name ?? 'Related product' }}</strong></a><br><span class="sub">{{ $alt->relation_type }} · {{ $alt->mpn ?: $alt->sku }}</span></p>@empty<p class="sub">Alternative parts and accessories are being mapped.</p>@endforelse</div>
+        <div class="info-card"><h2>Related LMS Tutorials</h2>@forelse($lmsLinks as $link)<p><a href="{{ $link->url ?: '/learn' }}"><strong>{{ $link->title }}</strong></a><br><span class="sub">{{ $link->relation_type }}</span></p>@empty<p class="sub">Related tutorials, lab kits and project usage will appear here.</p>@endforelse<a class="btn btn-ghost" href="/learn">Open Learning Hub</a></div>
+    </div>
+</section>
+
+<section class="section" style="background:#fff">
+    <div class="wrap grid" style="grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);align-items:start">
+        <div class="panel" style="padding:22px">
+            <div class="section-head" style="margin-bottom:12px"><div><p class="eyebrow">Reviews & Q&A</p><h2>Engineering feedback</h2></div><span class="badge b-info">{{ $reviewBadge }}</span></div>
+            @forelse($reviews as $review)
+                <article style="padding:14px 0;border-top:1px solid #e5eef7">
+                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><strong>{{ $review->title ?: 'Product review' }}</strong><span class="badge b-ok">{{ $review->rating }}/5</span></div>
+                    <p>{{ $review->body }}</p>
+                    <p class="sub">{{ $review->reviewer_name ?: 'NeoGiga customer' }}{{ $review->use_case ? ' · Use case: '.$review->use_case : '' }}</p>
+                </article>
+            @empty
+                <p class="sub">Approved customer reviews will appear here after moderation.</p>
+            @endforelse
+        </div>
+        <form class="panel" style="padding:22px;display:grid;gap:10px" method="post" action="{{ route('products.reviews.store', $product->slug) }}">@csrf
+            <h2 style="margin:0">Submit a review</h2>
+            <select class="control" name="rating" required><option value="">Rating</option><option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Average</option><option value="2">2 - Limited</option><option value="1">1 - Poor</option></select>
+            <input class="control" name="title" maxlength="180" placeholder="Short title">
+            <textarea class="control" name="body" rows="5" required minlength="10" maxlength="2500" placeholder="Share build quality, compatibility, packaging, or sourcing feedback"></textarea>
+            <input class="control" name="use_case" maxlength="160" placeholder="Use case, e.g. ESP32 gateway prototype">
+            @if(! auth()->check())
+                <input class="control" name="reviewer_name" maxlength="120" placeholder="Name">
+                <input class="control" type="email" name="reviewer_email" maxlength="190" placeholder="Email">
+            @endif
+            <button class="btn btn-primary" type="submit">Submit for moderation</button>
+            <p class="sub" style="margin:0">Reviews are checked before publication.</p>
+        </form>
+    </div>
+</section>
+
+<section class="section">
+    <div class="wrap">
+        <div class="section-head"><div><p class="eyebrow">Related products</p><h2>Similar engineering parts</h2></div></div>
+        <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
+            @forelse($related as $r)
+                <article class="product-card"><div class="product-img">{{ $r->brand->name ?? 'Part' }}</div><h3><a href="/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="/products/{{ $r->slug }}">View</a></article>
+            @empty
+                <div class="panel" style="padding:24px"><p class="sub">Related products are being indexed.</p></div>
+            @endforelse
+        </div>
+    </div>
+</section>
 @endsection
