@@ -402,6 +402,32 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function rfqs(\Illuminate\Http\Request $request): View
+    {
+        $query = \App\Models\Erp\RfqRequest::with('items')
+            ->when($request->query('status'), fn ($q, $s) => $q->where('status', $s))
+            ->orderByDesc('id');
+
+        return view('admin.rfqs', [
+            'rfqs' => $query->paginate(20)->withQueryString(),
+            'stats' => [
+                'total' => $this->safeCount('rfq_requests'),
+                'open' => $this->safeWhereCount('rfq_requests', 'status', 'open'),
+                'quoted' => $this->safeWhereCount('rfq_requests', 'status', 'quoted'),
+                'accepted' => $this->safeWhereCount('rfq_requests', 'status', 'accepted'),
+            ],
+            'statusFilter' => (string) $request->query('status', ''),
+        ]);
+    }
+
+    public function rfq(int $id): View
+    {
+        return view('admin.rfq-detail', [
+            'rfq' => \App\Models\Erp\RfqRequest::with('items')->findOrFail($id),
+            'history' => DB::table('rfq_status_histories')->where('rfq_request_id', $id)->orderByDesc('id')->get(),
+        ]);
+    }
+
     public function applications(): View
     {
         return view('admin.applications', [

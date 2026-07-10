@@ -269,6 +269,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h2l2 12h11l2-8H6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
                 Suppliers &amp; POs
             </a>
+            <a href="/admin/rfqs" class="{{ str_starts_with($r,'admin/rfqs') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6M8 17h8" stroke-linejoin="round"/></svg>
+                RFQ Inbox
+            </a>
             <a href="/admin/quotations" class="{{ str_starts_with($r,'admin/quotations') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l3 3v15H6z" stroke-linejoin="round"/><path d="M9 9h6M9 13h6M9 17h4" stroke-linecap="round"/></svg>
                 RFQ &amp; Quotations

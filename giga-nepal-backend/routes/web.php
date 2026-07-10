@@ -87,6 +87,8 @@ Route::prefix('admin')->group(function () {
         Route::get('orders', [AdminDash::class, 'orders']);
         Route::get('orders/{id}', [AdminDash::class, 'order'])->whereNumber('id');
         Route::get('orders/{id}/invoice', [AdminDash::class, 'invoice'])->whereNumber('id');
+        Route::get('rfqs', [AdminDash::class, 'rfqs']);
+        Route::get('rfqs/{id}', [AdminDash::class, 'rfq'])->whereNumber('id');
 
         // Commerce ops — guarded config actions (server-side; no live gateways)
         Route::post('payments/providers/{provider}/toggle', [AdminCommerce::class, 'toggleProvider'])->whereNumber('provider')->middleware('throttle:20,1');
@@ -101,6 +103,7 @@ Route::prefix('admin')->group(function () {
         Route::post('region-stock/rules/{rule}/toggle', [AdminCommerce::class, 'toggleStockRule'])->whereNumber('rule')->middleware('throttle:20,1');
         Route::post('users/{user}/send-reset', [AdminCommerce::class, 'sendPasswordReset'])->whereNumber('user')->middleware('throttle:20,1');
         Route::post('orders/{order}/status', [AdminCommerce::class, 'updateOrderStatus'])->whereNumber('order')->middleware('throttle:20,1');
+        Route::post('rfqs/{rfq}/status', [AdminCommerce::class, 'updateRfqStatus'])->whereNumber('rfq')->middleware('throttle:20,1');
     });
 });
 
@@ -112,6 +115,8 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{slug}', [CategoryController::class, 'show'])->where('slug', '[a-z0-9\-]+');
 Route::get('/products', [\App\Http\Controllers\Web\ProductPageController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [\App\Http\Controllers\Web\ProductPageController::class, 'show'])->where('slug', '[a-z0-9\-]+')->name('products.show');
+Route::get('/rfq', [\App\Http\Controllers\Web\RfqPageController::class, 'create'])->name('rfq.create');
+Route::post('/rfq', [\App\Http\Controllers\Web\RfqPageController::class, 'store'])->middleware('throttle:6,1')->name('rfq.store');
 Route::get('/sitemap.xml', SitemapController::class);
 
 // Password reset pages (the reset email links to the named password.reset route)
