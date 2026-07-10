@@ -220,6 +220,13 @@ class DashboardController extends Controller
                 'active' => Product::whereIn('status', ['active', 'approved', 'published'])->count(),
                 'draft' => Product::where('status', 'draft')->count(),
                 'lowStock' => Product::whereColumn('stock_quantity', '<=', 'low_stock_threshold')->count(),
+                'importPending' => Schema::hasTable('catalog_product_sources')
+                    ? DB::table('catalog_product_sources as cps')
+                        ->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')
+                        ->where('cs.code', 'jlcpcb_parts_database')
+                        ->whereNotIn('cps.review_status', ['approved', 'rejected'])
+                        ->count()
+                    : 0,
             ],
         ]);
     }
@@ -263,6 +270,100 @@ class DashboardController extends Controller
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
             'marketplaces' => DB::table('marketplaces')->where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get(),
             'currencies' => DB::table('currencies')->where('is_active', true)->orderByDesc('is_default')->orderBy('code')->get(),
+        ]);
+    }
+
+    public function jlcpcbImports(\Illuminate\Http\Request $request): View
+    {
+        abort_unless(Schema::hasTable('catalog_product_sources'), 404);
+
+        $status = (string) $request->query('review_status', 'needs_review');
+        $query = DB::table('catalog_product_sources as cps')
+            ->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')
+            ->join('products as p', 'p.id', '=', 'cps.product_id')
+            ->leftJoin('product_brands as b', 'b.id', '=', 'p.brand_id')
+            ->leftJoin('product_categories as c', 'c.id', '=', 'p.category_id')
+            ->leftJoin('catalog_distributor_offers as offer', 'offer.product_id', '=', 'p.id')
+            ->where('cs.code', 'jlcpcb_parts_database')
+            ->select(
+                'cps.*',
+                'cs.code as source_code',
+                'p.name as product_name',
+                'p.slug as product_slug',
+                'p.sku',
+                'p.mpn',
+                'p.status as product_status',
+                'p.approval_status',
+                'p.visibility_status',
+                'p.manufacturer_name',
+                'b.name as brand_name',
+                'c.name as category_name',
+                DB::raw('max(offer.stock) as offer_stock'),
+                DB::raw('count(offer.id) as offer_count')
+            )
+            ->groupBy(
+                'cps.id',
+                'cs.code',
+                'p.id',
+                'p.name',
+                'p.slug',
+                'p.sku',
+                'p.mpn',
+                'p.status',
+                'p.approval_status',
+                'p.visibility_status',
+                'p.manufacturer_name',
+                'b.name',
+                'c.name'
+            );
+
+        if ($status === 'needs_review') {
+            $query->whereNotIn('cps.review_status', ['approved', 'rejected']);
+        } elseif ($status !== '') {
+            $query->where('cps.review_status', $status);
+        }
+
+        $query->when($request->query('q'), function ($q, $term) {
+            $q->where(function ($inner) use ($term) {
+                $inner->where('p.name', 'ilike', "%{$term}%")
+                    ->orWhere('p.sku', 'ilike', "%{$term}%")
+                    ->orWhere('p.mpn', 'ilike', "%{$term}%")
+                    ->orWhere('cps.source_part_id', 'ilike', "%{$term}%");
+            });
+        });
+
+        $query->when($request->query('batch_id'), fn ($q, $batch) => $q->where('cps.import_batch_id', $batch));
+        $query->when($request->query('quality') === 'low', fn ($q) => $q->where('cps.data_quality_score', '<', 0.85));
+        $query->when($request->query('quality') === 'high', fn ($q) => $q->where('cps.data_quality_score', '>=', 0.85));
+
+        $imports = $query->orderByDesc('cps.imported_at')->orderByDesc('cps.id')->paginate(25)->withQueryString();
+        $productIds = collect($imports->items())->pluck('product_id');
+
+        return view('admin.jlcpcb-imports', [
+            'imports' => $imports,
+            'documents' => DB::table('product_documents')
+                ->whereIn('product_id', $productIds)
+                ->orderByDesc('id')
+                ->get()
+                ->groupBy('product_id'),
+            'batches' => DB::table('catalog_import_batches as b')
+                ->join('catalog_sources as s', 's.id', '=', 'b.source_id')
+                ->where('s.code', 'jlcpcb_parts_database')
+                ->orderByDesc('b.started_at')
+                ->limit(20)
+                ->get(['b.id', 'b.status', 'b.rows_read', 'b.rows_inserted', 'b.rows_updated', 'b.rows_skipped', 'b.started_at']),
+            'stats' => [
+                'pending' => DB::table('catalog_product_sources as cps')->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')->where('cs.code', 'jlcpcb_parts_database')->whereNotIn('cps.review_status', ['approved', 'rejected'])->count(),
+                'approved' => DB::table('catalog_product_sources as cps')->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')->where('cs.code', 'jlcpcb_parts_database')->where('cps.review_status', 'approved')->count(),
+                'rejected' => DB::table('catalog_product_sources as cps')->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')->where('cs.code', 'jlcpcb_parts_database')->where('cps.review_status', 'rejected')->count(),
+                'total' => DB::table('catalog_product_sources as cps')->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')->where('cs.code', 'jlcpcb_parts_database')->count(),
+            ],
+            'filters' => [
+                'q' => (string) $request->query('q', ''),
+                'review_status' => $status,
+                'batch_id' => (string) $request->query('batch_id', ''),
+                'quality' => (string) $request->query('quality', ''),
+            ],
         ]);
     }
 
