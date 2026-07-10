@@ -1,4 +1,18 @@
-# NeoGiga — Next Phase Backlog (Phase 1)
+# NeoGiga — Next Phase Backlog
+
+## Current (refreshed 2026-07-09, post-RFQ cycle)
+
+1. **Support chat foundation** — full blueprint in [CHAT_IMPLEMENTATION_PLAN.md](CHAT_IMPLEMENTATION_PLAN.md); note prod's panel build added `support_tickets`/`support_ticket_messages` + `/admin/support` — the chat cycle should EXTEND that (conversations layer on top), not duplicate it.
+2. **Review + merge decision on git branch `next-phase-panel-execution-d162b`** — panel work is live on prod and synced to git main via file-sync (484b76c); the branch's extra commits (cart_reservations migration, inventory reservation cleanup command, personal_access_tokens migration AGAIN) need human review before merging (personal_access_tokens = Sanctum remnant hazard).
+3. **Push git main via GitHub Desktop** — CLI has no credentials; Desktop does (it pushed main to a63fccc→70664c0 already). See GITHUB_SYNC_STATUS.md.
+4. **RFQ email notification** — replace the Log::info placeholder with a mail template once the sales mailer is chosen.
+5. **Product reviews** (plan §5 of REFERENCE_INTEGRATION_PLAN), **public pricing/offers layer**, **seller offers block**, **datasheet links**, **generic-suggestion surfacing** — carried from NEXT_REFERENCE_INTEGRATION_BACKLOG.md (items 2, 4–7).
+6. **Web-console RBAC** — map permission keys (admin.orders.*, admin.rfq.*, admin.chat.*) onto admin.web routes; prod's panel added an audit-log + permission-matrix placeholder on /admin/users to build on.
+7. **Catalog load** — /products is live but the catalog holds 1 seed product; import pipeline is the gate to real traffic.
+
+---
+
+# ARCHIVED — Phase 1 backlog (0.2.0 era; most items since completed)
 
 Ordered by dependency. Each item references the audit finding or blueprint section it serves.
 
