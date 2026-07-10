@@ -1225,10 +1225,11 @@ class CommerceOpsController extends Controller
         return back()->with('status', 'Seller product rejected.');
     }
 
-    public function approveJlcpcbImport(Request $request, int $source): RedirectResponse
+    public function approveJlcpcbImport(Request $request, int $source, CatalogSearchRebuildService $rebuilds): RedirectResponse
     {
         $data = $request->validate([
             'publish_public' => ['nullable', 'boolean'],
+            'queue_rebuild' => ['nullable', 'boolean'],
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -1238,16 +1239,20 @@ class CommerceOpsController extends Controller
         }
 
         $this->approveImportedProduct($request, (int) $row->id, (int) $row->product_id, (bool) ($data['publish_public'] ?? false), $data['note'] ?? null);
+        $jobId = ! empty($data['queue_rebuild']) ? $this->queueJlcpcbSearchRebuildJob($request, $rebuilds) : null;
 
-        return back()->with('status', 'Imported product approved for catalog review.');
+        return back()->with('status', $jobId
+            ? "Imported product approved and search/facet rebuild queued as job #{$jobId}."
+            : 'Imported product approved for catalog review.');
     }
 
-    public function bulkApproveJlcpcbImports(Request $request): RedirectResponse
+    public function bulkApproveJlcpcbImports(Request $request, CatalogSearchRebuildService $rebuilds): RedirectResponse
     {
         $data = $request->validate([
             'source_ids' => ['required', 'array', 'min:1', 'max:100'],
             'source_ids.*' => ['integer'],
             'publish_public' => ['nullable', 'boolean'],
+            'queue_rebuild' => ['nullable', 'boolean'],
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -1260,8 +1265,13 @@ class CommerceOpsController extends Controller
             $this->approveImportedProduct($request, (int) $row->id, (int) $row->product_id, (bool) ($data['publish_public'] ?? false), $data['note'] ?? null);
             $approved++;
         }
+        $jobId = ($approved > 0 && ! empty($data['queue_rebuild']))
+            ? $this->queueJlcpcbSearchRebuildJob($request, $rebuilds)
+            : null;
 
-        return back()->with('status', "{$approved} imported products approved.");
+        return back()->with('status', $jobId
+            ? "{$approved} imported products approved and search/facet rebuild queued as job #{$jobId}."
+            : "{$approved} imported products approved.");
     }
 
     public function rejectJlcpcbImport(Request $request, int $source): RedirectResponse
@@ -1328,6 +1338,15 @@ class CommerceOpsController extends Controller
     {
         abort_unless(Schema::hasTable('catalog_index_rebuild_jobs'), 404);
 
+        $jobId = $this->queueJlcpcbSearchRebuildJob($request, $rebuilds);
+
+        return back()->with('status', "Search/facet rebuild queued as job #{$jobId}.");
+    }
+
+    private function queueJlcpcbSearchRebuildJob(Request $request, CatalogSearchRebuildService $rebuilds): int
+    {
+        abort_unless(Schema::hasTable('catalog_index_rebuild_jobs'), 404);
+
         $jobId = $rebuilds->createJob($request->user()?->id, 'jlcpcb_parts_database');
         RebuildApprovedImportSearchIndexJob::dispatch($jobId, 'jlcpcb_parts_database');
 
@@ -1336,7 +1355,7 @@ class CommerceOpsController extends Controller
             'scope' => 'approved_imports',
         ]);
 
-        return back()->with('status', "Search/facet rebuild queued as job #{$jobId}.");
+        return $jobId;
     }
 
     private function jlcpcbSourceRow(int $sourceId): ?object
