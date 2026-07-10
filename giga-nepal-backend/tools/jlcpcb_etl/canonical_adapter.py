@@ -144,7 +144,7 @@ class NeoGigaCanonicalAdapter:
         return row["id"]
 
     def _create_batch(self, conn, source_id: int, rows_read: int) -> str:
-        return conn.execute(
+        batch_id = conn.execute(
             """
             INSERT INTO catalog_import_batches (source_id, checksum, status, started_at, rows_read, metadata)
             VALUES (%s, %s, 'running', now(), %s, %s::jsonb)
@@ -152,6 +152,7 @@ class NeoGigaCanonicalAdapter:
             """,
             (source_id, self.source_checksum, rows_read, json.dumps({"mode": "pilot"})),
         ).fetchone()["id"]
+        return str(batch_id)
 
     def _complete_batch(self, conn, batch_id: str, result: AdapterResult) -> None:
         conn.execute(

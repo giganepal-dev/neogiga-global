@@ -237,6 +237,8 @@ def run(argv: list[str] | None = None) -> int:
             )
             adapter_result = adapter.publish(processed)
             _write_adapter_report(adapter_result, settings.output_dir, mode="neogiga_pilot")
+            if adapter_result.skipped:
+                raise RuntimeError(f"NeoGiga pilot stopped with {adapter_result.skipped} adapter errors")
             checkpoint_store.write(
                 ImportCheckpoint(
                     source_checksum=result.checksum,
