@@ -56,12 +56,7 @@ class ProductPageController extends Controller
             ->when($datasheet === '1' && Schema::hasTable('product_documents'), fn ($query) => $query->whereExists(function ($sub) {
                 $sub->selectRaw('1')->from('product_documents')->whereColumn('product_documents.product_id', 'products.id')->where('document_type', 'datasheet');
             }))
-            ->tap(fn ($query) => $catalogSearch->applyPublicFilters($query, [
-                'q' => $q,
-                'stock' => $stock,
-                'package' => $package,
-                'quality' => $quality,
-            ]))
+            ->tap(fn ($query) => $catalogSearch->applyPublicFilters($query, compact('q', 'stock', 'package', 'quality')))
             ->when($sort === 'newest', fn ($query) => $query->orderByDesc('id'))
             ->when($sort === 'price', fn ($query) => $query->orderBy('base_price'))
             ->when($sort === 'stock', fn ($query) => $query->orderByDesc('stock_quantity'))
