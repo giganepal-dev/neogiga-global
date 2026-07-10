@@ -173,12 +173,35 @@ class WarehouseController extends Controller
             'total_warehouses' => Warehouse::count(),
             'active_warehouses' => Warehouse::where('status', 'active')->count(),
             'distribution_centers' => Warehouse::where('is_distribution_center', true)->count(),
+            'fulfillment_centers' => Warehouse::where('is_fulfillment_center', true)->count(),
+            'cross_border_enabled' => Warehouse::where('allows_cross_border', true)->count(),
+            
+            // Regional breakdown
+            'east_asia_warehouses' => Warehouse::where('region', 'East Asia')->count(),
+            'south_asia_warehouses' => Warehouse::where('region', 'South Asia')->count(),
             'middle_east_warehouses' => Warehouse::where('region', 'Middle East')->count(),
-            'uae_warehouses' => Warehouse::where('country', 'United Arab Emirates')->orWhere('country', 'UAE')->count(),
+            
+            // Country breakdown
+            'china_warehouses' => Warehouse::where('country', 'China')->count(),
+            'india_warehouses' => Warehouse::where('country', 'India')->count(),
+            'nepal_warehouses' => Warehouse::where('country', 'Nepal')->count(),
+            'sri_lanka_warehouses' => Warehouse::where('country', 'Sri Lanka')->count(),
+            
+            // Capacity metrics
+            'total_capacity_units' => Warehouse::sum('capacity_units'),
+            'total_current_stock_units' => Warehouse::sum('current_stock_units'),
+            'capacity_utilization_percent' => Warehouse::sum('capacity_units') > 0 
+                ? round((Warehouse::sum('current_stock_units') / Warehouse::sum('capacity_units')) * 100, 2) 
+                : 0,
+            
+            // Inventory metrics
             'total_products' => WarehouseProduct::sum('quantity_available'),
             'total_reserved' => WarehouseProduct::sum('quantity_reserved'),
+            
+            // Shipment metrics
             'pending_shipments' => WarehouseShipment::where('status', 'pending')->count(),
             'in_transit_shipments' => WarehouseShipment::where('status', 'in_transit')->count(),
+            'delivered_shipments' => WarehouseShipment::where('status', 'delivered')->count(),
         ];
 
         return response()->json([
@@ -188,14 +211,36 @@ class WarehouseController extends Controller
     }
 
     /**
-     * Get Middle East distribution centers.
+     * Get distribution centers by region.
      */
-    public function middleEastCenters(): JsonResponse
+    public function distributionCenters(Request $request): JsonResponse
     {
-        $warehouses = Warehouse::where('region', 'Middle East')
-            ->where('is_distribution_center', true)
+        $query = Warehouse::where('is_distribution_center', true)
+            ->where('status', 'active');
+
+        if ($request->has('region')) {
+            $query->where('region', $request->region);
+        }
+
+        $warehouses = $query->withCount(['products'])
+            ->orderBy('capacity_units', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $warehouses,
+        ]);
+    }
+
+    /**
+     * Get warehouses by country.
+     */
+    public function byCountry(string $country): JsonResponse
+    {
+        $warehouses = Warehouse::where('country', $country)
             ->where('status', 'active')
-            ->withCount(['products'])
+            ->withCount(['products', 'outboundShipments', 'inboundShipments'])
+            ->orderBy('city')
             ->get();
 
         return response()->json([

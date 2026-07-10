@@ -420,7 +420,8 @@ Route::prefix('v1')->group(function () {
 
             // Warehouse Management Routes
             Route::get('/warehouses/stats', [WarehouseController::class, 'stats']);
-            Route::get('/warehouses/middle-east-centers', [WarehouseController::class, 'middleEastCenters']);
+            Route::get('/warehouses/distribution-centers', [WarehouseController::class, 'distributionCenters']);
+            Route::get('/warehouses/by-country/{country}', [WarehouseController::class, 'byCountry']);
             Route::apiResource('warehouses', WarehouseController::class);
             
             Route::get('/warehouse-shipments', [WarehouseShipmentController::class, 'index']);
