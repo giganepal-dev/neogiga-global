@@ -14,13 +14,26 @@ Ordered by dependency, continuing from GLOBAL_COMMERCE_IMPLEMENTATION_PLAN.md's 
    Global Commerce but occupies the same `products`/`product_categories` tables this work touches.
 
 ## Stage 2 continuation (central pricing engine)
-4. Build the actual formula service reading `exchange_rates`/`marketplace_product_prices` and
-   writing `price_calculation_logs` — schema is ready, service is not (see
-   CENTRAL_PRICING_ENGINE_GUIDE.md).
-5. `ExchangeRateProviderInterface` + one real provider + a scheduled refresh job (see
-   EXCHANGE_RATE_GUIDE.md). Cart/order rate snapshotting is a hard requirement, not optional.
-6. HS-code + import-duty tables, extending `RegionalCommerceService` rather than replacing it (see
-   TAX_AND_DUTY_ENGINE_GUIDE.md).
+4. ✅ DONE (committed 717c6e8, NOT deployed) — `CentralPricingService` formula service reading
+   `exchange_rates`/`marketplace_product_prices`, writing `price_calculation_logs`, never
+   overwriting live prices (see CENTRAL_PRICING_ENGINE_GUIDE.md).
+5. PARTIAL — `ExchangeRateProviderInterface` + `ManualExchangeRateProvider` + `ExchangeRateService`
+   + `pricing:refresh-exchange-rates` command all built (bb4b4b3 / 717c6e8). Still needed: one
+   REAL (HTTP) provider + a scheduled refresh job + cart/order rate snapshotting (a hard
+   requirement). The live provider is an operational/network decision — left for explicit setup.
+6. ✅ DONE (committed d81fef0, NOT deployed) — `DutyService` + `ImportDutyRule` wired into the
+   pricing formula, using the pre-existing `import_duty_rules` table (empty on prod, so inert).
+   Still needed: a proper HS-code data model + duty seed data (operational). See
+   TAX_AND_DUTY_ENGINE_GUIDE.md.
+
+### Undeployed local commits awaiting review before prod push
+- 717c6e8 central pricing engine v1
+- d81fef0 import-duty wiring
+Deploy target files: `app/Services/Pricing/CentralPricingService.php`,
+`app/Services/Pricing/DutyService.php`, `app/Models/Marketplace/ImportDutyRule.php`,
+`app/Console/Commands/RefreshExchangeRates.php` (the exchange-rate services + models + config are
+already live on prod via bb4b4b3). All tables already exist on prod. Low risk: nothing is wired to
+run automatically.
 
 ## Stage 3 (sellers, warehouses, freight, payments)
 7. `seller_marketplace_approvals` + related tables (see REGIONAL_SELLER_GUIDE.md) — needs at least
