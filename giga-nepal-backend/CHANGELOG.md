@@ -15,6 +15,7 @@
 - Added Phase 3B internal search/facet rebuild foundation for approved JLCPCB imports: additive index tables, queued rebuild job, rebuild service, admin queue action, and rebuild status table.
 - Added Phase 3C approved-import search integration: public/API product search now consults approved `product_search_documents`, exposes package/quality/stock facets, and keeps pending JLCPCB imports hidden until reviewed.
 - Added Phase 3D review-to-index workflow: JLCPCB single/bulk approval can queue a search/facet rebuild, and bulk selection now covers all non-final pending source statuses.
+- Switched JLCPCB canonical product SKU generation from `JLCPCB-*` to NeoGiga `NG-*` and added a dry-run-first `jlcpcb:repair-skus` command for existing linked imports.
 
 ## 2026-07-09 - Complete System Audit
 

@@ -7,7 +7,7 @@ from tools.jlcpcb_etl.transformer import transform_record
 
 def test_slugify_and_stable_sku_are_deterministic():
     assert slugify("Texas Instruments Inc.") == "texas-instruments-inc"
-    assert stable_sku("C123") == "JLCPCB-C123"
+    assert stable_sku("C123") == "NG-C123"
 
 
 def test_payload_hash_is_stable_for_same_part():
