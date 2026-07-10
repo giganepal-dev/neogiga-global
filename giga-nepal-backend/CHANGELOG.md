@@ -8,6 +8,7 @@
 - Added additive catalog provenance migration for sources, import batches, source product links, import errors, and distributor offers.
 - Added CLI guardrails so NeoGiga writes require `--target neogiga --publish --pilot` and are capped at 1,000 rows for this execution.
 - Added canonical schema, field map, write plan, blocker resolution, pilot, idempotency, rollback dry-run, and next-scale gate reports.
+- Deployed the additive ETL/provenance changes to production and completed the controlled 1,000-row canonical pilot plus idempotency rerun; imported products remain `draft`/`hidden`/`pending_review`.
 
 ## 2026-07-09 - Complete System Audit
 

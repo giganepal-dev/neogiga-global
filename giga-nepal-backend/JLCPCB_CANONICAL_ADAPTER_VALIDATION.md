@@ -15,14 +15,23 @@ The adapter adds tests for:
 - dry-run no-connect behavior
 - data quality score penalty
 
-## Production validation scope
+## Production validation result
 
-To be completed after deployment:
+- Live ETL tests: 39 passed
+- Connection source: `LARAVEL_ENV`
+- PostgreSQL connection check: passed
+- `php artisan migrate --pretend --force`: additive DDL only
+- `php artisan migrate --force`: migration ran
+- 1,000-row NeoGiga dry-run: 1,000 transformed, 0 skipped
+- 1,000-row pilot: 1,000 loaded, 0 skipped
+- Idempotency rerun: 1,000 updated, 0 skipped
+- Rollback dry-run: source-scoped, 1,000 source links/products considered
+- Queue jobs: 0
+- Failed jobs: 0
+- Database size after pilot: 58 MB
 
-- `--connection-check --target neogiga`
-- `php artisan migrate --pretend`
-- `php artisan migrate --force`
-- `--target neogiga --dry-run --limit 1000`
-- `--target neogiga --publish --pilot --limit 1000`
-- idempotency rerun
-- rollback dry-run
+## Remaining validation before scale
+
+- Inspect sample imported products in the admin UI.
+- Decide whether to keep, hide, or merge pending-review brands/categories created by the two failed stopped attempts.
+- Add search-index/facet rebuild jobs before 10k scale.
