@@ -60,8 +60,9 @@
             <nav class="links" aria-label="Primary">
                 <a href="/categories">Categories</a>
                 <a href="/#featured">Products</a>
-                <a href="/#ai">AI BOM Builder</a>
-                <a href="/#vendors">Sell on NeoGiga</a>
+                <a href="/ai-commerce">AI Commerce</a>
+                <a href="/sell-on-neogiga">Sell on NeoGiga</a>
+                <a href="/distributors">Distributors</a>
             </nav>
             <a class="btn btn-ghost" href="/categories">Browse catalog</a>
         </div>
@@ -81,7 +82,7 @@
                     <p style="max-width:34ch">Global marketplace for semiconductors, electronics, robotics, IoT, batteries and engineering tools.</p>
                 </div>
                 <div><h4>Catalog</h4><a href="/categories">All categories</a><a href="/#featured">Featured</a><a href="/#new">New arrivals</a></div>
-                <div><h4>Platform</h4><a href="/#ai">AI BOM Builder</a><a href="/#lms">Tutorials</a><a href="/#vendors">Become a vendor</a></div>
+                <div><h4>Platform</h4><a href="/ai-commerce">AI Commerce</a><a href="/learn">Tutorials</a><a href="/sell-on-neogiga">Become a seller</a><a href="/distributors">Distributor network</a></div>
                 <div><h4>Editions</h4><a href="https://neogiga.com">Global · neogiga.com</a><a href="https://neogiga.in">India · neogiga.in</a><a href="https://giganepal.com">Nepal · giganepal.com</a></div>
             </div>
             <div class="bottom"><span>© {{ date('Y') }} Giga Ventures Pvt. Ltd.</span><span>Engineering the future.</span></div>

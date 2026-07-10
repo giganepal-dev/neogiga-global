@@ -80,6 +80,20 @@
         </div>
 
         <div class="card" style="margin-bottom:16px">
+            <div class="card-h"><h2>Fulfilment</h2><span class="sub">Carrier and shipment notes</span></div>
+            <form method="post" action="/admin/orders/{{ $order->id }}/tracking" class="form-stack" style="padding:16px">@csrf
+                <input class="control" name="carrier" maxlength="120" value="{{ $order->carrier }}" placeholder="Carrier">
+                <input class="control" name="tracking_number" maxlength="190" value="{{ $order->tracking_number }}" placeholder="Tracking number">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <input class="control" type="date" name="shipped_at" value="{{ optional($order->shipped_at)->format('Y-m-d') }}">
+                    <input class="control" type="date" name="delivered_at" value="{{ optional($order->delivered_at)->format('Y-m-d') }}">
+                </div>
+                <textarea class="control" name="vendor_notes" rows="3" maxlength="2000" placeholder="Internal fulfilment notes">{{ $order->vendor_notes }}</textarea>
+                <button class="btn btn-primary" type="submit">Save fulfilment</button>
+            </form>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
             <div class="card-h"><h2>Payments</h2></div>
             <div class="scroll-x"><table class="tbl">
                 <thead><tr><th>Method</th><th class="num">Amount</th><th>Status</th></tr></thead>

@@ -142,7 +142,8 @@
             <a href="#categories">Categories</a>
             <a href="#ai">AI Commerce</a>
             <a href="#learn">Learn</a>
-            <a href="#sellers">Sell</a>
+            <a href="/sell-on-neogiga">Sell</a>
+            <a href="/distributors">Distributors</a>
             <a href="#b2b">B2B</a>
         </nav>
         <div class="spacer"></div>
@@ -180,8 +181,8 @@
                 From hobbyist benches to factory floors.
             </p>
             <div class="cta-row">
-                <a class="btn btn-gold" href="#sellers">Become a Seller</a>
-                <a class="btn btn-ghost" href="#categories">Explore Categories</a>
+                <a class="btn btn-gold" href="/seller-early-access">Apply for Seller Early Access</a>
+                <a class="btn btn-ghost" href="/ai-commerce">Try AI Project Builder</a>
             </div>
             <p class="domains">
                 Regional editions:
@@ -216,11 +217,12 @@
             <p class="sec-sub">Commerce, knowledge, learning and AI — one ecosystem.</p>
             <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(255px,1fr))">
                 <article class="card">
-                    <div class="ic" aria-hidden="true">🤖</div>
-                    <h3>AI Commerce</h3>
-                    <p>Describe your project — the NeoGiga Engineer drafts a bill of materials, checks real local
-                       stock and prices from the catalog, and builds your cart. Prices always come from the
-                       database, never guessed. <span class="chip">Preview — Phase 2</span></p>
+                    <div class="ic" aria-hidden="true">AI</div>
+                    <h3>AI Commerce for Engineers and Makers</h3>
+                    <p>From idea to component list, quote, cart, and learning guide. The public demo uses local
+                       NeoGiga rules to suggest components, alternatives, tutorials, stock checks, and buying
+                       options without creating an order or payment.</p>
+                    <p style="margin-top:12px"><a class="btn btn-ghost" href="/ai-commerce">Try AI Project Builder</a></p>
                 </article>
                 <article class="card" id="learn">
                     <div class="ic" aria-hidden="true">🎓</div>
@@ -229,11 +231,11 @@
                        For students, universities and factory teams. <span class="chip">Coming soon</span></p>
                 </article>
                 <article class="card" id="sellers">
-                    <div class="ic" aria-hidden="true">🏪</div>
+                    <div class="ic" aria-hidden="true">S</div>
                     <h3>Sell on NeoGiga</h3>
-                    <p>Distributors, manufacturers and local shops: reach engineers across South Asia with
-                       per-marketplace approval, transparent settlement and stock sync.
-                       Vendor onboarding opens when the seller portal launches. <span class="chip">Coming soon</span></p>
+                    <p>Reach engineers, makers, schools, labs, workshops, resellers, and B2B buyers across South Asia.
+                       Seller portal is launching soon; early applicants will be reviewed first for Nepal and India.</p>
+                    <p style="margin-top:12px"><a class="btn btn-ghost" href="/sell-on-neogiga">Apply for Seller Early Access</a></p>
                 </article>
                 <article class="card" id="b2b">
                     <div class="ic" aria-hidden="true">🏭</div>
@@ -249,11 +251,12 @@
     <section aria-labelledby="seller-band-title">
         <div class="wrap">
             <div class="band">
-                <h2 id="seller-band-title">Grow your electronics business with NeoGiga
+                <h2 id="seller-band-title">Sell on NeoGiga
                     <small>Onboard once, sell across neogiga.com, neogiga.in and giganepal.com with regional
-                    approval and localized pricing.</small>
+                    approval, stock visibility, RFQ support and transparent settlement.</small>
                 </h2>
-                <a class="btn btn-gold" href="#sellers">Become a Seller</a>
+                <a class="btn btn-gold" href="/seller-early-access">Apply for Seller Early Access</a>
+                <a class="btn btn-ghost" href="/distributors">Join Distributor Network</a>
             </div>
         </div>
     </section>

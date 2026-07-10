@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Distributor\DistributorLeadStoreRequest;
 use App\Models\Distributor\DistributorLead;
 use App\Services\Distributor\DistributorContextService;
+use App\Services\Distributor\DistributorTerritoryStockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,10 @@ class DistributorResourceController extends Controller
 {
     use ApiResponses;
 
-    public function __construct(private readonly DistributorContextService $context) {}
+    public function __construct(
+        private readonly DistributorContextService $context,
+        private readonly DistributorTerritoryStockService $territoryStock
+    ) {}
 
     public function profile(Request $request): JsonResponse
     {
@@ -52,5 +56,15 @@ class DistributorResourceController extends Controller
         $distributor = $this->context->abortUnlessDistributor($request->user());
         $column = $table === 'distributor_downlines' ? 'parent_distributor_id' : 'distributor_id';
         return $this->success(DB::table($table)->where($column, $distributor->id)->latest('id')->paginate(25));
+    }
+
+    public function territoryProducts(Request $request): JsonResponse
+    {
+        return $this->success($this->territoryStock->products($this->context->abortUnlessDistributor($request->user())));
+    }
+
+    public function territoryVendors(Request $request): JsonResponse
+    {
+        return $this->success($this->territoryStock->vendors($this->context->abortUnlessDistributor($request->user())));
     }
 }
