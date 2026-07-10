@@ -2,7 +2,7 @@
 
 ## Current (refreshed 2026-07-09, post-RFQ cycle)
 
-1. **Support chat foundation** — full blueprint in [CHAT_IMPLEMENTATION_PLAN.md](CHAT_IMPLEMENTATION_PLAN.md); note prod's panel build added `support_tickets`/`support_ticket_messages` + `/admin/support` — the chat cycle should EXTEND that (conversations layer on top), not duplicate it.
+1. ~~Support chat foundation~~ **SHIPPED 2026-07-10 (e57f96e)** — customer API (`/api/v1/support/tickets*`: create/list/show/reply + AI-handoff placeholder) extends the panel build's support module; loop complete: customer API ↔ `/admin/support` inbox ↔ seller API. Remaining chat niceties: frontend chat UI (auth-aware), AI auto-responder wiring, unread counts.
 2. **Review + merge decision on git branch `next-phase-panel-execution-d162b`** — panel work is live on prod and synced to git main via file-sync (484b76c); the branch's extra commits (cart_reservations migration, inventory reservation cleanup command, personal_access_tokens migration AGAIN) need human review before merging (personal_access_tokens = Sanctum remnant hazard).
 3. **Push git main via GitHub Desktop** — CLI has no credentials; Desktop does (it pushed main to a63fccc→70664c0 already). See GITHUB_SYNC_STATUS.md.
 4. **RFQ email notification** — replace the Log::info placeholder with a mail template once the sales mailer is chosen.
