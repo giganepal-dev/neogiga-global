@@ -3,7 +3,7 @@
 | Source / ETL field | Canonical target | Conversion | Conflict strategy | Rollback identifier |
 | --- | --- | --- | --- | --- |
 | `source_part_id` | `catalog_product_sources.source_part_id` | text | unique with `source_id`; update source link | `import_batch_id` |
-| `source_part_id` | `products.sku` | `JLCPCB-{source_part_id}` | only on new product | source link |
+| `source_part_id` | `products.sku` | `NG-{source_part_id}` | only on new product | source link |
 | `mpn` | `products.mpn` | source text, normalized for lookup | match by `brand_id + normalized MPN` | source link |
 | `manufacturer.normalized_name` | `product_brands.slug` | slugified | match existing slug, insert if missing | n/a |
 | `manufacturer.display_name` | `product_brands.name`, `products.manufacturer_name` | text | preserve existing product brand/name | n/a |

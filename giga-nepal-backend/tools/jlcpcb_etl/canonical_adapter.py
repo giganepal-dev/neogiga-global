@@ -52,7 +52,7 @@ def slugify(value: str) -> str:
 
 
 def stable_sku(source_part_id: str) -> str:
-    return f"JLCPCB-{source_part_id}"
+    return f"NG-{source_part_id}"
 
 
 def payload_hash(part: TransformedPart) -> str:

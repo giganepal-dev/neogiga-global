@@ -49,6 +49,95 @@ Artisan::command('neogiga:smoke', function () {
     return $failed ? self::FAILURE : self::SUCCESS;
 })->purpose('Run production-safe NeoGiga smoke checks without migrations or data changes.');
 
+Artisan::command('jlcpcb:repair-skus {--apply : Persist SKU changes. Without this flag the command is a dry-run.} {--limit=0 : Maximum rows to process, 0 means all.}', function () {
+    if (! Schema::hasTable('catalog_product_sources') || ! Schema::hasTable('catalog_sources') || ! Schema::hasTable('products')) {
+        $this->error('Required catalog source/product tables are missing.');
+
+        return self::FAILURE;
+    }
+
+    $limit = max(0, (int) $this->option('limit'));
+    $apply = (bool) $this->option('apply');
+
+    $query = DB::table('catalog_product_sources as cps')
+        ->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')
+        ->join('products as p', 'p.id', '=', 'cps.product_id')
+        ->where('cs.code', 'jlcpcb_parts_database')
+        ->where('p.sku', 'like', 'JLCPCB-%')
+        ->select('p.id as product_id', 'p.sku', 'cps.source_part_id');
+
+    if ($limit > 0) {
+        $query->limit($limit);
+    }
+
+    $rows = $query->orderBy('p.id')->get();
+    $planned = [];
+    $conflicts = [];
+
+    foreach ($rows as $row) {
+        $targetSku = 'NG-'.$row->source_part_id;
+        $owner = DB::table('products')->where('sku', $targetSku)->where('id', '<>', $row->product_id)->first(['id', 'sku']);
+        if ($owner) {
+            $conflicts[] = [
+                'product_id' => $row->product_id,
+                'current_sku' => $row->sku,
+                'target_sku' => $targetSku,
+                'existing_product_id' => $owner->id,
+            ];
+            continue;
+        }
+
+        $planned[] = [
+            'product_id' => (int) $row->product_id,
+            'current_sku' => $row->sku,
+            'target_sku' => $targetSku,
+        ];
+    }
+
+    $this->line('Rows scanned: '.$rows->count());
+    $this->line('Safe updates: '.count($planned));
+    $this->line('Conflicts: '.count($conflicts));
+
+    foreach (array_slice($planned, 0, 10) as $item) {
+        $this->line("PLAN product #{$item['product_id']}: {$item['current_sku']} -> {$item['target_sku']}");
+    }
+    foreach (array_slice($conflicts, 0, 10) as $item) {
+        $this->warn("CONFLICT product #{$item['product_id']}: {$item['target_sku']} already belongs to #{$item['existing_product_id']}");
+    }
+
+    if ($conflicts !== []) {
+        $this->error('Refusing to apply while conflicts exist.');
+
+        return self::FAILURE;
+    }
+
+    if (! $apply) {
+        $this->comment('Dry-run only. Re-run with --apply to persist safe SKU repairs.');
+
+        return self::SUCCESS;
+    }
+
+    DB::transaction(function () use ($planned) {
+        foreach ($planned as $item) {
+            DB::table('products')->where('id', $item['product_id'])->update([
+                'sku' => $item['target_sku'],
+                'updated_at' => now(),
+            ]);
+
+            if (Schema::hasTable('product_search_documents')) {
+                DB::table('product_search_documents')->where('product_id', $item['product_id'])->update([
+                    'sku' => $item['target_sku'],
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    });
+
+    $this->info('Updated '.count($planned).' JLCPCB-linked product SKU(s) to NG-*.');
+
+    return self::SUCCESS;
+})->purpose('Repair JLCPCB-linked product SKUs from JLCPCB-* to NeoGiga NG-* format.');
+
 Schedule::job(new DetectAbandonedCartsJob)->everyFifteenMinutes();
 Schedule::job(new CalculateTrendingProductsJob)->hourly();
 Schedule::job(new CalculateTrendingCategoriesJob)->hourly();
