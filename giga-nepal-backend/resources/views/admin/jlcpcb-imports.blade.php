@@ -43,9 +43,10 @@
 
     <form id="bulkImportApprove" method="post" action="/admin/imports/jlcpcb/bulk-approve">@csrf</form>
         <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:#fff">
-            <div class="sub">Select up to 100 pending rows, then approve. Public publishing is optional and off by default.</div>
+            <div class="sub">Select up to 100 non-final rows, then approve. Public publishing is optional and off by default.</div>
             <div class="actions">
                 <label class="sub"><input form="bulkImportApprove" type="checkbox" name="publish_public" value="1"> Publish public</label>
+                <label class="sub"><input form="bulkImportApprove" type="checkbox" name="queue_rebuild" value="1" checked> Queue search rebuild</label>
                 <input form="bulkImportApprove" class="control" name="note" placeholder="Review note" style="min-width:220px">
                 <button form="bulkImportApprove" class="btn btn-primary" type="submit" onclick="return confirm('Approve selected imported products?')">Bulk Approve</button>
             </div>
@@ -62,7 +63,7 @@
                 @endphp
                 <tr>
                     <td>
-                        @if($review === 'pending_review')
+                        @if(! in_array($review, ['approved', 'rejected'], true))
                             <input form="bulkImportApprove" type="checkbox" name="source_ids[]" value="{{ $row->id }}">
                         @endif
                     </td>
@@ -95,6 +96,7 @@
                         @if($review !== 'approved')
                             <form method="post" action="/admin/imports/jlcpcb/{{ $row->id }}/approve">@csrf
                                 <input type="hidden" name="note" value="Approved from import review queue">
+                                <input type="hidden" name="queue_rebuild" value="1">
                                 <button class="btn btn-ghost" type="submit">Approve</button>
                             </form>
                             <details class="modal">
@@ -103,6 +105,7 @@
                                     <div class="modal-h"><h3>Approve & Publish</h3><span class="badge b-warn">public</span></div>
                                     <form class="modal-b form-stack" method="post" action="/admin/imports/jlcpcb/{{ $row->id }}/approve">@csrf
                                         <input type="hidden" name="publish_public" value="1">
+                                        <input type="hidden" name="queue_rebuild" value="1">
                                         <textarea class="control" name="note" placeholder="Review note"></textarea>
                                         <button class="btn btn-primary" type="submit" onclick="return confirm('Approve and make this imported product public?')">Approve & Publish</button>
                                     </form>
@@ -133,7 +136,7 @@
 
 <section class="card" style="margin-top:16px">
     <div class="card-h">
-        <div><h2>Search / Facet Rebuild</h2><div class="sub">Indexes approved JLCPCB imports into internal search/facet tables. Public search integration remains a later gate.</div></div>
+        <div><h2>Search / Facet Rebuild</h2><div class="sub">Indexes approved JLCPCB imports into product search/facet tables used by public/API catalog search. Pending imports are excluded.</div></div>
         <form method="post" action="/admin/imports/jlcpcb/search-rebuild">@csrf
             <button class="btn btn-primary" type="submit" onclick="return confirm('Queue search/facet rebuild for approved imported products?')">Queue Rebuild</button>
         </form>
