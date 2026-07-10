@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Marketplace\VendorProduct;
 use App\Services\Erp\DocumentNumberService;
+use App\Services\Inventory\TransferService;
+use App\Services\Product\ProductApprovalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -217,6 +221,8 @@ class CommerceOpsController extends Controller
             'slug' => ['nullable', 'string', 'max:200'],
             'description' => ['nullable', 'string', 'max:2000'],
             'icon_path' => ['nullable', 'string', 'max:500'],
+            'image_path' => ['nullable', 'string', 'max:500'],
+            'media_asset_id' => ['nullable', 'integer', 'exists:admin_media_assets,id'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
@@ -227,12 +233,18 @@ class CommerceOpsController extends Controller
         ]);
 
         $slug = $data['slug'] ?: Str::slug($data['name']);
+        $mediaAsset = ! empty($data['media_asset_id'])
+            ? DB::table('admin_media_assets')->where('id', $data['media_asset_id'])->first()
+            : null;
+        $mediaUrl = $mediaAsset ? Storage::disk($mediaAsset->disk ?: 'public')->url($mediaAsset->path) : null;
+
         $payload = [
             'parent_id' => $data['parent_id'] ?? null,
             'name' => $data['name'],
             'slug' => $slug,
             'description' => $data['description'] ?? null,
-            'icon_path' => $data['icon_path'] ?? null,
+            'icon_path' => $data['icon_path'] ?? $mediaUrl,
+            'image_path' => $data['image_path'] ?? $mediaUrl,
             'sort_order' => $data['sort_order'] ?? 100,
             'is_active' => (bool) ($data['is_active'] ?? false),
             'is_featured' => (bool) ($data['is_featured'] ?? false),
@@ -241,8 +253,15 @@ class CommerceOpsController extends Controller
                 'description' => $data['seo_description'] ?? null,
                 'country_visibility' => $data['country_visibility'] ?? null,
                 'lms_topic' => $data['lms_topic'] ?? null,
+                'source_notes' => 'manual admin metadata',
+                'confidence_level' => 'manual',
+                'last_updated' => now()->toDateTimeString(),
+                'disclaimer' => 'Advisory only',
             ]),
-            'marketplace_visibility' => json_encode([]),
+            'marketplace_visibility' => json_encode([
+                'country_visibility' => $data['country_visibility'] ?? null,
+                'media_asset_id' => $data['media_asset_id'] ?? null,
+            ]),
             'updated_at' => now(),
         ];
 
@@ -261,6 +280,146 @@ class CommerceOpsController extends Controller
         return back()->with('status', "Category {$verb}.");
     }
 
+    public function storeCategoryLmsLink(Request $request, int $category): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:190'],
+            'lms_course_id' => ['nullable', 'integer', 'exists:lms_courses,id'],
+            'lms_project_id' => ['nullable', 'integer', 'exists:lms_projects,id'],
+            'relation_type' => ['required', 'string', 'max:80'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        if (! DB::table('product_categories')->where('id', $category)->exists()) {
+            return back()->with('error', 'Category not found.');
+        }
+
+        $id = DB::table('category_lms_links')->insertGetId([
+            'product_category_id' => $category,
+            'lms_course_id' => $data['lms_course_id'] ?? null,
+            'lms_project_id' => $data['lms_project_id'] ?? null,
+            'title' => $data['title'],
+            'relation_type' => $data['relation_type'],
+            'notes' => $data['notes'] ?? null,
+            'is_active' => true,
+            'metadata' => json_encode(['saved_via' => 'admin.web']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'category_lms_link_created', 'category_lms_links', $id, ['product_category_id' => $category, 'title' => $data['title']]);
+
+        return back()->with('status', 'Category LMS link added.');
+    }
+
+    public function deleteCategoryLmsLink(Request $request, int $category, int $link): RedirectResponse
+    {
+        DB::table('category_lms_links')
+            ->where('product_category_id', $category)
+            ->where('id', $link)
+            ->update(['is_active' => false, 'updated_at' => now()]);
+
+        $this->auditAdminAction($request, 'category_lms_link_deactivated', 'category_lms_links', $link, ['product_category_id' => $category]);
+
+        return back()->with('status', 'Category LMS link deactivated.');
+    }
+
+    public function storeCategorySpecTemplate(Request $request, int $category): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('category_spec_templates'), 404);
+        abort_unless(DB::table('product_categories')->where('id', $category)->exists(), 404);
+
+        $data = $request->validate([
+            'id' => ['nullable', 'integer', 'exists:category_spec_templates,id'],
+            'name' => ['required', 'string', 'max:190'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'is_required' => ['nullable', 'boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $payload = [
+            'category_id' => $category,
+            'name' => $data['name'],
+            'description' => $data['description'] ?? null,
+            'is_required' => (bool) ($data['is_required'] ?? false),
+            'sort_order' => $data['sort_order'] ?? 0,
+            'metadata' => json_encode([
+                'source_notes' => 'Manual admin category spec template',
+                'confidence_level' => 'manual',
+                'last_updated' => now()->toISOString(),
+                'advisory' => 'Advisory only',
+            ]),
+            'updated_at' => now(),
+        ];
+
+        if (! empty($data['id'])) {
+            DB::table('category_spec_templates')->where('id', $data['id'])->where('category_id', $category)->update($payload);
+            $id = (int) $data['id'];
+            $action = 'category_spec_template_updated';
+        } else {
+            $payload['created_at'] = now();
+            $id = DB::table('category_spec_templates')->insertGetId($payload);
+            $action = 'category_spec_template_created';
+        }
+
+        $this->auditAdminAction($request, $action, 'category_spec_templates', $id, ['category_id' => $category, 'name' => $data['name']]);
+
+        return back()->with('status', 'Spec template saved.');
+    }
+
+    public function deleteCategorySpecTemplate(Request $request, int $category, int $template): RedirectResponse
+    {
+        DB::table('category_spec_templates')->where('category_id', $category)->where('id', $template)->delete();
+        $this->auditAdminAction($request, 'category_spec_template_deleted', 'category_spec_templates', $template, ['category_id' => $category]);
+
+        return back()->with('status', 'Spec template deleted.');
+    }
+
+    public function storeCategorySpecField(Request $request, int $category, int $template): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('spec_template_fields'), 404);
+        abort_unless(DB::table('category_spec_templates')->where('category_id', $category)->where('id', $template)->exists(), 404);
+
+        $data = $request->validate([
+            'field_name' => ['required', 'string', 'max:120'],
+            'field_label' => ['required', 'string', 'max:190'],
+            'field_type' => ['required', 'string', 'max:40'],
+            'unit' => ['nullable', 'string', 'max:80'],
+            'options' => ['nullable', 'string', 'max:1000'],
+            'validation_rules' => ['nullable', 'string', 'max:255'],
+            'help_text' => ['nullable', 'string', 'max:1000'],
+            'is_required' => ['nullable', 'boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $id = DB::table('spec_template_fields')->insertGetId([
+            'template_id' => $template,
+            'field_name' => Str::slug($data['field_name'], '_'),
+            'field_label' => $data['field_label'],
+            'field_type' => $data['field_type'],
+            'unit' => $data['unit'] ?? null,
+            'options' => $this->jsonArrayFromTextarea($data['options'] ?? null),
+            'validation_rules' => $data['validation_rules'] ?? null,
+            'help_text' => $data['help_text'] ?? null,
+            'is_required' => (bool) ($data['is_required'] ?? false),
+            'sort_order' => $data['sort_order'] ?? 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'category_spec_field_created', 'spec_template_fields', $id, ['category_id' => $category, 'template_id' => $template]);
+
+        return back()->with('status', 'Spec field added.');
+    }
+
+    public function deleteCategorySpecField(Request $request, int $category, int $template, int $field): RedirectResponse
+    {
+        DB::table('spec_template_fields')->where('template_id', $template)->where('id', $field)->delete();
+        $this->auditAdminAction($request, 'category_spec_field_deleted', 'spec_template_fields', $field, ['category_id' => $category, 'template_id' => $template]);
+
+        return back()->with('status', 'Spec field deleted.');
+    }
+
     public function deactivateCategory(Request $request, int $category): RedirectResponse
     {
         $row = DB::table('product_categories')->where('id', $category)->first();
@@ -272,6 +431,16 @@ class CommerceOpsController extends Controller
         $this->auditAdminAction($request, 'category_status_toggled', 'product_categories', $category, ['is_active' => ! $row->is_active]);
 
         return back()->with('status', 'Category status updated.');
+    }
+
+    private function jsonArrayFromTextarea(?string $value): ?string
+    {
+        $lines = collect(preg_split('/\r\n|\r|\n/', (string) $value))
+            ->map(fn ($line) => trim($line))
+            ->filter()
+            ->values();
+
+        return $lines->isEmpty() ? null : json_encode($lines->all());
     }
 
     public function storeProduct(Request $request): RedirectResponse
@@ -401,6 +570,121 @@ class CommerceOpsController extends Controller
         return back()->with('status', 'Product stock updated.');
     }
 
+    public function storeProductRegionalStock(Request $request, int $product): RedirectResponse
+    {
+        $data = $request->validate([
+            'inventory_stock_id' => ['nullable', 'integer', 'exists:inventory_stocks,id'],
+            'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
+            'country_id' => ['nullable', 'integer', 'exists:countries,id'],
+            'quantity_available' => ['required', 'integer', 'min:0'],
+            'quantity_reserved' => ['nullable', 'integer', 'min:0'],
+            'quantity_incoming' => ['nullable', 'integer', 'min:0'],
+            'reorder_point' => ['nullable', 'integer', 'min:0'],
+            'reorder_quantity' => ['nullable', 'integer', 'min:0'],
+            'unit_cost' => ['nullable', 'numeric', 'min:0'],
+            'status' => ['required', 'string', 'max:40'],
+            'backorder_allowed' => ['nullable', 'boolean'],
+            'quote_only' => ['nullable', 'boolean'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $productRow = DB::table('products')->where('id', $product)->first();
+        if (! $productRow) {
+            return back()->with('error', 'Product not found.');
+        }
+
+        $stock = null;
+        if (! empty($data['inventory_stock_id'])) {
+            $stock = DB::table('inventory_stocks')
+                ->where('id', $data['inventory_stock_id'])
+                ->where('product_id', $product)
+                ->first();
+        }
+
+        if (! $stock) {
+            $stock = DB::table('inventory_stocks')
+                ->where('product_id', $product)
+                ->where('warehouse_id', $data['warehouse_id'])
+                ->where(function ($query) use ($data) {
+                    if (! empty($data['country_id'])) {
+                        $query->where('country_id', $data['country_id']);
+                    } else {
+                        $query->whereNull('country_id');
+                    }
+                })
+                ->first();
+        }
+
+        $before = (int) ($stock->quantity_available ?? 0);
+        $reserved = (int) ($data['quantity_reserved'] ?? ($stock->quantity_reserved ?? 0));
+        $available = (int) $data['quantity_available'];
+        $onHand = $available + $reserved + (int) ($stock->quantity_damaged ?? 0);
+
+        $payload = [
+            'product_id' => $product,
+            'warehouse_id' => $data['warehouse_id'],
+            'country_id' => $data['country_id'] ?? null,
+            'vendor_id' => $productRow->vendor_id ?? null,
+            'sku' => $productRow->sku ?? null,
+            'quantity_available' => $available,
+            'quantity_reserved' => $reserved,
+            'quantity_incoming' => (int) ($data['quantity_incoming'] ?? ($stock->quantity_incoming ?? 0)),
+            'quantity_on_hand' => $onHand,
+            'reorder_point' => (int) ($data['reorder_point'] ?? ($stock->reorder_point ?? $productRow->low_stock_threshold ?? 5)),
+            'reorder_quantity' => (int) ($data['reorder_quantity'] ?? ($stock->reorder_quantity ?? 0)),
+            'unit_cost' => $data['unit_cost'] ?? ($stock->unit_cost ?? null),
+            'backorder_allowed' => (bool) ($data['backorder_allowed'] ?? false),
+            'quote_only' => (bool) ($data['quote_only'] ?? false),
+            'status' => $data['status'],
+            'is_active' => $data['status'] !== 'inactive',
+            'last_movement_at' => now(),
+            'metadata' => json_encode(['saved_via' => 'admin.product_detail', 'note' => $data['notes'] ?? null]),
+            'updated_at' => now(),
+        ];
+
+        if ($stock) {
+            DB::table('inventory_stocks')->where('id', $stock->id)->update($payload);
+            $stockId = (int) $stock->id;
+        } else {
+            $payload += ['quantity_damaged' => 0, 'created_at' => now()];
+            $stockId = DB::table('inventory_stocks')->insertGetId($payload);
+        }
+
+        DB::table('inventory_movements')->insert([
+            'inventory_stock_id' => $stockId,
+            'product_id' => $product,
+            'warehouse_id' => $data['warehouse_id'],
+            'vendor_id' => $productRow->vendor_id ?? null,
+            'movement_type' => $stock ? 'regional_stock_update' : 'regional_stock_create',
+            'quantity_change' => $available - $before,
+            'quantity_before' => $before,
+            'quantity_after' => $available,
+            'reference_type' => 'admin_product_regional_stock',
+            'reference_id' => $stockId,
+            'notes' => $data['notes'] ?? 'Regional stock saved via product admin',
+            'user_id' => $request->user()?->id,
+            'metadata' => json_encode(['country_id' => $data['country_id'] ?? null, 'reorder_point' => $payload['reorder_point']]),
+            'occurred_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $totalAvailable = (int) DB::table('inventory_stocks')
+            ->where('product_id', $product)
+            ->where('is_active', true)
+            ->sum('quantity_available');
+
+        DB::table('products')->where('id', $product)->update([
+            'stock_quantity' => $totalAvailable,
+            'low_stock_threshold' => $payload['reorder_point'],
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'product_regional_stock_saved', 'inventory_stocks', $stockId, $data + ['product_id' => $product]);
+
+        return back()->with('status', 'Regional inventory saved.');
+    }
+
     public function storeProductSpec(Request $request, int $product): RedirectResponse
     {
         $data = $request->validate([
@@ -439,30 +723,259 @@ class CommerceOpsController extends Controller
         return back()->with('status', 'Product specification deleted.');
     }
 
+    public function storeAdvancedProductSpec(Request $request, int $product): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('product_specifications') && Schema::hasTable('spec_template_fields'), 404);
+        abort_unless(DB::table('products')->where('id', $product)->exists(), 404);
+
+        $data = $request->validate([
+            'template_field_id' => ['required', 'integer', 'exists:spec_template_fields,id'],
+            'value' => ['required', 'string', 'max:4000'],
+            'unit_override' => ['nullable', 'string', 'max:80'],
+            'is_visible' => ['nullable', 'boolean'],
+        ]);
+
+        DB::table('product_specifications')->updateOrInsert(
+            [
+                'product_id' => $product,
+                'template_field_id' => $data['template_field_id'],
+            ],
+            [
+                'value' => $data['value'],
+                'unit_override' => $data['unit_override'] ?? null,
+                'is_visible' => (bool) ($data['is_visible'] ?? true),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+
+        $this->auditAdminAction($request, 'advanced_product_spec_saved', 'product_specifications', $data['template_field_id'], ['product_id' => $product]);
+
+        return back()->with('status', 'Advanced product specification saved.');
+    }
+
+    public function deleteAdvancedProductSpec(Request $request, int $product, int $spec): RedirectResponse
+    {
+        DB::table('product_specifications')->where('product_id', $product)->where('id', $spec)->delete();
+        $this->auditAdminAction($request, 'advanced_product_spec_deleted', 'product_specifications', $spec, ['product_id' => $product]);
+
+        return back()->with('status', 'Advanced product specification deleted.');
+    }
+
+    public function updateProductReview(Request $request, int $product, int $review): RedirectResponse
+    {
+        if (! Schema::hasTable('product_reviews')) {
+            return back()->with('error', 'Product reviews table is not available.');
+        }
+
+        $data = $request->validate([
+            'status' => ['required', 'in:pending,approved,rejected,hidden'],
+            'moderation_note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $row = DB::table('product_reviews')
+            ->where('id', $review)
+            ->where('product_id', $product)
+            ->first();
+
+        if (! $row) {
+            return back()->with('error', 'Review not found.');
+        }
+
+        DB::table('product_reviews')->where('id', $review)->update([
+            'status' => $data['status'],
+            'moderated_by' => $request->user()?->id,
+            'moderated_at' => now(),
+            'moderation_note' => $data['moderation_note'] ?? null,
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'product_review_'.$data['status'], 'product_reviews', $review, [
+            'product_id' => $product,
+            'previous_status' => $row->status,
+            'status' => $data['status'],
+        ]);
+
+        return back()->with('status', 'Review moderation saved.');
+    }
+
+    public function storeMarketplaceProductPrice(Request $request, int $product): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('marketplace_product_prices'), 404);
+        abort_unless(DB::table('products')->where('id', $product)->exists(), 404);
+
+        $data = $request->validate([
+            'id' => ['nullable', 'integer', 'exists:marketplace_product_prices,id'],
+            'marketplace_id' => ['required', 'integer', 'exists:marketplaces,id'],
+            'base_price' => ['required', 'numeric', 'min:0'],
+            'sale_price' => ['nullable', 'numeric', 'min:0'],
+            'cost_price' => ['nullable', 'numeric', 'min:0'],
+            'currency_code' => ['required', 'string', 'max:3', 'exists:currencies,code'],
+            'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'is_tax_inclusive' => ['nullable', 'boolean'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $payload = [
+            'product_id' => $product,
+            'marketplace_id' => $data['marketplace_id'],
+            'base_price' => $data['base_price'],
+            'sale_price' => $data['sale_price'] ?? null,
+            'cost_price' => $data['cost_price'] ?? null,
+            'currency_code' => strtoupper($data['currency_code']),
+            'tax_rate' => $data['tax_rate'] ?? 0,
+            'is_tax_inclusive' => (bool) ($data['is_tax_inclusive'] ?? false),
+            'is_active' => (bool) ($data['is_active'] ?? true),
+            'updated_at' => now(),
+        ];
+
+        if (! empty($data['id'])) {
+            DB::table('marketplace_product_prices')->where('id', $data['id'])->where('product_id', $product)->update($payload);
+            $id = (int) $data['id'];
+            $action = 'marketplace_product_price_updated';
+        } else {
+            $payload['created_at'] = now();
+            $id = DB::table('marketplace_product_prices')->insertGetId($payload);
+            $action = 'marketplace_product_price_created';
+        }
+
+        $this->auditAdminAction($request, $action, 'marketplace_product_prices', $id, ['product_id' => $product, 'marketplace_id' => $data['marketplace_id']]);
+
+        return back()->with('status', 'Marketplace price saved.');
+    }
+
+    public function toggleMarketplaceProductPrice(Request $request, int $product, int $price): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('marketplace_product_prices'), 404);
+
+        $row = DB::table('marketplace_product_prices')->where('product_id', $product)->where('id', $price)->first();
+        if (! $row) {
+            return back()->with('error', 'Marketplace price not found.');
+        }
+
+        DB::table('marketplace_product_prices')->where('id', $price)->update(['is_active' => ! (bool) $row->is_active, 'updated_at' => now()]);
+        $this->auditAdminAction($request, 'marketplace_product_price_toggled', 'marketplace_product_prices', $price, ['product_id' => $product, 'is_active' => ! (bool) $row->is_active]);
+
+        return back()->with('status', 'Marketplace price status updated.');
+    }
+
+    public function storeVendorProductPrice(Request $request, int $product): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('vendor_product_prices'), 404);
+        abort_unless(DB::table('products')->where('id', $product)->exists(), 404);
+
+        $data = $request->validate([
+            'id' => ['nullable', 'integer', 'exists:vendor_product_prices,id'],
+            'vendor_id' => ['required', 'integer', 'exists:vendors,id'],
+            'selling_price' => ['required', 'numeric', 'min:0'],
+            'min_price' => ['nullable', 'numeric', 'min:0'],
+            'cost_price' => ['nullable', 'numeric', 'min:0'],
+            'currency_code' => ['required', 'string', 'max:3', 'exists:currencies,code'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $payload = [
+            'vendor_id' => $data['vendor_id'],
+            'product_id' => $product,
+            'cost_price' => $data['cost_price'] ?? null,
+            'selling_price' => $data['selling_price'],
+            'min_price' => $data['min_price'] ?? null,
+            'currency_code' => strtoupper($data['currency_code']),
+            'is_active' => (bool) ($data['is_active'] ?? true),
+            'updated_at' => now(),
+        ];
+
+        if (! empty($data['id'])) {
+            DB::table('vendor_product_prices')->where('id', $data['id'])->where('product_id', $product)->update($payload);
+            $id = (int) $data['id'];
+            $action = 'vendor_product_price_updated';
+        } else {
+            $payload['created_at'] = now();
+            $id = DB::table('vendor_product_prices')->insertGetId($payload);
+            $action = 'vendor_product_price_created';
+        }
+
+        $this->auditAdminAction($request, $action, 'vendor_product_prices', $id, ['product_id' => $product, 'vendor_id' => $data['vendor_id']]);
+
+        return back()->with('status', 'Seller offer saved.');
+    }
+
+    public function toggleVendorProductPrice(Request $request, int $product, int $price): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('vendor_product_prices'), 404);
+
+        $row = DB::table('vendor_product_prices')->where('product_id', $product)->where('id', $price)->first();
+        if (! $row) {
+            return back()->with('error', 'Seller offer not found.');
+        }
+
+        DB::table('vendor_product_prices')->where('id', $price)->update(['is_active' => ! (bool) $row->is_active, 'updated_at' => now()]);
+        $this->auditAdminAction($request, 'vendor_product_price_toggled', 'vendor_product_prices', $price, ['product_id' => $product, 'is_active' => ! (bool) $row->is_active]);
+
+        return back()->with('status', 'Seller offer status updated.');
+    }
+
     public function storeProductDocument(Request $request, int $product): RedirectResponse
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:190'],
             'document_type' => ['required', 'string', 'max:80'],
+            'media_asset_id' => ['nullable', 'integer', 'exists:admin_media_assets,id'],
+            'file' => ['nullable', 'file', 'max:51200', 'mimes:jpg,jpeg,png,webp,pdf,csv,txt,zip'],
             'file_url' => ['nullable', 'string', 'max:1000'],
             'source_url' => ['nullable', 'string', 'max:1000'],
         ]);
 
         abort_unless(DB::table('products')->where('id', $product)->exists(), 404);
 
+        $fileUrl = $data['file_url'] ?? null;
+        $filePath = null;
+        $mimeType = null;
+        $fileSize = null;
+        $mediaAssetId = $data['media_asset_id'] ?? null;
+        $metadata = ['saved_via' => 'admin.web'];
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $filePath = $file->storeAs('product-documents/'.$product, Str::uuid().'.'.$file->getClientOriginalExtension(), 'public');
+            $fileUrl = Storage::disk('public')->url($filePath);
+            $mimeType = $file->getClientMimeType();
+            $fileSize = $file->getSize();
+            $metadata['original_name'] = $file->getClientOriginalName();
+            $metadata['storage_disk'] = 'public';
+        } elseif ($mediaAssetId) {
+            $asset = DB::table('admin_media_assets')->where('id', $mediaAssetId)->first();
+            if ($asset) {
+                $filePath = $asset->path;
+                $fileUrl = Storage::disk($asset->disk ?: 'public')->url($asset->path);
+                $mimeType = $asset->mime_type;
+                $fileSize = $asset->size;
+                $metadata['media_asset_id'] = $asset->id;
+                $metadata['media_asset_name'] = $asset->title ?: $asset->original_name;
+                $metadata['storage_disk'] = $asset->disk ?: 'public';
+            }
+        }
+
         $id = DB::table('product_documents')->insertGetId([
             'product_id' => $product,
+            'media_asset_id' => $mediaAssetId ?: null,
             'title' => $data['title'],
             'document_type' => $data['document_type'],
-            'file_url' => $data['file_url'] ?? null,
+            'file_url' => $fileUrl,
+            'file_path' => $filePath,
+            'mime_type' => $mimeType,
+            'file_size' => $fileSize,
             'source_url' => $data['source_url'] ?? null,
-            'metadata' => json_encode(['saved_via' => 'admin.web']),
+            'uploaded_by' => $request->user()?->id,
+            'status' => 'approved',
+            'is_public' => true,
+            'metadata' => json_encode($metadata),
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $this->auditAdminAction($request, 'product_document_created', 'product_documents', $id, ['product_id' => $product, 'title' => $data['title']]);
+        $this->auditAdminAction($request, 'product_document_created', 'product_documents', $id, ['product_id' => $product, 'title' => $data['title'], 'media_asset_id' => $mediaAssetId]);
 
         return back()->with('status', 'Product document attached.');
     }
@@ -647,6 +1160,69 @@ class CommerceOpsController extends Controller
         return back()->with('status', 'Seller status updated.');
     }
 
+    public function updateVendorDocumentStatus(Request $request, int $document): RedirectResponse
+    {
+        $data = $request->validate([
+            'status' => ['required', 'in:pending,approved,rejected,expired'],
+            'rejection_reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $row = DB::table('vendor_documents')->where('id', $document)->first();
+        if (! $row) {
+            return back()->with('error', 'KYC document not found.');
+        }
+
+        DB::table('vendor_documents')->where('id', $document)->update([
+            'status' => $data['status'],
+            'rejection_reason' => $data['status'] === 'rejected' ? ($data['rejection_reason'] ?? null) : null,
+            'verified_by' => $data['status'] === 'approved' ? $request->user()?->id : $row->verified_by,
+            'verified_at' => $data['status'] === 'approved' ? now() : $row->verified_at,
+            'updated_at' => now(),
+        ]);
+
+        $this->vendorAudit($request, (int) $row->vendor_id, 'vendor_document_status_updated', ['document_id' => $document, 'status' => $data['status']]);
+        $this->auditAdminAction($request, 'vendor_document_status_updated', 'vendor_documents', $document, $data);
+
+        return back()->with('status', 'KYC document status updated.');
+    }
+
+    public function approveVendorProduct(Request $request, int $product, ProductApprovalService $approval): RedirectResponse
+    {
+        $vendorProduct = VendorProduct::find($product);
+        if (! $vendorProduct) {
+            return back()->with('error', 'Seller product submission not found.');
+        }
+
+        $approval->approveVendorProduct($vendorProduct, $request);
+        $this->auditAdminAction($request, 'vendor_product_approved', 'vendor_products', $product, [
+            'vendor_id' => $vendorProduct->vendor_id,
+            'product_id' => $vendorProduct->product_id,
+        ]);
+
+        return back()->with('status', 'Seller product approved.');
+    }
+
+    public function rejectVendorProduct(Request $request, int $product, ProductApprovalService $approval): RedirectResponse
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $vendorProduct = VendorProduct::find($product);
+        if (! $vendorProduct) {
+            return back()->with('error', 'Seller product submission not found.');
+        }
+
+        $approval->rejectVendorProduct($vendorProduct, $request, $data['reason']);
+        $this->auditAdminAction($request, 'vendor_product_rejected', 'vendor_products', $product, [
+            'vendor_id' => $vendorProduct->vendor_id,
+            'product_id' => $vendorProduct->product_id,
+            'reason' => $data['reason'],
+        ]);
+
+        return back()->with('status', 'Seller product rejected.');
+    }
+
     // ---- Users and roles ---------------------------------------------------
 
     public function storeUser(Request $request): RedirectResponse
@@ -700,11 +1276,111 @@ class CommerceOpsController extends Controller
         return back()->with('status', "User {$verb}.");
     }
 
+    public function storeAdminInvitation(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['nullable', 'string', 'max:180'],
+            'email' => ['required', 'email', 'max:255'],
+            'role_id' => ['nullable', 'integer', 'exists:roles,id'],
+            'expires_days' => ['nullable', 'integer', 'min:1', 'max:90'],
+        ]);
+
+        $id = DB::table('admin_invitations')->insertGetId([
+            'name' => $data['name'] ?? null,
+            'email' => $data['email'],
+            'role_id' => $data['role_id'] ?? null,
+            'token' => Str::random(48),
+            'status' => 'pending',
+            'invited_by' => $request->user()?->id,
+            'expires_at' => now()->addDays((int) ($data['expires_days'] ?? 7)),
+            'metadata' => json_encode(['delivery' => 'logged_only', 'saved_via' => 'admin.web']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'admin_invitation_created', 'admin_invitations', $id, ['email' => $data['email'], 'role_id' => $data['role_id'] ?? null]);
+
+        return back()->with('status', 'Invitation logged. Email delivery provider is not enabled for this action.');
+    }
+
+    public function storePermission(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'key' => ['required', 'string', 'max:160', 'regex:/^[a-z0-9_.-]+$/i'],
+            'name' => ['required', 'string', 'max:180'],
+            'group' => ['required', 'string', 'max:80'],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        DB::table('permissions')->updateOrInsert(
+            ['key' => $data['key']],
+            [
+                'key' => $data['key'],
+                'name' => $data['name'],
+                'group' => $data['group'],
+                'description' => $data['description'] ?? null,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        $this->auditAdminAction($request, 'permission_saved', 'permissions', null, ['key' => $data['key']]);
+
+        return back()->with('status', 'Permission saved.');
+    }
+
+    public function toggleRolePermission(Request $request, int $role, int $permission): RedirectResponse
+    {
+        if (! DB::table('roles')->where('id', $role)->exists() || ! DB::table('permissions')->where('id', $permission)->exists()) {
+            return back()->with('error', 'Role or permission not found.');
+        }
+
+        $existing = DB::table('role_permissions')->where('role_id', $role)->where('permission_id', $permission)->first();
+        if ($existing) {
+            DB::table('role_permissions')->where('id', $existing->id)->delete();
+            $enabled = false;
+        } else {
+            DB::table('role_permissions')->insert(['role_id' => $role, 'permission_id' => $permission, 'created_at' => now(), 'updated_at' => now()]);
+            $enabled = true;
+        }
+
+        $this->auditAdminAction($request, 'role_permission_toggled', 'role_permissions', null, ['role_id' => $role, 'permission_id' => $permission, 'enabled' => $enabled]);
+
+        return back()->with('status', 'Role permission updated.');
+    }
+
+    public function assignUserCountryAccess(Request $request, int $user): RedirectResponse
+    {
+        $data = $request->validate(['country_id' => ['required', 'integer', 'exists:countries,id']]);
+        DB::table('user_country_access')->updateOrInsert(
+            ['user_id' => $user, 'country_id' => $data['country_id']],
+            ['assigned_by' => $request->user()?->id, 'metadata' => json_encode(['saved_via' => 'admin.web']), 'created_at' => now(), 'updated_at' => now()]
+        );
+        $this->auditAdminAction($request, 'user_country_access_assigned', 'user_country_access', null, ['user_id' => $user, 'country_id' => $data['country_id']]);
+        return back()->with('status', 'Country access assigned.');
+    }
+
+    public function assignUserSellerAccess(Request $request, int $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'vendor_id' => ['required', 'integer', 'exists:vendors,id'],
+            'access_level' => ['required', 'string', 'max:80'],
+        ]);
+        DB::table('user_seller_access')->updateOrInsert(
+            ['user_id' => $user, 'vendor_id' => $data['vendor_id']],
+            ['access_level' => $data['access_level'], 'assigned_by' => $request->user()?->id, 'metadata' => json_encode(['saved_via' => 'admin.web']), 'created_at' => now(), 'updated_at' => now()]
+        );
+        $this->auditAdminAction($request, 'user_seller_access_assigned', 'user_seller_access', null, ['user_id' => $user, 'vendor_id' => $data['vendor_id'], 'access_level' => $data['access_level']]);
+        return back()->with('status', 'Seller access assigned.');
+    }
+
     // ---- LMS operations ----------------------------------------------------
 
     public function storeLmsCourse(Request $request): RedirectResponse
     {
         $data = $request->validate([
+            'id' => ['nullable', 'integer', 'exists:lms_courses,id'],
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
             'lms_course_category_id' => ['nullable', 'integer'],
@@ -718,7 +1394,7 @@ class CommerceOpsController extends Controller
             'seo_description' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $id = DB::table('lms_courses')->insertGetId([
+        $payload = [
             'lms_course_category_id' => $data['lms_course_category_id'] ?? null,
             'title' => $data['title'],
             'slug' => $data['slug'] ?: Str::slug($data['title']).'-'.Str::lower(Str::random(4)),
@@ -732,13 +1408,48 @@ class CommerceOpsController extends Controller
             'seo_description' => $data['seo_description'] ?? null,
             'published_at' => $data['status'] === 'published' ? now() : null,
             'metadata' => json_encode(['ai_tutor_placeholder' => true, 'saved_via' => 'admin.web']),
+            'updated_at' => now(),
+        ];
+
+        if (! empty($data['id'])) {
+            DB::table('lms_courses')->where('id', $data['id'])->update($payload);
+            $id = (int) $data['id'];
+            $verb = 'updated';
+        } else {
+            $payload['created_at'] = now();
+            $id = DB::table('lms_courses')->insertGetId($payload);
+            $verb = 'created';
+        }
+
+        $this->auditAdminAction($request, 'lms_course_'.$verb, 'lms_courses', $id, ['title' => $data['title']]);
+
+        return back()->with('status', "Course {$verb}.");
+    }
+
+    public function storeLmsModule(Request $request, int $course): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'summary' => ['nullable', 'string', 'max:1000'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'status' => ['required', 'string', 'max:60'],
+        ]);
+
+        $id = DB::table('lms_modules')->insertGetId([
+            'lms_course_id' => $course,
+            'title' => $data['title'],
+            'slug' => Str::slug($data['title']).'-'.Str::lower(Str::random(4)),
+            'summary' => $data['summary'] ?? null,
+            'sort_order' => $data['sort_order'] ?? 100,
+            'status' => $data['status'],
+            'metadata' => json_encode(['saved_via' => 'admin.web']),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $this->auditAdminAction($request, 'lms_course_created', 'lms_courses', $id, ['title' => $data['title']]);
+        $this->auditAdminAction($request, 'lms_module_created', 'lms_modules', $id, ['lms_course_id' => $course, 'title' => $data['title']]);
 
-        return back()->with('status', 'Course created.');
+        return back()->with('status', 'Module created.');
     }
 
     public function storeLmsLesson(Request $request): RedirectResponse
@@ -778,6 +1489,132 @@ class CommerceOpsController extends Controller
         return back()->with('status', 'Lesson created.');
     }
 
+    public function storeLmsProject(Request $request, int $course): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'summary' => ['nullable', 'string', 'max:1000'],
+            'description' => ['nullable', 'string'],
+            'difficulty_level' => ['nullable', 'string', 'max:60'],
+            'estimated_minutes' => ['nullable', 'integer', 'min:0'],
+            'status' => ['required', 'string', 'max:60'],
+            'thumbnail_url' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $id = DB::table('lms_projects')->insertGetId([
+            'lms_course_id' => $course,
+            'title' => $data['title'],
+            'slug' => Str::slug($data['title']).'-'.Str::lower(Str::random(4)),
+            'summary' => $data['summary'] ?? null,
+            'description' => $data['description'] ?? null,
+            'difficulty_level' => $data['difficulty_level'] ?? 'beginner',
+            'estimated_minutes' => $data['estimated_minutes'] ?? null,
+            'status' => $data['status'],
+            'thumbnail_url' => $data['thumbnail_url'] ?? null,
+            'published_at' => $data['status'] === 'published' ? now() : null,
+            'metadata' => json_encode(['saved_via' => 'admin.web']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'lms_project_created', 'lms_projects', $id, ['lms_course_id' => $course, 'title' => $data['title']]);
+
+        return back()->with('status', 'Project created.');
+    }
+
+    public function storeLmsProductLink(Request $request, int $course): RedirectResponse
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'lms_project_id' => ['nullable', 'integer', 'exists:lms_projects,id'],
+            'lms_lesson_id' => ['nullable', 'integer', 'exists:lms_lessons,id'],
+            'title' => ['nullable', 'string', 'max:190'],
+            'link_type' => ['required', 'string', 'max:80'],
+            'is_required' => ['nullable', 'boolean'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $product = DB::table('products')->where('id', $data['product_id'])->first();
+        $id = DB::table('product_lms_links')->insertGetId([
+            'lms_course_id' => $course,
+            'lms_project_id' => $data['lms_project_id'] ?? null,
+            'lms_lesson_id' => $data['lms_lesson_id'] ?? null,
+            'product_id' => $data['product_id'],
+            'title' => $data['title'] ?: $product?->name,
+            'link_type' => $data['link_type'],
+            'relation_type' => $data['link_type'],
+            'is_required' => (bool) ($data['is_required'] ?? false),
+            'sort_order' => 100,
+            'notes' => $data['notes'] ?? null,
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'lms_product_link_created', 'product_lms_links', $id, ['lms_course_id' => $course, 'product_id' => $data['product_id']]);
+
+        return back()->with('status', 'Product/lab kit linked.');
+    }
+
+    public function storeLmsLessonFile(Request $request, int $course, int $lesson): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:190'],
+            'admin_media_asset_id' => ['nullable', 'integer', 'exists:admin_media_assets,id'],
+            'file' => ['nullable', 'file', 'max:51200', 'mimes:jpg,jpeg,png,webp,pdf,mp4,mov,zip,csv,txt'],
+            'file_url' => ['nullable', 'string', 'max:1000'],
+            'file_type' => ['required', 'string', 'max:80'],
+            'is_downloadable' => ['nullable', 'boolean'],
+        ]);
+
+        if (! DB::table('lms_lessons')->where('id', $lesson)->where('lms_course_id', $course)->exists()) {
+            return back()->with('error', 'Lesson not found for this course.');
+        }
+
+        $fileUrl = $data['file_url'] ?? null;
+        $mimeType = null;
+        $fileSize = null;
+        $metadata = ['saved_via' => 'admin.web'];
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $path = $file->storeAs('lms-files/'.$lesson, Str::uuid().'.'.$file->getClientOriginalExtension(), 'public');
+            $fileUrl = Storage::disk('public')->url($path);
+            $mimeType = $file->getClientMimeType();
+            $fileSize = $file->getSize();
+            $metadata['path'] = $path;
+            $metadata['disk'] = 'public';
+            $metadata['original_name'] = $file->getClientOriginalName();
+        } elseif (! empty($data['admin_media_asset_id'])) {
+            $asset = DB::table('admin_media_assets')->where('id', $data['admin_media_asset_id'])->first();
+            if ($asset) {
+                $fileUrl = Storage::disk($asset->disk ?: 'public')->url($asset->path);
+                $mimeType = $asset->mime_type;
+                $fileSize = $asset->size;
+                $metadata['media_asset_id'] = $asset->id;
+            }
+        }
+
+        $id = DB::table('lms_lesson_files')->insertGetId([
+            'lms_lesson_id' => $lesson,
+            'admin_media_asset_id' => $data['admin_media_asset_id'] ?? null,
+            'title' => $data['title'],
+            'file_url' => $fileUrl,
+            'file_type' => $data['file_type'],
+            'mime_type' => $mimeType,
+            'file_size' => $fileSize,
+            'is_downloadable' => (bool) ($data['is_downloadable'] ?? true),
+            'is_active' => true,
+            'metadata' => json_encode($metadata),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'lms_lesson_file_created', 'lms_lesson_files', $id, ['lms_course_id' => $course, 'lms_lesson_id' => $lesson]);
+
+        return back()->with('status', 'Lesson file attached.');
+    }
+
     public function toggleLmsCourse(Request $request, int $course): RedirectResponse
     {
         $row = DB::table('lms_courses')->where('id', $course)->first();
@@ -786,6 +1623,52 @@ class CommerceOpsController extends Controller
         DB::table('lms_courses')->where('id', $course)->update(['status' => $next, 'published_at' => $next === 'published' ? now() : null, 'updated_at' => now()]);
         $this->auditAdminAction($request, 'lms_course_status_updated', 'lms_courses', $course, ['status' => $next]);
         return back()->with('status', 'Course status updated.');
+    }
+
+    public function issueLmsCertificate(Request $request, int $enrollment): RedirectResponse
+    {
+        $row = DB::table('lms_enrollments')->where('id', $enrollment)->first();
+        if (! $row) {
+            return back()->with('error', 'Enrollment not found.');
+        }
+        if ((float) $row->progress_percent < 100) {
+            return back()->with('error', 'Enrollment must be 100% complete before issuing a certificate.');
+        }
+
+        $existing = DB::table('lms_certificates')->where('lms_enrollment_id', $enrollment)->first();
+        if ($existing) {
+            return back()->with('status', 'Certificate already exists: '.$existing->certificate_number);
+        }
+
+        $number = 'NG-LMS-'.now()->format('Ymd').'-'.Str::upper(Str::random(8));
+        $id = DB::table('lms_certificates')->insertGetId([
+            'lms_enrollment_id' => $enrollment,
+            'lms_course_id' => $row->lms_course_id,
+            'user_id' => $row->user_id,
+            'email' => $row->email,
+            'certificate_number' => $number,
+            'status' => 'issued',
+            'issued_at' => now(),
+            'metadata' => json_encode(['issued_via' => 'admin.web']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'lms_certificate_issued', 'lms_certificates', $id, ['certificate_number' => $number]);
+
+        return back()->with('status', 'Certificate issued: '.$number);
+    }
+
+    public function revokeLmsCertificate(Request $request, int $certificate): RedirectResponse
+    {
+        DB::table('lms_certificates')->where('id', $certificate)->update([
+            'status' => 'revoked',
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'lms_certificate_revoked', 'lms_certificates', $certificate, []);
+
+        return back()->with('status', 'Certificate revoked.');
     }
 
     // ---- Inventory operations --------------------------------------------
@@ -872,6 +1755,305 @@ class CommerceOpsController extends Controller
         return back()->with('status', 'Inventory stock adjusted.');
     }
 
+    public function transferInventoryStock(Request $request, TransferService $transfers): RedirectResponse
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'from_warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
+            'to_warehouse_id' => ['required', 'integer', 'different:from_warehouse_id', 'exists:warehouses,id'],
+            'quantity' => ['required', 'integer', 'min:1'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $transfers->transfer($data + ['metadata' => ['saved_via' => 'admin.web']]);
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->auditAdminAction($request, 'inventory_stock_transferred', 'inventory_movements', null, $data);
+
+        return back()->with('status', 'Inventory transfer posted.');
+    }
+
+    public function reserveInventoryStock(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
+            'quantity' => ['required', 'integer', 'min:1'],
+            'reference_type' => ['nullable', 'string', 'max:80'],
+            'reference_id' => ['nullable', 'integer', 'min:1'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $reservationId = DB::transaction(function () use ($request, $data) {
+                $stock = DB::table('inventory_stocks')
+                    ->where('product_id', $data['product_id'])
+                    ->where('warehouse_id', $data['warehouse_id'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $stock) {
+                    throw new \RuntimeException('No stock row exists for this product and warehouse.');
+                }
+
+                if ((int) $stock->quantity_available < (int) $data['quantity']) {
+                    throw new \RuntimeException('Insufficient available stock to reserve.');
+                }
+
+                $beforeAvailable = (int) $stock->quantity_available;
+                $afterAvailable = $beforeAvailable - (int) $data['quantity'];
+                $afterReserved = (int) $stock->quantity_reserved + (int) $data['quantity'];
+
+                DB::table('inventory_stocks')->where('id', $stock->id)->update([
+                    'quantity_available' => $afterAvailable,
+                    'quantity_reserved' => $afterReserved,
+                    'last_movement_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $reservationId = DB::table('inventory_reservations')->insertGetId([
+                    'inventory_stock_id' => $stock->id,
+                    'product_id' => $data['product_id'],
+                    'warehouse_id' => $data['warehouse_id'],
+                    'variant_id' => $stock->variant_id,
+                    'quantity' => $data['quantity'],
+                    'status' => 'active',
+                    'reference_type' => $data['reference_type'] ?? 'admin_hold',
+                    'reference_id' => $data['reference_id'] ?? null,
+                    'notes' => $data['notes'] ?? null,
+                    'created_by' => $request->user()?->id,
+                    'metadata' => json_encode(['saved_via' => 'admin.web']),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('inventory_movements')->insert([
+                    'inventory_stock_id' => $stock->id,
+                    'product_id' => $data['product_id'],
+                    'variant_id' => $stock->variant_id,
+                    'warehouse_id' => $data['warehouse_id'],
+                    'marketplace_id' => $stock->marketplace_id,
+                    'vendor_id' => $stock->vendor_id,
+                    'movement_type' => 'reservation',
+                    'quantity_change' => -abs((int) $data['quantity']),
+                    'quantity_before' => $beforeAvailable,
+                    'quantity_after' => $afterAvailable,
+                    'reference_type' => 'inventory_reservation',
+                    'reference_id' => $reservationId,
+                    'notes' => $data['notes'] ?? 'Reserved via admin console',
+                    'user_id' => $request->user()?->id,
+                    'metadata' => json_encode(['reserved_quantity_after' => $afterReserved]),
+                    'occurred_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                return $reservationId;
+            });
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->auditAdminAction($request, 'inventory_stock_reserved', 'inventory_reservations', $reservationId, $data);
+
+        return back()->with('status', 'Inventory stock reserved.');
+    }
+
+    public function releaseInventoryReservation(Request $request, int $reservation): RedirectResponse
+    {
+        try {
+            DB::transaction(function () use ($request, $reservation) {
+                $row = DB::table('inventory_reservations')->where('id', $reservation)->lockForUpdate()->first();
+                if (! $row) {
+                    throw new \RuntimeException('Reservation not found.');
+                }
+                if ($row->status !== 'active') {
+                    throw new \RuntimeException('Reservation is already released or closed.');
+                }
+
+                $stock = DB::table('inventory_stocks')->where('id', $row->inventory_stock_id)->lockForUpdate()->first();
+                if (! $stock) {
+                    throw new \RuntimeException('Reservation stock row not found.');
+                }
+
+                $beforeAvailable = (int) $stock->quantity_available;
+                $afterAvailable = $beforeAvailable + (int) $row->quantity;
+                $afterReserved = max(0, (int) $stock->quantity_reserved - (int) $row->quantity);
+
+                DB::table('inventory_stocks')->where('id', $stock->id)->update([
+                    'quantity_available' => $afterAvailable,
+                    'quantity_reserved' => $afterReserved,
+                    'last_movement_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('inventory_reservations')->where('id', $reservation)->update([
+                    'status' => 'released',
+                    'released_by' => $request->user()?->id,
+                    'released_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('inventory_movements')->insert([
+                    'inventory_stock_id' => $stock->id,
+                    'product_id' => $row->product_id,
+                    'variant_id' => $row->variant_id,
+                    'warehouse_id' => $row->warehouse_id,
+                    'marketplace_id' => $stock->marketplace_id,
+                    'vendor_id' => $stock->vendor_id,
+                    'movement_type' => 'reservation_release',
+                    'quantity_change' => abs((int) $row->quantity),
+                    'quantity_before' => $beforeAvailable,
+                    'quantity_after' => $afterAvailable,
+                    'reference_type' => 'inventory_reservation',
+                    'reference_id' => $reservation,
+                    'notes' => 'Reservation released via admin console',
+                    'user_id' => $request->user()?->id,
+                    'metadata' => json_encode(['reserved_quantity_after' => $afterReserved]),
+                    'occurred_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            });
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->auditAdminAction($request, 'inventory_reservation_released', 'inventory_reservations', $reservation, []);
+
+        return back()->with('status', 'Inventory reservation released.');
+    }
+
+    public function generateLowStockAlerts(Request $request): RedirectResponse
+    {
+        if (! Schema::hasTable('low_stock_alerts')) {
+            return back()->with('error', 'Low-stock alert table is not available yet.');
+        }
+
+        $created = 0;
+        $updated = 0;
+        $resolved = 0;
+
+        try {
+            DB::transaction(function () use (&$created, &$updated, &$resolved) {
+                $rows = DB::table('inventory_stocks')
+                    ->where('reorder_point', '>', 0)
+                    ->whereColumn('quantity_available', '<=', 'reorder_point')
+                    ->limit(500)
+                    ->get();
+
+                foreach ($rows as $stock) {
+                    $severity = (int) $stock->quantity_available <= 0 ? 'critical' : 'warning';
+                    $existing = DB::table('low_stock_alerts')
+                        ->where('inventory_stock_id', $stock->id)
+                        ->whereIn('status', ['open', 'active', 'acknowledged', 'reorder_queued'])
+                        ->first();
+
+                    $payload = [
+                        'inventory_stock_id' => $stock->id,
+                        'product_id' => $stock->product_id,
+                        'warehouse_id' => $stock->warehouse_id,
+                        'vendor_id' => $stock->vendor_id,
+                        'marketplace_id' => $stock->marketplace_id,
+                        'available_quantity' => $stock->quantity_available,
+                        'threshold' => $stock->reorder_point,
+                        'status' => $existing?->status ?: 'open',
+                        'severity' => $severity,
+                        'metadata' => json_encode(['generated_via' => 'admin.web', 'source_table' => 'inventory_stocks']),
+                        'updated_at' => now(),
+                    ];
+
+                    if ($existing) {
+                        DB::table('low_stock_alerts')->where('id', $existing->id)->update($payload);
+                        $updated++;
+                    } else {
+                        $payload['created_at'] = now();
+                        DB::table('low_stock_alerts')->insert($payload);
+                        $created++;
+                    }
+                }
+
+                $staleAlerts = DB::table('low_stock_alerts')
+                    ->whereIn('status', ['open', 'active', 'acknowledged', 'reorder_queued']);
+
+                $lowStockIds = $rows->pluck('id')->all();
+                if ($lowStockIds) {
+                    $staleAlerts->whereNotIn('inventory_stock_id', $lowStockIds);
+                }
+
+                $resolved = $staleAlerts->update([
+                    'status' => 'resolved',
+                    'resolved_at' => now(),
+                    'action_note' => 'Automatically resolved after low-stock scan.',
+                    'updated_at' => now(),
+                ]);
+            });
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->auditAdminAction($request, 'low_stock_alerts_generated', 'low_stock_alerts', null, compact('created', 'updated', 'resolved'));
+
+        return back()->with('status', "Low-stock scan complete: {$created} created, {$updated} refreshed, {$resolved} resolved.");
+    }
+
+    public function updateLowStockAlert(Request $request, int $alert): RedirectResponse
+    {
+        $data = $request->validate([
+            'action' => ['required', 'in:acknowledge,reorder_queued,resolve,ignore'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $row = DB::table('low_stock_alerts')->where('id', $alert)->first();
+        if (! $row) {
+            return back()->with('error', 'Low-stock alert not found.');
+        }
+
+        $status = match ($data['action']) {
+            'acknowledge' => 'acknowledged',
+            'reorder_queued' => 'reorder_queued',
+            'resolve' => 'resolved',
+            'ignore' => 'ignored',
+        };
+
+        $payload = [
+            'status' => $status,
+            'action_note' => $data['note'] ?? null,
+            'updated_at' => now(),
+        ];
+
+        if ($data['action'] === 'acknowledge') {
+            $payload['acknowledged_by'] = $request->user()?->id;
+            $payload['acknowledged_at'] = now();
+        }
+
+        if (in_array($data['action'], ['resolve', 'ignore'], true)) {
+            $payload['resolved_by'] = $request->user()?->id;
+            $payload['resolved_at'] = now();
+        }
+
+        DB::table('low_stock_alerts')->where('id', $alert)->update($payload);
+
+        if (Schema::hasTable('stock_alert_actions')) {
+            DB::table('stock_alert_actions')->insert([
+                'low_stock_alert_id' => $alert,
+                'action' => $data['action'],
+                'note' => $data['note'] ?? null,
+                'created_by' => $request->user()?->id,
+                'metadata' => json_encode(['previous_status' => $row->status ?? null, 'new_status' => $status]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $this->auditAdminAction($request, 'low_stock_alert_'.$data['action'], 'low_stock_alerts', $alert, ['status' => $status, 'note' => $data['note'] ?? null]);
+
+        return back()->with('status', 'Low-stock alert updated.');
+    }
+
     // ---- POS operations ----------------------------------------------------
 
     public function storePosTerminal(Request $request): RedirectResponse
@@ -937,6 +2119,190 @@ class CommerceOpsController extends Controller
         ]);
         $this->auditAdminAction($request, 'pos_session_closed', 'pos_sessions', $session, $data);
         return back()->with('status', 'POS session closed.');
+    }
+
+    public function storePosPaymentMethod(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'id' => ['nullable', 'integer', 'exists:pos_payment_methods,id'],
+            'name' => ['required', 'string', 'max:120'],
+            'code' => ['required', 'string', 'max:80', 'regex:/^[a-z0-9_.-]+$/i'],
+            'type' => ['required', 'string', 'max:80'],
+            'requires_reference' => ['nullable', 'boolean'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $payload = [
+            'name' => $data['name'],
+            'code' => Str::lower($data['code']),
+            'type' => $data['type'],
+            'requires_reference' => (bool) ($data['requires_reference'] ?? false),
+            'is_active' => (bool) ($data['is_active'] ?? true),
+            'metadata' => json_encode(['saved_via' => 'admin.web']),
+            'updated_at' => now(),
+        ];
+
+        if (! empty($data['id'])) {
+            DB::table('pos_payment_methods')->where('id', $data['id'])->update($payload);
+            $id = (int) $data['id'];
+            $verb = 'updated';
+        } else {
+            $payload['created_at'] = now();
+            $id = DB::table('pos_payment_methods')->insertGetId($payload);
+            $verb = 'created';
+        }
+
+        $this->auditAdminAction($request, 'pos_payment_method_'.$verb, 'pos_payment_methods', $id, $payload);
+
+        return back()->with('status', 'POS payment method saved.');
+    }
+
+    public function togglePosPaymentMethod(Request $request, int $method): RedirectResponse
+    {
+        $row = DB::table('pos_payment_methods')->where('id', $method)->first();
+        if (! $row) {
+            return back()->with('error', 'Payment method not found.');
+        }
+
+        DB::table('pos_payment_methods')->where('id', $method)->update([
+            'is_active' => ! (bool) $row->is_active,
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'pos_payment_method_toggled', 'pos_payment_methods', $method, ['is_active' => ! (bool) $row->is_active]);
+
+        return back()->with('status', 'POS payment method updated.');
+    }
+
+    public function storePosRefund(Request $request, int $sale): RedirectResponse
+    {
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'refund_method' => ['required', 'string', 'max:80'],
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $row = DB::table('pos_sales')->where('id', $sale)->first();
+        if (! $row) {
+            return back()->with('error', 'POS sale not found.');
+        }
+
+        $alreadyRefunded = (float) DB::table('pos_refunds')
+            ->where('pos_sale_id', $sale)
+            ->whereIn('status', ['recorded', 'processed'])
+            ->sum('amount');
+        $remaining = max(0, (float) $row->total_amount - $alreadyRefunded);
+
+        if ((float) $data['amount'] > $remaining) {
+            return back()->with('error', 'Refund exceeds remaining sale total.');
+        }
+
+        $refundId = DB::table('pos_refunds')->insertGetId([
+            'pos_sale_id' => $sale,
+            'amount' => $data['amount'],
+            'currency_code' => $row->currency_code ?? 'USD',
+            'refund_method' => $data['refund_method'],
+            'reason' => $data['reason'],
+            'status' => 'recorded',
+            'processed_by' => $request->user()?->id,
+            'processed_at' => now(),
+            'metadata' => json_encode(['saved_via' => 'admin.web', 'gateway_action' => 'not_sent']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $newRefunded = $alreadyRefunded + (float) $data['amount'];
+        DB::table('pos_sales')->where('id', $sale)->update([
+            'payment_status' => $newRefunded >= (float) $row->total_amount ? 'refunded' : 'partial_refund',
+            'status' => $newRefunded >= (float) $row->total_amount ? 'refunded' : $row->status,
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'pos_refund_recorded', 'pos_refunds', $refundId, ['pos_sale_id' => $sale, 'amount' => $data['amount'], 'refund_method' => $data['refund_method']]);
+
+        return back()->with('status', 'POS refund recorded.');
+    }
+
+    public function storePosOfflineSyncEvent(Request $request): RedirectResponse
+    {
+        if (! Schema::hasTable('pos_offline_sync_events')) {
+            return back()->with('error', 'POS offline sync event table is not available yet.');
+        }
+
+        $data = $request->validate([
+            'pos_terminal_id' => ['nullable', 'integer', 'exists:pos_terminals,id'],
+            'pos_session_id' => ['nullable', 'integer', 'exists:pos_sessions,id'],
+            'event_uuid' => ['nullable', 'string', 'max:120'],
+            'event_type' => ['required', 'string', 'max:80'],
+            'payload' => ['nullable', 'string', 'max:20000'],
+            'occurred_at' => ['nullable', 'date'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $payload = null;
+        if (! empty($data['payload'])) {
+            $decoded = json_decode($data['payload'], true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return back()->with('error', 'Payload must be valid JSON.');
+            }
+            $payload = json_encode($decoded);
+        }
+
+        $id = DB::table('pos_offline_sync_events')->insertGetId([
+            'pos_terminal_id' => $data['pos_terminal_id'] ?? null,
+            'pos_session_id' => $data['pos_session_id'] ?? null,
+            'event_uuid' => $data['event_uuid'] ?: 'manual-'.Str::uuid(),
+            'event_type' => $data['event_type'],
+            'status' => 'pending',
+            'attempts' => 0,
+            'payload' => $payload,
+            'occurred_at' => $data['occurred_at'] ?? now(),
+            'metadata' => json_encode(['created_via' => 'admin.web', 'note' => $data['note'] ?? null]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'pos_offline_sync_event_created', 'pos_offline_sync_events', $id, ['event_type' => $data['event_type']]);
+
+        return back()->with('status', 'POS offline sync event queued.');
+    }
+
+    public function updatePosOfflineSyncEvent(Request $request, int $event): RedirectResponse
+    {
+        if (! Schema::hasTable('pos_offline_sync_events')) {
+            return back()->with('error', 'POS offline sync event table is not available yet.');
+        }
+
+        $data = $request->validate([
+            'action' => ['required', 'in:mark_processing,mark_processed,mark_failed,ignore,retry'],
+            'error_message' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $row = DB::table('pos_offline_sync_events')->where('id', $event)->first();
+        if (! $row) {
+            return back()->with('error', 'POS offline sync event not found.');
+        }
+
+        $status = match ($data['action']) {
+            'mark_processing' => 'processing',
+            'mark_processed' => 'processed',
+            'mark_failed' => 'failed',
+            'ignore' => 'ignored',
+            'retry' => 'pending',
+        };
+
+        DB::table('pos_offline_sync_events')->where('id', $event)->update([
+            'status' => $status,
+            'attempts' => $data['action'] === 'retry' ? (int) $row->attempts + 1 : $row->attempts,
+            'error_message' => $data['error_message'] ?? ($data['action'] === 'retry' ? null : $row->error_message),
+            'processed_at' => in_array($data['action'], ['mark_processed', 'ignore'], true) ? now() : $row->processed_at,
+            'processed_by' => in_array($data['action'], ['mark_processed', 'ignore'], true) ? $request->user()?->id : $row->processed_by,
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'pos_offline_sync_event_'.$data['action'], 'pos_offline_sync_events', $event, ['status' => $status]);
+
+        return back()->with('status', 'POS offline sync event updated.');
     }
 
     // ---- Payments ----------------------------------------------------------
@@ -1103,27 +2469,6 @@ class CommerceOpsController extends Controller
         ]);
 
         return back()->with('status', "Order {$row->order_number} tracking updated.");
-    }
-
-    public function moderateReview(Request $request, int $review): RedirectResponse
-    {
-        $data = $request->validate([
-            'status' => ['required', 'in:approved,rejected,pending'],
-        ]);
-
-        $row = DB::table('product_reviews')->where('id', $review)->first();
-        if (! $row) {
-            return back()->with('error', 'Review not found.');
-        }
-
-        DB::table('product_reviews')->where('id', $review)->update([
-            'status' => $data['status'],
-            'moderated_by' => $request->user()?->id,
-            'moderated_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return back()->with('status', "Review #{$review} → {$data['status']}.");
     }
 
     public function updateRfqStatus(Request $request, int $rfq): RedirectResponse
@@ -1354,9 +2699,12 @@ class CommerceOpsController extends Controller
             'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
             'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
             'channel' => ['nullable', 'string', 'max:80'],
+            'related_product_id' => ['nullable', 'integer', 'exists:products,id'],
+            'related_order_id' => ['nullable', 'integer', 'exists:orders,id'],
         ]);
 
         $ticketNumber = 'SUP-'.now()->format('Ymd-His').'-'.random_int(100, 999);
+        [$firstResponseDue, $slaDue] = $this->supportDueDates($data['priority']);
         $ticketId = DB::table('support_tickets')->insertGetId([
             'ticket_number' => $ticketNumber,
             'customer_id' => $data['customer_id'] ?? null,
@@ -1367,6 +2715,11 @@ class CommerceOpsController extends Controller
             'status' => 'open',
             'category' => $data['category'] ?? 'general',
             'assigned_to' => $data['assigned_to'] ?? null,
+            'support_channel' => $data['channel'] ?? 'admin',
+            'first_response_due_at' => $firstResponseDue,
+            'sla_due_at' => $slaDue,
+            'related_product_id' => $data['related_product_id'] ?? null,
+            'related_order_id' => $data['related_order_id'] ?? null,
             'metadata' => json_encode([
                 'created_via' => 'admin.web',
                 'channel' => $data['channel'] ?? 'admin',
@@ -1402,6 +2755,10 @@ class CommerceOpsController extends Controller
             'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
             'resolution_notes' => ['nullable', 'string', 'max:3000'],
             'ai_handoff' => ['nullable', 'boolean'],
+            'related_product_id' => ['nullable', 'integer', 'exists:products,id'],
+            'related_order_id' => ['nullable', 'integer', 'exists:orders,id'],
+            'support_channel' => ['nullable', 'string', 'max:80'],
+            'sla_due_at' => ['nullable', 'date'],
         ]);
 
         $row = DB::table('support_tickets')->where('id', $ticket)->first();
@@ -1421,6 +2778,10 @@ class CommerceOpsController extends Controller
             'assigned_to' => $data['assigned_to'] ?? null,
             'resolution_notes' => $data['resolution_notes'] ?? null,
             'resolved_at' => in_array($data['status'], ['resolved', 'closed'], true) ? now() : null,
+            'support_channel' => $data['support_channel'] ?? $row->support_channel ?? 'admin',
+            'related_product_id' => $data['related_product_id'] ?? null,
+            'related_order_id' => $data['related_order_id'] ?? null,
+            'sla_due_at' => $data['sla_due_at'] ?? $row->sla_due_at ?? null,
             'metadata' => $meta,
             'updated_at' => now(),
         ]);
@@ -1434,12 +2795,11 @@ class CommerceOpsController extends Controller
         return back()->with('status', "Support ticket {$row->ticket_number} updated.");
     }
 
-    public function storeSupportTicketMessage(Request $request, int $ticket): RedirectResponse
+    public function escalateSupportTicket(Request $request, int $ticket): RedirectResponse
     {
         $data = $request->validate([
-            'message' => ['required', 'string', 'max:5000'],
-            'sender_type' => ['required', 'in:admin,customer,seller,system,ai'],
-            'mark_status' => ['nullable', 'in:open,in_progress,waiting_customer,resolved,closed'],
+            'escalation_level' => ['required', 'integer', 'min:1', 'max:5'],
+            'reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $row = DB::table('support_tickets')->where('id', $ticket)->first();
@@ -1447,21 +2807,89 @@ class CommerceOpsController extends Controller
             return back()->with('error', 'Support ticket not found.');
         }
 
-        DB::transaction(function () use ($request, $ticket, $row, $data) {
+        DB::table('support_tickets')->where('id', $ticket)->update([
+            'status' => $row->status === 'open' ? 'in_progress' : $row->status,
+            'escalation_level' => $data['escalation_level'],
+            'escalated_at' => now(),
+            'metadata' => $this->mergeJsonMeta($row->metadata ?? null, [
+                'last_escalation_reason' => $data['reason'] ?? null,
+                'last_escalated_by' => $request->user()?->id,
+                'last_escalated_at' => now()->toIso8601String(),
+            ]),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('support_ticket_messages')->insert([
+            'support_ticket_id' => $ticket,
+            'user_id' => $request->user()?->id,
+            'sender_type' => 'system',
+            'message' => 'Escalated to level '.$data['escalation_level'].($data['reason'] ? ': '.$data['reason'] : '.'),
+            'metadata' => json_encode(['event' => 'ticket.escalated']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'support_ticket_escalated', 'support_tickets', $ticket, [
+            'ticket_number' => $row->ticket_number,
+            'level' => $data['escalation_level'],
+        ]);
+
+        return back()->with('status', "Support ticket {$row->ticket_number} escalated.");
+    }
+
+    public function storeSupportTicketMessage(Request $request, int $ticket): RedirectResponse
+    {
+        $data = $request->validate([
+            'message' => ['required', 'string', 'max:5000'],
+            'sender_type' => ['required', 'in:admin,customer,seller,system,ai'],
+            'mark_status' => ['nullable', 'in:open,in_progress,waiting_customer,resolved,closed'],
+            'attachment' => ['nullable', 'file', 'max:51200', 'mimes:jpg,jpeg,png,webp,pdf,csv,txt,zip'],
+        ]);
+
+        $row = DB::table('support_tickets')->where('id', $ticket)->first();
+        if (! $row) {
+            return back()->with('error', 'Support ticket not found.');
+        }
+
+        $attachment = ['disk' => null, 'path' => null, 'original_name' => null, 'mime_type' => null, 'size' => null];
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $attachment = [
+                'disk' => 'public',
+                'path' => $file->storeAs('support-attachments/'.$ticket, Str::uuid().'.'.$file->getClientOriginalExtension(), 'public'),
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+            ];
+        }
+
+        DB::transaction(function () use ($request, $ticket, $row, $data, $attachment) {
             DB::table('support_ticket_messages')->insert([
                 'support_ticket_id' => $ticket,
                 'user_id' => $request->user()?->id,
                 'sender_type' => $data['sender_type'],
                 'message' => $data['message'],
-                'metadata' => json_encode(['event' => 'message.created']),
+                'metadata' => json_encode([
+                    'event' => 'message.created',
+                    'attachment_url' => $attachment['path'] ? Storage::disk('public')->url($attachment['path']) : null,
+                ]),
+                'attachment_disk' => $attachment['disk'],
+                'attachment_path' => $attachment['path'],
+                'attachment_original_name' => $attachment['original_name'],
+                'attachment_mime_type' => $attachment['mime_type'],
+                'attachment_size' => $attachment['size'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            DB::table('support_tickets')->where('id', $ticket)->update([
+            $update = [
                 'status' => $data['mark_status'] ?? $row->status,
                 'updated_at' => now(),
-            ]);
+            ];
+            if (! $row->first_responded_at && $data['sender_type'] === 'admin') {
+                $update['first_responded_at'] = now();
+            }
+            DB::table('support_tickets')->where('id', $ticket)->update($update);
         });
 
         $this->auditAdminAction($request, 'support_ticket_message_added', 'support_tickets', $ticket, [
@@ -1632,5 +3060,15 @@ class CommerceOpsController extends Controller
             'grand_total' => round($subtotal + $tax + $shipping, 2),
             'updated_at' => now(),
         ]);
+    }
+
+    private function supportDueDates(string $priority): array
+    {
+        return match ($priority) {
+            'urgent' => [now()->addMinutes(30), now()->addHours(4)],
+            'high' => [now()->addHours(2), now()->addHours(12)],
+            'medium' => [now()->addHours(8), now()->addDays(2)],
+            default => [now()->addDay(), now()->addDays(5)],
+        };
     }
 }

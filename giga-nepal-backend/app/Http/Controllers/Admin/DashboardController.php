@@ -9,6 +9,7 @@ use App\Models\Marketplace\ProductCategory;
 use App\Models\Marketplace\Vendor;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -96,11 +97,67 @@ class DashboardController extends Controller
             'roots' => $roots,
             'total' => $total,
             'allCategories' => ProductCategory::orderBy('name')->get(),
+            'mediaAssets' => $this->safeMediaAssets(80),
             'filters' => [
                 'q' => (string) $request->query('q', ''),
                 'status' => (string) $request->query('status', ''),
             ],
         ]);
+    }
+
+    public function category(int $id): View
+    {
+        $category = ProductCategory::where('id', $id)->first();
+        abort_if(! $category, 404);
+
+        return view('admin.category-detail', [
+            'category' => $category,
+            'seo' => $this->decodeJsonObject($category->seo_meta),
+            'visibility' => $this->decodeJsonObject($category->marketplace_visibility),
+            'parent' => $category->parent_id ? ProductCategory::where('id', $category->parent_id)->first() : null,
+            'children' => ProductCategory::where('parent_id', $id)->orderBy('sort_order')->orderBy('name')->get(),
+            'allCategories' => ProductCategory::where('id', '<>', $id)->orderBy('name')->get(),
+            'products' => Product::where('category_id', $id)->orderByDesc('id')->limit(20)->get(['id', 'name', 'sku', 'status']),
+            'productCount' => Product::where('category_id', $id)->count(),
+            'specTemplates' => $this->safeCategorySpecTemplates($id),
+            'lmsLinks' => $this->safeCategoryLmsLinks($id),
+            'courses' => $this->safeRows('lms_courses', 200),
+            'projects' => $this->safeRows('lms_projects', 200),
+            'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
+            'mediaAssets' => $this->safeMediaAssets(120),
+        ]);
+    }
+
+    private function safeCategorySpecTemplates(int $categoryId)
+    {
+        if (! Schema::hasTable('category_spec_templates')) {
+            return collect();
+        }
+
+        $templates = DB::table('category_spec_templates')
+            ->where('category_id', $categoryId)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        if (! Schema::hasTable('spec_template_fields')) {
+            return $templates->map(function ($template) {
+                $template->fields = collect();
+                return $template;
+            });
+        }
+
+        $fields = DB::table('spec_template_fields')
+            ->whereIn('template_id', $templates->pluck('id')->all() ?: [0])
+            ->orderBy('sort_order')
+            ->orderBy('field_label')
+            ->get()
+            ->groupBy('template_id');
+
+        return $templates->map(function ($template) use ($fields) {
+            $template->fields = $fields->get($template->id, collect());
+            return $template;
+        });
     }
 
     public function marketplaces(): View
@@ -138,6 +195,7 @@ class DashboardController extends Controller
             'brands' => DB::table('product_brands')->orderBy('name')->get(),
             'vendors' => Vendor::orderBy('name')->get(),
             'allProducts' => Product::orderBy('name')->limit(500)->get(['id', 'name', 'sku']),
+            'mediaAssets' => $this->safeMediaAssets(),
             'productSpecs' => DB::table('product_specs')->whereIn('product_id', collect($products->items())->pluck('id'))->orderBy('sort_order')->get()->groupBy('product_id'),
             'productDocuments' => DB::table('product_documents')->whereIn('product_id', collect($products->items())->pluck('id'))->orderByDesc('id')->get()->groupBy('product_id'),
             'productRelated' => DB::table('product_related_items as r')
@@ -166,6 +224,144 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function product(int $id): View
+    {
+        $product = Product::query()
+            ->leftJoin('product_categories as c', 'c.id', '=', 'products.category_id')
+            ->leftJoin('product_brands as b', 'b.id', '=', 'products.brand_id')
+            ->leftJoin('vendors as v', 'v.id', '=', 'products.vendor_id')
+            ->select('products.*', 'c.name as category_name', 'b.name as brand_name', 'v.name as vendor_name')
+            ->where('products.id', $id)
+            ->first();
+        abort_if(! $product, 404);
+
+        return view('admin.product-detail', [
+            'p' => $product,
+            'categories' => ProductCategory::orderBy('name')->get(),
+            'brands' => DB::table('product_brands')->orderBy('name')->get(),
+            'vendors' => Vendor::orderBy('name')->get(),
+            'allProducts' => Product::where('id', '<>', $id)->orderBy('name')->limit(500)->get(['id', 'name', 'sku']),
+            'mediaAssets' => $this->safeMediaAssets(),
+            'productSpecs' => DB::table('product_specs')->where('product_id', $id)->orderBy('sort_order')->get(),
+            'advancedProductSpecs' => $this->safeAdvancedProductSpecs($id),
+            'advancedSpecFields' => $this->safeAdvancedSpecFields((int) ($product->category_id ?? 0)),
+            'productDocuments' => DB::table('product_documents')->where('product_id', $id)->orderByDesc('id')->get(),
+            'productRelated' => DB::table('product_related_items as r')
+                ->leftJoin('products as rp', 'rp.id', '=', 'r.related_product_id')
+                ->where('r.product_id', $id)
+                ->select('r.*', 'rp.name as related_name', 'rp.sku as related_sku')
+                ->orderBy('r.sort_order')
+                ->get(),
+            'productLmsLinks' => DB::table('product_lms_links')->where('product_id', $id)->orderByDesc('id')->get(),
+            'productSeo' => DB::table('product_seo_meta')->where('product_id', $id)->first(),
+            'productReviews' => $this->safeProductReviews($id),
+            'reviewSummary' => $this->safeProductReviewSummary($id),
+            'marketplacePrices' => $this->safeMarketplacePrices($id),
+            'vendorPrices' => $this->safeVendorPrices($id),
+            'recentStocks' => $this->safeProductInventoryStocks($id),
+            'warehouses' => DB::table('warehouses')->where('is_active', true)->orderBy('name')->get(),
+            'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
+            'marketplaces' => DB::table('marketplaces')->where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get(),
+            'currencies' => DB::table('currencies')->where('is_active', true)->orderByDesc('is_default')->orderBy('code')->get(),
+        ]);
+    }
+
+    private function safeMarketplacePrices(int $productId)
+    {
+        if (! Schema::hasTable('marketplace_product_prices')) {
+            return collect();
+        }
+
+        return DB::table('marketplace_product_prices as price')
+            ->leftJoin('marketplaces as m', 'm.id', '=', 'price.marketplace_id')
+            ->where('price.product_id', $productId)
+            ->select('price.*', 'm.name as marketplace_name', 'm.code as marketplace_code')
+            ->orderByDesc('price.is_active')
+            ->orderBy('m.name')
+            ->get();
+    }
+
+    private function safeVendorPrices(int $productId)
+    {
+        if (! Schema::hasTable('vendor_product_prices')) {
+            return collect();
+        }
+
+        return DB::table('vendor_product_prices as price')
+            ->leftJoin('vendors as v', 'v.id', '=', 'price.vendor_id')
+            ->where('price.product_id', $productId)
+            ->select('price.*', 'v.name as vendor_name', 'v.slug as vendor_slug')
+            ->orderByDesc('price.is_active')
+            ->orderBy('v.name')
+            ->get();
+    }
+
+    private function safeProductReviews(int $productId)
+    {
+        if (! Schema::hasTable('product_reviews')) {
+            return collect();
+        }
+
+        return DB::table('product_reviews as r')
+            ->leftJoin('users as u', 'u.id', '=', 'r.user_id')
+            ->where('r.product_id', $productId)
+            ->select('r.*', 'u.name as user_name', 'u.email as user_email')
+            ->orderByRaw("CASE r.status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END")
+            ->orderByDesc('r.id')
+            ->limit(50)
+            ->get();
+    }
+
+    private function safeProductReviewSummary(int $productId): object
+    {
+        if (! Schema::hasTable('product_reviews')) {
+            return (object) ['total' => 0, 'pending' => 0, 'approved' => 0, 'average' => null];
+        }
+
+        $total = DB::table('product_reviews')->where('product_id', $productId)->count();
+        $pending = DB::table('product_reviews')->where('product_id', $productId)->where('status', 'pending')->count();
+        $approved = DB::table('product_reviews')->where('product_id', $productId)->where('status', 'approved')->count();
+        $average = DB::table('product_reviews')->where('product_id', $productId)->where('status', 'approved')->avg('rating');
+
+        return (object) [
+            'total' => $total,
+            'pending' => $pending,
+            'approved' => $approved,
+            'average' => $average !== null ? round((float) $average, 1) : null,
+        ];
+    }
+
+    private function safeAdvancedProductSpecs(int $productId)
+    {
+        if (! Schema::hasTable('product_specifications') || ! Schema::hasTable('spec_template_fields')) {
+            return collect();
+        }
+
+        return DB::table('product_specifications as ps')
+            ->join('spec_template_fields as f', 'f.id', '=', 'ps.template_field_id')
+            ->leftJoin('category_spec_templates as t', 't.id', '=', 'f.template_id')
+            ->where('ps.product_id', $productId)
+            ->select('ps.*', 'f.field_label', 'f.field_name', 'f.unit', 't.name as template_name')
+            ->orderBy('t.sort_order')
+            ->orderBy('f.sort_order')
+            ->get();
+    }
+
+    private function safeAdvancedSpecFields(int $categoryId)
+    {
+        if ($categoryId <= 0 || ! Schema::hasTable('category_spec_templates') || ! Schema::hasTable('spec_template_fields')) {
+            return collect();
+        }
+
+        return DB::table('spec_template_fields as f')
+            ->join('category_spec_templates as t', 't.id', '=', 'f.template_id')
+            ->where('t.category_id', $categoryId)
+            ->select('f.*', 't.name as template_name')
+            ->orderBy('t.sort_order')
+            ->orderBy('f.sort_order')
+            ->get();
+    }
+
     public function vendors(\Illuminate\Http\Request $request): View
     {
         $vendors = Vendor::query()
@@ -190,6 +386,7 @@ class DashboardController extends Controller
                 'approved' => Vendor::whereIn('status', ['approved', 'active'])->count(),
                 'suspended' => Vendor::where('status', 'suspended')->count(),
                 'documentsPending' => $this->safeWhereCount('vendor_documents', 'status', 'pending'),
+                'productsPending' => $this->safeWhereCount('vendor_products', 'status', 'pending_review'),
             ],
             'filters' => [
                 'q' => (string) $request->query('q', ''),
@@ -197,8 +394,8 @@ class DashboardController extends Controller
                 'type' => (string) $request->query('type', ''),
             ],
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
-            'recentDocuments' => $this->safeRows('vendor_documents'),
-            'recentProducts' => $this->safeRows('vendor_products'),
+            'recentDocuments' => $this->safeVendorDocuments(),
+            'recentProducts' => $this->safeVendorProducts(),
         ]);
     }
 
@@ -249,11 +446,18 @@ class DashboardController extends Controller
             'users' => $users,
             'roles' => DB::table('roles')->where('is_active', true)->orderBy('name')->get(),
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
+            'vendors' => Vendor::orderBy('name')->limit(300)->get(['id', 'name', 'slug']),
+            'permissions' => $this->safeRows('permissions', 200)->groupBy('group'),
+            'rolePermissions' => $this->safeRolePermissions(),
+            'countryAccess' => $this->safeUserCountryAccess(),
+            'sellerAccess' => $this->safeUserSellerAccess(),
+            'invitations' => $this->safeRows('admin_invitations', 20),
             'stats' => [
                 'total' => User::count(),
                 'admins' => User::whereIn('role_id', DB::table('roles')->whereIn('name', ['super_admin', 'admin'])->pluck('id'))->count(),
                 'verified' => User::whereNotNull('email_verified_at')->count(),
                 'recentLogins' => User::whereNotNull('last_login_at')->count(),
+                'pendingInvites' => $this->safeWhereCount('admin_invitations', 'status', 'pending'),
             ],
             'filters' => [
                 'q' => (string) $request->query('q', ''),
@@ -276,11 +480,38 @@ class DashboardController extends Controller
             ],
             'courses' => DB::table('lms_courses')->orderByDesc('id')->limit(12)->get(),
             'projects' => DB::table('lms_projects')->orderByDesc('id')->limit(12)->get(),
-            'modules' => DB::table('lms_modules')->orderByDesc('id')->limit(20)->get(),
-            'lessons' => DB::table('lms_lessons')->orderByDesc('id')->limit(20)->get(),
+            'modules' => DB::table('lms_modules as m')->leftJoin('lms_courses as c', 'c.id', '=', 'm.lms_course_id')->select('m.*', 'c.title as course_title')->orderByDesc('m.id')->limit(20)->get(),
+            'lessons' => DB::table('lms_lessons as l')->leftJoin('lms_courses as c', 'c.id', '=', 'l.lms_course_id')->leftJoin('lms_modules as m', 'm.id', '=', 'l.lms_module_id')->select('l.*', 'c.title as course_title', 'm.title as module_title')->orderByDesc('l.id')->limit(20)->get(),
             'enrollments' => DB::table('lms_enrollments')->orderByDesc('id')->limit(12)->get(),
+            'certificates' => DB::table('lms_certificates')->orderByDesc('id')->limit(12)->get(),
             'categories' => DB::table('lms_course_categories')->where('is_active', true)->orderBy('name')->get(),
             'products' => DB::table('products')->orderBy('name')->limit(300)->get(['id', 'name', 'sku']),
+            'mediaAssets' => $this->safeMediaAssets(120),
+        ]);
+    }
+
+    public function lmsCourse(int $id): View
+    {
+        $course = DB::table('lms_courses')->where('id', $id)->first();
+        abort_if(! $course, 404);
+
+        return view('admin.lms-course-detail', [
+            'course' => $course,
+            'modules' => DB::table('lms_modules')->where('lms_course_id', $id)->orderBy('sort_order')->orderBy('id')->get(),
+            'lessons' => DB::table('lms_lessons as l')
+                ->leftJoin('lms_modules as m', 'm.id', '=', 'l.lms_module_id')
+                ->where('l.lms_course_id', $id)
+                ->select('l.*', 'm.title as module_title')
+                ->orderBy('l.sort_order')
+                ->orderBy('l.id')
+                ->get(),
+            'projects' => DB::table('lms_projects')->where('lms_course_id', $id)->orderByDesc('id')->get(),
+            'productLinks' => $this->safeLmsProductLinks($id),
+            'lessonFiles' => $this->safeLmsLessonFiles($id),
+            'enrollments' => DB::table('lms_enrollments')->where('lms_course_id', $id)->orderByDesc('id')->limit(30)->get(),
+            'certificates' => DB::table('lms_certificates')->where('lms_course_id', $id)->orderByDesc('id')->limit(30)->get(),
+            'products' => DB::table('products')->orderBy('name')->limit(300)->get(['id', 'name', 'sku']),
+            'mediaAssets' => $this->safeMediaAssets(120),
         ]);
     }
 
@@ -294,6 +525,8 @@ class DashboardController extends Controller
                 'reservedUnits' => (int) DB::table('inventory_stocks')->sum('quantity_reserved'),
                 'lowStockRows' => DB::table('inventory_stocks')->whereColumn('quantity_available', '<=', 'reorder_point')->count(),
                 'movements' => $this->safeCount('inventory_movements'),
+                'activeReservations' => $this->safeWhereCount('inventory_reservations', 'status', 'active'),
+                'activeLowStockAlerts' => $this->safeActiveLowStockAlertCount(),
             ],
             'stocks' => DB::table('inventory_stocks as s')
                 ->leftJoin('products as p', 'p.id', '=', 's.product_id')
@@ -302,7 +535,15 @@ class DashboardController extends Controller
                 ->orderByDesc('s.id')
                 ->limit(15)
                 ->get(),
-            'movements' => DB::table('inventory_movements')->orderByDesc('id')->limit(15)->get(),
+            'movements' => DB::table('inventory_movements as m')
+                ->leftJoin('products as p', 'p.id', '=', 'm.product_id')
+                ->leftJoin('warehouses as w', 'w.id', '=', 'm.warehouse_id')
+                ->select('m.*', 'p.name as product_name', 'p.sku as product_sku', 'w.name as warehouse_name')
+                ->orderByDesc('m.id')
+                ->limit(15)
+                ->get(),
+            'reservations' => $this->safeInventoryReservations(),
+            'lowStockAlerts' => $this->safeLowStockAlerts(20),
             'warehouses' => DB::table('warehouses')->orderBy('name')->get(),
             'products' => DB::table('products')->orderBy('name')->limit(300)->get(['id', 'name', 'sku']),
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
@@ -318,12 +559,44 @@ class DashboardController extends Controller
                 'sales' => $this->safeCount('pos_sales'),
                 'paidSales' => DB::table('pos_sales')->where('payment_status', 'paid')->count(),
                 'revenue' => DB::table('pos_sales')->sum('total_amount'),
+                'refunds' => $this->safeCount('pos_refunds'),
+                'pendingSyncEvents' => $this->safeWhereCount('pos_offline_sync_events', 'status', 'pending'),
             ],
             'sessions' => DB::table('pos_sessions')->orderByDesc('id')->limit(15)->get(),
-            'sales' => DB::table('pos_sales')->orderByDesc('id')->limit(15)->get(),
+            'sales' => DB::table('pos_sales as s')
+                ->leftJoin('pos_sessions as ps', 'ps.id', '=', 's.pos_session_id')
+                ->leftJoin('pos_terminals as t', 't.id', '=', 'ps.pos_terminal_id')
+                ->select('s.*', 't.terminal_name')
+                ->orderByDesc('s.id')
+                ->limit(15)
+                ->get(),
             'terminals' => DB::table('pos_terminals')->orderByDesc('id')->limit(50)->get(),
             'warehouses' => DB::table('warehouses')->where('is_active', true)->orderBy('name')->get(),
             'products' => DB::table('products')->orderBy('name')->limit(300)->get(['id', 'name', 'sku', 'base_price']),
+            'paymentMethods' => $this->safeRows('pos_payment_methods', 30),
+            'refunds' => $this->safePosRefunds(),
+            'offlineSyncEvents' => $this->safePosOfflineSyncEvents(),
+        ]);
+    }
+
+    public function posSale(int $id): View
+    {
+        $sale = DB::table('pos_sales as s')
+            ->leftJoin('pos_sessions as ps', 'ps.id', '=', 's.pos_session_id')
+            ->leftJoin('pos_terminals as t', 't.id', '=', 'ps.pos_terminal_id')
+            ->leftJoin('warehouses as w', 'w.id', '=', 's.warehouse_id')
+            ->select('s.*', 'ps.session_number', 't.terminal_name', 'w.name as warehouse_name')
+            ->where('s.id', $id)
+            ->first();
+
+        abort_if(! $sale, 404);
+
+        return view('admin.pos-sale-detail', [
+            'sale' => $sale,
+            'items' => DB::table('pos_sale_items')->where('pos_sale_id', $id)->orderBy('id')->get(),
+            'payments' => DB::table('pos_payments')->where('pos_sale_id', $id)->orderByDesc('id')->get(),
+            'refunds' => $this->safePosRefunds($id),
+            'paymentMethods' => $this->safeRows('pos_payment_methods', 30),
         ]);
     }
 
@@ -682,7 +955,9 @@ class DashboardController extends Controller
             ->leftJoin('users as u', 'u.id', '=', 't.user_id')
             ->leftJoin('users as a', 'a.id', '=', 't.assigned_to')
             ->leftJoin('customers as c', 'c.id', '=', 't.customer_id')
-            ->select('t.*', 'u.name as requester_name', 'u.email as requester_email', 'a.name as assigned_name', 'c.name as customer_name')
+            ->leftJoin('products as p', 'p.id', '=', 't.related_product_id')
+            ->leftJoin('orders as o', 'o.id', '=', 't.related_order_id')
+            ->select('t.*', 'u.name as requester_name', 'u.email as requester_email', 'a.name as assigned_name', 'c.name as customer_name', 'p.name as related_product_name', 'o.order_number as related_order_number')
             ->when($request->query('status'), fn ($q, $status) => $q->where('t.status', $status))
             ->when($request->query('priority'), fn ($q, $priority) => $q->where('t.priority', $priority))
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
@@ -712,12 +987,16 @@ class DashboardController extends Controller
                 'open' => $this->safeWhereCount('support_tickets', 'status', 'open'),
                 'pending' => $this->safeWhereCount('support_tickets', 'status', 'waiting_customer'),
                 'closed' => $this->safeWhereCount('support_tickets', 'status', 'closed'),
+                'overdue' => $this->safeOverdueSupportCount(),
+                'escalated' => (int) DB::table('support_tickets')->where('escalation_level', '>', 0)->count(),
             ],
             'filters' => [
                 'q' => (string) $request->query('q', ''),
                 'status' => (string) $request->query('status', ''),
                 'priority' => (string) $request->query('priority', ''),
             ],
+            'products' => Product::orderBy('name')->limit(200)->get(['id', 'name', 'sku']),
+            'orders' => DB::table('orders')->orderByDesc('id')->limit(100)->get(['id', 'order_number']),
         ]);
     }
 
@@ -725,14 +1004,15 @@ class DashboardController extends Controller
     {
         $status = (string) $request->query('status', 'pending');
 
-        $reviews = DB::table('product_reviews as r')
-            ->join('products as p', 'p.id', '=', 'r.product_id')
-            ->join('users as u', 'u.id', '=', 'r.user_id')
-            ->when(in_array($status, ['pending', 'approved', 'rejected'], true), fn ($q) => $q->where('r.status', $status))
-            ->orderByDesc('r.id')
-            ->select('r.*', 'p.name as product_name', 'p.slug as product_slug', 'u.name as reviewer', 'u.email as reviewer_email')
-            ->paginate(20)
-            ->withQueryString();
+        $reviews = Schema::hasTable('product_reviews')
+            ? DB::table('product_reviews as r')
+                ->join('products as p', 'p.id', '=', 'r.product_id')
+                ->when(in_array($status, ['pending', 'approved', 'rejected', 'hidden'], true), fn ($q) => $q->where('r.status', $status))
+                ->orderByDesc('r.id')
+                ->select('r.*', 'p.name as product_name', 'p.slug as product_slug')
+                ->paginate(20)
+                ->withQueryString()
+            : new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
 
         return view('admin.reviews', [
             'reviews' => $reviews,
@@ -793,12 +1073,12 @@ class DashboardController extends Controller
                 'rules' => $this->safeCount('region_stock_visibilities'),
                 'allocations' => $this->safeCount('territory_stock_allocations'),
                 'reservations' => $this->safeWhereCount('stock_reservations', 'status', 'pending'),
-                'alerts' => $this->safeWhereCount('low_stock_alerts', 'status', 'active'),
+                'alerts' => $this->safeActiveLowStockAlertCount(),
             ],
             'rules' => $this->safeRows('region_stock_visibilities'),
             'allocations' => $this->safeRows('territory_stock_allocations'),
             'reservations' => $this->safeRows('stock_reservations'),
-            'alerts' => $this->safeRows('low_stock_alerts'),
+            'alerts' => $this->safeLowStockAlerts(20),
         ]);
     }
 
@@ -844,6 +1124,315 @@ class DashboardController extends Controller
             return DB::table($table)->orderByDesc('id')->limit($limit)->get();
         } catch (\Throwable) {
             return collect();
+        }
+    }
+
+    private function safeRowsWhere(string $table, string $column, int $value, int $limit = 20): \Illuminate\Support\Collection
+    {
+        try {
+            return DB::table($table)->where($column, $value)->orderByDesc('id')->limit($limit)->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeProductInventoryStocks(int $productId, int $limit = 50): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('inventory_stocks')) {
+                return collect();
+            }
+
+            return DB::table('inventory_stocks as s')
+                ->leftJoin('warehouses as w', 'w.id', '=', 's.warehouse_id')
+                ->leftJoin('countries as c', 'c.id', '=', 's.country_id')
+                ->where('s.product_id', $productId)
+                ->select('s.*', 'w.name as warehouse_name', 'w.code as warehouse_code', 'c.name as country_name')
+                ->orderByDesc('s.id')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeMediaAssets(int $limit = 200): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('admin_media_assets')) {
+                return collect();
+            }
+
+            return DB::table('admin_media_assets')
+                ->orderByDesc('id')
+                ->limit($limit)
+                ->get(['id', 'disk', 'path', 'original_name', 'mime_type', 'folder', 'title']);
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeVendorProducts(int $limit = 30): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('vendor_products')) {
+                return collect();
+            }
+
+            return DB::table('vendor_products as vp')
+                ->leftJoin('vendors as v', 'v.id', '=', 'vp.vendor_id')
+                ->leftJoin('products as p', 'p.id', '=', 'vp.product_id')
+                ->select([
+                    'vp.*',
+                    'v.name as vendor_name',
+                    'p.name as linked_product_name',
+                    'p.sku as linked_product_sku',
+                ])
+                ->orderByDesc('vp.id')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeVendorDocuments(int $limit = 30): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('vendor_documents')) {
+                return collect();
+            }
+
+            return DB::table('vendor_documents as d')
+                ->leftJoin('vendors as v', 'v.id', '=', 'd.vendor_id')
+                ->select('d.*', 'v.name as vendor_name')
+                ->orderByDesc('d.id')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeRolePermissions(): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('role_permissions')) {
+                return collect();
+            }
+
+            return DB::table('role_permissions as rp')
+                ->join('permissions as p', 'p.id', '=', 'rp.permission_id')
+                ->select('rp.role_id', 'p.key')
+                ->get()
+                ->groupBy('role_id');
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeUserCountryAccess(): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('user_country_access')) {
+                return collect();
+            }
+
+            return DB::table('user_country_access as a')
+                ->join('countries as c', 'c.id', '=', 'a.country_id')
+                ->select('a.user_id', 'c.name')
+                ->get()
+                ->groupBy('user_id');
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeUserSellerAccess(): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('user_seller_access')) {
+                return collect();
+            }
+
+            return DB::table('user_seller_access as a')
+                ->join('vendors as v', 'v.id', '=', 'a.vendor_id')
+                ->select('a.user_id', 'v.name', 'a.access_level')
+                ->get()
+                ->groupBy('user_id');
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeInventoryReservations(int $limit = 15): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('inventory_reservations')) {
+                return collect();
+            }
+
+            return DB::table('inventory_reservations as r')
+                ->leftJoin('products as p', 'p.id', '=', 'r.product_id')
+                ->leftJoin('warehouses as w', 'w.id', '=', 'r.warehouse_id')
+                ->select('r.*', 'p.name as product_name', 'p.sku as product_sku', 'w.name as warehouse_name')
+                ->orderByDesc('r.id')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeActiveLowStockAlertCount(): int
+    {
+        try {
+            if (! Schema::hasTable('low_stock_alerts')) {
+                return 0;
+            }
+
+            return DB::table('low_stock_alerts')
+                ->whereIn('status', ['open', 'active', 'acknowledged', 'reorder_queued'])
+                ->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function safeLowStockAlerts(int $limit = 20): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('low_stock_alerts')) {
+                return collect();
+            }
+
+            return DB::table('low_stock_alerts as a')
+                ->leftJoin('products as p', 'p.id', '=', 'a.product_id')
+                ->leftJoin('warehouses as w', 'w.id', '=', 'a.warehouse_id')
+                ->select('a.*', 'p.name as product_name', 'p.sku as product_sku', 'w.name as warehouse_name')
+                ->orderByRaw("case when a.status in ('open','active') then 0 when a.status = 'reorder_queued' then 1 when a.status = 'acknowledged' then 2 else 3 end")
+                ->orderByDesc('a.updated_at')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safePosRefunds(?int $saleId = null, int $limit = 15): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('pos_refunds') || ! Schema::hasColumn('pos_refunds', 'pos_sale_id')) {
+                return collect();
+            }
+
+            return DB::table('pos_refunds as r')
+                ->leftJoin('pos_sales as s', 's.id', '=', 'r.pos_sale_id')
+                ->when($saleId, fn ($q) => $q->where('r.pos_sale_id', $saleId))
+                ->select('r.*', 's.sale_reference')
+                ->orderByDesc('r.id')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safePosOfflineSyncEvents(int $limit = 20): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('pos_offline_sync_events')) {
+                return collect();
+            }
+
+            return DB::table('pos_offline_sync_events as e')
+                ->leftJoin('pos_terminals as t', 't.id', '=', 'e.pos_terminal_id')
+                ->leftJoin('pos_sessions as s', 's.id', '=', 'e.pos_session_id')
+                ->select('e.*', 't.terminal_name', 't.terminal_code', 's.session_number')
+                ->orderByRaw("case when e.status = 'pending' then 0 when e.status = 'processing' then 1 when e.status = 'failed' then 2 else 3 end")
+                ->orderByDesc('e.id')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeCategoryLmsLinks(int $category, int $limit = 30): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('category_lms_links')) {
+                return collect();
+            }
+
+            return DB::table('category_lms_links as l')
+                ->leftJoin('lms_courses as c', 'c.id', '=', 'l.lms_course_id')
+                ->leftJoin('lms_projects as p', 'p.id', '=', 'l.lms_project_id')
+                ->where('l.product_category_id', $category)
+                ->select('l.*', 'c.title as course_title', 'p.title as project_title')
+                ->orderByDesc('l.id')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeLmsProductLinks(int $course, int $limit = 40): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('product_lms_links')) {
+                return collect();
+            }
+
+            return DB::table('product_lms_links as l')
+                ->leftJoin('products as p', 'p.id', '=', 'l.product_id')
+                ->where('l.lms_course_id', $course)
+                ->select('l.*', 'p.name as product_name', 'p.sku as product_sku')
+                ->orderBy('l.sort_order')
+                ->orderByDesc('l.id')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeLmsLessonFiles(int $course, int $limit = 60): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('lms_lesson_files')) {
+                return collect();
+            }
+
+            return DB::table('lms_lesson_files as f')
+                ->leftJoin('lms_lessons as l', 'l.id', '=', 'f.lms_lesson_id')
+                ->where('l.lms_course_id', $course)
+                ->select('f.*', 'l.title as lesson_title')
+                ->orderByDesc('f.id')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function decodeJsonObject(?string $value): object
+    {
+        $decoded = $value ? json_decode($value, true) : [];
+
+        return (object) (is_array($decoded) ? $decoded : []);
+    }
+
+    private function safeOverdueSupportCount(): int
+    {
+        try {
+            return (int) DB::table('support_tickets')
+                ->whereNotIn('status', ['resolved', 'closed'])
+                ->where('sla_due_at', '<', now())
+                ->count();
+        } catch (\Throwable) {
+            return 0;
         }
     }
 }

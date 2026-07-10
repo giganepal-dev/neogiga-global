@@ -6,11 +6,16 @@ use App\Http\Controllers\Admin\DashboardController as AdminDash;
 use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\CategoryController;
+use App\Http\Controllers\Web\CartPageController;
 use App\Http\Controllers\Web\LandingController;
+use App\Http\Controllers\Web\AiCommercePageController;
 use App\Http\Controllers\Web\LmsPageController;
+use App\Http\Controllers\Web\MarketplacePreferenceController;
 use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Web\SellOnNeoGigaController;
 use App\Http\Controllers\Web\SitemapController;
+use App\Http\Controllers\Web\SeoLandingController;
+use App\Http\Controllers\Web\SsoController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,14 +39,18 @@ Route::prefix('admin')->group(function () {
     Route::middleware('admin.web')->group(function () {
         Route::get('/', [AdminDash::class, 'index']);
         Route::get('categories', [AdminDash::class, 'categories']);
+        Route::get('categories/{id}', [AdminDash::class, 'category'])->whereNumber('id');
         Route::get('products', [AdminDash::class, 'products']);
+        Route::get('products/{id}', [AdminDash::class, 'product'])->whereNumber('id');
         Route::get('marketplaces', [AdminDash::class, 'marketplaces']);
         Route::get('vendors', [AdminDash::class, 'vendors']);
         Route::get('distributors', [AdminDash::class, 'distributors']);
         Route::get('users', [AdminDash::class, 'users']);
         Route::get('lms', [AdminDash::class, 'lms']);
+        Route::get('lms/courses/{course}', [AdminDash::class, 'lmsCourse'])->whereNumber('course');
         Route::get('inventory', [AdminDash::class, 'inventory']);
         Route::get('pos', [AdminDash::class, 'pos']);
+        Route::get('pos/sales/{sale}', [AdminDash::class, 'posSale'])->whereNumber('sale');
         Route::get('settings', [AdminDash::class, 'settings']);
         Route::get('media', [AdminDash::class, 'media']);
         Route::get('seo', [AdminDash::class, 'seo']);
@@ -54,12 +63,26 @@ Route::prefix('admin')->group(function () {
         Route::delete('seo/redirects/{redirect}', [AdminCommerce::class, 'deleteSeoRedirect'])->whereNumber('redirect')->middleware('throttle:20,1');
         Route::post('categories', [AdminCommerce::class, 'storeCategory'])->middleware('throttle:20,1');
         Route::post('categories/{category}/toggle', [AdminCommerce::class, 'deactivateCategory'])->whereNumber('category')->middleware('throttle:20,1');
+        Route::post('categories/{category}/lms-links', [AdminCommerce::class, 'storeCategoryLmsLink'])->whereNumber('category')->middleware('throttle:20,1');
+        Route::delete('categories/{category}/lms-links/{link}', [AdminCommerce::class, 'deleteCategoryLmsLink'])->whereNumber(['category', 'link'])->middleware('throttle:20,1');
+        Route::post('categories/{category}/spec-templates', [AdminCommerce::class, 'storeCategorySpecTemplate'])->whereNumber('category')->middleware('throttle:20,1');
+        Route::delete('categories/{category}/spec-templates/{template}', [AdminCommerce::class, 'deleteCategorySpecTemplate'])->whereNumber(['category', 'template'])->middleware('throttle:20,1');
+        Route::post('categories/{category}/spec-templates/{template}/fields', [AdminCommerce::class, 'storeCategorySpecField'])->whereNumber(['category', 'template'])->middleware('throttle:20,1');
+        Route::delete('categories/{category}/spec-templates/{template}/fields/{field}', [AdminCommerce::class, 'deleteCategorySpecField'])->whereNumber(['category', 'template', 'field'])->middleware('throttle:20,1');
         Route::post('products', [AdminCommerce::class, 'storeProduct'])->middleware('throttle:20,1');
         Route::post('products/{product}/duplicate', [AdminCommerce::class, 'duplicateProduct'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/toggle', [AdminCommerce::class, 'deactivateProduct'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/stock', [AdminCommerce::class, 'adjustProductStock'])->whereNumber('product')->middleware('throttle:20,1');
+        Route::post('products/{product}/regional-stock', [AdminCommerce::class, 'storeProductRegionalStock'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/specs', [AdminCommerce::class, 'storeProductSpec'])->whereNumber('product')->middleware('throttle:20,1');
         Route::delete('products/{product}/specs/{spec}', [AdminCommerce::class, 'deleteProductSpec'])->whereNumber(['product', 'spec'])->middleware('throttle:20,1');
+        Route::post('products/{product}/advanced-specs', [AdminCommerce::class, 'storeAdvancedProductSpec'])->whereNumber('product')->middleware('throttle:20,1');
+        Route::delete('products/{product}/advanced-specs/{spec}', [AdminCommerce::class, 'deleteAdvancedProductSpec'])->whereNumber(['product', 'spec'])->middleware('throttle:20,1');
+        Route::post('products/{product}/reviews/{review}', [AdminCommerce::class, 'updateProductReview'])->whereNumber(['product', 'review'])->middleware('throttle:20,1');
+        Route::post('products/{product}/marketplace-prices', [AdminCommerce::class, 'storeMarketplaceProductPrice'])->whereNumber('product')->middleware('throttle:20,1');
+        Route::post('products/{product}/marketplace-prices/{price}/toggle', [AdminCommerce::class, 'toggleMarketplaceProductPrice'])->whereNumber(['product', 'price'])->middleware('throttle:20,1');
+        Route::post('products/{product}/vendor-prices', [AdminCommerce::class, 'storeVendorProductPrice'])->whereNumber('product')->middleware('throttle:20,1');
+        Route::post('products/{product}/vendor-prices/{price}/toggle', [AdminCommerce::class, 'toggleVendorProductPrice'])->whereNumber(['product', 'price'])->middleware('throttle:20,1');
         Route::post('products/{product}/documents', [AdminCommerce::class, 'storeProductDocument'])->whereNumber('product')->middleware('throttle:20,1');
         Route::delete('products/{product}/documents/{document}', [AdminCommerce::class, 'deleteProductDocument'])->whereNumber(['product', 'document'])->middleware('throttle:20,1');
         Route::post('products/{product}/related', [AdminCommerce::class, 'storeProductRelated'])->whereNumber('product')->middleware('throttle:20,1');
@@ -68,15 +91,39 @@ Route::prefix('admin')->group(function () {
         Route::post('products/{product}/seo', [AdminCommerce::class, 'updateProductSeo'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('vendors', [AdminCommerce::class, 'storeVendor'])->middleware('throttle:20,1');
         Route::post('vendors/{vendor}/status', [AdminCommerce::class, 'updateVendorStatus'])->whereNumber('vendor')->middleware('throttle:20,1');
+        Route::post('vendor-documents/{document}/status', [AdminCommerce::class, 'updateVendorDocumentStatus'])->whereNumber('document')->middleware('throttle:20,1');
+        Route::post('vendor-products/{product}/approve', [AdminCommerce::class, 'approveVendorProduct'])->whereNumber('product')->middleware('throttle:20,1');
+        Route::post('vendor-products/{product}/reject', [AdminCommerce::class, 'rejectVendorProduct'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('users', [AdminCommerce::class, 'storeUser'])->middleware('throttle:20,1');
+        Route::post('users/invitations', [AdminCommerce::class, 'storeAdminInvitation'])->middleware('throttle:20,1');
+        Route::post('users/permissions', [AdminCommerce::class, 'storePermission'])->middleware('throttle:20,1');
+        Route::post('users/roles/{role}/permissions/{permission}', [AdminCommerce::class, 'toggleRolePermission'])->whereNumber(['role', 'permission'])->middleware('throttle:20,1');
+        Route::post('users/{user}/country-access', [AdminCommerce::class, 'assignUserCountryAccess'])->whereNumber('user')->middleware('throttle:20,1');
+        Route::post('users/{user}/seller-access', [AdminCommerce::class, 'assignUserSellerAccess'])->whereNumber('user')->middleware('throttle:20,1');
         Route::post('lms/courses', [AdminCommerce::class, 'storeLmsCourse'])->middleware('throttle:20,1');
         Route::post('lms/courses/{course}/toggle', [AdminCommerce::class, 'toggleLmsCourse'])->whereNumber('course')->middleware('throttle:20,1');
+        Route::post('lms/courses/{course}/modules', [AdminCommerce::class, 'storeLmsModule'])->whereNumber('course')->middleware('throttle:20,1');
+        Route::post('lms/courses/{course}/projects', [AdminCommerce::class, 'storeLmsProject'])->whereNumber('course')->middleware('throttle:20,1');
+        Route::post('lms/courses/{course}/products', [AdminCommerce::class, 'storeLmsProductLink'])->whereNumber('course')->middleware('throttle:20,1');
+        Route::post('lms/courses/{course}/lessons/{lesson}/files', [AdminCommerce::class, 'storeLmsLessonFile'])->whereNumber(['course', 'lesson'])->middleware('throttle:20,1');
         Route::post('lms/lessons', [AdminCommerce::class, 'storeLmsLesson'])->middleware('throttle:20,1');
+        Route::post('lms/enrollments/{enrollment}/certificate', [AdminCommerce::class, 'issueLmsCertificate'])->whereNumber('enrollment')->middleware('throttle:20,1');
+        Route::post('lms/certificates/{certificate}/revoke', [AdminCommerce::class, 'revokeLmsCertificate'])->whereNumber('certificate')->middleware('throttle:20,1');
         Route::post('inventory/warehouses', [AdminCommerce::class, 'storeWarehouse'])->middleware('throttle:20,1');
         Route::post('inventory/stocks', [AdminCommerce::class, 'adjustInventoryStock'])->middleware('throttle:20,1');
+        Route::post('inventory/transfers', [AdminCommerce::class, 'transferInventoryStock'])->middleware('throttle:20,1');
+        Route::post('inventory/reservations', [AdminCommerce::class, 'reserveInventoryStock'])->middleware('throttle:20,1');
+        Route::post('inventory/reservations/{reservation}/release', [AdminCommerce::class, 'releaseInventoryReservation'])->whereNumber('reservation')->middleware('throttle:20,1');
+        Route::post('inventory/low-stock/generate', [AdminCommerce::class, 'generateLowStockAlerts'])->middleware('throttle:10,1');
+        Route::post('inventory/low-stock/{alert}/action', [AdminCommerce::class, 'updateLowStockAlert'])->whereNumber('alert')->middleware('throttle:20,1');
         Route::post('pos/terminals', [AdminCommerce::class, 'storePosTerminal'])->middleware('throttle:20,1');
         Route::post('pos/sessions/open', [AdminCommerce::class, 'openPosSession'])->middleware('throttle:20,1');
         Route::post('pos/sessions/{session}/close', [AdminCommerce::class, 'closePosSession'])->whereNumber('session')->middleware('throttle:20,1');
+        Route::post('pos/payment-methods', [AdminCommerce::class, 'storePosPaymentMethod'])->middleware('throttle:20,1');
+        Route::post('pos/payment-methods/{method}/toggle', [AdminCommerce::class, 'togglePosPaymentMethod'])->whereNumber('method')->middleware('throttle:20,1');
+        Route::post('pos/sales/{sale}/refunds', [AdminCommerce::class, 'storePosRefund'])->whereNumber('sale')->middleware('throttle:20,1');
+        Route::post('pos/offline-sync-events', [AdminCommerce::class, 'storePosOfflineSyncEvent'])->middleware('throttle:20,1');
+        Route::post('pos/offline-sync-events/{event}/status', [AdminCommerce::class, 'updatePosOfflineSyncEvent'])->whereNumber('event')->middleware('throttle:20,1');
 
         Route::get('marketing', [AdminDash::class, 'marketing']);
         Route::get('marketing/crm', [AdminDash::class, 'crm']);
@@ -138,7 +185,6 @@ Route::prefix('admin')->group(function () {
         Route::post('orders/{order}/status', [AdminCommerce::class, 'updateOrderStatus'])->whereNumber('order')->middleware('throttle:20,1');
         Route::post('orders/{order}/tracking', [AdminCommerce::class, 'updateOrderTracking'])->whereNumber('order')->middleware('throttle:20,1');
         Route::get('reviews', [AdminDash::class, 'reviews']);
-        Route::post('reviews/{review}/moderate', [AdminCommerce::class, 'moderateReview'])->whereNumber('review')->middleware('throttle:20,1');
         Route::get('rfqs', [AdminDash::class, 'rfqs']);
         Route::get('rfqs/{id}', [AdminDash::class, 'rfq'])->whereNumber('id');
         Route::post('rfqs/{rfq}/status', [AdminCommerce::class, 'updateRfqStatus'])->whereNumber('rfq')->middleware('throttle:20,1');
@@ -148,18 +194,42 @@ Route::prefix('admin')->group(function () {
         Route::delete('quotations/{quotation}/items/{item}', [AdminCommerce::class, 'deleteQuotationItem'])->whereNumber(['quotation', 'item'])->middleware('throttle:20,1');
         Route::post('support/tickets', [AdminCommerce::class, 'storeSupportTicket'])->middleware('throttle:20,1');
         Route::post('support/tickets/{ticket}', [AdminCommerce::class, 'updateSupportTicket'])->whereNumber('ticket')->middleware('throttle:20,1');
+        Route::post('support/tickets/{ticket}/escalate', [AdminCommerce::class, 'escalateSupportTicket'])->whereNumber('ticket')->middleware('throttle:20,1');
         Route::post('support/tickets/{ticket}/messages', [AdminCommerce::class, 'storeSupportTicketMessage'])->whereNumber('ticket')->middleware('throttle:20,1');
     });
 });
 
 // Public marketplace
+Route::post('/marketplace/preference', [MarketplacePreferenceController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('marketplace.preference');
+Route::get('/sso/start', [SsoController::class, 'start'])
+    ->middleware(['auth', 'throttle:10,1'])
+    ->name('sso.start');
+Route::get('/sso/consume', [SsoController::class, 'consume'])
+    ->middleware('throttle:20,1')
+    ->name('sso.consume');
 Route::get('/learn', [LmsPageController::class, 'index']);
+Route::get('/learning', [LmsPageController::class, 'index']);
 Route::get('/learn/projects/{slug}', [LmsPageController::class, 'project']);
 Route::get('/', LandingController::class);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{slug}', [CategoryController::class, 'show'])->where('slug', '[a-z0-9\-]+');
+Route::get('/manufacturers/{slug}', [SeoLandingController::class, 'manufacturer'])->where('slug', '[a-z0-9\-]+');
+Route::get('/mpn/{mpn}', [SeoLandingController::class, 'mpn'])->where('mpn', '[A-Za-z0-9\\.\\-_]+');
+Route::get('/technologies/{slug}', [SeoLandingController::class, 'technology'])->where('slug', '[a-z0-9\-]+');
+Route::get('/applications/{slug}', [SeoLandingController::class, 'application'])->where('slug', '[a-z0-9\-]+');
+Route::get('/countries/{code}', [SeoLandingController::class, 'country'])->where('code', '[A-Za-z]{2,3}');
 Route::get('/products', [\App\Http\Controllers\Web\ProductPageController::class, 'index'])->name('products.index');
+Route::post('/products/{slug}/reviews', [\App\Http\Controllers\Web\ProductPageController::class, 'storeReview'])->where('slug', '[a-z0-9\-]+')->middleware('throttle:4,1')->name('products.reviews.store');
 Route::get('/products/{slug}', [\App\Http\Controllers\Web\ProductPageController::class, 'show'])->where('slug', '[a-z0-9\-]+')->name('products.show');
+Route::get('/cart', [CartPageController::class, 'show'])->name('cart.show');
+Route::post('/cart/items', [CartPageController::class, 'add'])->middleware('throttle:30,1')->name('cart.items.add');
+Route::patch('/cart/items/{item}', [CartPageController::class, 'update'])->whereNumber('item')->middleware('throttle:30,1')->name('cart.items.update');
+Route::delete('/cart/items/{item}', [CartPageController::class, 'remove'])->whereNumber('item')->middleware('throttle:30,1')->name('cart.items.remove');
+Route::get('/checkout', [CartPageController::class, 'checkout'])->name('checkout.show');
+Route::post('/checkout', [CartPageController::class, 'placeOrder'])->middleware('throttle:10,1')->name('checkout.place');
+Route::get('/checkout/thank-you/{orderNumber}', [CartPageController::class, 'thankYou'])->where('orderNumber', '[A-Z0-9\\-]+')->name('checkout.thank-you');
 Route::get('/rfq', [\App\Http\Controllers\Web\RfqPageController::class, 'create'])->name('rfq.create');
 Route::post('/rfq', [\App\Http\Controllers\Web\RfqPageController::class, 'store'])->middleware('throttle:6,1')->name('rfq.store');
 Route::get('/sitemap.xml', SitemapController::class);
@@ -173,5 +243,7 @@ Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middl
 // Public seller/partner landing pages
 Route::get('/sell-on-neogiga', [SellOnNeoGigaController::class, 'sell']);
 Route::get('/distributors', [SellOnNeoGigaController::class, 'distributors']);
-Route::get('/ai-commerce', [SellOnNeoGigaController::class, 'aiCommerce']);
+Route::get('/ai-commerce', [AiCommercePageController::class, 'index']);
+Route::post('/ai-commerce/build', [AiCommercePageController::class, 'build'])->middleware('throttle:12,1');
+Route::post('/ai-commerce/save', [AiCommercePageController::class, 'save'])->middleware('throttle:8,1');
 Route::get('/seller-early-access', [SellOnNeoGigaController::class, 'earlyAccess']);
