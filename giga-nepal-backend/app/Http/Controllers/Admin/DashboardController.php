@@ -721,6 +721,30 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function reviews(\Illuminate\Http\Request $request): View
+    {
+        $status = (string) $request->query('status', 'pending');
+
+        $reviews = DB::table('product_reviews as r')
+            ->join('products as p', 'p.id', '=', 'r.product_id')
+            ->join('users as u', 'u.id', '=', 'r.user_id')
+            ->when(in_array($status, ['pending', 'approved', 'rejected'], true), fn ($q) => $q->where('r.status', $status))
+            ->orderByDesc('r.id')
+            ->select('r.*', 'p.name as product_name', 'p.slug as product_slug', 'u.name as reviewer', 'u.email as reviewer_email')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('admin.reviews', [
+            'reviews' => $reviews,
+            'stats' => [
+                'pending' => $this->safeWhereCount('product_reviews', 'status', 'pending'),
+                'approved' => $this->safeWhereCount('product_reviews', 'status', 'approved'),
+                'rejected' => $this->safeWhereCount('product_reviews', 'status', 'rejected'),
+            ],
+            'statusFilter' => $status,
+        ]);
+    }
+
     public function rfqs(\Illuminate\Http\Request $request): View
     {
         $query = \App\Models\Erp\RfqRequest::with('items')

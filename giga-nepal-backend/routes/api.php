@@ -768,3 +768,15 @@ Route::prefix('v1/support')->middleware('api.token')->group(function () {
     Route::post('/tickets/{id}/messages', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'reply'])->whereNumber('id')->middleware('throttle:writes');
     Route::post('/tickets/{id}/request-human', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'requestHuman'])->whereNumber('id')->middleware('throttle:writes');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Product reviews (2026-07-10)
+|--------------------------------------------------------------------------
+| Public read of APPROVED reviews + rating aggregate; authenticated submit
+| lands in the /admin/reviews moderation queue (never auto-published).
+*/
+Route::prefix('v1/products/{product}')->group(function () {
+    Route::get('/reviews', [\App\Http\Controllers\Api\Product\ProductReviewController::class, 'index'])->whereNumber('product');
+    Route::post('/reviews', [\App\Http\Controllers\Api\Product\ProductReviewController::class, 'store'])->whereNumber('product')->middleware(['api.token', 'throttle:writes']);
+});
