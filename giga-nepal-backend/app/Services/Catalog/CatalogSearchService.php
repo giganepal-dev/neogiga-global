@@ -81,6 +81,7 @@ class CatalogSearchService
             ->where('pfv.source_code', self::INDEXED_SOURCE)
             ->where('psd.review_status', 'approved')
             ->whereIn('p.status', self::PUBLIC_STATUSES)
+            ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('p.visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->whereIn('pfv.facet_name', ['manufacturer', 'category', 'stock', 'package', 'quality_band'])
             ->when($q !== '', function ($query) use ($q) {
                 $like = $this->likeTerm($q);

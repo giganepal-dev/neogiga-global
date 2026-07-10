@@ -46,6 +46,7 @@ Route::prefix('admin')->group(function () {
         Route::post('imports/jlcpcb/bulk-approve', [AdminCommerce::class, 'bulkApproveJlcpcbImports'])->middleware('throttle:10,1');
         Route::post('imports/jlcpcb/search-rebuild', [AdminCommerce::class, 'queueJlcpcbSearchRebuild'])->middleware('throttle:5,1');
         Route::post('imports/jlcpcb/{source}/approve', [AdminCommerce::class, 'approveJlcpcbImport'])->whereNumber('source')->middleware('throttle:20,1');
+        Route::post('imports/jlcpcb/{source}/publish', [AdminCommerce::class, 'publishJlcpcbImport'])->whereNumber('source')->middleware('throttle:10,1');
         Route::post('imports/jlcpcb/{source}/reject', [AdminCommerce::class, 'rejectJlcpcbImport'])->whereNumber('source')->middleware('throttle:20,1');
         Route::get('marketplaces', [AdminDash::class, 'marketplaces']);
         Route::get('vendors', [AdminDash::class, 'vendors']);

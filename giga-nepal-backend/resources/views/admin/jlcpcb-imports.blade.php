@@ -112,6 +112,20 @@
                                 </div>
                             </details>
                         @endif
+                        @if($review === 'approved' && ($row->visibility_status ?? '') !== 'public')
+                            <details class="modal">
+                                <summary class="btn btn-ghost">Publish Public</summary>
+                                <div class="modal-panel">
+                                    <div class="modal-h"><h3>Publish Approved Import</h3><span class="badge b-warn">public catalog</span></div>
+                                    <form class="modal-b form-stack" method="post" action="/admin/imports/jlcpcb/{{ $row->id }}/publish">@csrf
+                                        <input type="hidden" name="queue_rebuild" value="1">
+                                        <textarea class="control" name="note" placeholder="Publication note"></textarea>
+                                        <div class="sub">This makes the approved product visible on public catalog surfaces and queues a search/facet rebuild.</div>
+                                        <button class="btn btn-primary" type="submit" onclick="return confirm('Publish this approved imported product publicly?')">Publish Public</button>
+                                    </form>
+                                </div>
+                            </details>
+                        @endif
                         @if($review !== 'rejected')
                             <details class="modal">
                                 <summary class="btn btn-ghost danger">Reject</summary>
