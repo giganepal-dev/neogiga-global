@@ -1223,6 +1223,185 @@ class CommerceOpsController extends Controller
         return back()->with('status', 'Seller product rejected.');
     }
 
+    public function approveJlcpcbImport(Request $request, int $source): RedirectResponse
+    {
+        $data = $request->validate([
+            'publish_public' => ['nullable', 'boolean'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $row = $this->jlcpcbSourceRow($source);
+        if (! $row) {
+            return back()->with('error', 'Imported product source row not found.');
+        }
+
+        $this->approveImportedProduct($request, (int) $row->id, (int) $row->product_id, (bool) ($data['publish_public'] ?? false), $data['note'] ?? null);
+
+        return back()->with('status', 'Imported product approved for catalog review.');
+    }
+
+    public function bulkApproveJlcpcbImports(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'source_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'source_ids.*' => ['integer'],
+            'publish_public' => ['nullable', 'boolean'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $approved = 0;
+        foreach (array_unique($data['source_ids']) as $sourceId) {
+            $row = $this->jlcpcbSourceRow((int) $sourceId);
+            if (! $row) {
+                continue;
+            }
+            $this->approveImportedProduct($request, (int) $row->id, (int) $row->product_id, (bool) ($data['publish_public'] ?? false), $data['note'] ?? null);
+            $approved++;
+        }
+
+        return back()->with('status', "{$approved} imported products approved.");
+    }
+
+    public function rejectJlcpcbImport(Request $request, int $source): RedirectResponse
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $row = $this->jlcpcbSourceRow($source);
+        if (! $row) {
+            return back()->with('error', 'Imported product source row not found.');
+        }
+
+        DB::transaction(function () use ($request, $row, $data) {
+            $now = now();
+            DB::table('catalog_product_sources')->where('id', $row->id)->update([
+                'review_status' => 'rejected',
+                'last_synced_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            DB::table('catalog_distributor_offers')->where('product_id', $row->product_id)->update([
+                'review_status' => 'rejected',
+                'updated_at' => $now,
+            ]);
+
+            $productUpdate = [
+                'status' => 'rejected',
+                'updated_at' => $now,
+            ];
+            if (Schema::hasColumn('products', 'approval_status')) {
+                $productUpdate['approval_status'] = 'rejected';
+            }
+            if (Schema::hasColumn('products', 'visibility_status')) {
+                $productUpdate['visibility_status'] = 'hidden';
+            }
+            if (Schema::hasColumn('products', 'rejection_reason')) {
+                $productUpdate['rejection_reason'] = $data['reason'];
+            }
+            if (Schema::hasColumn('products', 'metadata')) {
+                $product = DB::table('products')->where('id', $row->product_id)->first();
+                $metadata = json_decode((string) ($product->metadata ?? '{}'), true) ?: [];
+                $metadata['jlcpcb_admin_review'] = [
+                    'status' => 'rejected',
+                    'reviewed_by' => $request->user()?->id,
+                    'reviewed_at' => $now->toIso8601String(),
+                    'reason' => $data['reason'],
+                ];
+                $productUpdate['metadata'] = json_encode($metadata);
+            }
+            DB::table('products')->where('id', $row->product_id)->update($productUpdate);
+
+            $this->auditAdminAction($request, 'jlcpcb_import_rejected', 'catalog_product_sources', (int) $row->id, [
+                'product_id' => (int) $row->product_id,
+                'source_part_id' => $row->source_part_id,
+                'reason' => $data['reason'],
+            ]);
+        });
+
+        return back()->with('status', 'Imported product rejected and hidden.');
+    }
+
+    private function jlcpcbSourceRow(int $sourceId): ?object
+    {
+        if (! Schema::hasTable('catalog_product_sources')) {
+            return null;
+        }
+
+        return DB::table('catalog_product_sources as cps')
+            ->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')
+            ->where('cs.code', 'jlcpcb_parts_database')
+            ->where('cps.id', $sourceId)
+            ->select('cps.*')
+            ->first();
+    }
+
+    private function approveImportedProduct(Request $request, int $sourceId, int $productId, bool $publishPublic, ?string $note): void
+    {
+        DB::transaction(function () use ($request, $sourceId, $productId, $publishPublic, $note) {
+            $now = now();
+            DB::table('catalog_product_sources')->where('id', $sourceId)->update([
+                'review_status' => 'approved',
+                'last_synced_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            DB::table('catalog_distributor_offers')->where('product_id', $productId)->update([
+                'review_status' => 'approved',
+                'updated_at' => $now,
+            ]);
+
+            if (Schema::hasTable('product_documents')) {
+                $documentUpdate = ['updated_at' => $now];
+                if (Schema::hasColumn('product_documents', 'status')) {
+                    $documentUpdate['status'] = 'approved';
+                }
+                if (Schema::hasColumn('product_documents', 'is_public')) {
+                    $documentUpdate['is_public'] = $publishPublic;
+                }
+                DB::table('product_documents')->where('product_id', $productId)->where('document_type', 'datasheet')->update($documentUpdate);
+            }
+
+            $product = DB::table('products')->where('id', $productId)->first();
+            $metadata = json_decode((string) ($product->metadata ?? '{}'), true) ?: [];
+            $metadata['jlcpcb_admin_review'] = [
+                'status' => 'approved',
+                'reviewed_by' => $request->user()?->id,
+                'reviewed_at' => $now->toIso8601String(),
+                'publish_public' => $publishPublic,
+                'note' => $note,
+            ];
+
+            $productUpdate = [
+                'status' => 'approved',
+                'metadata' => json_encode($metadata),
+                'updated_at' => $now,
+            ];
+            if (Schema::hasColumn('products', 'approval_status')) {
+                $productUpdate['approval_status'] = 'approved';
+            }
+            if (Schema::hasColumn('products', 'approved_by')) {
+                $productUpdate['approved_by'] = $request->user()?->id;
+            }
+            if (Schema::hasColumn('products', 'approved_at')) {
+                $productUpdate['approved_at'] = $now;
+            }
+            if (Schema::hasColumn('products', 'visibility_status')) {
+                $productUpdate['visibility_status'] = $publishPublic ? 'public' : 'hidden';
+            }
+            if (Schema::hasColumn('products', 'rejection_reason')) {
+                $productUpdate['rejection_reason'] = null;
+            }
+            DB::table('products')->where('id', $productId)->update($productUpdate);
+
+            $this->auditAdminAction($request, 'jlcpcb_import_approved', 'catalog_product_sources', $sourceId, [
+                'product_id' => $productId,
+                'publish_public' => $publishPublic,
+                'note' => $note,
+            ]);
+        });
+    }
+
     // ---- Users and roles ---------------------------------------------------
 
     public function storeUser(Request $request): RedirectResponse

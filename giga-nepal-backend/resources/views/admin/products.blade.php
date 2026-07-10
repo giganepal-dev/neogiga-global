@@ -2,6 +2,7 @@
 @section('title','Products')
 @section('crumb','Catalog / Product Admin')
 @section('page_actions')
+<a class="btn btn-ghost" href="/admin/imports/jlcpcb">Import Review</a>
 <details class="modal">
     <summary class="btn btn-primary">Add Product</summary>
     <div class="modal-panel">
@@ -28,6 +29,7 @@
     <div class="kpi"><div class="t">Active</div><div class="v tnum">{{ number_format($stats['active']) }}</div><div class="s">sellable</div></div>
     <div class="kpi"><div class="t">Draft</div><div class="v tnum">{{ number_format($stats['draft']) }}</div><div class="s">needs work</div></div>
     <div class="kpi"><div class="t">Low stock</div><div class="v tnum">{{ number_format($stats['lowStock']) }}</div><div class="s">review reorder</div></div>
+    <div class="kpi"><div class="t">Import Review</div><div class="v tnum">{{ number_format($stats['importPending']) }}</div><div class="s"><a href="/admin/imports/jlcpcb">pending JLCPCB</a></div></div>
 </div>
 
 <section class="card">
