@@ -4,19 +4,16 @@
 __pycache__/
 *.o
 *.obj
-*.class
-*.exe
-*.dll
-*.so
-*.a
-*.out
+dist/
+build/
+target/
 
 # Dependencies
-vendor/
+.venv/
+venv/
 node_modules/
-.env
-.env.local
-.env.*
+vendor/
+composer.lock
 
 # Logs and temp files
 *.log
@@ -24,41 +21,30 @@ node_modules/
 *.swp
 *.swo
 
+# Environment
+.env
+.env.local
+.env.*
+
 # Editors
 .vscode/
 .idea/
-*.iml
-*.ipr
-*.iws
+*.swp
+*.swo
 
-# System files
+# OS generated files
 .DS_Store
 Thumbs.db
 
-# Coverage reports
+# Testing and coverage
+.coverage
 coverage/
 htmlcov/
-.coverage
+.phpunit.result.cache
 
-# PHP specific
-*.php~
-*.php.bak
-*.php.swp
-
-# Laravel specific (if applicable)
+# Laravel specific
 storage/
 bootstrap/cache/
-public/storage
-
-# MyPy cache
-.mypy_cache/
-# PyTest cache
-.pytest_cache/
-
-# Distribution / packaging
-dist/
-build/
-*.egg
-*.egg-info/
-MANIFEST
+.npm
+.yarn
 ```
