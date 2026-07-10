@@ -266,7 +266,7 @@ class NeoGigaCanonicalAdapter:
             "source_checksum": self.source_checksum,
             "imported_at": datetime.now(timezone.utc).isoformat(),
             "review_status": "pending_review" if part.category.is_unknown else "source_imported_pending_approval",
-            "data_quality_score": self._quality_score(part),
+            "data_quality_score": float(self._quality_score(part)),
             "source_payload_hash": payload_hash(part),
             "last_synced_at": datetime.now(timezone.utc).isoformat(),
         }
