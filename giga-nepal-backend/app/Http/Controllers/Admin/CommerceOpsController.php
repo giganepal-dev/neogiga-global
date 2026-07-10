@@ -149,6 +149,42 @@ class CommerceOpsController extends Controller
         return back()->with('status', "Order {$row->order_number}: {$row->status} → {$data['status']}.");
     }
 
+    // ---- RFQs -----------------------------------------------------------------
+
+    public function updateRfqStatus(Request $request, int $rfq): RedirectResponse
+    {
+        // Whitelist mirrors the rfq_requests.status vocabulary.
+        $data = $request->validate([
+            'status' => ['required', 'in:open,quoted,accepted,closed,cancelled'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $row = DB::table('rfq_requests')->where('id', $rfq)->first();
+        if (! $row) {
+            return back()->with('error', 'RFQ not found.');
+        }
+        if ($row->status === $data['status']) {
+            return back()->with('error', 'RFQ is already ' . $data['status'] . '.');
+        }
+
+        DB::transaction(function () use ($rfq, $row, $data, $request) {
+            DB::table('rfq_requests')->where('id', $rfq)
+                ->update(['status' => $data['status'], 'updated_at' => now()]);
+
+            DB::table('rfq_status_histories')->insert([
+                'rfq_request_id' => $rfq,
+                'previous_status' => $row->status,
+                'status' => $data['status'],
+                'notes' => $data['notes'] ?? 'Changed via admin console',
+                'changed_by_user_id' => $request->user()?->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        return back()->with('status', "RFQ {$row->rfq_number}: {$row->status} → {$data['status']}.");
+    }
+
     // ---- Users ----------------------------------------------------------------
 
     public function sendPasswordReset(int $user): RedirectResponse

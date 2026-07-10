@@ -84,7 +84,7 @@
         <div class="pd-card">
             <h2 style="font-size:1.05rem;margin:0 0 12px">Get this part</h2>
             <div class="cta-stack">
-                <a class="btn btn-primary" href="mailto:sales@neogiga.com?subject=Bulk%20RFQ%3A%20{{ rawurlencode($product->name) }}%20({{ rawurlencode($product->sku ?? '') }})">Request bulk quote (RFQ)</a>
+                <a class="btn btn-primary" href="/rfq?product={{ $product->slug }}">Request bulk quote (RFQ)</a>
                 <span class="cta-note">B2B RFQs are answered with a formal quotation (RFQ → QUO workflow).</span>
                 <a class="btn btn-ghost" href="/learn">Related tutorials on NeoGiga Learn</a>
                 <span class="badge-soft">Ask AI Engineer — coming soon</span>
