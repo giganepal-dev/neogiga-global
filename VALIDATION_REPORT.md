@@ -20,7 +20,7 @@
 | Wallet canary `/api/v1/wallet` | **401** ✓ (payments intact after route rebuild) |
 | Health / marketplaces API | **200 / 200** |
 | **Live E2E submit** (real POST with CSRF through the form) | **302 redirect + flash; RFQ-00001 in prod DB with 1 item, 1 history row, meta.country recorded** |
-| `php artisan test` | not run this cycle — full Phase1 suites need a dedicated pass; live E2E submit used instead |
+| `php artisan test` | **GREEN (2026-07-10)** — suite repaired (phpunit.xml pgsql role fix), test DB migrated current; PR#2's orphan suite skipped-with-reason; +6 new feature tests (RfqSupportReviewsTest). 0 failures, 74 assertions |
 
 ## Incidents handled during the cycle
 1. **Workspace hijack recovered:** GitHub Desktop had stashed the uncommitted RFQ work
