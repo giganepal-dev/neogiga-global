@@ -3,7 +3,6 @@
 namespace App\Services\Marketplace;
 
 use App\Models\Marketplace\Marketplace;
-use App\Services\MarketplaceResolverService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -14,50 +13,45 @@ class GlobalMarketplaceContextService
     public const SEEN_COOKIE = 'ng_marketplace_recommendation_seen';
 
     public function __construct(
-        private readonly MarketplaceResolverService $resolver,
-        private readonly MarketplacePathResolver $pathResolver,
+        private readonly MarketplaceContextResolver $resolver,
         private readonly MarketplaceUrlGenerator $urlGenerator,
     ) {
     }
 
-    /**
-     * Resolution order (Global Commerce Stage 1):
-     * 1. URL path prefix (/in, /np, ...)
-     * 2. cookie preference (existing)
-     * 3. authenticated user preference (inert no-op until a users.marketplace_id
-     *    column exists — reading an undefined attribute is a safe null in Eloquent)
-     * 4. domain rules (existing MarketplaceResolverService)
-     * 5. GeoIP / edge-country signal (CF-IPCountry header — data-driven across
-     *    all active editions, no hardcoded country list; see recommendedMarketplace())
-     * 6. global fallback
-     * No step in this method redirects; it only selects the resolved context.
-     */
     public function context(Request $request): array
     {
-        $preference = strtolower((string) $request->cookie(self::PREFERENCE_COOKIE, ''));
-        $authPreferenceCode = $this->authenticatedPreference($request);
-
-        $current = $this->pathResolver->resolve($request)
-            ?? ($preference !== '' ? $this->marketplaceModelForCode($preference) : null)
-            ?? ($authPreferenceCode ? $this->marketplaceModelForCode($authPreferenceCode) : null)
-            ?? $this->resolver->resolve($request)
-            ?? $this->fallbackMarketplace();
-
+        $current = $this->resolver->resolve($request) ?: $this->fallbackMarketplace();
         $editions = $this->editions();
-        $recommended = $this->recommendedMarketplace($request, $current, $editions);
+        $recommended = $this->marketplaceToEdition($this->resolver->recommended($request, $current), $editions);
+        $preference = strtolower((string) $request->cookie(self::PREFERENCE_COOKIE, ''));
+        $seen = (bool) $request->cookie(self::SEEN_COOKIE, false);
 
         return [
             'current' => $current,
             'recommended' => $recommended,
             'editions' => $editions,
             'preference' => $preference,
-            'show_recommendation' => $this->shouldShowRecommendation($request, $current, $recommended, (bool) $request->cookie(self::SEEN_COOKIE, false)),
+            'show_recommendation' => $this->shouldShowRecommendation($request, $current, $recommended, $seen),
             'currency_code' => $current?->currency?->code ?? 'USD',
             'country_id' => $current?->country_id,
             'country_code' => strtoupper((string) ($current?->country?->iso_code_2 ?? '')),
             'locale' => $current?->locale ?: 'en',
             'hreflang' => $this->hreflangLinks($request, $editions),
         ];
+    }
+
+    public function editions(): Collection
+    {
+        return Cache::remember('marketplace:public-editions', 3600, function () {
+            return Marketplace::query()
+                ->with(['country', 'currency', 'domains' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')])
+                ->where('is_active', true)
+                ->orderByDesc('is_default')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Marketplace $marketplace) => $this->editionPayload($marketplace))
+                ->values();
+        });
     }
 
     /**
@@ -71,44 +65,6 @@ class GlobalMarketplaceContextService
             return Marketplace::query()
                 ->with(['country', 'currency', 'domains' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')])
                 ->orderByDesc('is_active')
-                ->orderBy('name')
-                ->get()
-                ->map(fn (Marketplace $marketplace) => $this->editionPayload($marketplace))
-                ->values();
-        });
-    }
-
-    private function authenticatedPreference(Request $request): ?string
-    {
-        $user = $request->user();
-
-        if (! $user) {
-            return null;
-        }
-
-        // Forward-compatible: returns null today (no users.marketplace_id
-        // column exists yet); starts working automatically if one is added.
-        $marketplaceId = $user->getAttribute('marketplace_id');
-
-        return $marketplaceId ? Marketplace::find($marketplaceId)?->code : null;
-    }
-
-    private function marketplaceModelForCode(string $code): ?Marketplace
-    {
-        return Marketplace::query()
-            ->with(['country', 'currency', 'domains'])
-            ->where('code', strtoupper($code))
-            ->where('is_active', true)
-            ->first();
-    }
-
-    public function editions(): Collection
-    {
-        return Cache::remember('marketplace:public-editions', 3600, function () {
-            return Marketplace::query()
-                ->with(['country', 'currency', 'domains' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')])
-                ->where('is_active', true)
-                ->orderByDesc('is_default')
                 ->orderBy('name')
                 ->get()
                 ->map(fn (Marketplace $marketplace) => $this->editionPayload($marketplace))
@@ -149,33 +105,9 @@ class GlobalMarketplaceContextService
         return $this->editions()->firstWhere('code', $normalized);
     }
 
-    /**
-     * Data-driven country recommendation (no hardcoded country list): matches
-     * the CF-IPCountry edge header, then the Accept-Language region subtag,
-     * against whichever ACTIVE marketplaces exist for that country. Unsupported
-     * countries fall through to the current/default edition — they are never
-     * left without a recommendation, but they're also never forced anywhere.
-     */
-    private function recommendedMarketplace(Request $request, ?Marketplace $current, Collection $editions): ?array
+    private function marketplaceToEdition(?Marketplace $marketplace, Collection $editions): ?array
     {
-        $byCountry = $editions->filter(fn ($edition) => $edition['country_code'] !== '')
-            ->keyBy('country_code');
-
-        $country = strtoupper((string) $request->header('CF-IPCountry', ''));
-        $match = $country !== '' ? $byCountry->get($country) : null;
-
-        if (! $match) {
-            $acceptLanguage = strtolower((string) $request->header('Accept-Language', ''));
-            if (preg_match('/[a-z]{2}-([a-z]{2})/', $acceptLanguage, $regionMatch)) {
-                $match = $byCountry->get(strtoupper($regionMatch[1]));
-            }
-        }
-
-        if (! $match) {
-            return $current ? $editions->firstWhere('id', $current->id) : $editions->firstWhere('is_default', true);
-        }
-
-        return $match;
+        return $marketplace ? $editions->firstWhere('id', $marketplace->id) : null;
     }
 
     private function shouldShowRecommendation(Request $request, ?Marketplace $current, ?array $recommended, bool $seen): bool
@@ -229,10 +161,6 @@ class GlobalMarketplaceContextService
 
     private function fallbackMarketplace(): ?Marketplace
     {
-        return Marketplace::query()
-            ->with(['country', 'currency', 'domains'])
-            ->where('is_active', true)
-            ->orderByDesc('is_default')
-            ->first();
+        return $this->resolver->fallback();
     }
 }
