@@ -9,6 +9,7 @@ use App\Models\Marketplace\ProductCategory;
 use App\Models\Marketplace\Vendor;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -60,14 +61,107 @@ class DashboardController extends Controller
     {
         $products = Product::orderByDesc('id')->paginate(20);
 
+<<<<<<< Updated upstream
         return view('admin.products', compact('products'));
     }
 
     public function vendors(): View
+=======
+        return view('admin.products', [
+            'products' => $products,
+            'categories' => ProductCategory::orderBy('name')->get(),
+            'brands' => DB::table('product_brands')->orderBy('name')->get(),
+            'vendors' => Vendor::orderBy('name')->get(),
+            'allProducts' => Product::orderBy('name')->limit(500)->get(['id', 'name', 'sku']),
+            'mediaAssets' => $this->safeMediaAssets(),
+            'productSpecs' => DB::table('product_specs')->whereIn('product_id', collect($products->items())->pluck('id'))->orderBy('sort_order')->get()->groupBy('product_id'),
+            'productDocuments' => DB::table('product_documents')->whereIn('product_id', collect($products->items())->pluck('id'))->orderByDesc('id')->get()->groupBy('product_id'),
+            'productRelated' => DB::table('product_related_items as r')
+                ->leftJoin('products as rp', 'rp.id', '=', 'r.related_product_id')
+                ->whereIn('r.product_id', collect($products->items())->pluck('id'))
+                ->select('r.*', 'rp.name as related_name', 'rp.sku as related_sku')
+                ->orderBy('r.sort_order')
+                ->get()
+                ->groupBy('product_id'),
+            'productLmsLinks' => DB::table('product_lms_links')->whereIn('product_id', collect($products->items())->pluck('id'))->orderByDesc('id')->get()->groupBy('product_id'),
+            'productSeo' => DB::table('product_seo_meta')->whereIn('product_id', collect($products->items())->pluck('id'))->get()->keyBy('product_id'),
+            'filters' => [
+                'q' => (string) $request->query('q', ''),
+                'category_id' => (string) $request->query('category_id', ''),
+                'brand_id' => (string) $request->query('brand_id', ''),
+                'vendor_id' => (string) $request->query('vendor_id', ''),
+                'status' => (string) $request->query('status', ''),
+                'stock' => (string) $request->query('stock', ''),
+            ],
+            'stats' => [
+                'total' => Product::count(),
+                'active' => Product::whereIn('status', ['active', 'approved', 'published'])->count(),
+                'draft' => Product::where('status', 'draft')->count(),
+                'lowStock' => Product::whereColumn('stock_quantity', '<=', 'low_stock_threshold')->count(),
+            ],
+        ]);
+    }
+
+    public function product(int $id): View
+    {
+        $product = Product::query()
+            ->leftJoin('product_categories as c', 'c.id', '=', 'products.category_id')
+            ->leftJoin('product_brands as b', 'b.id', '=', 'products.brand_id')
+            ->leftJoin('vendors as v', 'v.id', '=', 'products.vendor_id')
+            ->select('products.*', 'c.name as category_name', 'b.name as brand_name', 'v.name as vendor_name')
+            ->where('products.id', $id)
+            ->first();
+        abort_if(! $product, 404);
+
+        return view('admin.product-detail', [
+            'p' => $product,
+            'categories' => ProductCategory::orderBy('name')->get(),
+            'brands' => DB::table('product_brands')->orderBy('name')->get(),
+            'vendors' => Vendor::orderBy('name')->get(),
+            'allProducts' => Product::where('id', '<>', $id)->orderBy('name')->limit(500)->get(['id', 'name', 'sku']),
+            'mediaAssets' => $this->safeMediaAssets(),
+            'productSpecs' => DB::table('product_specs')->where('product_id', $id)->orderBy('sort_order')->get(),
+            'productDocuments' => DB::table('product_documents')->where('product_id', $id)->orderByDesc('id')->get(),
+            'productRelated' => DB::table('product_related_items as r')
+                ->leftJoin('products as rp', 'rp.id', '=', 'r.related_product_id')
+                ->where('r.product_id', $id)
+                ->select('r.*', 'rp.name as related_name', 'rp.sku as related_sku')
+                ->orderBy('r.sort_order')
+                ->get(),
+            'productLmsLinks' => DB::table('product_lms_links')->where('product_id', $id)->orderByDesc('id')->get(),
+            'productSeo' => DB::table('product_seo_meta')->where('product_id', $id)->first(),
+            'recentStocks' => $this->safeRowsWhere('inventory_stocks', 'product_id', $id),
+        ]);
+    }
+
+    public function vendors(\Illuminate\Http\Request $request): View
+>>>>>>> Stashed changes
     {
         $vendors = Vendor::orderByDesc('id')->paginate(20);
 
+<<<<<<< Updated upstream
         return view('admin.vendors', compact('vendors'));
+=======
+        return view('admin.vendors', [
+            'vendors' => $vendors,
+            'stats' => [
+                'total' => Vendor::count(),
+                'pending' => Vendor::where('status', 'pending')->count(),
+                'approved' => Vendor::whereIn('status', ['approved', 'active'])->count(),
+                'suspended' => Vendor::where('status', 'suspended')->count(),
+                'documentsPending' => $this->safeWhereCount('vendor_documents', 'status', 'pending'),
+                'productsPending' => $this->safeWhereCount('vendor_products', 'status', 'pending_review'),
+            ],
+            'filters' => [
+                'q' => (string) $request->query('q', ''),
+                'status' => (string) $request->query('status', ''),
+                'type' => (string) $request->query('type', ''),
+            ],
+            'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
+            'recentDocuments' => $this->safeRows('vendor_documents'),
+            'recentProducts' => $this->safeVendorProducts(),
+        ]);
+>>>>>>> Stashed changes
     }
 
     public function users(): View
@@ -402,6 +496,86 @@ class DashboardController extends Controller
         ]);
     }
 
+<<<<<<< Updated upstream
+=======
+    public function support(\Illuminate\Http\Request $request): View
+    {
+        $tickets = DB::table('support_tickets as t')
+            ->leftJoin('users as u', 'u.id', '=', 't.user_id')
+            ->leftJoin('users as a', 'a.id', '=', 't.assigned_to')
+            ->leftJoin('customers as c', 'c.id', '=', 't.customer_id')
+            ->leftJoin('products as p', 'p.id', '=', 't.related_product_id')
+            ->leftJoin('orders as o', 'o.id', '=', 't.related_order_id')
+            ->select('t.*', 'u.name as requester_name', 'u.email as requester_email', 'a.name as assigned_name', 'c.name as customer_name', 'p.name as related_product_name', 'o.order_number as related_order_number')
+            ->when($request->query('status'), fn ($q, $status) => $q->where('t.status', $status))
+            ->when($request->query('priority'), fn ($q, $priority) => $q->where('t.priority', $priority))
+            ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
+                $inner->where('t.ticket_number', 'ilike', "%{$term}%")
+                    ->orWhere('t.subject', 'ilike', "%{$term}%")
+                    ->orWhere('u.email', 'ilike', "%{$term}%")
+                    ->orWhere('c.name', 'ilike', "%{$term}%");
+            }))
+            ->orderByRaw("case t.priority when 'urgent' then 1 when 'high' then 2 when 'medium' then 3 else 4 end")
+            ->orderByDesc('t.id')
+            ->paginate(20)
+            ->withQueryString();
+
+        $ticketIds = collect($tickets->items())->pluck('id');
+
+        return view('admin.support', [
+            'tickets' => $tickets,
+            'messages' => DB::table('support_ticket_messages')
+                ->whereIn('support_ticket_id', $ticketIds)
+                ->orderBy('created_at')
+                ->get()
+                ->groupBy('support_ticket_id'),
+            'users' => User::orderBy('name')->get(['id', 'name', 'email']),
+            'customers' => DB::table('customers')->orderBy('name')->limit(200)->get(['id', 'name', 'email']),
+            'stats' => [
+                'total' => $this->safeCount('support_tickets'),
+                'open' => $this->safeWhereCount('support_tickets', 'status', 'open'),
+                'pending' => $this->safeWhereCount('support_tickets', 'status', 'waiting_customer'),
+                'closed' => $this->safeWhereCount('support_tickets', 'status', 'closed'),
+                'overdue' => $this->safeOverdueSupportCount(),
+                'escalated' => (int) DB::table('support_tickets')->where('escalation_level', '>', 0)->count(),
+            ],
+            'filters' => [
+                'q' => (string) $request->query('q', ''),
+                'status' => (string) $request->query('status', ''),
+                'priority' => (string) $request->query('priority', ''),
+            ],
+            'products' => Product::orderBy('name')->limit(200)->get(['id', 'name', 'sku']),
+            'orders' => DB::table('orders')->orderByDesc('id')->limit(100)->get(['id', 'order_number']),
+        ]);
+    }
+
+    public function rfqs(\Illuminate\Http\Request $request): View
+    {
+        $query = \App\Models\Erp\RfqRequest::with('items')
+            ->when($request->query('status'), fn ($q, $s) => $q->where('status', $s))
+            ->orderByDesc('id');
+
+        return view('admin.rfqs', [
+            'rfqs' => $query->paginate(20)->withQueryString(),
+            'stats' => [
+                'total' => $this->safeCount('rfq_requests'),
+                'open' => $this->safeWhereCount('rfq_requests', 'status', 'open'),
+                'quoted' => $this->safeWhereCount('rfq_requests', 'status', 'quoted'),
+                'accepted' => $this->safeWhereCount('rfq_requests', 'status', 'accepted'),
+            ],
+            'statusFilter' => (string) $request->query('status', ''),
+        ]);
+    }
+
+    public function rfq(int $id): View
+    {
+        return view('admin.rfq-detail', [
+            'rfq' => \App\Models\Erp\RfqRequest::with('items')->findOrFail($id),
+            'history' => DB::table('rfq_status_histories')->where('rfq_request_id', $id)->orderByDesc('id')->get(),
+        ]);
+    }
+
+>>>>>>> Stashed changes
     public function applications(): View
     {
         return view('admin.applications', [
@@ -457,6 +631,67 @@ class DashboardController extends Controller
             return DB::table($table)->orderByDesc('id')->limit($limit)->get();
         } catch (\Throwable) {
             return collect();
+        }
+    }
+
+    private function safeRowsWhere(string $table, string $column, int $value, int $limit = 20): \Illuminate\Support\Collection
+    {
+        try {
+            return DB::table($table)->where($column, $value)->orderByDesc('id')->limit($limit)->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeMediaAssets(int $limit = 200): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('admin_media_assets')) {
+                return collect();
+            }
+
+            return DB::table('admin_media_assets')
+                ->orderByDesc('id')
+                ->limit($limit)
+                ->get(['id', 'disk', 'path', 'original_name', 'mime_type', 'folder', 'title']);
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeVendorProducts(int $limit = 30): \Illuminate\Support\Collection
+    {
+        try {
+            if (! Schema::hasTable('vendor_products')) {
+                return collect();
+            }
+
+            return DB::table('vendor_products as vp')
+                ->leftJoin('vendors as v', 'v.id', '=', 'vp.vendor_id')
+                ->leftJoin('products as p', 'p.id', '=', 'vp.product_id')
+                ->select([
+                    'vp.*',
+                    'v.name as vendor_name',
+                    'p.name as linked_product_name',
+                    'p.sku as linked_product_sku',
+                ])
+                ->orderByDesc('vp.id')
+                ->limit($limit)
+                ->get();
+        } catch (\Throwable) {
+            return collect();
+        }
+    }
+
+    private function safeOverdueSupportCount(): int
+    {
+        try {
+            return (int) DB::table('support_tickets')
+                ->whereNotIn('status', ['resolved', 'closed'])
+                ->where('sla_due_at', '<', now())
+                ->count();
+        } catch (\Throwable) {
+            return 0;
         }
     }
 }
