@@ -38,7 +38,7 @@
         </form>
     </div>
     <div class="scroll-x"><table class="tbl">
-        <thead><tr><th>Order</th><th>Customer</th><th>Marketplace</th><th class="num">Total</th><th>Payment</th><th>Status</th><th>Placed</th><th>Action</th></tr></thead>
+        <thead><tr><th>Order</th><th>Customer</th><th>Marketplace</th><th class="num">Total</th><th>Payment</th><th>Status</th><th>Tracking</th><th>Placed</th><th>Action</th></tr></thead>
         <tbody>
         @forelse ($orders as $o)
             <tr>
@@ -48,11 +48,15 @@
                 <td class="num tnum">{{ number_format($o->grand_total, 2) }} {{ $o->currency_code }}</td>
                 <td><span class="badge {{ $payBadge($o->payment_status) }}">{{ $o->payment_status }}</span></td>
                 <td><span class="badge {{ $statusBadge($o->status) }}">{{ $o->status }}</span></td>
+                <td>{{ $o->tracking_number ?: '—' }}<div class="sub">{{ $o->carrier ?: '' }}</div></td>
                 <td class="sub">{{ $o->created_at?->format('Y-m-d H:i') }}</td>
-                <td><a class="btn btn-ghost" href="/admin/orders/{{ $o->id }}">View</a></td>
+                <td style="display:flex;gap:6px;flex-wrap:wrap">
+                    <a class="btn btn-ghost" href="/admin/orders/{{ $o->id }}">View</a>
+                    <a class="btn btn-ghost" href="/admin/orders/{{ $o->id }}/invoice" target="_blank">Invoice</a>
+                </td>
             </tr>
         @empty
-            <tr><td colspan="8"><div class="empty"><h3>No orders yet</h3><p>Orders placed via checkout will appear here.</p></div></td></tr>
+            <tr><td colspan="9"><div class="empty"><h3>No orders yet</h3><p>Orders placed via checkout will appear here.</p></div></td></tr>
         @endforelse
         </tbody>
     </table></div>

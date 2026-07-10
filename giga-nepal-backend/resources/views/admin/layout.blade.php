@@ -52,6 +52,15 @@
         .crumb{color:var(--muted);font-size:.8rem}
         .who{display:flex;align-items:center;gap:10px}
         .who .av{width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:700}
+        .top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+        .searchbox{width:min(320px,30vw);position:relative}
+        .searchbox input{padding-left:34px}
+        .searchbox svg{position:absolute;left:10px;top:10px;width:17px;height:17px;color:var(--muted)}
+        .chip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--slate);font-size:.78rem;font-weight:700}
+        .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
+        .page-head h2{margin:0;font-size:1.35rem;letter-spacing:-.02em}
+        .page-head p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+        .page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
         .content{padding:22px;max-width:1280px;width:100%;margin:0 auto}
 
         /* Buttons */
@@ -68,6 +77,25 @@
         textarea.control{min-height:84px;resize:vertical}
         .control:focus{border-color:#93c5fd;outline:2px solid rgba(3,105,161,.16);outline-offset:0}
         .form-stack{display:grid;gap:10px}
+        .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+        .field label{display:block;color:var(--muted);font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 5px}
+        .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);background:#fbfdff}
+        .actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+        .icon-btn{width:34px;height:34px;padding:0;justify-content:center}
+        .danger{color:var(--danger);border-color:#fecaca;background:#fff}
+        .tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);background:#fff}
+        .tab{height:32px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:0 12px;font-size:.78rem;font-weight:700;color:var(--slate);display:inline-flex;align-items:center}
+        .tab.active{background:#e0f2fe;border-color:#bae6fd;color:#075985}
+        .drawer{border-left:1px solid var(--line);background:#fbfdff;padding:14px}
+        details.modal{display:inline-block}
+        details.modal > summary{list-style:none}
+        details.modal > summary::-webkit-details-marker{display:none}
+        details.modal[open]::before{content:"";position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:80}
+        .modal-panel{position:fixed;right:24px;top:24px;bottom:24px;width:min(560px,calc(100vw - 48px));overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 24px 80px rgba(2,6,23,.28);z-index:90}
+        .modal-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid var(--line)}
+        .modal-h h3{margin:0;font-size:1rem}
+        .modal-b{padding:16px}
+        .dropzone{border:1.5px dashed #cbd5e1;border-radius:10px;background:#f8fafc;padding:24px;text-align:center;color:var(--muted)}
 
         /* Cards / KPIs */
         .grid{display:grid;gap:14px}
@@ -134,6 +162,10 @@
         }
         @media (max-width:640px){
             .who form{display:none}
+            .searchbox,.top-actions .chip{display:none}
+            .page-head{display:block}
+            .page-actions{justify-content:flex-start;margin-top:10px}
+            .form-grid{grid-template-columns:1fr}
             .kpis{grid-template-columns:1fr}
             .tbl th,.tbl td{padding:9px 11px}
         }
@@ -187,6 +219,10 @@
             <a href="/admin/vendors" class="{{ str_starts_with($r,'admin/vendors') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" stroke-linecap="round"/><circle cx="9" cy="7" r="4"/><path d="M17 11a4 4 0 000-8" stroke-linecap="round"/></svg>
                 Vendors
+            </a>
+            <a href="/admin/distributors" class="{{ str_starts_with($r,'admin/distributors') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18M6 7v10a2 2 0 002 2h8a2 2 0 002-2V7" stroke-linejoin="round"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M9 12h6" stroke-linecap="round"/></svg>
+                Distributors
             </a>
             <a href="/admin/users" class="{{ str_starts_with($r,'admin/users') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1" stroke-linecap="round"/></svg>
@@ -245,6 +281,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2l1.5 3M18 2l-1.5 3M3 6h18l-2 12H5L3 6z" stroke-linejoin="round"/><path d="M9 10v4m6-4v4" stroke-linecap="round"/></svg>
                 Orders
             </a>
+            <a href="/admin/support" class="{{ str_starts_with($r,'admin/support') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 01-8 8H7l-4 3v-6.2A8 8 0 1113 20" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11h8M8 15h5" stroke-linecap="round"/></svg>
+                Support
+            </a>
             <a href="/admin/payments" class="{{ str_starts_with($r,'admin/payments') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h4" stroke-linecap="round"/></svg>
                 Payments &amp; Wallet
@@ -296,7 +336,39 @@
                     <div class="crumb">@yield('crumb','NeoGiga Admin')</div>
                 </div>
             </div>
-            <div class="who">
+            <div class="top-actions">
+                <form class="searchbox" method="get" action="/admin/products">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg>
+                    <input class="control" name="q" placeholder="Search products, orders, sellers" value="{{ request('q') }}">
+                </form>
+                <span class="chip">EN</span>
+                <span class="chip">Global</span>
+                <details class="modal">
+                    <summary class="btn btn-ghost icon-btn" title="Notifications">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" stroke-linecap="round"/><path d="M10 21h4" stroke-linecap="round"/></svg>
+                    </summary>
+                    <div class="modal-panel" style="max-width:420px">
+                        <div class="modal-h"><h3>Notifications</h3><span class="badge b-info">placeholder</span></div>
+                        <div class="modal-b"><div class="empty"><h3>No new notifications</h3><p>Queue alerts, seller approvals, low stock and RFQ updates will appear here.</p></div></div>
+                    </div>
+                </details>
+                <details class="modal">
+                    <summary class="btn btn-primary">Quick Actions</summary>
+                    <div class="modal-panel">
+                        <div class="modal-h"><h3>Quick Actions</h3><span class="badge b-info">NeoGiga</span></div>
+                        <div class="modal-b grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+                            <a class="btn btn-ghost" href="/admin/products">Add Product</a>
+                            <a class="btn btn-ghost" href="/admin/categories">Add Category</a>
+                            <a class="btn btn-ghost" href="/admin/applications">Add Seller</a>
+                            <a class="btn btn-ghost" href="/admin/marketing/email">Add Campaign</a>
+                            <a class="btn btn-ghost" href="/admin/lms">Add Course</a>
+                            <a class="btn btn-ghost" href="/admin/inventory">Add Warehouse</a>
+                            <a class="btn btn-ghost" href="/admin/quotations">Create RFQ</a>
+                            <a class="btn btn-ghost" href="/admin/media">Upload Media</a>
+                        </div>
+                    </div>
+                </details>
+                <div class="who">
                 <span style="text-align:right;line-height:1.2">
                     <strong style="font-size:.86rem">{{ auth()->user()->name ?? 'Admin' }}</strong><br>
                     <span style="color:var(--muted);font-size:.74rem">{{ ucfirst(str_replace('_',' ', auth()->user()->role->name ?? 'admin')) }}</span>
@@ -307,9 +379,17 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 12H3m0 0l4-4m-4 4l4 4M13 4h6a1 1 0 011 1v14a1 1 0 01-1 1h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </form>
+                </div>
             </div>
         </header>
         <main class="content">
+            <div class="page-head">
+                <div>
+                    <h2>@yield('title','Dashboard')</h2>
+                    <p>@yield('crumb','NeoGiga Admin')</p>
+                </div>
+                <div class="page-actions">@yield('page_actions')</div>
+            </div>
             @if (session('status'))
                 <div class="note"><strong>Saved.</strong> {{ session('status') }}</div>
             @endif
