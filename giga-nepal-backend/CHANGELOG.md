@@ -43,6 +43,7 @@
 - Added a hidden `product_image_candidates` review queue and `product-images:discover-candidates` command that can collect public source-page image URL candidates by product/MPN without downloading or publishing unapproved media.
 - Tightened public image candidate discovery with a configurable confidence floor so generic source-page images are skipped instead of filling the review queue.
 - Added product image candidate listing/export and review-status commands so operations can prepare licensed image manifests and approve/reject candidates without changing public product images.
+- Added the BOM procurement import API: authenticated users can upload/paste BOM CSVs, auto-match lines by normalized MPN, manually review ambiguous lines, and convert the full BOM into an RFQ.
 
 ## 2026-07-09 - Complete System Audit
 
