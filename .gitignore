@@ -7,27 +7,15 @@
 *.bak
 *.backup
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Logs
-*.log
-
 # Temporary files
 *.tmp
 *.temp
-*.temp.*
+*.log
 
-# Environment variables
+# Environment files
 .env
 .env.local
-.env.*
+*.env.*
 
 # IDE specific
 .vscode/
@@ -35,36 +23,33 @@ Thumbs.db
 *.swp
 *.swo
 
-# Build artifacts
+# Dependencies and build artifacts (if any get added later)
+node_modules/
 dist/
 build/
 target/
+__pycache__/
+*.pyc
+*.class
 *.o
 *.obj
-*.out
 *.exe
 *.dll
 *.so
 *.a
+*.out
 
-# Dependencies
-node_modules/
-venv/
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.egg-info/
-.tox/
-.coverage
+# System files
+.DS_Store
+Thumbs.db
+.git/
+
+# Coverage reports
+coverage/
 htmlcov/
-.mypy_cache/
-.pytest_cache/
-.hypothesis/
+.coverage
 
-# Compression
+# Compressed files
 *.zip
 *.gz
 *.tar
@@ -83,9 +68,7 @@ htmlcov/
 *.Z
 *.lz
 *.lzo
-
-# Images (not ignored as per requirements)
-# *.png, *.jpg, *.jpeg, *.bmp, *.gif, *.webm remain tracked
-
-# Original rules preserved
-*.log
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
