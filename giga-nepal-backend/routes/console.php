@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 Artisan::command('neogiga:smoke', function () {
     $failed = false;
@@ -218,6 +219,298 @@ Artisan::command('products:activate-drafts-and-images {--apply : Persist changes
 
     return self::SUCCESS;
 })->purpose('Activate draft products while preserving approval/visibility, and add placeholder images for products missing images.');
+
+Artisan::command('product-images:audit {--sample=10 : Placeholder sample size.}', function () {
+    if (! Schema::hasTable('products') || ! Schema::hasTable('product_images')) {
+        $this->error('Required products/product_images tables are missing.');
+
+        return self::FAILURE;
+    }
+
+    $placeholderPath = '/images/products/neogiga-component-placeholder.svg';
+    $sampleSize = max(0, (int) $this->option('sample'));
+    $sourceLicenseColumn = Schema::hasColumn('product_images', 'source_license');
+    $checksumColumn = Schema::hasColumn('product_images', 'checksum');
+
+    $totalProducts = DB::table('products')->count();
+    $activeRows = DB::table('product_images')->where('is_active', true)->count();
+    $productsWithActiveImage = DB::table('products as p')
+        ->whereExists(function ($query) {
+            $query->selectRaw('1')
+                ->from('product_images as pi')
+                ->whereColumn('pi.product_id', 'p.id')
+                ->where('pi.is_active', true);
+        })
+        ->count();
+    $missingActiveImage = max(0, $totalProducts - $productsWithActiveImage);
+    $placeholderRows = DB::table('product_images')->where('file_path', $placeholderPath)->where('is_active', true)->count();
+    $licensedRows = $sourceLicenseColumn
+        ? DB::table('product_images')->whereNotNull('source_license')->where('is_active', true)->count()
+        : 0;
+    $checksummedRows = $checksumColumn
+        ? DB::table('product_images')->whereNotNull('checksum')->where('is_active', true)->count()
+        : 0;
+
+    $this->line('Products: '.$totalProducts);
+    $this->line('Active image rows: '.$activeRows);
+    $this->line('Products with active image: '.$productsWithActiveImage);
+    $this->line('Products missing active image: '.$missingActiveImage);
+    $this->line('Active placeholder image rows: '.$placeholderRows);
+    $this->line('Active licensed/source-attributed image rows: '.$licensedRows);
+    $this->line('Active checksum-attributed image rows: '.$checksummedRows);
+    $this->line('Safety: external images are not downloaded by this audit.');
+
+    if ($sampleSize > 0) {
+        $samples = DB::table('product_images as pi')
+            ->join('products as p', 'p.id', '=', 'pi.product_id')
+            ->where('pi.file_path', $placeholderPath)
+            ->where('pi.is_active', true)
+            ->orderBy('p.id')
+            ->limit($sampleSize)
+            ->get(['p.id', 'p.sku', 'p.name']);
+
+        if ($samples->isNotEmpty()) {
+            $this->table(['Product ID', 'SKU', 'Name'], $samples->map(fn ($row) => [
+                $row->id,
+                $row->sku,
+                Str::limit((string) $row->name, 80),
+            ])->all());
+        }
+    }
+
+    return self::SUCCESS;
+})->purpose('Audit product image coverage and placeholder/licensed attribution status.');
+
+Artisan::command('product-images:import-licensed-manifest
+    {manifest : CSV file with product_id or manufacturer+mpn plus local_path/file_path and license fields.}
+    {--apply : Persist changes. Without this flag the command is a dry-run.}
+    {--limit=0 : Maximum manifest rows to inspect, 0 means all.}
+    {--media-root= : Base directory used to resolve relative local_path values.}
+    {--replace-placeholder : Deactivate the NeoGiga placeholder image when a licensed image is inserted.}', function () {
+    if (! Schema::hasTable('products') || ! Schema::hasTable('product_images')) {
+        $this->error('Required products/product_images tables are missing.');
+
+        return self::FAILURE;
+    }
+
+    foreach (['source_name', 'source_license', 'source_url', 'original_url', 'checksum', 'width', 'height', 'copyright', 'downloaded_at', 'metadata'] as $column) {
+        if (! Schema::hasColumn('product_images', $column)) {
+            $this->error("product_images.{$column} is missing. Run migrations before importing licensed images.");
+
+            return self::FAILURE;
+        }
+    }
+
+    $manifest = (string) $this->argument('manifest');
+    if (! is_file($manifest) || ! is_readable($manifest)) {
+        $this->error('Manifest file is not readable: '.$manifest);
+
+        return self::FAILURE;
+    }
+
+    $apply = (bool) $this->option('apply');
+    $replacePlaceholder = (bool) $this->option('replace-placeholder');
+    $limit = max(0, (int) $this->option('limit'));
+    $mediaRoot = (string) ($this->option('media-root') ?: dirname($manifest));
+    $placeholderPath = '/images/products/neogiga-component-placeholder.svg';
+    $targetRoot = public_path('storage/catalog/product-images');
+
+    $normalizeMpn = fn (?string $value): string => strtoupper(preg_replace('/[^A-Z0-9]+/i', '', (string) $value) ?? '');
+    $allowed = fn ($value): bool => in_array(strtolower(trim((string) $value)), ['1', 'true', 'yes', 'y', 'allowed', 'permitted'], true);
+
+    $handle = fopen($manifest, 'r');
+    if ($handle === false) {
+        $this->error('Could not open manifest file: '.$manifest);
+
+        return self::FAILURE;
+    }
+
+    $headers = fgetcsv($handle);
+    if (! is_array($headers)) {
+        fclose($handle);
+        $this->error('Manifest is empty or not valid CSV.');
+
+        return self::FAILURE;
+    }
+    $headers = array_map(fn ($header) => Str::snake(trim((string) $header)), $headers);
+
+    $planned = [];
+    $skipped = [];
+    $rowNumber = 1;
+    while (($row = fgetcsv($handle)) !== false) {
+        $rowNumber++;
+        if ($limit > 0 && count($planned) + count($skipped) >= $limit) {
+            break;
+        }
+
+        $data = array_combine($headers, array_pad($row, count($headers), null));
+        if (! is_array($data)) {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'invalid CSV row'];
+            continue;
+        }
+
+        $license = trim((string) ($data['source_license'] ?? $data['license'] ?? $data['license_note'] ?? ''));
+        $sourceName = trim((string) ($data['source_name'] ?? $data['source'] ?? ''));
+        $sourceUrl = trim((string) ($data['source_url'] ?? ''));
+        $redistribution = $allowed($data['redistribution_allowed'] ?? $data['image_redistribution_allowed'] ?? false);
+        $localPath = trim((string) ($data['local_path'] ?? $data['image_local_path'] ?? $data['file_path'] ?? ''));
+
+        if ($license === '' || in_array(strtolower($license), ['unknown', 'n/a', 'none'], true)) {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'missing/unknown source license'];
+            continue;
+        }
+        if ($sourceName === '' || $sourceUrl === '') {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'source_name/source_url required'];
+            continue;
+        }
+        if (! $redistribution) {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'redistribution not explicitly allowed'];
+            continue;
+        }
+        if ($localPath === '') {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'local_path/file_path required; external hotlink/download skipped'];
+            continue;
+        }
+
+        $sourceFile = str_starts_with($localPath, '/') ? $localPath : rtrim($mediaRoot, '/').'/'.$localPath;
+        if (! is_file($sourceFile) || ! is_readable($sourceFile)) {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'local image file not readable'];
+            continue;
+        }
+
+        $productQuery = DB::table('products');
+        if (! empty($data['product_id'])) {
+            $productQuery->where('id', (int) $data['product_id']);
+        } else {
+            $normalized = $normalizeMpn((string) ($data['mpn'] ?? $data['manufacturer_part_number'] ?? ''));
+            if ($normalized === '') {
+                $skipped[] = ['row' => $rowNumber, 'reason' => 'product_id or MPN required'];
+                continue;
+            }
+
+            $productQuery->where('normalized_mpn', $normalized);
+            $manufacturer = trim((string) ($data['manufacturer'] ?? ''));
+            if ($manufacturer !== '' && Schema::hasColumn('products', 'manufacturer_name')) {
+                $productQuery->whereRaw('lower(manufacturer_name) = ?', [strtolower($manufacturer)]);
+            }
+        }
+
+        $product = $productQuery->orderBy('id')->first(['id', 'name', 'sku']);
+        if (! $product) {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'matching product not found'];
+            continue;
+        }
+
+        $checksum = hash_file('sha256', $sourceFile);
+        $duplicate = DB::table('product_images')->where('product_id', $product->id)->where('checksum', $checksum)->exists();
+        if ($duplicate) {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'duplicate checksum for product'];
+            continue;
+        }
+
+        $extension = strtolower(pathinfo($sourceFile, PATHINFO_EXTENSION) ?: 'jpg');
+        if (! in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif'], true)) {
+            $skipped[] = ['row' => $rowNumber, 'reason' => 'unsupported image extension'];
+            continue;
+        }
+
+        $planned[] = [
+            'row' => $rowNumber,
+            'product' => $product,
+            'source_file' => $sourceFile,
+            'checksum' => $checksum,
+            'extension' => $extension,
+            'source_name' => $sourceName,
+            'source_url' => $sourceUrl,
+            'source_license' => $license,
+            'original_url' => trim((string) ($data['original_url'] ?? $data['image_url'] ?? '')) ?: null,
+            'copyright' => trim((string) ($data['copyright'] ?? $data['image_copyright'] ?? '')) ?: null,
+            'alt_text' => trim((string) ($data['alt_text'] ?? $data['image_alt_text'] ?? $product->name.' product image')),
+            'caption' => trim((string) ($data['caption'] ?? $data['image_caption'] ?? 'Licensed product image from '.$sourceName)),
+        ];
+    }
+    fclose($handle);
+
+    $this->line('Manifest rows planned for import: '.count($planned));
+    $this->line('Manifest rows skipped: '.count($skipped));
+    $this->line('Safety: only local files with explicit redistribution permission are imported.');
+    if ($skipped) {
+        $this->table(['Row', 'Reason'], array_slice(array_map(fn ($row) => [$row['row'], $row['reason']], $skipped), 0, 20));
+    }
+
+    if (! $apply) {
+        $this->comment('Dry-run only. Re-run with --apply to copy files and insert image rows.');
+
+        return self::SUCCESS;
+    }
+
+    if (! is_dir($targetRoot) && ! mkdir($targetRoot, 0775, true) && ! is_dir($targetRoot)) {
+        $this->error('Could not create target image directory: '.$targetRoot);
+
+        return self::FAILURE;
+    }
+
+    DB::transaction(function () use ($planned, $targetRoot, $placeholderPath, $replacePlaceholder) {
+        foreach ($planned as $plan) {
+            $product = $plan['product'];
+            $productDir = $targetRoot.'/'.$product->id;
+            if (! is_dir($productDir) && ! mkdir($productDir, 0775, true) && ! is_dir($productDir)) {
+                throw new RuntimeException('Could not create product image directory: '.$productDir);
+            }
+
+            $fileName = $plan['checksum'].'.'.$plan['extension'];
+            $destination = $productDir.'/'.$fileName;
+            if (! is_file($destination) && ! copy($plan['source_file'], $destination)) {
+                throw new RuntimeException('Could not copy image file to '.$destination);
+            }
+
+            $size = @getimagesize($destination) ?: [null, null];
+            $mime = mime_content_type($destination) ?: match ($plan['extension']) {
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                'avif' => 'image/avif',
+                'gif' => 'image/gif',
+                default => 'image/jpeg',
+            };
+
+            if ($replacePlaceholder) {
+                DB::table('product_images')
+                    ->where('product_id', $product->id)
+                    ->where('file_path', $placeholderPath)
+                    ->update(['is_active' => false, 'updated_at' => now()]);
+            }
+
+            DB::table('product_images')->insert([
+                'product_id' => $product->id,
+                'file_path' => '/storage/catalog/product-images/'.$product->id.'/'.$fileName,
+                'original_url' => $plan['original_url'],
+                'source_url' => $plan['source_url'],
+                'source_name' => $plan['source_name'],
+                'source_license' => $plan['source_license'],
+                'copyright' => $plan['copyright'],
+                'checksum' => $plan['checksum'],
+                'width' => $size[0],
+                'height' => $size[1],
+                'downloaded_at' => now(),
+                'metadata' => json_encode(['imported_by' => 'product-images:import-licensed-manifest', 'advisory' => 'Image rights supplied by licensed manifest.']),
+                'file_name' => $fileName,
+                'mime_type' => $mime,
+                'file_size' => filesize($destination) ?: null,
+                'sort_order' => 0,
+                'is_primary' => true,
+                'alt_text' => mb_substr($plan['alt_text'], 0, 255),
+                'caption' => mb_substr($plan['caption'], 0, 255),
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    });
+
+    $this->info('Imported '.count($planned).' licensed product image(s).');
+
+    return self::SUCCESS;
+})->purpose('Import licensed local product images from a manifest, with dry-run and rights gates.');
 
 Schedule::job(new DetectAbandonedCartsJob)->everyFifteenMinutes();
 Schedule::job(new CalculateTrendingProductsJob)->hourly();
