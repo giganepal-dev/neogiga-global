@@ -40,3 +40,22 @@ def test_scale_import_flag_is_explicit():
 
     assert args.scale_import is True
     assert args.limit == 20000
+    assert args.scale_import_max == 20000
+
+
+def test_scale_import_max_can_be_raised_for_controlled_batches():
+    args = cli.build_parser().parse_args([
+        "--target",
+        "neogiga",
+        "--publish",
+        "--pilot",
+        "--scale-import",
+        "--scale-import-max",
+        "70000",
+        "--limit",
+        "70000",
+    ])
+
+    assert args.scale_import is True
+    assert args.scale_import_max == 70000
+    assert args.limit == 70000

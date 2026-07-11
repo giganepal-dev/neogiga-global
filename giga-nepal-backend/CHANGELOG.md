@@ -27,6 +27,8 @@
 - Added a dry-run-first product activation/image utility that can set draft products to active while preserving approval/visibility gates and add a NeoGiga placeholder image for products missing media.
 - Changed catalog search rebuilds to index all imported JLCPCB rows, not only approved imports, while keeping SEO publication controlled by visibility/sitemap gates.
 - Added a licensed production catalog import pipeline for official manufacturer/distributor feeds with source/license validation, duplicate gates, marketplace localization overlays, provenance requirements, and dry-run/apply reports.
+- Added a configurable JLCPCB NeoGiga scale-import ceiling so controlled follow-up imports can exceed the default 20,000-row guard only when an explicit `--scale-import-max` is supplied.
+- Ran the controlled 70,000-row JLCPCB production scale import on live: 49,933 new products, 20,067 existing products refreshed, 69,880 searchable JLCPCB documents, 489,160 facets, active placeholder images for all products, and no copied/hotlinked JLCPCB product images.
 
 ## 2026-07-09 - Complete System Audit
 
