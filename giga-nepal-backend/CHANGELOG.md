@@ -41,6 +41,7 @@
 - Added a Composer post-autoload patch and app database config fallback for Laravel 11's deprecated `PDO::MYSQL_ATTR_SSL_CA` default so PHP 8.5 local/CI runs stay clean without a major framework upgrade.
 - Added licensed product image source metadata columns plus dry-run-first `product-images:audit` and `product-images:import-licensed-manifest` commands, so placeholder images can be replaced only from local files with explicit redistribution permission.
 - Added a hidden `product_image_candidates` review queue and `product-images:discover-candidates` command that can collect public source-page image URL candidates by product/MPN without downloading or publishing unapproved media.
+- Tightened public image candidate discovery with a configurable confidence floor so generic source-page images are skipped instead of filling the review queue.
 
 ## 2026-07-09 - Complete System Audit
 

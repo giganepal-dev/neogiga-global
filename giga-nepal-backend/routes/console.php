@@ -516,6 +516,7 @@ Artisan::command('product-images:import-licensed-manifest
 Artisan::command('product-images:discover-candidates
     {--apply : Persist candidates. Without this flag the command is a dry-run.}
     {--limit=100 : Maximum products to inspect.}
+    {--min-confidence=0.70 : Minimum candidate confidence to store.}
     {--timeout=8 : HTTP timeout seconds per source page.}', function () {
     if (! Schema::hasTable('products') || ! Schema::hasTable('catalog_product_sources') || ! Schema::hasTable('catalog_sources')) {
         $this->error('Required products/catalog source tables are missing.');
@@ -530,6 +531,7 @@ Artisan::command('product-images:discover-candidates
 
     $apply = (bool) $this->option('apply');
     $limit = max(1, (int) $this->option('limit'));
+    $minConfidence = max(0.0, min(1.0, (float) $this->option('min-confidence')));
     $timeout = max(2, min(30, (int) $this->option('timeout')));
     $placeholderPath = '/images/products/neogiga-component-placeholder.svg';
     $extractCandidates = function (string $html, string $baseUrl, string $mpn): array {
@@ -640,6 +642,12 @@ Artisan::command('product-images:discover-candidates
             continue;
         }
 
+        $found = array_values(array_filter($found, fn ($candidate) => (float) $candidate['confidence'] >= $minConfidence));
+        if (! $found) {
+            $skipped[] = [$row->product_id, 'only low-confidence/generic image candidates'];
+            continue;
+        }
+
         foreach ($found as $candidate) {
             $candidates[] = [
                 'product_id' => $row->product_id,
@@ -665,6 +673,7 @@ Artisan::command('product-images:discover-candidates
 
     $this->line('Candidate image URL(s) found: '.count($candidates));
     $this->line('Skipped product(s): '.count($skipped));
+    $this->line('Minimum confidence: '.$minConfidence);
     if ($skipped) {
         $this->table(['Product ID', 'Reason'], array_slice($skipped, 0, 20));
     }
