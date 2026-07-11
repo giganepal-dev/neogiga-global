@@ -13,6 +13,12 @@ class RebuildApprovedImportSearchIndexJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $timeout = 3600;
+
+    public int $tries = 1;
+
+    public bool $failOnTimeout = true;
+
     public function __construct(public int $jobId, public string $sourceCode = 'jlcpcb_parts_database')
     {
     }
