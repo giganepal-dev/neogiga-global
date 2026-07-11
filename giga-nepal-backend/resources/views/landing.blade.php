@@ -143,8 +143,8 @@
             <a href="#categories">Categories</a>
             <a href="#ai">AI Commerce</a>
             <a href="#learn">Learn</a>
-            <a href="/sell-on-neogiga">Sell</a>
-            <a href="/distributors">Distributors</a>
+            <a href="/en/sell-on-neogiga">Sell</a>
+            <a href="/en/distributors">Distributors</a>
             <a href="#b2b">B2B</a>
         </nav>
         <div class="spacer"></div>
@@ -182,8 +182,8 @@
                 From hobbyist benches to factory floors.
             </p>
             <div class="cta-row">
-                <a class="btn btn-gold" href="/seller-early-access">Apply for Seller Early Access</a>
-                <a class="btn btn-ghost" href="/ai-commerce">Try AI Project Builder</a>
+                <a class="btn btn-gold" href="/en/seller-early-access">Apply for Seller Early Access</a>
+                <a class="btn btn-ghost" href="/en/ai-commerce">Try AI Project Builder</a>
             </div>
             <p class="domains">
                 Regional editions:
@@ -223,7 +223,7 @@
                     <p>From idea to component list, quote, cart, and learning guide. The public demo uses local
                        NeoGiga rules to suggest components, alternatives, tutorials, stock checks, and buying
                        options without creating an order or payment.</p>
-                    <p style="margin-top:12px"><a class="btn btn-ghost" href="/ai-commerce">Try AI Project Builder</a></p>
+                    <p style="margin-top:12px"><a class="btn btn-ghost" href="/en/ai-commerce">Try AI Project Builder</a></p>
                 </article>
                 <article class="card" id="learn">
                     <div class="ic" aria-hidden="true">🎓</div>
@@ -236,7 +236,7 @@
                     <h3>Sell on NeoGiga</h3>
                     <p>Reach engineers, makers, schools, labs, workshops, resellers, and B2B buyers across South Asia.
                        Seller portal is launching soon; early applicants will be reviewed first for Nepal and India.</p>
-                    <p style="margin-top:12px"><a class="btn btn-ghost" href="/sell-on-neogiga">Apply for Seller Early Access</a></p>
+                    <p style="margin-top:12px"><a class="btn btn-ghost" href="/en/sell-on-neogiga">Apply for Seller Early Access</a></p>
                 </article>
                 <article class="card" id="b2b">
                     <div class="ic" aria-hidden="true">🏭</div>
@@ -256,8 +256,8 @@
                     <small>Onboard once, sell across neogiga.com, neogiga.in and giganepal.com with regional
                     approval, stock visibility, RFQ support and transparent settlement.</small>
                 </h2>
-                <a class="btn btn-gold" href="/seller-early-access">Apply for Seller Early Access</a>
-                <a class="btn btn-ghost" href="/distributors">Join Distributor Network</a>
+                <a class="btn btn-gold" href="/en/seller-early-access">Apply for Seller Early Access</a>
+                <a class="btn btn-ghost" href="/en/distributors">Join Distributor Network</a>
             </div>
         </div>
     </section>
