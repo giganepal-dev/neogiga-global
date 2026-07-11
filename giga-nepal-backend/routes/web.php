@@ -13,6 +13,7 @@ use App\Http\Controllers\Web\AiCommercePageController;
 use App\Http\Controllers\Web\LmsPageController;
 use App\Http\Controllers\Web\MarketplacePreferenceController;
 use App\Http\Controllers\Web\PasswordResetController;
+use App\Http\Controllers\Web\RedesignController;
 use App\Http\Controllers\Web\SellOnNeoGigaController;
 use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\SeoLandingController;
@@ -230,17 +231,20 @@ Route::get('/sso/consume', [SsoController::class, 'consume'])
 Route::get('/learn', [LmsPageController::class, 'index']);
 Route::get('/learning', [LmsPageController::class, 'index']);
 Route::get('/learn/projects/{slug}', [LmsPageController::class, 'project']);
-Route::get('/', LandingController::class);
-Route::get('/categories', [CategoryController::class, 'index']);
-Route::get('/categories/{slug}', [CategoryController::class, 'show'])->where('slug', '[a-z0-9\-]+');
+Route::redirect('/', '/en', 301);
+// Stitch "Precision Engineering" redesign preview (noindex; does not touch the
+// live homepage/layout). Promote to the live home only after review.
+Route::get('/preview/home', [RedesignController::class, 'home']);
+Route::get('/categories', fn (\Illuminate\Http\Request $request) => redirect()->to('/en/categories' . ($request->getQueryString() ? '?' . $request->getQueryString() : ''), 301));
+Route::get('/categories/{slug}', fn (\Illuminate\Http\Request $request, string $slug) => redirect()->to('/en/categories/' . $slug . ($request->getQueryString() ? '?' . $request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+');
 Route::get('/manufacturers/{slug}', [SeoLandingController::class, 'manufacturer'])->where('slug', '[a-z0-9\-]+');
 Route::get('/mpn/{mpn}', [SeoLandingController::class, 'mpn'])->where('mpn', '[A-Za-z0-9\\.\\-_]+');
 Route::get('/technologies/{slug}', [SeoLandingController::class, 'technology'])->where('slug', '[a-z0-9\-]+');
 Route::get('/applications/{slug}', [SeoLandingController::class, 'application'])->where('slug', '[a-z0-9\-]+');
 Route::get('/countries/{code}', [SeoLandingController::class, 'country'])->where('code', '[A-Za-z]{2,3}');
-Route::get('/products', [\App\Http\Controllers\Web\ProductPageController::class, 'index'])->name('products.index');
+Route::get('/products', fn (\Illuminate\Http\Request $request) => redirect()->to('/en/products' . ($request->getQueryString() ? '?' . $request->getQueryString() : ''), 301))->name('products.index');
 Route::post('/products/{slug}/reviews', [\App\Http\Controllers\Web\ProductPageController::class, 'storeReview'])->where('slug', '[a-z0-9\-]+')->middleware('throttle:4,1')->name('products.reviews.store');
-Route::get('/products/{slug}', [\App\Http\Controllers\Web\ProductPageController::class, 'show'])->where('slug', '[a-z0-9\-]+')->name('products.show');
+Route::get('/products/{slug}', fn (\Illuminate\Http\Request $request, string $slug) => redirect()->to('/en/products/' . $slug . ($request->getQueryString() ? '?' . $request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+')->name('products.show');
 Route::get('/cart', [CartPageController::class, 'show'])->name('cart.show');
 Route::post('/cart/items', [CartPageController::class, 'add'])->middleware('throttle:30,1')->name('cart.items.add');
 Route::patch('/cart/items/{item}', [CartPageController::class, 'update'])->whereNumber('item')->middleware('throttle:30,1')->name('cart.items.update');
@@ -248,7 +252,7 @@ Route::delete('/cart/items/{item}', [CartPageController::class, 'remove'])->wher
 Route::get('/checkout', [CartPageController::class, 'checkout'])->name('checkout.show');
 Route::post('/checkout', [CartPageController::class, 'placeOrder'])->middleware('throttle:10,1')->name('checkout.place');
 Route::get('/checkout/thank-you/{orderNumber}', [CartPageController::class, 'thankYou'])->where('orderNumber', '[A-Z0-9\\-]+')->name('checkout.thank-you');
-Route::get('/rfq', [\App\Http\Controllers\Web\RfqPageController::class, 'create'])->name('rfq.create');
+Route::get('/rfq', fn (\Illuminate\Http\Request $request) => redirect()->to('/en/rfq' . ($request->getQueryString() ? '?' . $request->getQueryString() : ''), 301))->name('rfq.create');
 Route::post('/rfq', [\App\Http\Controllers\Web\RfqPageController::class, 'store'])->middleware('throttle:6,1')->name('rfq.store');
 Route::get('/sitemap.xml', SitemapController::class);
 

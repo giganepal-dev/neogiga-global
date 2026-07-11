@@ -32,6 +32,7 @@
 - Tightened sitemap generation to include only `visibility_status=public` products so marketplace-searchable imports do not become SEO-published accidentally.
 - Added the global SEO/i18n architecture foundation: 28 locale-prefixed public routes, marketplace metadata config, hreflang/SEO service, country localization/payment/warehouse/pricing plans, redirect policy, schema guide, SEO template library, and validation backlog.
 - Fixed category detail pages by always providing related LMS lesson data to the frontend category view, preventing `/categories/{slug}` 500 errors when no lessons are linked.
+- Canonicalized the global storefront so `neogiga.com/`, catalog, product, and RFQ GET URLs redirect to `/en/...`, and updated landing canonical, hreflang, JSON-LD, and sitemap metadata to point at `/en`.
 
 ## 2026-07-09 - Complete System Audit
 

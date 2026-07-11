@@ -38,7 +38,7 @@ class SitemapController extends Controller
         $cacheKey = 'seo:sitemap:' . $host . ':' . ($includeCatalog ? 'full' : 'min');
         $xml = Cache::remember($cacheKey, 3600, function () use ($includeCatalog) {
             $urls = [[
-                'loc' => url('/'),
+                'loc' => url('/en'),
                 'lastmod' => now()->toAtomString(),
                 'priority' => '1.0',
             ]];
@@ -54,7 +54,7 @@ class SitemapController extends Controller
                         ->get(['slug', 'updated_at'])
                         ->each(function (ProductCategory $category) use (&$urls) {
                             $urls[] = [
-                                'loc' => url('/categories/' . $category->slug),
+                                'loc' => url('/en/categories/' . $category->slug),
                                 'lastmod' => optional($category->updated_at)->toAtomString() ?? now()->toAtomString(),
                                 'priority' => '0.7',
                             ];
@@ -72,7 +72,7 @@ class SitemapController extends Controller
                         ->get(['slug', 'updated_at'])
                         ->each(function (object $product) use (&$urls) {
                             $urls[] = [
-                                'loc' => url('/products/' . $product->slug),
+                                'loc' => url('/en/products/' . $product->slug),
                                 'lastmod' => $this->lastmod($product->updated_at ?? null),
                                 'priority' => '0.6',
                             ];

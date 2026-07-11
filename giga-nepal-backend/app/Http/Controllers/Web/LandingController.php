@@ -14,6 +14,12 @@ class LandingController extends Controller
      */
     public function __invoke(): Response
     {
+        $prefix = strtolower((string) request()->segment(1));
+        $marketplace = config("neogiga_global.prefixes.{$prefix}");
+        $canonicalPath = $marketplace ? "/{$prefix}" : '/en';
+        $canonicalUrl = url($canonicalPath);
+        $locale = $marketplace['locale'] ?? 'en';
+
         $categories = [
             ['name' => 'Semiconductors', 'slug' => 'semiconductors', 'icon' => '⚡', 'blurb' => 'ICs, MCUs, discretes, memory and logic from leading manufacturers.'],
             ['name' => 'Electronics', 'slug' => 'electronic-components', 'icon' => '🔌', 'blurb' => 'Passives, connectors, displays and every board-level component.'],
@@ -34,7 +40,7 @@ class LandingController extends Controller
                     '@id' => 'https://neogiga.com/#organization',
                     'name' => config('seo.site_name'),
                     'legalName' => config('seo.organization.legal_name'),
-                    'url' => 'https://neogiga.com',
+                    'url' => 'https://neogiga.com/en',
                     'email' => config('seo.organization.email'),
                     'sameAs' => array_values(array_filter([
                         config('seo.social.twitter'),
@@ -47,15 +53,15 @@ class LandingController extends Controller
                 ],
                 [
                     '@type' => 'WebSite',
-                    '@id' => url('/') . '/#website',
-                    'url' => url('/'),
+                    '@id' => $canonicalUrl . '#website',
+                    'url' => $canonicalUrl,
                     'name' => config('seo.site_name'),
                     'publisher' => ['@id' => 'https://neogiga.com/#organization'],
                     'potentialAction' => [
                         '@type' => 'SearchAction',
                         'target' => [
                             '@type' => 'EntryPoint',
-                            'urlTemplate' => url('/api/v1/products/search') . '?q={search_term_string}',
+                            'urlTemplate' => url($canonicalPath . '/products') . '?q={search_term_string}',
                         ],
                         'query-input' => 'required name=search_term_string',
                     ],
@@ -66,7 +72,7 @@ class LandingController extends Controller
                         '@type' => 'ListItem',
                         'position' => 1,
                         'name' => 'Home',
-                        'item' => url('/'),
+                        'item' => $canonicalUrl,
                     ]],
                 ],
                 [
@@ -96,7 +102,8 @@ class LandingController extends Controller
             ->view('landing', [
                 'categories' => $categories,
                 'jsonLd' => $jsonLd,
-                'locale' => 'en-IN',
+                'canonical' => $canonicalUrl,
+                'locale' => $locale,
             ])
             ->header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
     }
