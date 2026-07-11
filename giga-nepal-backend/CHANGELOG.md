@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-12 - Deploy-Ready Product Copy UX and Migration Hardening
+
+- Improved admin product detail copy fields with buyer-focused labels, placeholders, SEO metadata controls, and clearer simple-spec controls for sort order, public visibility, and catalog filterability.
+- Updated the public product detail page to prefer saved SEO metadata, render a cleaner buyer summary, show a dedicated Product overview before technical specifications, and hide simple specs marked not visible.
+- Fixed a malformed PCB API route middleware string that prevented Artisan boot.
+- Removed PHP 8.5 PDO deprecation warnings while preserving older PHP compatibility for MySQL SSL CA configuration.
+- Hardened JLCPCB and PCB migrations so fresh test migrations run cleanly across the current PostgreSQL test setup and non-PostgreSQL local environments.
+
 ## 2026-07-10 - JLCPCB Canonical Import Safety Gate
 
 - Added the JLCPCB/LCSC ETL as a source-controlled Laravel tool with tests, mappings, validation reports, and production run documentation.

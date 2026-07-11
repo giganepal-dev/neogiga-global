@@ -18,8 +18,8 @@ class MarketplaceContextResolver
     /**
      * Global Commerce Stage 1 resolution order:
      * 1. URL path prefix (/in, /np, ...)
-     * 2. branded-domain special case (neogiga.in / giganepal.com always win
-     *    on their own host, matching the pre-existing behavior exactly)
+     * 2. active domain/subdomain marketplace rules always win on their own
+     *    host; the global root is the only host where a cookie can override
      * 3. cookie preference
      * 4. authenticated user preference (inert until users.marketplace_id
      *    exists — reading an undefined attribute is a safe null in Eloquent)
@@ -35,7 +35,7 @@ class MarketplaceContextResolver
         $domainMarketplace = $this->domains->resolve($request);
         $host = strtolower(parse_url('//' . $request->getHost(), PHP_URL_HOST) ?: $request->getHost());
 
-        if (in_array($host, ['neogiga.in', 'www.neogiga.in', 'giganepal.com', 'www.giganepal.com'], true)) {
+        if ($domainMarketplace && ! in_array($host, ['neogiga.com', 'www.neogiga.com'], true)) {
             return $domainMarketplace ?: $this->fallback();
         }
 

@@ -37,8 +37,27 @@
                 <div class="field"><label>Stock</label><input class="control" type="number" name="stock_quantity" value="{{ $p->stock_quantity }}"></div>
                 <div class="field"><label>Low stock</label><input class="control" type="number" name="low_stock_threshold" value="{{ $p->low_stock_threshold }}"></div>
             </div>
-            <div class="field"><label>Short description</label><textarea class="control" name="short_description">{{ $p->short_description }}</textarea></div>
-            <div class="field"><label>Description</label><textarea class="control" name="description" rows="6">{{ $p->description }}</textarea></div>
+            <div class="field">
+                <label>Short summary</label>
+                <textarea class="control" name="short_description" rows="3" maxlength="1000" placeholder="Example: Compact ESP32 development board for Wi-Fi/Bluetooth prototypes, classroom labs, and IoT proof-of-concepts.">{{ $p->short_description }}</textarea>
+                <div class="sub">Shown near the top of the product page. Keep it buyer-focused, specific, and easy to scan.</div>
+            </div>
+            <div class="field">
+                <label>Detailed description</label>
+                <textarea class="control" name="description" rows="8" placeholder="Describe practical use cases, compatibility, included items, engineering benefits, compliance notes, and sourcing guidance. Use short paragraphs rather than copied datasheet text.">{{ $p->description }}</textarea>
+                <div class="sub">Used for the public Product overview section before technical specifications.</div>
+            </div>
+            <div class="field">
+                <label>SEO title</label>
+                <input class="control" name="meta_title" value="{{ $p->meta_title ?? '' }}" maxlength="60" placeholder="{{ $p->name }} - Buy Online from NeoGiga">
+                <div class="sub">Recommended: 50-60 characters, include product type, MPN or manufacturer when useful.</div>
+            </div>
+            <div class="field">
+                <label>SEO description</label>
+                <textarea class="control" name="meta_description" rows="3" maxlength="160" placeholder="Buy {{ $p->name }} with specs, RFQ sourcing, regional availability, and engineering support from NeoGiga.">{{ $p->meta_description ?? '' }}</textarea>
+                <div class="sub">Recommended: 140-160 characters. This maps to the existing product save flow.</div>
+            </div>
+            <div class="sub">Copy standard: write original marketplace copy. Do not paste copyrighted distributor descriptions.</div>
             <button class="btn btn-primary" type="submit">Save product</button>
         </form>
     </div>
@@ -274,9 +293,22 @@
             <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
             <h3>Simple Specs</h3>
             @forelse($productSpecs as $spec)
-                <div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)"><span><strong>{{ $spec->name }}</strong>: {{ $spec->value }} {{ $spec->unit }}</span><form method="post" action="/admin/products/{{ $p->id }}/specs/{{ $spec->id }}">@csrf @method('DELETE')<button class="btn btn-ghost danger" type="submit">Delete</button></form></div>
+                <div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)"><span><strong>{{ $spec->name }}</strong>: {{ $spec->value }} {{ $spec->unit }}<div class="sub">Sort {{ $spec->sort_order ?? 100 }} · {{ $spec->is_visible ? 'visible on product page' : 'hidden from product page' }}{{ $spec->is_filterable ? ' · filterable in catalog' : '' }}</div></span><form method="post" action="/admin/products/{{ $p->id }}/specs/{{ $spec->id }}">@csrf @method('DELETE')<button class="btn btn-ghost danger" type="submit">Delete</button></form></div>
             @empty <div class="sub">No specs yet.</div> @endforelse
-            <form method="post" action="/admin/products/{{ $p->id }}/specs" class="form-grid" style="margin-top:12px">@csrf<input class="control" name="name" placeholder="Voltage" required><input class="control" name="value" placeholder="12"><input class="control" name="unit" placeholder="V"><button class="btn" type="submit">Add spec</button></form>
+            <form method="post" action="/admin/products/{{ $p->id }}/specs" class="form-stack" style="margin-top:12px">@csrf
+                <div class="form-grid">
+                    <div class="field"><label>Spec name</label><input class="control" name="name" placeholder="Voltage / Connector / Package" required></div>
+                    <div class="field"><label>Value</label><input class="control" name="value" placeholder="12 / 2.4 / 1000"></div>
+                    <div class="field"><label>Unit</label><input class="control" name="unit" placeholder="V / mm / pcs"></div>
+                    <div class="field"><label>Sort order</label><input class="control" type="number" name="sort_order" min="0" value="100" placeholder="100"></div>
+                </div>
+                <div class="form-grid">
+                    <label><input type="checkbox" name="is_visible" value="1" checked> Visible on public page</label>
+                    <label><input type="checkbox" name="is_filterable" value="1"> Filterable in catalog</label>
+                </div>
+                <div class="sub">Use simple specs for buyer-facing facts. Put detailed electrical/parametric specs in advanced template specs when available.</div>
+                <button class="btn" type="submit">Add spec</button>
+            </form>
         </div>
     </div>
 
