@@ -8,10 +8,11 @@
     <meta name="description" content="{{ $description ?? config('seo.default_description') }}">
     <link rel="canonical" href="{{ $canonical ?? url('/') }}">
 
-    {{-- hreflang cluster (Blueprint §42 — ccTLD editions, x-default → .com) --}}
-    @foreach (config('seo.editions') as $lang => $edition)
-        <link rel="alternate" hreflang="{{ $lang }}" href="{{ $edition['domain'] }}/">
+    {{-- hreflang cluster: canonical global edition lives at /en; country storefronts use locale prefixes. --}}
+    @foreach (config('neogiga_global.prefixes', []) as $prefix => $edition)
+        <link rel="alternate" hreflang="{{ $edition['locale'] }}" href="{{ url('/'.$prefix) }}">
     @endforeach
+    <link rel="alternate" hreflang="x-default" href="{{ url('/en') }}">
 
     {{-- OpenGraph --}}
     <meta property="og:type" content="website">
@@ -129,7 +130,7 @@
 
 <header>
     <div class="wrap nav">
-        <a class="logo" href="/" aria-label="NeoGiga home">
+        <a class="logo" href="/en" aria-label="NeoGiga home">
             {{-- NeoGiga mark: hex/circuit motif in cyan + gold --}}
             <svg width="34" height="34" viewBox="0 0 48 48" fill="none" aria-hidden="true">
                 <path d="M24 3 42 13.5v21L24 45 6 34.5v-21L24 3Z" stroke="#19D3F5" stroke-width="2.6"/>
