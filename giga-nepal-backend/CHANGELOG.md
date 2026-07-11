@@ -26,6 +26,7 @@
 - Upgraded JLCPCB localized SEO templates to professional country-specific commercial titles/descriptions for Global, India, and Nepal, including category/product/brand tags and keywords such as local stock, fast dispatch, and RFQ sourcing while keeping imported records noindex until review.
 - Added a dry-run-first product activation/image utility that can set draft products to active while preserving approval/visibility gates and add a NeoGiga placeholder image for products missing media.
 - Changed catalog search rebuilds to index all imported JLCPCB rows, not only approved imports, while keeping SEO publication controlled by visibility/sitemap gates.
+- Added a licensed production catalog import pipeline for official manufacturer/distributor feeds with source/license validation, duplicate gates, marketplace localization overlays, provenance requirements, and dry-run/apply reports.
 
 ## 2026-07-09 - Complete System Audit
 

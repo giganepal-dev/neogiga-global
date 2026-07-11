@@ -1,0 +1,42 @@
+marketplaces:
+  india:
+    country: India
+    locale: en-IN
+    currency: INR
+    domain: neogiga.in
+    brand: NeoGiga India
+    product_title_template: "Buy {mpn} Online in India | Local Stock & RFQ Sourcing | NeoGiga India"
+    product_description_template: "Source {name} in India through NeoGiga India. Availability, GST, warranty and dispatch are confirmed from configured marketplace stock and sellers."
+    shipping_text: "India shipping is calculated from configured warehouses and seller routes; do not assume local stock until inventory confirms it."
+    payment_methods: "UPI, cards, net banking and approved B2B payment methods where configured."
+    tax_information: "GST is calculated from marketplace tax configuration."
+    warranty_information: "Warranty follows seller/manufacturer terms shown at quote/order review."
+  nepal:
+    country: Nepal
+    locale: en-NP
+    currency: NPR
+    domain: giganepal.com
+    brand: GigaNepal
+    product_title_template: "Buy {mpn} in Nepal | Local Electronics Sourcing | GigaNepal"
+    product_description_template: "Source {name} in Nepal through GigaNepal. Availability, VAT, warranty and delivery are confirmed from configured marketplace stock and sellers."
+    shipping_text: "Nepal delivery depends on configured warehouses, sellers and import route."
+    payment_methods: "Wallet, bank transfer, cards and approved B2B payment methods where configured."
+    tax_information: "VAT/duties are calculated from marketplace tax configuration."
+    warranty_information: "Warranty follows seller/manufacturer terms shown at quote/order review."
+  bangladesh: {country: Bangladesh, locale: en-BD, currency: BDT, domain: bd.neogiga.com, brand: NeoGiga Bangladesh}
+  sri_lanka: {country: Sri Lanka, locale: en-LK, currency: LKR, domain: lk.neogiga.com, brand: NeoGiga Sri Lanka}
+  australia: {country: Australia, locale: en-AU, currency: AUD, domain: au.neogiga.com, brand: NeoGiga Australia}
+  usa: {country: USA, locale: en-US, currency: USD, domain: us.neogiga.com, brand: NeoGiga USA}
+  canada: {country: Canada, locale: en-CA, currency: CAD, domain: ca.neogiga.com, brand: NeoGiga Canada}
+  uk: {country: UK, locale: en-GB, currency: GBP, domain: uk.neogiga.com, brand: NeoGiga UK}
+  uae: {country: UAE, locale: en-AE, currency: AED, domain: ae.neogiga.com, brand: NeoGiga UAE}
+  saudi_arabia: {country: Saudi Arabia, locale: en-SA, currency: SAR, domain: sa.neogiga.com, brand: NeoGiga Saudi Arabia}
+  qatar: {country: Qatar, locale: en-QA, currency: QAR, domain: qa.neogiga.com, brand: NeoGiga Qatar}
+  germany: {country: Germany, locale: de-DE, currency: EUR, domain: de.neogiga.com, brand: NeoGiga Germany}
+  france: {country: France, locale: fr-FR, currency: EUR, domain: fr.neogiga.com, brand: NeoGiga France}
+  italy: {country: Italy, locale: it-IT, currency: EUR, domain: it.neogiga.com, brand: NeoGiga Italy}
+  spain: {country: Spain, locale: es-ES, currency: EUR, domain: es.neogiga.com, brand: NeoGiga Spain}
+  brazil: {country: Brazil, locale: pt-BR, currency: BRL, domain: br.neogiga.com, brand: NeoGiga Brazil}
+  south_africa: {country: South Africa, locale: en-ZA, currency: ZAR, domain: za.neogiga.com, brand: NeoGiga South Africa}
+  kenya: {country: Kenya, locale: en-KE, currency: KES, domain: ke.neogiga.com, brand: NeoGiga Kenya}
+
