@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureAdminToken;
 use App\Http\Middleware\EnsureAdminWeb;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsurePermission;
+use App\Http\Middleware\ForceMarketplaceRecommendationRedirect;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Baseline security headers on every response (SEC-07).
         $middleware->append(SecurityHeaders::class);
+        $middleware->append(ForceMarketplaceRecommendationRedirect::class);
 
         // Interim admin gate; replace with Sanctum + policies in Phase 1 (SEC-01/02).
         $middleware->alias([
