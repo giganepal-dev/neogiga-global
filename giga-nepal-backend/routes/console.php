@@ -138,6 +138,87 @@ Artisan::command('jlcpcb:repair-skus {--apply : Persist SKU changes. Without thi
     return self::SUCCESS;
 })->purpose('Repair JLCPCB-linked product SKUs from JLCPCB-* to NeoGiga NG-* format.');
 
+Artisan::command('products:activate-drafts-and-images {--apply : Persist changes. Without this flag the command is a dry-run.} {--limit=0 : Maximum products to inspect, 0 means all.}', function () {
+    if (! Schema::hasTable('products') || ! Schema::hasTable('product_images')) {
+        $this->error('Required products/product_images tables are missing.');
+
+        return self::FAILURE;
+    }
+
+    $limit = max(0, (int) $this->option('limit'));
+    $apply = (bool) $this->option('apply');
+    $targetStatus = 'approved';
+    $placeholderPath = '/images/products/neogiga-component-placeholder.svg';
+    $fileSize = file_exists(public_path(ltrim($placeholderPath, '/')))
+        ? filesize(public_path(ltrim($placeholderPath, '/')))
+        : 0;
+
+    $draftQuery = DB::table('products')->where('status', 'draft');
+    if ($limit > 0) {
+        $draftQuery->whereIn('id', DB::table('products')->where('status', 'draft')->orderBy('id')->limit($limit)->pluck('id'));
+    }
+
+    $missingImageQuery = DB::table('products as p')
+        ->whereNotExists(function ($query) {
+            $query->selectRaw('1')
+                ->from('product_images as pi')
+                ->whereColumn('pi.product_id', 'p.id')
+                ->where('pi.is_active', true);
+        })
+        ->select('p.id', 'p.name', 'p.sku');
+
+    if ($limit > 0) {
+        $missingImageQuery->orderBy('p.id')->limit($limit);
+    }
+
+    $draftCount = (clone $draftQuery)->count();
+    $missingImages = $missingImageQuery->orderBy('p.id')->get();
+
+    $this->line('Draft products to activate: '.$draftCount);
+    $this->line('Products missing active image: '.$missingImages->count());
+    $this->line('Target products.status: '.$targetStatus.' (database active catalog state)');
+    $this->line('Placeholder image: '.$placeholderPath);
+    $this->line('Safety: approval_status and visibility_status are preserved.');
+
+    if (! $apply) {
+        $this->comment('Dry-run only. Re-run with --apply to persist activation and placeholder images.');
+
+        return self::SUCCESS;
+    }
+
+    DB::transaction(function () use ($draftQuery, $missingImages, $placeholderPath, $fileSize, $targetStatus) {
+        $draftQuery->update([
+            'status' => $targetStatus,
+            'updated_at' => now(),
+        ]);
+
+        foreach ($missingImages->chunk(500) as $chunk) {
+            DB::table('product_images')->insert($chunk->map(function ($product) use ($placeholderPath, $fileSize) {
+                $name = trim((string) ($product->name ?: $product->sku ?: 'NeoGiga product'));
+
+                return [
+                    'product_id' => $product->id,
+                    'file_path' => $placeholderPath,
+                    'file_name' => 'neogiga-component-placeholder.svg',
+                    'mime_type' => 'image/svg+xml',
+                    'file_size' => $fileSize,
+                    'sort_order' => 1,
+                    'is_primary' => true,
+                    'alt_text' => mb_substr($name.' product image', 0, 255),
+                    'caption' => 'NeoGiga catalog placeholder image pending product media review.',
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            })->all());
+        }
+    });
+
+    $this->info('Activated '.$draftCount.' draft product(s) and inserted '.$missingImages->count().' placeholder image row(s).');
+
+    return self::SUCCESS;
+})->purpose('Activate draft products while preserving approval/visibility, and add placeholder images for products missing images.');
+
 Schedule::job(new DetectAbandonedCartsJob)->everyFifteenMinutes();
 Schedule::job(new CalculateTrendingProductsJob)->hourly();
 Schedule::job(new CalculateTrendingCategoriesJob)->hourly();
