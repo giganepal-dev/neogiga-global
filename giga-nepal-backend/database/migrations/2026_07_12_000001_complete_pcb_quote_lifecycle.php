@@ -12,26 +12,35 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('pcb_quote_configurations', function (Blueprint $table) {
-            if (! Schema::hasColumn('pcb_quote_configurations', 'order_id')) {
+        $missing = collect([
+            'order_id', 'submitted_at', 'quoted_at', 'quote_valid_until',
+            'customer_approved_at', 'customer_rejected_at', 'customer_notes',
+        ])->reject(fn (string $column) => Schema::hasColumn('pcb_quote_configurations', $column))->all();
+
+        if (! $missing) {
+            return;
+        }
+
+        Schema::table('pcb_quote_configurations', function (Blueprint $table) use ($missing) {
+            if (in_array('order_id', $missing, true)) {
                 $table->foreignId('order_id')->nullable()->after('project_id')->constrained('orders')->nullOnDelete();
             }
-            if (! Schema::hasColumn('pcb_quote_configurations', 'submitted_at')) {
+            if (in_array('submitted_at', $missing, true)) {
                 $table->timestamp('submitted_at')->nullable();
             }
-            if (! Schema::hasColumn('pcb_quote_configurations', 'quoted_at')) {
+            if (in_array('quoted_at', $missing, true)) {
                 $table->timestamp('quoted_at')->nullable();
             }
-            if (! Schema::hasColumn('pcb_quote_configurations', 'quote_valid_until')) {
+            if (in_array('quote_valid_until', $missing, true)) {
                 $table->date('quote_valid_until')->nullable();
             }
-            if (! Schema::hasColumn('pcb_quote_configurations', 'customer_approved_at')) {
+            if (in_array('customer_approved_at', $missing, true)) {
                 $table->timestamp('customer_approved_at')->nullable();
             }
-            if (! Schema::hasColumn('pcb_quote_configurations', 'customer_rejected_at')) {
+            if (in_array('customer_rejected_at', $missing, true)) {
                 $table->timestamp('customer_rejected_at')->nullable();
             }
-            if (! Schema::hasColumn('pcb_quote_configurations', 'customer_notes')) {
+            if (in_array('customer_notes', $missing, true)) {
                 $table->text('customer_notes')->nullable();
             }
         });
