@@ -12,8 +12,8 @@ Do not scale beyond 1,000 rows until the remaining gates below are complete.
 - Completed: database size after pilot reviewed at 58 MB.
 - Pending: manually inspect sample imported products in admin.
 - Pending: review pending brands/categories created during failed stopped attempts.
-- Pending: implement or schedule search-index/facet rebuild for imported products.
-- Pending: define sitemap/SEO publication gate so thin imported pages remain hidden until review.
+- Completed: implement or schedule search-index/facet rebuild for imported products.
+- Completed: define sitemap/SEO publication gate so hidden or review-pending imported pages remain excluded; sitemap includes only public visible product URLs and cache is cleared on import review/publish/reject changes.
 
 ## Still forbidden in current execution
 

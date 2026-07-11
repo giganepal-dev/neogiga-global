@@ -19,6 +19,7 @@
 - Hardened public/API product visibility so approved-but-hidden imported products remain excluded from listing, detail, category, SEO landing, cart, and review submission flows.
 - Added a guarded JLCPCB approved-import publication workflow and visibility-aware public facet counts; approved hidden imports can now be published explicitly from admin without automatic exposure.
 - Added a guarded bulk-publish action for approved hidden JLCPCB imports so admins can deliberately promote reviewed rows in small batches and queue one search/facet rebuild.
+- Added the JLCPCB sitemap/SEO publication gate: sitemap product URLs now use the public visibility service only, and import review/publish/reject actions clear the sitemap cache.
 
 ## 2026-07-09 - Complete System Audit
 

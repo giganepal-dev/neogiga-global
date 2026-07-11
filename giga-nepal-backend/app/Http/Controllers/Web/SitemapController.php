@@ -4,15 +4,17 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\ProductCategory;
+use App\Services\Product\ProductVisibilityService;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 /**
- * Dynamic sitemap (Blueprint §42). Currently: landing page + active
- * category slugs (future category pages). Grows into sharded sitemaps
- * driven by catalog events in Phase 2.
+ * Dynamic sitemap (Blueprint §42). Includes only public catalog surfaces.
+ * Large catalogs should move to sitemap indexes/shards before high-scale
+ * publication, but this gate keeps hidden/review-pending imports out now.
  */
 class SitemapController extends Controller
 {
@@ -42,6 +44,23 @@ class SitemapController extends Controller
                             ];
                         });
                 }
+
+                if (Schema::hasTable('products')) {
+                    app(ProductVisibilityService::class)
+                        ->publicProducts()
+                        ->whereNotNull('slug')
+                        ->where('slug', '!=', '')
+                        ->orderByDesc('updated_at')
+                        ->limit(5000)
+                        ->get(['slug', 'updated_at'])
+                        ->each(function (object $product) use (&$urls) {
+                            $urls[] = [
+                                'loc' => url('/products/' . $product->slug),
+                                'lastmod' => $this->lastmod($product->updated_at ?? null),
+                                'priority' => '0.6',
+                            ];
+                        });
+                }
             } catch (Throwable) {
                 // Keep sitemap available before database provisioning.
             }
@@ -50,9 +69,12 @@ class SitemapController extends Controller
                 . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
             foreach ($urls as $url) {
-                $out .= "  <url><loc>{$url['loc']}</loc>"
-                    . "<lastmod>{$url['lastmod']}</lastmod>"
-                    . "<priority>{$url['priority']}</priority></url>\n";
+                $loc = e($url['loc']);
+                $lastmod = e($url['lastmod']);
+                $priority = e($url['priority']);
+                $out .= "  <url><loc>{$loc}</loc>"
+                    . "<lastmod>{$lastmod}</lastmod>"
+                    . "<priority>{$priority}</priority></url>\n";
             }
 
             return $out . '</urlset>';
@@ -61,5 +83,18 @@ class SitemapController extends Controller
         return response($xml, 200)
             ->header('Content-Type', 'application/xml')
             ->header('Cache-Control', 'public, max-age=3600');
+    }
+
+    private function lastmod(mixed $value): string
+    {
+        if ($value instanceof CarbonInterface) {
+            return $value->toAtomString();
+        }
+
+        if (is_string($value) && $value !== '') {
+            return date(DATE_ATOM, strtotime($value) ?: time());
+        }
+
+        return now()->toAtomString();
     }
 }
