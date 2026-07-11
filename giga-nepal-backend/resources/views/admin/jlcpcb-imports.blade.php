@@ -14,6 +14,54 @@
     <div class="kpi"><div class="t">Search Docs</div><div class="v tnum">{{ number_format($stats['indexed']) }}</div><div class="s">{{ number_format($stats['facets']) }} facet values</div></div>
 </div>
 
+<section class="card" style="margin-bottom:16px">
+    <div class="card-h">
+        <div>
+            <h2>Taxonomy Review Gate</h2>
+            <div class="sub">Read-only brand/category checks for the JLCPCB pilot before any larger import scale.</div>
+        </div>
+        <span class="badge {{ (($taxonomyReview['flagged_brands'] ?? 0) + ($taxonomyReview['flagged_categories'] ?? 0)) > 0 ? 'b-warn' : 'b-ok' }}">
+            {{ (($taxonomyReview['flagged_brands'] ?? 0) + ($taxonomyReview['flagged_categories'] ?? 0)) }} review flags
+        </span>
+    </div>
+    <div class="grid kpis" style="padding:0 16px 14px">
+        <div class="kpi"><div class="t">Brands</div><div class="v tnum">{{ number_format($taxonomyReview['distinct_brands'] ?? 0) }}</div><div class="s">{{ number_format($taxonomyReview['products_without_brand'] ?? 0) }} products without brand</div></div>
+        <div class="kpi"><div class="t">Categories</div><div class="v tnum">{{ number_format($taxonomyReview['distinct_categories'] ?? 0) }}</div><div class="s">{{ number_format($taxonomyReview['products_without_category'] ?? 0) }} products without category</div></div>
+        <div class="kpi"><div class="t">Brand Flags</div><div class="v tnum">{{ number_format($taxonomyReview['flagged_brands'] ?? 0) }}</div><div class="s">top imported brand names needing review</div></div>
+        <div class="kpi"><div class="t">Category Flags</div><div class="v tnum">{{ number_format($taxonomyReview['flagged_categories'] ?? 0) }}</div><div class="s">generic or unmapped category labels</div></div>
+    </div>
+    <div class="grid two">
+        <div class="scroll-x">
+            <table class="tbl">
+                <thead><tr><th>Imported Brand</th><th class="num">Products</th><th>Gate</th></tr></thead>
+                <tbody>
+                @foreach(($taxonomyReview['brands'] ?? collect()) as $brand)
+                    <tr>
+                        <td>{{ $brand->name ?: 'Unassigned' }}</td>
+                        <td class="num tnum">{{ number_format($brand->products_count) }}</td>
+                        <td><span class="badge {{ $brand->review_flag ? 'b-warn' : 'b-ok' }}">{{ $brand->review_flag ? 'Review naming' : 'OK' }}</span></td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+        <div class="scroll-x">
+            <table class="tbl">
+                <thead><tr><th>Imported Category</th><th class="num">Products</th><th>Gate</th></tr></thead>
+                <tbody>
+                @foreach(($taxonomyReview['categories'] ?? collect()) as $category)
+                    <tr>
+                        <td>{{ $category->name ?: 'Unassigned' }}</td>
+                        <td class="num tnum">{{ number_format($category->products_count) }}</td>
+                        <td><span class="badge {{ $category->review_flag ? 'b-warn' : 'b-ok' }}">{{ $category->review_flag ? 'Review mapping' : 'OK' }}</span></td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
 <section class="card">
     <div class="card-h">
         <div><h2>Imported Product Queue</h2><div class="sub">{{ number_format($imports->total()) }} rows in this view</div></div>

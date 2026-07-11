@@ -20,6 +20,7 @@
 - Added a guarded JLCPCB approved-import publication workflow and visibility-aware public facet counts; approved hidden imports can now be published explicitly from admin without automatic exposure.
 - Added a guarded bulk-publish action for approved hidden JLCPCB imports so admins can deliberately promote reviewed rows in small batches and queue one search/facet rebuild.
 - Added the JLCPCB sitemap/SEO publication gate: sitemap product URLs now use the public visibility service only, and import review/publish/reject actions clear the sitemap cache.
+- Added a read-only JLCPCB taxonomy review gate in admin to surface imported brand/category counts and flag generic labels before larger-scale catalog imports.
 
 ## 2026-07-09 - Complete System Audit
 

@@ -367,6 +367,7 @@ class DashboardController extends Controller
                 'indexed' => Schema::hasTable('product_search_documents') ? DB::table('product_search_documents')->where('source_code', 'jlcpcb_parts_database')->count() : 0,
                 'facets' => Schema::hasTable('product_facet_values') ? DB::table('product_facet_values')->where('source_code', 'jlcpcb_parts_database')->count() : 0,
             ],
+            'taxonomyReview' => $this->jlcpcbTaxonomyReviewSummary(),
             'filters' => [
                 'q' => (string) $request->query('q', ''),
                 'review_status' => $status,
@@ -374,6 +375,57 @@ class DashboardController extends Controller
                 'quality' => (string) $request->query('quality', ''),
             ],
         ]);
+    }
+
+    private function jlcpcbTaxonomyReviewSummary(): array
+    {
+        $base = DB::table('catalog_product_sources as cps')
+            ->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')
+            ->join('products as p', 'p.id', '=', 'cps.product_id')
+            ->where('cs.code', 'jlcpcb_parts_database');
+
+        $brands = (clone $base)
+            ->leftJoin('product_brands as b', 'b.id', '=', 'p.brand_id')
+            ->select('b.id', 'b.name', DB::raw('count(*) as products_count'))
+            ->groupBy('b.id', 'b.name')
+            ->orderByDesc('products_count')
+            ->orderBy('b.name')
+            ->limit(20)
+            ->get()
+            ->map(function ($row) {
+                $name = trim((string) ($row->name ?? ''));
+                $row->review_flag = $name === ''
+                    || str_contains($name, '(')
+                    || str_contains($name, ')')
+                    || in_array(strtolower($name), ['made in china', 'unknown', 'generic'], true);
+                return $row;
+            });
+
+        $genericCategories = ['smd', 'leaded', 'needs review', 'unknown', 'uncategorized', 'other'];
+        $categories = (clone $base)
+            ->leftJoin('product_categories as c', 'c.id', '=', 'p.category_id')
+            ->select('c.id', 'c.name', DB::raw('count(*) as products_count'))
+            ->groupBy('c.id', 'c.name')
+            ->orderByDesc('products_count')
+            ->orderBy('c.name')
+            ->limit(24)
+            ->get()
+            ->map(function ($row) use ($genericCategories) {
+                $name = trim((string) ($row->name ?? ''));
+                $row->review_flag = $name === '' || in_array(strtolower($name), $genericCategories, true);
+                return $row;
+            });
+
+        return [
+            'distinct_brands' => (clone $base)->whereNotNull('p.brand_id')->distinct('p.brand_id')->count('p.brand_id'),
+            'distinct_categories' => (clone $base)->whereNotNull('p.category_id')->distinct('p.category_id')->count('p.category_id'),
+            'products_without_brand' => (clone $base)->whereNull('p.brand_id')->count(),
+            'products_without_category' => (clone $base)->whereNull('p.category_id')->count(),
+            'brands' => $brands,
+            'categories' => $categories,
+            'flagged_brands' => $brands->where('review_flag', true)->count(),
+            'flagged_categories' => $categories->where('review_flag', true)->count(),
+        ];
     }
 
     private function safeMarketplacePrices(int $productId)
