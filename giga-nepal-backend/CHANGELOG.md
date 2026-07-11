@@ -42,6 +42,7 @@
 - Added licensed product image source metadata columns plus dry-run-first `product-images:audit` and `product-images:import-licensed-manifest` commands, so placeholder images can be replaced only from local files with explicit redistribution permission.
 - Added a hidden `product_image_candidates` review queue and `product-images:discover-candidates` command that can collect public source-page image URL candidates by product/MPN without downloading or publishing unapproved media.
 - Tightened public image candidate discovery with a configurable confidence floor so generic source-page images are skipped instead of filling the review queue.
+- Added product image candidate listing/export and review-status commands so operations can prepare licensed image manifests and approve/reject candidates without changing public product images.
 
 ## 2026-07-09 - Complete System Audit
 
