@@ -64,6 +64,7 @@ class SitemapController extends Controller
                 if ($includeCatalog && Schema::hasTable('products')) {
                     app(ProductVisibilityService::class)
                         ->publicProducts()
+                        ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->where('visibility_status', 'public'))
                         ->whereNotNull('slug')
                         ->where('slug', '!=', '')
                         ->orderByDesc('updated_at')
