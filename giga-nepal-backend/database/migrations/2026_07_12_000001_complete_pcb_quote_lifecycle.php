@@ -8,10 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (! Schema::hasTable('pcb_quote_configurations')) {
-            return;
-        }
-
         $missing = collect([
             'order_id', 'submitted_at', 'quoted_at', 'quote_valid_until',
             'customer_approved_at', 'customer_rejected_at', 'customer_notes',
