@@ -20,7 +20,23 @@ class SitemapController extends Controller
 {
     public function __invoke(): Response
     {
-        $xml = Cache::remember('seo:sitemap', 3600, function () {
+        $host = request()->getHost();
+
+        // Resolve the marketplace for this host (defensive). A marketplace that
+        // is not active+indexable+sitemap_enabled is excluded from catalog
+        // indexing (codex §7); the homepage is still listed. An unresolved host
+        // keeps the legacy full behavior.
+        $marketplace = null;
+        try {
+            $marketplace = app(\App\Services\MarketplaceResolverService::class)->resolve(request());
+        } catch (Throwable) {
+            $marketplace = null;
+        }
+        $includeCatalog = ! $marketplace
+            || ($marketplace->is_active && $marketplace->indexable && ($marketplace->sitemap_enabled ?? true));
+
+        $cacheKey = 'seo:sitemap:' . $host . ':' . ($includeCatalog ? 'full' : 'min');
+        $xml = Cache::remember($cacheKey, 3600, function () use ($includeCatalog) {
             $urls = [[
                 'loc' => url('/'),
                 'lastmod' => now()->toAtomString(),
@@ -31,7 +47,7 @@ class SitemapController extends Controller
             // On early hosting deployments, DB credentials may intentionally
             // be absent; sitemap must still return the canonical homepage.
             try {
-                if (Schema::hasTable('product_categories')) {
+                if ($includeCatalog && Schema::hasTable('product_categories')) {
                     ProductCategory::query()
                         ->where('is_active', true)
                         ->orderBy('slug')
@@ -45,7 +61,7 @@ class SitemapController extends Controller
                         });
                 }
 
-                if (Schema::hasTable('products')) {
+                if ($includeCatalog && Schema::hasTable('products')) {
                     app(ProductVisibilityService::class)
                         ->publicProducts()
                         ->whereNotNull('slug')
