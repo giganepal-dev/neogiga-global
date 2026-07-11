@@ -29,6 +29,22 @@ class MarketplaceController extends Controller
         ]);
     }
 
+    /**
+     * Public marketplace selector list: active AND publicly visible only.
+     * Hidden/preview/inactive markets are never exposed here (codex §7).
+     */
+    public function active(): JsonResponse
+    {
+        $marketplaces = Marketplace::with(['country:id,name,iso_code_2', 'currency:id,code,symbol'])
+            ->where('is_active', true)
+            ->where('is_visible', true)
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get(['id', 'name', 'code', 'country_id', 'currency_id', 'domain', 'generated_domain', 'url_prefix', 'locale', 'is_default']);
+
+        return response()->json(['success' => true, 'data' => $marketplaces]);
+    }
+
     public function current(Request $request): JsonResponse
     {
         $marketplace = $this->resolver->resolve($request);

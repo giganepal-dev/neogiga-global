@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\AI\AiCommerceController;
 use App\Http\Controllers\Api\POS\PosController;
 use App\Http\Controllers\Api\LMS\LmsController;
 use App\Http\Controllers\Api\Admin\AdminConsoleController;
+use App\Http\Controllers\Api\Admin\MarketplaceAdminController;
 use App\Http\Controllers\Api\Admin\ProductAdminController;
 use App\Http\Controllers\Api\Admin\VendorAdminController;
 use App\Http\Controllers\Api\Admin\DistributorAdminController;
@@ -97,9 +98,12 @@ Route::prefix('v1')->group(function () {
     // Marketplace resolution (public, read-only)
     Route::prefix('marketplaces')->group(function () {
         Route::get('/', [MarketplaceController::class, 'index']);
+        Route::get('/active', [MarketplaceController::class, 'active']);
         Route::get('/current', [MarketplaceController::class, 'current']);
         Route::get('/by-domain', [MarketplaceController::class, 'byDomain']);
     });
+    // Public alias used by the storefront (codex §8: GET /api/marketplace/current)
+    Route::get('/marketplace/current', [MarketplaceController::class, 'current']);
 
     // Catalog (public, read-only)
     Route::prefix('categories')->group(function () {
@@ -294,6 +298,21 @@ Route::prefix('v1')->group(function () {
 
     // Admin (fail-closed token gate; replace with Sanctum + RBAC in Phase 1)
     Route::middleware('admin.token')->group(function () {
+        // Marketplace domain/SEO/status management (codex §8). Fine-grained
+        // permission:marketplaces.* gating is a follow-up; admin.token is the
+        // fail-closed gate for now.
+        Route::prefix('admin/marketplaces')->group(function () {
+            Route::get('/', [MarketplaceAdminController::class, 'index']);
+            Route::get('/{id}', [MarketplaceAdminController::class, 'show'])->whereNumber('id');
+            Route::patch('/{id}/status', [MarketplaceAdminController::class, 'updateStatus'])->whereNumber('id');
+            Route::post('/{id}/generate-domain', [MarketplaceAdminController::class, 'generateDomain'])->whereNumber('id');
+            Route::post('/{id}/verify-domain', [MarketplaceAdminController::class, 'verifyDomain'])->whereNumber('id');
+            Route::post('/{id}/generate-seo', [MarketplaceAdminController::class, 'generateSeo'])->whereNumber('id');
+            Route::post('/{id}/validate-launch', [MarketplaceAdminController::class, 'validateLaunch'])->whereNumber('id');
+            Route::post('/{id}/clear-cache', [MarketplaceAdminController::class, 'clearCache'])->whereNumber('id');
+            Route::get('/{id}/audit-history', [MarketplaceAdminController::class, 'auditHistory'])->whereNumber('id');
+        });
+
         Route::prefix('admin/imports')->group(function () {
             Route::post('/dry-run', [ImportExportController::class, 'dryRun']);
             Route::post('/execute', [ImportExportController::class, 'execute']);
