@@ -34,6 +34,7 @@
 - Fixed category detail pages by always providing related LMS lesson data to the frontend category view, preventing `/categories/{slug}` 500 errors when no lessons are linked.
 - Canonicalized the global storefront so `neogiga.com/`, catalog, product, and RFQ GET URLs redirect to `/en/...`, and updated landing canonical, hreflang, JSON-LD, and sitemap metadata to point at `/en`.
 - Updated public navigation and landing links to target locale-prefixed URLs directly, and added `/en` routes for distributors and seller early access to reduce internal redirect hops.
+- Enabled non-forced marketplace recommendations on the `/en` landing page using country/locale signals, with crawler exclusion and cookie-backed switch/stay preferences.
 
 ## 2026-07-09 - Complete System Audit
 

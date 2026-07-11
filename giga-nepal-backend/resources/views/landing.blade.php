@@ -73,6 +73,13 @@
         .switcher select{
             background:var(--ng-navy-2);color:var(--ng-gray);border:1px solid rgba(25,211,245,.25);
             border-radius:8px;padding:6px 10px;font-size:.85rem}
+        .marketplace-recommend{background:#fff7df;color:#3b2b06;border-bottom:1px solid #f4d47b}
+        .marketplace-recommend .wrap{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 20px;flex-wrap:wrap}
+        .marketplace-recommend strong{color:#081527}
+        .recommend-actions{display:flex;gap:8px;flex-wrap:wrap}
+        .recommend-actions form{margin:0}
+        .recommend-actions button{border:1px solid #d9a514;border-radius:8px;min-height:36px;padding:0 12px;font-weight:800;background:#fff;color:#081527}
+        .recommend-actions .primary{background:var(--ng-gold)}
         /* Hero */
         .hero{position:relative;overflow:hidden;
             background:radial-gradient(1200px 500px at 70% -10%,rgba(18,58,107,.9),transparent),
@@ -127,6 +134,29 @@
     </style>
 </head>
 <body>
+@if($marketplaceContext['show_recommendation'] ?? false)
+    <aside class="marketplace-recommend" aria-label="Marketplace recommendation">
+        <div class="wrap">
+            <span>We detected a closer NeoGiga edition: <strong>{{ $marketplaceContext['recommended']['name'] }}</strong> with {{ $marketplaceContext['recommended']['currency_code'] }} pricing and regional stock. Your choice is remembered.</span>
+            <div class="recommend-actions">
+                <form method="post" action="{{ route('marketplace.preference') }}">
+                    @csrf
+                    <input type="hidden" name="marketplace" value="{{ $marketplaceContext['recommended']['code'] }}">
+                    <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
+                    <input type="hidden" name="action" value="switch">
+                    <button class="primary" type="submit">Switch to {{ $marketplaceContext['recommended']['name'] }}</button>
+                </form>
+                <form method="post" action="{{ route('marketplace.preference') }}">
+                    @csrf
+                    <input type="hidden" name="marketplace" value="{{ strtolower($marketplaceContext['current']->code ?? 'global') }}">
+                    <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
+                    <input type="hidden" name="action" value="stay">
+                    <button type="submit">Stay on {{ $marketplaceContext['current']->name ?? 'NeoGiga Global' }}</button>
+                </form>
+            </div>
+        </div>
+    </aside>
+@endif
 
 <header>
     <div class="wrap nav">

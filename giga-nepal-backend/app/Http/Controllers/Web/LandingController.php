@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Services\Marketplace\GlobalMarketplaceContextService;
 use Illuminate\Http\Response;
 
 class LandingController extends Controller
@@ -14,6 +15,7 @@ class LandingController extends Controller
      */
     public function __invoke(): Response
     {
+        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context(request());
         $prefix = strtolower((string) request()->segment(1));
         $marketplace = config("neogiga_global.prefixes.{$prefix}");
         $canonicalPath = $marketplace ? "/{$prefix}" : '/en';
@@ -104,6 +106,7 @@ class LandingController extends Controller
                 'jsonLd' => $jsonLd,
                 'canonical' => $canonicalUrl,
                 'locale' => $locale,
+                'marketplaceContext' => $marketplaceContext,
             ])
             ->header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
     }
