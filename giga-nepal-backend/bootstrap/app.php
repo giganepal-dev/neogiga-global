@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureAdminToken;
 use App\Http\Middleware\EnsureAdminWeb;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsurePermission;
+use App\Http\Middleware\EnsurePcbWebAuth;
 use App\Http\Middleware\ForceMarketplaceRecommendationRedirect;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.web' => EnsureAdminWeb::class,
             'api.token' => AuthenticateApiToken::class,
             'permission' => EnsurePermission::class,
+            'pcb.auth' => EnsurePcbWebAuth::class,
         ]);
 
         // Default API rate limit (limiter defined in AppServiceProvider).

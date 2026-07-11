@@ -293,6 +293,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2l1.5 3M18 2l-1.5 3M3 6h18l-2 12H5L3 6z" stroke-linejoin="round"/><path d="M9 10v4m6-4v4" stroke-linecap="round"/></svg>
                 Orders
             </a>
+            <a href="/admin/pcb" class="{{ str_starts_with($r,'admin/pcb') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3m6-3v3M9 19v3m6-3v3M2 9h3m-3 6h3m14-6h3m-3 6h3M9 9h6v6H9z" stroke-linecap="round"/></svg>
+                PCB Projects
+            </a>
             <a href="/admin/support" class="{{ str_starts_with($r,'admin/support') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 01-8 8H7l-4 3v-6.2A8 8 0 1113 20" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11h8M8 15h5" stroke-linecap="round"/></svg>
                 Support
@@ -380,6 +384,7 @@
                             <a class="btn btn-ghost" href="/admin/lms">Add Course</a>
                             <a class="btn btn-ghost" href="/admin/inventory">Add Warehouse</a>
                             <a class="btn btn-ghost" href="/admin/quotations">Create RFQ</a>
+                            <a class="btn btn-ghost" href="/admin/pcb">Review PCB</a>
                             <a class="btn btn-ghost" href="/admin/media">Upload Media</a>
                         </div>
                     </div>

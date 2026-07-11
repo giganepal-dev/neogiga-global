@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-07-12 - Usable PCB Customer and Admin Workflow
+
+- Replaced the generic storefront response on `pcb.neogiga.com` with a dedicated responsive PCB engineering portal and product-specific hero asset.
+- Added customer registration, login, project list, project creation, requirement editing, cancellation, and private project activity views using the existing NeoGiga user/session model.
+- Added private Gerber, BOM, CPL, schematic, source, drawing, and STEP uploads with UUID storage names, checksum metadata, extension/MIME validation, ZIP traversal protection, archive expansion/ratio limits, file versions, scan-state records, and access logs.
+- Added structural Gerber filename inspection with detected layers and engineering-review warnings; automatic DFM and automatic pricing remain explicitly disabled.
+- Added customer board-configuration quote requests, admin engineering review and manual quote issuance, quote approval/rejection, commercial snapshot capture, and idempotent conversion into the shared NeoGiga order tables.
+- Added a protected PCB project queue and project review workspace to `admin.neogiga.com`, including private file download logging, Gerber review, workflow status updates, and pricing controls.
+- Completed authenticated PCB file/quote API routes plus a public capabilities endpoint, and prevented customer API calls from escalating project manufacturing status.
+- Corrected existing PCB Eloquent relationship foreign keys to match the deployed `project_id`, `file_id`, `quote_id`, `analysis_run_id`, and CPL/component schema.
+- Added PostgreSQL-backed feature tests covering subdomain isolation, account creation, project authorization, safe/unsafe Gerber uploads, quote issuance, order conversion, admin protection, and API status security.
+
 ## 2026-07-12 - Deploy-Ready Product Copy UX and Migration Hardening
 
 - Improved admin product detail copy fields with buyer-focused labels, placeholders, SEO metadata controls, and clearer simple-spec controls for sort order, public visibility, and catalog filterability.
