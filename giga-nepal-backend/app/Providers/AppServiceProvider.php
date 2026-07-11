@@ -3,9 +3,12 @@
 namespace App\Providers;
 
 use App\Services\MarketplaceResolverService;
+use App\Services\Marketplace\GlobalMarketplaceContextService;
+use App\Services\Marketplace\MarketplaceSeoRenderer;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // One resolved marketplace per request lifecycle.
         $this->app->scoped(MarketplaceResolverService::class);
+        $this->app->scoped(GlobalMarketplaceContextService::class);
 
         // AI tool surface — DB-backed; agents can never invent price/stock.
         $this->app->bind(
@@ -34,6 +38,9 @@ class AppServiceProvider extends ServiceProvider
         // by Laravel automatically (audit finding DB-01).
         $this->loadMigrationsFrom(database_path('migrations/marketplace'));
         $this->loadMigrationsFrom(database_path('migrations/marketing'));
+        $this->loadMigrationsFrom(database_path('migrations/admin_console'));
+        $this->loadMigrationsFrom(database_path('migrations/inventory_pos'));
+        $this->loadMigrationsFrom(database_path('migrations/lms'));
 
         // Default API limiter (SEC-05). Keyed by user when authenticated, IP otherwise.
         RateLimiter::for('api', function (Request $request) {
@@ -51,6 +58,15 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('marketing', function (Request $request) {
             return Limit::perMinute(20)->by($request->user()?->id ?: $request->ip());
+        });
+
+        View::composer('frontend.*', function ($view) {
+            $request = request();
+            $context = app(GlobalMarketplaceContextService::class)->context($request);
+
+            $view->with('marketplaceContext', $context)
+                ->with('locale', $context['locale'] ?? 'en')
+                ->with('marketplaceSeo', app(MarketplaceSeoRenderer::class)->tags($context['current'] ?? null, url()->current()));
         });
     }
 }
