@@ -36,6 +36,7 @@
 - Updated public navigation and landing links to target locale-prefixed URLs directly, and added `/en` routes for distributors and seller early access to reduce internal redirect hops.
 - Enabled non-forced marketplace recommendations on the `/en` landing page using country/locale signals, with crawler exclusion and cookie-backed switch/stay preferences.
 - Added feature-flagged forced marketplace recommendation redirects for normal GET/HEAD traffic, preserving crawler, admin/API, health, sitemap, and explicit user-preference bypasses; dedicated regional domains land at their storefront homepages until catalog paths are available there.
+- Hardened the shared public frontend layout with the dark NeoGiga marketplace design tokens while keeping fonts self-contained for the existing CSP.
 
 ## 2026-07-09 - Complete System Audit
 
