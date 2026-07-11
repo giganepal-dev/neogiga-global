@@ -33,6 +33,7 @@
     },
     "scripts": {
         "post-autoload-dump": [
+            "@php tools/patches/laravel-pdo-mysql-ssl-ca.php",
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
         ],

@@ -38,6 +38,7 @@
 - Added feature-flagged forced marketplace recommendation redirects for normal GET/HEAD traffic, preserving crawler, admin/API, health, sitemap, and explicit user-preference bypasses; dedicated regional domains land at their storefront homepages until catalog paths are available there.
 - Hardened the shared public frontend layout with the dark NeoGiga marketplace design tokens while keeping fonts self-contained for the existing CSP.
 - Replaced scheduled marketing placeholder jobs with first-party safe-mode implementations for trending products/categories, top searches, abandoned cart capture/reminders, segment refresh, regional sales reports, and transactional email queue processing.
+- Added a Composer post-autoload patch and app database config fallback for Laravel 11's deprecated `PDO::MYSQL_ATTR_SSL_CA` default so PHP 8.5 local/CI runs stay clean without a major framework upgrade.
 
 ## 2026-07-09 - Complete System Audit
 
