@@ -31,6 +31,7 @@
 - Ran the controlled 70,000-row JLCPCB production scale import on live: 49,933 new products, 20,067 existing products refreshed, 69,880 searchable JLCPCB documents, 489,160 facets, active placeholder images for all products, and no copied/hotlinked JLCPCB product images.
 - Tightened sitemap generation to include only `visibility_status=public` products so marketplace-searchable imports do not become SEO-published accidentally.
 - Added the global SEO/i18n architecture foundation: 28 locale-prefixed public routes, marketplace metadata config, hreflang/SEO service, country localization/payment/warehouse/pricing plans, redirect policy, schema guide, SEO template library, and validation backlog.
+- Fixed category detail pages by always providing related LMS lesson data to the frontend category view, preventing `/categories/{slug}` 500 errors when no lessons are linked.
 
 ## 2026-07-09 - Complete System Audit
 
