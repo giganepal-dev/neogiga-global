@@ -17,6 +17,7 @@ use App\Jobs\Marketing\GenerateRegionalSalesReportJob;
 use App\Jobs\Marketing\RefreshCustomerSegmentJob;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -511,6 +512,181 @@ Artisan::command('product-images:import-licensed-manifest
 
     return self::SUCCESS;
 })->purpose('Import licensed local product images from a manifest, with dry-run and rights gates.');
+
+Artisan::command('product-images:discover-candidates
+    {--apply : Persist candidates. Without this flag the command is a dry-run.}
+    {--limit=100 : Maximum products to inspect.}
+    {--timeout=8 : HTTP timeout seconds per source page.}', function () {
+    if (! Schema::hasTable('products') || ! Schema::hasTable('catalog_product_sources') || ! Schema::hasTable('catalog_sources')) {
+        $this->error('Required products/catalog source tables are missing.');
+
+        return self::FAILURE;
+    }
+    if (! Schema::hasTable('product_image_candidates')) {
+        $this->error('product_image_candidates table is missing. Run migrations before candidate discovery.');
+
+        return self::FAILURE;
+    }
+
+    $apply = (bool) $this->option('apply');
+    $limit = max(1, (int) $this->option('limit'));
+    $timeout = max(2, min(30, (int) $this->option('timeout')));
+    $placeholderPath = '/images/products/neogiga-component-placeholder.svg';
+    $extractCandidates = function (string $html, string $baseUrl, string $mpn): array {
+        $urls = [];
+        $mpnNeedle = strtoupper(preg_replace('/[^A-Z0-9]+/i', '', $mpn) ?? '');
+        $add = function (?string $url, string $selector, string $context = '') use (&$urls, $baseUrl, $mpnNeedle): void {
+            $url = trim((string) $url);
+            if ($url === '' || str_starts_with($url, 'data:')) {
+                return;
+            }
+            if (str_starts_with($url, '//')) {
+                $url = 'https:'.$url;
+            } elseif (str_starts_with($url, '/')) {
+                $parts = parse_url($baseUrl);
+                $url = ($parts['scheme'] ?? 'https').'://'.($parts['host'] ?? '').$url;
+            } elseif (! preg_match('#^https?://#i', $url)) {
+                $url = rtrim(dirname($baseUrl), '/').'/'.$url;
+            }
+
+            if (! preg_match('/\.(jpe?g|png|webp|avif|gif)(\?|$)/i', $url)) {
+                return;
+            }
+
+            $contextNormalized = strtoupper(preg_replace('/[^A-Z0-9]+/i', '', $context) ?? '');
+            $matchedMpn = $mpnNeedle !== '' && str_contains($contextNormalized.$url, $mpnNeedle);
+            $confidence = $selector === 'meta' ? 0.75 : 0.55;
+            if ($matchedMpn) {
+                $confidence += 0.20;
+            }
+
+            $urls[$url] = [
+                'url' => $url,
+                'selector' => $selector,
+                'matched_mpn' => $matchedMpn,
+                'confidence' => min(0.95, $confidence),
+            ];
+        };
+
+        libxml_use_internal_errors(true);
+        $dom = new DOMDocument();
+        $dom->loadHTML($html);
+        $xpath = new DOMXPath($dom);
+
+        foreach ($xpath->query('//meta[@property="og:image" or @property="og:image:secure_url" or @name="twitter:image"]') ?: [] as $node) {
+            $add($node->attributes?->getNamedItem('content')?->nodeValue, 'meta');
+        }
+
+        foreach ($xpath->query('//img[@src]') ?: [] as $node) {
+            $src = $node->attributes?->getNamedItem('src')?->nodeValue;
+            $alt = $node->attributes?->getNamedItem('alt')?->nodeValue ?? '';
+            $class = $node->attributes?->getNamedItem('class')?->nodeValue ?? '';
+            $add($src, 'img', $alt.' '.$class);
+        }
+
+        return array_values($urls);
+    };
+
+    $rows = DB::table('products as p')
+        ->join('catalog_product_sources as cps', 'cps.product_id', '=', 'p.id')
+        ->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')
+        ->whereNotNull('cps.source_url')
+        ->whereExists(function ($query) use ($placeholderPath) {
+            $query->selectRaw('1')
+                ->from('product_images as pi')
+                ->whereColumn('pi.product_id', 'p.id')
+                ->where('pi.file_path', $placeholderPath)
+                ->where('pi.is_active', true);
+        })
+        ->whereNotExists(function ($query) {
+            $query->selectRaw('1')
+                ->from('product_image_candidates as pic')
+                ->whereColumn('pic.product_id', 'p.id');
+        })
+        ->orderBy('p.id')
+        ->limit($limit)
+        ->get([
+            'p.id as product_id',
+            'p.name',
+            'p.mpn',
+            'p.manufacturer_name',
+            'cps.source_url',
+            'cs.name as source_name',
+        ]);
+
+    $this->line('Products inspected: '.$rows->count());
+    $this->line('Safety: candidates remain hidden with rights_status=pending_review; no image is downloaded or published.');
+
+    $candidates = [];
+    $skipped = [];
+    foreach ($rows as $row) {
+        try {
+            $response = Http::timeout($timeout)
+                ->withHeaders(['User-Agent' => 'NeoGigaImageCandidateBot/1.0 (+https://neogiga.com)'])
+                ->get((string) $row->source_url);
+        } catch (Throwable $exception) {
+            $skipped[] = [$row->product_id, 'fetch failed'];
+            continue;
+        }
+
+        if (! $response->ok() || ! str_contains(strtolower((string) $response->header('content-type')), 'text/html')) {
+            $skipped[] = [$row->product_id, 'non-html or bad response'];
+            continue;
+        }
+
+        $found = $extractCandidates((string) $response->body(), (string) $row->source_url, (string) $row->mpn);
+        if (! $found) {
+            $skipped[] = [$row->product_id, 'no candidate image'];
+            continue;
+        }
+
+        foreach ($found as $candidate) {
+            $candidates[] = [
+                'product_id' => $row->product_id,
+                'candidate_url' => $candidate['url'],
+                'source_page_url' => $row->source_url,
+                'source_name' => $row->source_name,
+                'manufacturer' => $row->manufacturer_name,
+                'mpn' => $row->mpn,
+                'discovered_by' => 'product-images:discover-candidates',
+                'rights_status' => 'pending_review',
+                'confidence_score' => $candidate['confidence'],
+                'evidence' => json_encode([
+                    'selector' => $candidate['selector'],
+                    'matched_mpn' => $candidate['matched_mpn'],
+                    'advisory' => 'Candidate URL only. Do not download/publish until rights are approved.',
+                ]),
+                'discovered_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+    }
+
+    $this->line('Candidate image URL(s) found: '.count($candidates));
+    $this->line('Skipped product(s): '.count($skipped));
+    if ($skipped) {
+        $this->table(['Product ID', 'Reason'], array_slice($skipped, 0, 20));
+    }
+
+    if (! $apply) {
+        $this->comment('Dry-run only. Re-run with --apply to store hidden candidate URLs for review.');
+
+        return self::SUCCESS;
+    }
+
+    foreach (collect($candidates)->chunk(250) as $chunk) {
+        DB::table('product_image_candidates')->upsert(
+            $chunk->all(),
+            ['product_id', 'candidate_url'],
+            ['source_page_url', 'source_name', 'manufacturer', 'mpn', 'confidence_score', 'evidence', 'discovered_at', 'updated_at']
+        );
+    }
+
+    $this->info('Stored '.count($candidates).' hidden image candidate URL(s) for rights review.');
+
+    return self::SUCCESS;
+})->purpose('Discover hidden product image candidates from existing public source pages without downloading or publishing images.');
 
 Schedule::job(new DetectAbandonedCartsJob)->everyFifteenMinutes();
 Schedule::job(new CalculateTrendingProductsJob)->hourly();
