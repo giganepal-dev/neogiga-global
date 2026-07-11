@@ -1274,6 +1274,48 @@ class CommerceOpsController extends Controller
             : "{$approved} imported products approved.");
     }
 
+    public function bulkPublishJlcpcbImports(Request $request, CatalogSearchRebuildService $rebuilds): RedirectResponse
+    {
+        $data = $request->validate([
+            'source_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'source_ids.*' => ['integer'],
+            'queue_rebuild' => ['nullable', 'boolean'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $published = 0;
+        $skipped = 0;
+        foreach (array_unique($data['source_ids']) as $sourceId) {
+            $row = $this->jlcpcbSourceRow((int) $sourceId);
+            if (! $row || $row->review_status !== 'approved') {
+                $skipped++;
+                continue;
+            }
+
+            $product = DB::table('products')->where('id', $row->product_id)->select('visibility_status')->first();
+            if (($product->visibility_status ?? null) === 'public') {
+                $skipped++;
+                continue;
+            }
+
+            $this->publishImportedProduct($request, (int) $row->id, (int) $row->product_id, $data['note'] ?? null);
+            $published++;
+        }
+
+        $jobId = ($published > 0 && ! empty($data['queue_rebuild']))
+            ? $this->queueJlcpcbSearchRebuildJob($request, $rebuilds)
+            : null;
+
+        $message = "{$published} approved imported products published";
+        if ($skipped > 0) {
+            $message .= "; {$skipped} skipped because they were not approved or were already public";
+        }
+
+        return back()->with('status', $jobId
+            ? "{$message}. Search/facet rebuild queued as job #{$jobId}."
+            : "{$message}.");
+    }
+
     public function publishJlcpcbImport(Request $request, int $source, CatalogSearchRebuildService $rebuilds): RedirectResponse
     {
         $data = $request->validate([
