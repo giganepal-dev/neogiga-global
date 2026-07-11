@@ -211,7 +211,7 @@
 
 <section class="card" style="margin-top:16px">
     <div class="card-h">
-        <div><h2>Search / Facet Rebuild</h2><div class="sub">Indexes approved JLCPCB imports into product search/facet tables used by public/API catalog search. Pending imports are excluded.</div></div>
+        <div><h2>Search / Facet Rebuild</h2><div class="sub">Indexes all JLCPCB imports into product search/facet tables used by catalog search. SEO publication remains controlled separately.</div></div>
         <form method="post" action="/admin/imports/jlcpcb/search-rebuild">@csrf
             <button class="btn btn-primary" type="submit" onclick="return confirm('Queue search/facet rebuild for approved imported products?')">Queue Rebuild</button>
         </form>

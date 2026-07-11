@@ -80,8 +80,8 @@
         </form>
     </div>
     <div class="pmeta">
-        Indexed search documents: {{ number_format($indexedSummary['approved_documents'] ?? 0) }} approved / {{ number_format($indexedSummary['documents'] ?? 0) }} total.
-        Pending imports are not searchable until approved.
+        Indexed search documents: {{ number_format($indexedSummary['searchable_documents'] ?? $indexedSummary['documents'] ?? 0) }} searchable / {{ number_format($indexedSummary['documents'] ?? 0) }} total.
+        Imported catalog rows are searchable; SEO publication remains controlled separately.
     </div>
     @if(($facetGroups['manufacturer'] ?? collect())->isNotEmpty() || ($facetGroups['stock'] ?? collect())->isNotEmpty())
         <div class="facetbar" aria-label="Indexed catalog facets">
