@@ -697,6 +697,159 @@ Artisan::command('product-images:discover-candidates
     return self::SUCCESS;
 })->purpose('Discover hidden product image candidates from existing public source pages without downloading or publishing images.');
 
+Artisan::command('product-images:candidates
+    {--status=pending_review : Candidate rights_status filter, or all.}
+    {--limit=50 : Maximum candidates to show/export.}
+    {--export= : Optional CSV path for review or licensed-manifest preparation.}', function () {
+    if (! Schema::hasTable('product_image_candidates')) {
+        $this->error('product_image_candidates table is missing.');
+
+        return self::FAILURE;
+    }
+
+    $status = (string) $this->option('status');
+    $limit = max(1, (int) $this->option('limit'));
+    $exportPath = (string) ($this->option('export') ?? '');
+
+    $query = DB::table('product_image_candidates as pic')
+        ->join('products as p', 'p.id', '=', 'pic.product_id')
+        ->when($status !== 'all', fn ($q) => $q->where('pic.rights_status', $status))
+        ->orderByDesc('pic.confidence_score')
+        ->orderBy('pic.id')
+        ->limit($limit)
+        ->select([
+            'pic.id',
+            'pic.product_id',
+            'p.sku',
+            'p.name',
+            'pic.manufacturer',
+            'pic.mpn',
+            'pic.candidate_url',
+            'pic.source_page_url',
+            'pic.source_name',
+            'pic.rights_status',
+            'pic.confidence_score',
+        ]);
+
+    $rows = $query->get();
+
+    $this->line('Candidate rows: '.$rows->count());
+    $this->line('Status filter: '.$status);
+    $this->line('Safety: these are review candidates only; public product images are unchanged.');
+
+    if ($rows->isNotEmpty()) {
+        $this->table(
+            ['ID', 'SKU', 'MPN', 'Status', 'Score', 'Candidate URL'],
+            $rows->map(fn ($row) => [
+                $row->id,
+                $row->sku,
+                $row->mpn,
+                $row->rights_status,
+                $row->confidence_score,
+                Str::limit((string) $row->candidate_url, 90),
+            ])->all()
+        );
+    }
+
+    if ($exportPath !== '') {
+        $directory = dirname($exportPath);
+        if (! is_dir($directory) && ! mkdir($directory, 0775, true) && ! is_dir($directory)) {
+            $this->error('Could not create export directory: '.$directory);
+
+            return self::FAILURE;
+        }
+
+        $handle = fopen($exportPath, 'w');
+        if ($handle === false) {
+            $this->error('Could not write export file: '.$exportPath);
+
+            return self::FAILURE;
+        }
+
+        fputcsv($handle, [
+            'candidate_id',
+            'product_id',
+            'sku',
+            'manufacturer',
+            'mpn',
+            'candidate_url',
+            'source_page_url',
+            'source_name',
+            'rights_status',
+            'confidence_score',
+            'local_path',
+            'source_license',
+            'redistribution_allowed',
+            'review_notes',
+        ]);
+
+        foreach ($rows as $row) {
+            fputcsv($handle, [
+                $row->id,
+                $row->product_id,
+                $row->sku,
+                $row->manufacturer,
+                $row->mpn,
+                $row->candidate_url,
+                $row->source_page_url,
+                $row->source_name,
+                $row->rights_status,
+                $row->confidence_score,
+                '',
+                '',
+                'false',
+                '',
+            ]);
+        }
+        fclose($handle);
+
+        $this->info('Exported candidate review CSV: '.$exportPath);
+    }
+
+    return self::SUCCESS;
+})->purpose('List or export hidden product image candidates for rights review.');
+
+Artisan::command('product-images:review-candidate
+    {candidate_id : product_image_candidates.id to review.}
+    {status : pending_review, rejected, approved_for_manifest, or rights_confirmed.}
+    {--note= : Review note.}
+    {--reviewer= : Optional reviewer user id.}', function () {
+    if (! Schema::hasTable('product_image_candidates')) {
+        $this->error('product_image_candidates table is missing.');
+
+        return self::FAILURE;
+    }
+
+    $candidateId = (int) $this->argument('candidate_id');
+    $status = (string) $this->argument('status');
+    $allowed = ['pending_review', 'rejected', 'approved_for_manifest', 'rights_confirmed'];
+    if (! in_array($status, $allowed, true)) {
+        $this->error('Invalid status. Allowed: '.implode(', ', $allowed));
+
+        return self::FAILURE;
+    }
+
+    $candidate = DB::table('product_image_candidates')->where('id', $candidateId)->first();
+    if (! $candidate) {
+        $this->error('Candidate not found: '.$candidateId);
+
+        return self::FAILURE;
+    }
+
+    DB::table('product_image_candidates')->where('id', $candidateId)->update([
+        'rights_status' => $status,
+        'reviewed_at' => now(),
+        'reviewed_by' => filled($this->option('reviewer')) ? (int) $this->option('reviewer') : null,
+        'review_notes' => (string) ($this->option('note') ?: 'Reviewed via product-images:review-candidate.'),
+        'updated_at' => now(),
+    ]);
+
+    $this->info('Updated candidate '.$candidateId.' to '.$status.'.');
+    $this->line('Note: approval here does not download or publish an image. Use product-images:import-licensed-manifest with a local file and explicit license to replace placeholders.');
+
+    return self::SUCCESS;
+})->purpose('Mark a hidden product image candidate for review without publishing it.');
+
 Schedule::job(new DetectAbandonedCartsJob)->everyFifteenMinutes();
 Schedule::job(new CalculateTrendingProductsJob)->hourly();
 Schedule::job(new CalculateTrendingCategoriesJob)->hourly();
