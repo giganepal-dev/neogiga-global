@@ -25,9 +25,39 @@ SOURCE_CODE = "jlcpcb_parts_database"
 SOURCE_NAME = "JLCPCB/LCSC open parts database"
 SOURCE_URL = "https://github.com/CDFER/jlcpcb-parts-database"
 LOCALIZED_MARKETS = {
-    "global": {"locale": "en", "country": "Global", "currency": "USD", "domain": "neogiga.com"},
-    "india": {"locale": "en-IN", "country": "India", "currency": "INR", "domain": "neogiga.in"},
-    "nepal": {"locale": "en-NP", "country": "Nepal", "currency": "NPR", "domain": "giganepal.com"},
+    "global": {
+        "locale": "en",
+        "country": "Global",
+        "currency": "USD",
+        "domain": "neogiga.com",
+        "brand": "NeoGiga",
+        "category_title": "Buy {name} Online | Global Stock & RFQ Sourcing | NeoGiga",
+        "product_title": "Buy {mpn} Online | Global Stock & RFQ Sourcing | NeoGiga",
+        "brand_title": "Buy {brand} Components Online | Global Electronics Marketplace | NeoGiga",
+        "dispatch": "global sourcing, RFQ support and regional fulfillment options",
+    },
+    "india": {
+        "locale": "en-IN",
+        "country": "India",
+        "currency": "INR",
+        "domain": "neogiga.in",
+        "brand": "NeoGiga India",
+        "category_title": "Buy {name} Online in India | Local Stock & Fast Dispatch | NeoGiga India",
+        "product_title": "Buy {mpn} Online in India | Local Stock & Fast Dispatch | NeoGiga India",
+        "brand_title": "Buy {brand} Components in India | Local Stock & Fast Dispatch | NeoGiga India",
+        "dispatch": "local stock, GST-ready B2B sourcing and fast dispatch where available",
+    },
+    "nepal": {
+        "locale": "en-NP",
+        "country": "Nepal",
+        "currency": "NPR",
+        "domain": "giganepal.com",
+        "brand": "GigaNepal",
+        "category_title": "Buy {name} in Nepal | Local Stock & Fast Delivery | GigaNepal",
+        "product_title": "Buy {mpn} in Nepal | Local Stock & Fast Delivery | GigaNepal",
+        "brand_title": "Buy {brand} Components in Nepal | Local Stock & Fast Delivery | GigaNepal",
+        "dispatch": "local stock, Nepal-ready sourcing and fast delivery where available",
+    },
 }
 
 
@@ -507,6 +537,11 @@ class NeoGigaCanonicalAdapter:
             part.manufacturer.normalized_name,
             part.category.path,
             part.package or "",
+            "buy online",
+            "local stock",
+            "fast dispatch",
+            "RFQ sourcing",
+            "B2B electronics",
             "electronic component",
             "semiconductor",
             "LCSC",
@@ -530,16 +565,22 @@ class NeoGigaCanonicalAdapter:
     def _product_seo_meta(self, part: TransformedPart, name: str) -> dict[str, Any]:
         description = part.description or f"{part.manufacturer.display_name} {part.mpn} electronic component."
         keywords = self._product_keywords(part)
+        category_name = self._seo_name(part.category.path.split("/")[-1] if part.category.path else "Electronic Components")
         localized = {}
         for market, info in LOCALIZED_MARKETS.items():
+            title = info["product_title"].format(mpn=part.mpn)
             localized[market] = {
                 "locale": info["locale"],
                 "country": info["country"],
                 "currency": info["currency"],
                 "domain": info["domain"],
-                "title": f"{name} | NeoGiga {info['country']}",
-                "description": f"Review-pending {part.mpn} from {part.manufacturer.display_name}. {description[:180]}",
-                "keywords": keywords + [info["country"], info["currency"]],
+                "title": self._truncate(title, 90),
+                "description": self._truncate(
+                    f"Buy {part.mpn} by {part.manufacturer.display_name} on {info['brand']}. "
+                    f"Review-pending catalog data with {info['dispatch']}. {description}",
+                    158,
+                ),
+                "keywords": self._seo_terms(keywords + [info["country"], info["currency"], info["brand"], "buy online", "local stock", "fast dispatch"]),
                 "canonical_path": f"/products/{slugify(f'{name}-{part.source_part_id}')}",
                 "hreflang": info["locale"],
             }
@@ -547,8 +588,8 @@ class NeoGigaCanonicalAdapter:
             "robots": "noindex,nofollow",
             "source": SOURCE_CODE,
             "review_status": "pending_review",
-            "tags": keywords[:20],
-            "keywords": keywords,
+            "tags": self._seo_terms(keywords + ["buy online", "local stock", "fast dispatch"])[:24],
+            "keywords": self._seo_terms(keywords + ["buy online", "local stock", "fast dispatch", "RFQ sourcing"]),
             "localized": localized,
             "source_notes": "Generated from JLCPCB/LCSC open parts database; hidden until NeoGiga review.",
             "confidence_level": "source_imported",
@@ -557,7 +598,7 @@ class NeoGigaCanonicalAdapter:
         }
 
     def _brand_seo_meta(self, brand: str) -> dict[str, Any]:
-        keywords = [brand, "manufacturer", "electronic components", "NeoGiga"]
+        keywords = self._seo_terms([brand, "manufacturer", "electronic components", "local stock", "fast dispatch", "B2B electronics", "NeoGiga"])
         return {
             "review_status": "pending_review",
             "source": SOURCE_CODE,
@@ -566,16 +607,21 @@ class NeoGigaCanonicalAdapter:
             "localized": {
                 market: {
                     "locale": info["locale"],
-                    "title": f"{brand} components | NeoGiga {info['country']}",
-                    "description": f"Review-pending manufacturer page for {brand} electronic components in {info['country']}.",
-                    "keywords": keywords + [info["country"]],
+                    "title": self._truncate(info["brand_title"].format(brand=brand), 90),
+                    "description": self._truncate(
+                        f"Buy {brand} components through {info['brand']} with {info['dispatch']}. "
+                        "Manufacturer catalog data is pending NeoGiga review.",
+                        158,
+                    ),
+                    "keywords": self._seo_terms(keywords + [info["country"], info["currency"], info["brand"]]),
                 }
                 for market, info in LOCALIZED_MARKETS.items()
             },
         }
 
     def _category_seo_meta(self, name: str, path: str) -> dict[str, Any]:
-        keywords = [name, path, "electronic components", "engineering marketplace", "NeoGiga"]
+        display_name = self._seo_name(name)
+        keywords = self._seo_terms([display_name, name, path, "buy online", "local stock", "fast dispatch", "electronic components", "engineering marketplace", "B2B electronics", "NeoGiga"])
         return {
             "review_status": "pending_review",
             "source": SOURCE_CODE,
@@ -584,10 +630,46 @@ class NeoGigaCanonicalAdapter:
             "localized": {
                 market: {
                     "locale": info["locale"],
-                    "title": f"{name} | NeoGiga {info['country']}",
-                    "description": f"Review-pending category for {name} products in {info['country']}.",
-                    "keywords": keywords + [info["country"]],
+                    "title": self._truncate(info["category_title"].format(name=display_name), 90),
+                    "description": self._truncate(
+                        f"Buy {display_name} through {info['brand']} with {info['dispatch']}. "
+                        "Review-pending imported catalog data for engineering and B2B sourcing.",
+                        158,
+                    ),
+                    "keywords": self._seo_terms(keywords + [info["country"], info["currency"], info["brand"]]),
                 }
                 for market, info in LOCALIZED_MARKETS.items()
             },
         }
+
+    def _seo_name(self, value: str) -> str:
+        text = re.sub(r"\s+", " ", str(value or "Electronic Components")).strip()
+        if not text:
+            return "Electronic Components"
+        lower = text.casefold()
+        if lower in {"resistor", "resistors"}:
+            return "Resistors"
+        if lower in {"capacitor", "capacitors"}:
+            return "Capacitors"
+        if lower in {"mosfet", "mosfets"}:
+            return "MOSFETs"
+        if lower in {"mlcc smd", "mlcc"}:
+            return "MLCC Capacitors"
+        return text
+
+    def _seo_terms(self, terms: list[str]) -> list[str]:
+        cleaned = []
+        seen = set()
+        for term in terms:
+            value = re.sub(r"\s+", " ", str(term or "")).strip()
+            key = value.casefold()
+            if value and key not in seen:
+                cleaned.append(value)
+                seen.add(key)
+        return cleaned[:60]
+
+    def _truncate(self, value: str, length: int) -> str:
+        value = re.sub(r"\s+", " ", str(value or "")).strip()
+        if len(value) <= length:
+            return value
+        return value[: max(0, length - 1)].rstrip(" |,-") + "…"
