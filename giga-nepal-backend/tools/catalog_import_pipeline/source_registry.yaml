@@ -1,0 +1,93 @@
+sources:
+  raspberry_pi_official:
+    name: Raspberry Pi official product feed
+    source_url: https://www.raspberrypi.com/
+    source_page_url: https://www.raspberrypi.com/products/
+    license_name: unknown
+    license_url:
+    license_note: Configure only after Raspberry Pi/licensor grants redistribution rights or supplies an authorized feed.
+    official_source: true
+    redistribution_allowed: false
+    image_redistribution_allowed: false
+    feed_path:
+    feed_format: csv
+    data_year: 2026
+    downloaded_at:
+    default_category: Development Boards/SBCs/Raspberry Pi
+    notes: Blocked until an official redistributable feed or written permission is configured.
+    field_map: &default_fields
+      source_part_id: source_part_id
+      manufacturer: manufacturer
+      brand: brand
+      mpn: mpn
+      sku: sku
+      product_family: product_family
+      category: category
+      subcategory: subcategory
+      name: name
+      short_description: short_description
+      technical_specs: technical_specs
+      parametric_attributes: parametric_attributes
+      datasheet_url: datasheet_url
+      compliance: compliance
+      lifecycle: lifecycle
+      country_of_origin: country_of_origin
+      source_url: source_url
+      image_url: image_url
+      image_local_path: image_local_path
+      image_checksum: image_checksum
+      image_width: image_width
+      image_height: image_height
+      image_alt_text: image_alt_text
+      image_caption: image_caption
+      image_copyright: image_copyright
+  arduino_official:
+    name: Arduino official product feed
+    source_url: https://www.arduino.cc/
+    source_page_url: https://store.arduino.cc/
+    license_name: unknown
+    license_url:
+    license_note: Configure only with authorized Arduino feed/API and redistribution rights.
+    official_source: true
+    redistribution_allowed: false
+    image_redistribution_allowed: false
+    feed_path:
+    feed_format: csv
+    data_year: 2026
+    downloaded_at:
+    default_category: Development Boards/Microcontroller Boards/Arduino
+    field_map: *default_fields
+  espressif_official:
+    name: Espressif official product feed
+    source_url: https://www.espressif.com/
+    source_page_url: https://www.espressif.com/en/products/socs
+    license_name: unknown
+    license_url:
+    license_note: Configure only with official export/API terms permitting redistribution.
+    official_source: true
+    redistribution_allowed: false
+    image_redistribution_allowed: false
+    feed_path:
+    feed_format: csv
+    data_year: 2026
+    downloaded_at:
+    default_category: Semiconductors/Wireless SoCs/Espressif
+    field_map: *default_fields
+  licensed_distributor_feed:
+    name: Licensed distributor/manufacturer feed
+    source_url: https://example.com/replace-with-official-feed
+    source_page_url: https://example.com/replace-with-feed-page
+    license_name: replace-with-license
+    license_url:
+    license_note: Replace with contract/feed terms proving redistribution permission.
+    official_source: false
+    redistribution_allowed: false
+    image_redistribution_allowed: false
+    feed_path:
+    feed_format: csv
+    data_year: 2026
+    downloaded_at:
+    default_category: Uncategorized/Needs Review
+    notes: Duplicate this block per official feed and set rights explicitly.
+    field_map: *default_fields
+

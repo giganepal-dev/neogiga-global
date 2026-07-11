@@ -1,0 +1,67 @@
+{
+  "status": "blocked",
+  "generated_at": "2026-07-11T04:57:10.607101+00:00",
+  "stop_reason": "No licensed feed_path is configured. Add official/licensed source feeds to source_registry.yaml.",
+  "configured_sources": [
+    {
+      "code": "raspberry_pi_official",
+      "name": "Raspberry Pi official product feed",
+      "source_url": "https://www.raspberrypi.com/",
+      "official_source": true,
+      "license_name": "unknown",
+      "license_url": null,
+      "redistribution_allowed": false,
+      "image_redistribution_allowed": false,
+      "feed_configured": false,
+      "feed_format": "csv",
+      "default_category": "Development Boards/SBCs/Raspberry Pi",
+      "notes": "Blocked until an official redistributable feed or written permission is configured."
+    },
+    {
+      "code": "arduino_official",
+      "name": "Arduino official product feed",
+      "source_url": "https://www.arduino.cc/",
+      "official_source": true,
+      "license_name": "unknown",
+      "license_url": null,
+      "redistribution_allowed": false,
+      "image_redistribution_allowed": false,
+      "feed_configured": false,
+      "feed_format": "csv",
+      "default_category": "Development Boards/Microcontroller Boards/Arduino",
+      "notes": null
+    },
+    {
+      "code": "espressif_official",
+      "name": "Espressif official product feed",
+      "source_url": "https://www.espressif.com/",
+      "official_source": true,
+      "license_name": "unknown",
+      "license_url": null,
+      "redistribution_allowed": false,
+      "image_redistribution_allowed": false,
+      "feed_configured": false,
+      "feed_format": "csv",
+      "default_category": "Semiconductors/Wireless SoCs/Espressif",
+      "notes": null
+    },
+    {
+      "code": "licensed_distributor_feed",
+      "name": "Licensed distributor/manufacturer feed",
+      "source_url": "https://example.com/replace-with-official-feed",
+      "official_source": false,
+      "license_name": "replace-with-license",
+      "license_url": null,
+      "redistribution_allowed": false,
+      "image_redistribution_allowed": false,
+      "feed_configured": false,
+      "feed_format": "csv",
+      "default_category": "Uncategorized/Needs Review",
+      "notes": "Duplicate this block per official feed and set rights explicitly."
+    }
+  ],
+  "totals": {
+    "products_considered": 0
+  },
+  "rollback_plan": "No data was written."
+}
