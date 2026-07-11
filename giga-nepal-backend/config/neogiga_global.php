@@ -1,0 +1,75 @@
+<?php
+
+return [
+    'features' => [
+        'locale_prefix_routes' => env('NEOGIGA_LOCALE_PREFIX_ROUTES', true),
+        'geo_recommendation_redirect' => env('NEOGIGA_GEO_RECOMMENDATION_REDIRECT', false),
+        'localized_sitemaps' => env('NEOGIGA_LOCALIZED_SITEMAPS', false),
+        'localized_pricing' => env('NEOGIGA_LOCALIZED_PRICING', false),
+    ],
+
+    'default_prefix' => 'en',
+    'x_default' => 'https://neogiga.com/en',
+
+    'prefixes' => [
+        'en' => ['country' => 'Global', 'locale' => 'en', 'currency' => 'USD', 'domain' => 'neogiga.com', 'brand' => 'NeoGiga'],
+        'in' => ['country' => 'India', 'locale' => 'en-IN', 'currency' => 'INR', 'domain' => 'neogiga.in', 'brand' => 'NeoGiga India'],
+        'np' => ['country' => 'Nepal', 'locale' => 'en-NP', 'currency' => 'NPR', 'domain' => 'giganepal.com', 'brand' => 'GigaNepal'],
+        'bd' => ['country' => 'Bangladesh', 'locale' => 'en-BD', 'currency' => 'BDT', 'domain' => 'bd.neogiga.com', 'brand' => 'NeoGiga Bangladesh'],
+        'mm' => ['country' => 'Myanmar', 'locale' => 'en-MM', 'currency' => 'MMK', 'domain' => 'mm.neogiga.com', 'brand' => 'NeoGiga Myanmar'],
+        'au' => ['country' => 'Australia', 'locale' => 'en-AU', 'currency' => 'AUD', 'domain' => 'au.neogiga.com', 'brand' => 'NeoGiga Australia'],
+        'us' => ['country' => 'USA', 'locale' => 'en-US', 'currency' => 'USD', 'domain' => 'us.neogiga.com', 'brand' => 'NeoGiga USA'],
+        'ca' => ['country' => 'Canada', 'locale' => 'en-CA', 'currency' => 'CAD', 'domain' => 'ca.neogiga.com', 'brand' => 'NeoGiga Canada'],
+        'uk' => ['country' => 'United Kingdom', 'locale' => 'en-GB', 'currency' => 'GBP', 'domain' => 'uk.neogiga.com', 'brand' => 'NeoGiga UK'],
+        'ae' => ['country' => 'UAE', 'locale' => 'en-AE', 'currency' => 'AED', 'domain' => 'ae.neogiga.com', 'brand' => 'NeoGiga UAE'],
+        'qa' => ['country' => 'Qatar', 'locale' => 'en-QA', 'currency' => 'QAR', 'domain' => 'qa.neogiga.com', 'brand' => 'NeoGiga Qatar'],
+        'sa' => ['country' => 'Saudi Arabia', 'locale' => 'en-SA', 'currency' => 'SAR', 'domain' => 'sa.neogiga.com', 'brand' => 'NeoGiga Saudi Arabia'],
+        'sg' => ['country' => 'Singapore', 'locale' => 'en-SG', 'currency' => 'SGD', 'domain' => 'sg.neogiga.com', 'brand' => 'NeoGiga Singapore'],
+        'my' => ['country' => 'Malaysia', 'locale' => 'en-MY', 'currency' => 'MYR', 'domain' => 'my.neogiga.com', 'brand' => 'NeoGiga Malaysia'],
+        'th' => ['country' => 'Thailand', 'locale' => 'en-TH', 'currency' => 'THB', 'domain' => 'th.neogiga.com', 'brand' => 'NeoGiga Thailand'],
+        'jp' => ['country' => 'Japan', 'locale' => 'ja-JP', 'currency' => 'JPY', 'domain' => 'jp.neogiga.com', 'brand' => 'NeoGiga Japan'],
+        'kr' => ['country' => 'South Korea', 'locale' => 'ko-KR', 'currency' => 'KRW', 'domain' => 'kr.neogiga.com', 'brand' => 'NeoGiga Korea'],
+        'de' => ['country' => 'Germany', 'locale' => 'de-DE', 'currency' => 'EUR', 'domain' => 'de.neogiga.com', 'brand' => 'NeoGiga Germany'],
+        'fr' => ['country' => 'France', 'locale' => 'fr-FR', 'currency' => 'EUR', 'domain' => 'fr.neogiga.com', 'brand' => 'NeoGiga France'],
+        'es' => ['country' => 'Spain', 'locale' => 'es-ES', 'currency' => 'EUR', 'domain' => 'es.neogiga.com', 'brand' => 'NeoGiga Spain'],
+        'it' => ['country' => 'Italy', 'locale' => 'it-IT', 'currency' => 'EUR', 'domain' => 'it.neogiga.com', 'brand' => 'NeoGiga Italy'],
+        'nl' => ['country' => 'Netherlands', 'locale' => 'nl-NL', 'currency' => 'EUR', 'domain' => 'nl.neogiga.com', 'brand' => 'NeoGiga Netherlands'],
+        'pl' => ['country' => 'Poland', 'locale' => 'pl-PL', 'currency' => 'PLN', 'domain' => 'pl.neogiga.com', 'brand' => 'NeoGiga Poland'],
+        'br' => ['country' => 'Brazil', 'locale' => 'pt-BR', 'currency' => 'BRL', 'domain' => 'br.neogiga.com', 'brand' => 'NeoGiga Brazil'],
+        'mx' => ['country' => 'Mexico', 'locale' => 'es-MX', 'currency' => 'MXN', 'domain' => 'mx.neogiga.com', 'brand' => 'NeoGiga Mexico'],
+        'za' => ['country' => 'South Africa', 'locale' => 'en-ZA', 'currency' => 'ZAR', 'domain' => 'za.neogiga.com', 'brand' => 'NeoGiga South Africa'],
+        'ke' => ['country' => 'Kenya', 'locale' => 'en-KE', 'currency' => 'KES', 'domain' => 'ke.neogiga.com', 'brand' => 'NeoGiga Kenya'],
+        'ng' => ['country' => 'Nigeria', 'locale' => 'en-NG', 'currency' => 'NGN', 'domain' => 'ng.neogiga.com', 'brand' => 'NeoGiga Nigeria'],
+    ],
+
+    'languages' => [
+        'en' => 'English',
+        'hi' => 'Hindi',
+        'ne' => 'Nepali',
+        'bn' => 'Bangla',
+        'my' => 'Burmese',
+        'ar' => 'Arabic',
+        'fr' => 'French',
+        'de' => 'German',
+        'es' => 'Spanish',
+        'pt' => 'Portuguese',
+        'ja' => 'Japanese',
+        'zh' => 'Chinese',
+        'ko' => 'Korean',
+    ],
+
+    'payment_gateways' => [
+        'in' => ['Razorpay', 'PayU', 'PhonePe', 'UPI', 'Cash'],
+        'np' => ['eSewa', 'Khalti', 'FonePay', 'IME Pay', 'COD'],
+        'bd' => ['bKash', 'Nagad', 'Rocket'],
+        'au' => ['Stripe', 'PayPal', 'Apple Pay', 'Google Pay'],
+        'global' => ['Stripe', 'PayPal', 'Wire', 'Bank Transfer'],
+    ],
+
+    'seo_templates' => [
+        'product_title' => '{mpn} in {country} | {brand} | Local Stock & RFQ Sourcing',
+        'product_description' => 'Source {name} through {brand}. Availability, tax, warranty and delivery are confirmed from regional marketplace configuration.',
+        'category_title' => 'Buy {category} in {country} | {brand}',
+        'manufacturer_title' => 'Buy {manufacturer} Components in {country} | {brand}',
+    ],
+];

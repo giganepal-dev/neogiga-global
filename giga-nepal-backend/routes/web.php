@@ -266,6 +266,27 @@ Route::post('/ai-commerce/build', [AiCommercePageController::class, 'build'])->m
 Route::post('/ai-commerce/save', [AiCommercePageController::class, 'save'])->middleware('throttle:8,1');
 Route::get('/seller-early-access', [SellOnNeoGigaController::class, 'earlyAccess']);
 
+if (config('neogiga_global.features.locale_prefix_routes', true)) {
+    $localePrefixes = array_keys(config('neogiga_global.prefixes', []));
+
+    Route::prefix('{localePrefix}')
+        ->whereIn('localePrefix', $localePrefixes)
+        ->group(function () {
+            Route::get('/', fn (string $localePrefix) => app(LandingController::class)())->name('localized.home');
+            Route::get('/products', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(\App\Http\Controllers\Web\ProductPageController::class)->index($request))->name('localized.products.index');
+            Route::get('/products/{slug}', fn (string $localePrefix, string $slug) => app(\App\Http\Controllers\Web\ProductPageController::class)->show($slug))->where('slug', '[a-z0-9\-]+')->name('localized.products.show');
+            Route::get('/categories', fn (string $localePrefix) => app(CategoryController::class)->index())->name('localized.categories.index');
+            Route::get('/categories/{slug}', fn (string $localePrefix, string $slug) => app(CategoryController::class)->show($slug))->where('slug', '[a-z0-9\-]+')->name('localized.categories.show');
+            Route::get('/manufacturer/{slug}', fn (string $localePrefix, string $slug) => app(SeoLandingController::class)->manufacturer($slug))->where('slug', '[a-z0-9\-]+')->name('localized.manufacturer.show');
+            Route::get('/brands', fn (string $localePrefix) => redirect('/categories'))->name('localized.brands.index');
+            Route::get('/lms', fn (string $localePrefix) => app(LmsPageController::class)->index(app(\App\Services\Lms\CourseCatalogService::class)))->name('localized.lms.index');
+            Route::get('/projects', fn (string $localePrefix) => redirect('/learn'))->name('localized.projects.index');
+            Route::get('/rfq', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(\App\Http\Controllers\Web\RfqPageController::class)->create($request))->name('localized.rfq.create');
+            Route::get('/sell-on-neogiga', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->sell())->name('localized.seller');
+            Route::get('/ai-commerce', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(AiCommercePageController::class)->index($request, app(\App\Services\CommerceAi\CommerceAiService::class)))->name('localized.ai');
+        });
+}
+
 // Global Commerce Stage 1: marketplace country selector / landing page.
 // Constrained to the 25 seeded url_prefix codes only — cannot collide with
 // any existing top-level route above (none of them are 2-8 letter codes).
