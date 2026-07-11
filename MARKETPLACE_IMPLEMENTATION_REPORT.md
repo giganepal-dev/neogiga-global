@@ -70,10 +70,18 @@ generation · inactive-noindex / active-index · manual SEO override preserved �
 seeder idempotency + audit logging. **Result: 11 passed, 28 assertions, 0 failures.** Full suite
 green afterward (227 assertions, no regressions).
 
-## 7. DEFERRED (documented, not built this cycle)
+## 7a. BUILT + DEPLOYED since the initial cycle
+- **Enable/disable + pre-launch validation** (`MarketplaceLaunchValidator`, `MarketplaceStatusService`)
+  — commit `bcaa08e`, live. Critical validation blocks activation; disable requires a reason and
+  turns off registrations/checkout while preserving data; both audited.
+- **API endpoints** (`MarketplaceAdminController` fleshed out) — commit `586d50a`, live under
+  `/api/v1/admin/marketplaces*` (index, show, status, generate-domain, verify-domain, generate-seo,
+  validate-launch, clear-cache, audit-history), fail-closed behind `admin.token`; public
+  `/api/v1/marketplaces/active` (excludes hidden) + `/api/v1/marketplace/current`. Verified on prod:
+  admin no-token → 401, public active → 200. Tests: MarketplaceStatusTest (7) + MarketplaceAdminApiTest (8).
+
+## 7. STILL DEFERRED
 - Tabbed **admin UI** (General/Domain/Status/SEO/Branding/Advanced), list columns, filters, wizards.
-- **API endpoints** `/api/admin/marketplaces*` (generate-domain, verify-domain, generate-seo,
-  validate-launch, clear-cache, audit-history) and public `/api/marketplace/current`, `/marketplaces/active`.
 - **Frontend SEO rendering** + per-marketplace **sitemap** indexes + hreflang emission.
 - **Host-spoofing allow-list middleware** (the resolver stack exists; the explicit allowed-host
   rejection + trusted-proxy hardening is not yet wired).
