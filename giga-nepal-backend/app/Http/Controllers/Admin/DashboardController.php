@@ -9,6 +9,7 @@ use App\Models\Marketplace\ProductCategory;
 use App\Models\Marketplace\Vendor;
 use App\Models\User;
 use App\Services\Catalog\CatalogSearchService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -77,6 +78,41 @@ class DashboardController extends Controller
             'inventoryBands',
             'marketingStats'
         ));
+    }
+
+    public function systemHealth(): View
+    {
+        $database = $this->systemDatabaseHealth();
+        $cache = $this->systemCacheHealth();
+        $redis = $this->systemRedisHealth();
+        $storage = $this->systemStorageHealth();
+        $queue = $this->systemQueueHealth();
+        $catalog = $this->systemCatalogHealth();
+        $imports = $this->systemImportHealth();
+        $api = $this->systemApiHealth();
+
+        $services = [
+            'Database' => $database['ok'],
+            'Cache' => $cache['ok'],
+            'Redis' => $redis['ok'],
+            'Storage' => $storage['ok'],
+            'Queue' => $queue['ok'],
+            'Search Index' => $catalog['search_documents'] > 0,
+            'API Health' => $api['ok'],
+        ];
+
+        return view('admin.system-health', [
+            'database' => $database,
+            'cache' => $cache,
+            'redis' => $redis,
+            'storage' => $storage,
+            'queue' => $queue,
+            'catalog' => $catalog,
+            'imports' => $imports,
+            'api' => $api,
+            'services' => $services,
+            'checkedAt' => now(),
+        ]);
     }
 
     public function categories(\Illuminate\Http\Request $request): View
@@ -1345,6 +1381,232 @@ class DashboardController extends Controller
             return DB::table($table)->where($column, $value)->orderByDesc('id')->limit($limit)->get();
         } catch (\Throwable) {
             return collect();
+        }
+    }
+
+    private function systemDatabaseHealth(): array
+    {
+        try {
+            $driver = DB::connection()->getDriverName();
+            $version = (string) (DB::selectOne('select version() as version')->version ?? $driver);
+            $databaseSize = null;
+
+            if ($driver === 'pgsql') {
+                $databaseSize = (string) (DB::selectOne('select pg_size_pretty(pg_database_size(current_database())) as size')->size ?? null);
+            }
+
+            return [
+                'ok' => true,
+                'driver' => $driver,
+                'version' => $version,
+                'tables' => count(Schema::getTables()),
+                'database_size' => $databaseSize,
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'ok' => false,
+                'driver' => config('database.default'),
+                'version' => $e->getMessage(),
+                'tables' => 0,
+                'database_size' => null,
+            ];
+        }
+    }
+
+    private function systemCacheHealth(): array
+    {
+        $key = 'admin_system_health_check';
+
+        try {
+            Cache::put($key, 'ok', now()->addMinutes(2));
+
+            return [
+                'ok' => Cache::get($key) === 'ok',
+                'driver' => config('cache.default'),
+                'prefix' => config('cache.prefix'),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'ok' => false,
+                'driver' => config('cache.default'),
+                'prefix' => config('cache.prefix'),
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    private function systemRedisHealth(): array
+    {
+        $configured = collect([
+            config('cache.default'),
+            config('queue.default'),
+            config('session.driver'),
+        ])->contains('redis');
+
+        try {
+            if (! $configured) {
+                return [
+                    'ok' => null,
+                    'configured' => false,
+                    'message' => 'Redis is not selected for cache, queue, or sessions.',
+                ];
+            }
+
+            $response = \Illuminate\Support\Facades\Redis::connection()->ping();
+
+            return [
+                'ok' => true,
+                'configured' => true,
+                'message' => is_string($response) ? $response : 'pong',
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'ok' => false,
+                'configured' => $configured,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    private function systemStorageHealth(): array
+    {
+        $paths = [
+            'storage' => storage_path(),
+            'framework' => storage_path('framework'),
+            'logs' => storage_path('logs'),
+            'bootstrap_cache' => base_path('bootstrap/cache'),
+        ];
+
+        $checks = [];
+
+        foreach ($paths as $name => $path) {
+            $checks[$name] = [
+                'path' => $path,
+                'exists' => is_dir($path),
+                'writable' => is_writable($path),
+            ];
+        }
+
+        $free = @disk_free_space(base_path());
+        $total = @disk_total_space(base_path());
+
+        return [
+            'ok' => collect($checks)->every(fn ($check) => $check['exists'] && $check['writable']),
+            'checks' => $checks,
+            'free_bytes' => $free ?: 0,
+            'total_bytes' => $total ?: 0,
+            'used_percent' => $total ? round((($total - $free) / $total) * 100, 2) : null,
+        ];
+    }
+
+    private function systemQueueHealth(): array
+    {
+        return [
+            'ok' => $this->safeCount('failed_jobs') === 0,
+            'connection' => config('queue.default'),
+            'pending_jobs' => $this->safeCount('jobs'),
+            'default_jobs' => $this->safeWhereCount('jobs', 'queue', 'default'),
+            'failed_jobs' => $this->safeCount('failed_jobs'),
+            'catalog_rebuild_jobs' => $this->safeCount('catalog_index_rebuild_jobs'),
+            'queued_rebuilds' => $this->safeWhereCount('catalog_index_rebuild_jobs', 'status', 'queued'),
+        ];
+    }
+
+    private function systemCatalogHealth(): array
+    {
+        $products = $this->safeCount('products');
+        $activeImages = $this->safeWhereCount('product_images', 'is_active', '1');
+        $licensedImages = $this->safeLicensedImageCount();
+
+        return [
+            'products' => $products,
+            'categories' => $this->safeCount('product_categories'),
+            'manufacturers' => $this->safeCount('manufacturers'),
+            'search_documents' => $this->safeCount('product_search_documents'),
+            'facet_values' => $this->safeCount('product_facet_values'),
+            'marketplace_searchable' => $this->safeWhereCount('product_search_documents', 'visibility_status', 'marketplace_searchable'),
+            'public_products' => $this->safeWhereCount('product_search_documents', 'visibility_status', 'public'),
+            'active_images' => $activeImages,
+            'placeholder_images' => $this->safePlaceholderImageCount(),
+            'licensed_images' => $licensedImages,
+            'image_candidates' => $this->safeCount('product_image_candidates'),
+            'image_coverage_percent' => $products ? round(($activeImages / $products) * 100, 2) : 0,
+            'licensed_image_percent' => $products ? round(($licensedImages / $products) * 100, 2) : 0,
+        ];
+    }
+
+    private function systemImportHealth(): array
+    {
+        return [
+            'sources' => $this->safeCount('catalog_sources'),
+            'batches' => $this->safeCount('catalog_import_batches'),
+            'running_batches' => $this->safeWhereCount('catalog_import_batches', 'status', 'running'),
+            'failed_batches' => $this->safeWhereCount('catalog_import_batches', 'status', 'failed'),
+            'product_sources' => $this->safeCount('catalog_product_sources'),
+            'distributor_offers' => $this->safeCount('catalog_distributor_offers'),
+            'import_errors' => $this->safeCount('catalog_import_errors'),
+            'bom_imports' => $this->safeCount('bom_imports'),
+            'bom_lines' => $this->safeCount('bom_import_lines'),
+        ];
+    }
+
+    private function systemApiHealth(): array
+    {
+        try {
+            $controller = app(\App\Http\Controllers\HealthController::class);
+            $response = $controller->__invoke();
+            $status = method_exists($response, 'getStatusCode') ? $response->getStatusCode() : 200;
+
+            return [
+                'ok' => $status >= 200 && $status < 500,
+                'status' => $status,
+                'endpoint' => '/health',
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'ok' => false,
+                'status' => 500,
+                'endpoint' => '/health',
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    private function safePlaceholderImageCount(): int
+    {
+        try {
+            if (! Schema::hasTable('product_images') || ! Schema::hasColumn('product_images', 'file_path')) {
+                return 0;
+            }
+
+            return DB::table('product_images')
+                ->where(function ($query) {
+                    $query->where('file_path', 'like', '%placeholder%')
+                        ->orWhere('file_name', 'like', '%placeholder%');
+                })
+                ->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function safeLicensedImageCount(): int
+    {
+        try {
+            if (! Schema::hasTable('product_images') || ! Schema::hasColumn('product_images', 'source_license')) {
+                return 0;
+            }
+
+            return DB::table('product_images')
+                ->whereNotNull('source_license')
+                ->where('source_license', '<>', '')
+                ->where(function ($query) {
+                    $query->whereNull('file_path')
+                        ->orWhere('file_path', 'not like', '%placeholder%');
+                })
+                ->count();
+        } catch (\Throwable) {
+            return 0;
         }
     }
 

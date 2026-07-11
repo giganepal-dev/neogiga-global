@@ -40,6 +40,7 @@ Route::prefix('admin')->group(function () {
 
     Route::middleware('admin.web')->group(function () {
         Route::get('/', [AdminDash::class, 'index']);
+        Route::get('system-health', [AdminDash::class, 'systemHealth']);
         Route::get('categories', [AdminDash::class, 'categories']);
         Route::get('categories/{id}', [AdminDash::class, 'category'])->whereNumber('id');
         Route::get('products', [AdminDash::class, 'products']);
