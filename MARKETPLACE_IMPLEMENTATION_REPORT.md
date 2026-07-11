@@ -93,9 +93,21 @@ Commit `e8fd44a`, live. User-approved ("align data, then wire live").
 - Verified live: neogiga.com robots meta = `index,follow` (not noindex); homepage title unchanged;
   wallet 401, home/products 200. Tests: MarketplaceSeoRenderTest (5).
 
+## 7c. BUILT + DEPLOYED — marketplace config admin UI (codex §3, §11)
+Commit `9c99ebc`, live behind `admin.web`.
+- `MarketplaceConfigController` + `admin/marketplace-edit.blade.php`: tabbed editor (General /
+  Domain & Routing / Status & Access / SEO / Branding / Advanced) with status badges, the
+  pre-launch checklist, SEO char counters, and inline audit history. Delegates to the marketplace
+  services — can't activate a failing marketplace, overwrite a locked domain, or fake verification.
+- `admin/marketplaces.blade.php`: Domain/Mode/Visibility/SEO/Status columns + Configure link.
+- Verified live: `/admin/marketplaces/{id}/config` + list redirect unauthenticated → `/admin/login`;
+  enable POST without session/CSRF → 419 (does not execute). Tests: MarketplaceAdminUiTest (6).
+
 ## 7. STILL DEFERRED
-- Tabbed **admin UI** (General/Domain/Status/SEO/Branding/Advanced), list columns, filters, wizards.
-- **Host-spoofing allow-list middleware** + fine-grained `permission:marketplaces.*` RBAC.
+- **Host-spoofing allow-list middleware** + fine-grained `permission:marketplaces.*` RBAC (the
+  UI/API currently use the fail-closed `admin.web` / `admin.token` gates, consistent with the rest
+  of the admin console).
+- List **filters/search** and bulk actions (list columns + per-row Configure are done).
 - **Host-spoofing allow-list middleware** (the resolver stack exists; the explicit allowed-host
   rejection + trusted-proxy hardening is not yet wired).
 - **Permission enforcement** wiring + role gates; **domain verification** (real DNS/HTTP).
