@@ -799,3 +799,25 @@ Route::prefix('v1/products/{product}')->group(function () {
     Route::get('/reviews', [\App\Http\Controllers\Api\Product\ProductReviewController::class, 'index'])->whereNumber('product');
     Route::post('/reviews', [\App\Http\Controllers\Api\Product\ProductReviewController::class, 'store'])->whereNumber('product')->middleware(['api.token', 'throttle:writes']);
 });
+
+// Add PCB routes before the final closing brackets
+Route::prefix('v1/pcb')->middleware('api.token)->group(function () {
+    // PCB Projects
+    Route::apiResource('projects', \App\Http\Controllers\Pcb\PcbProjectController::class);
+    Route::get('projects/{project}/activity', [\App\Http\Controllers\Pcb\PcbProjectController::class, 'activity']);
+    
+    // PCB Files (to be implemented)
+    // Route::post('projects/{project}/files', [PcbFileController::class, 'store']);
+    // Route::get('files/{file}/download', [PcbFileController::class, 'download']);
+    
+    // PCB Quotes (to be implemented)
+    // Route::post('projects/{project}/quote', [PcbQuoteController::class, 'create']);
+    // Route::get('quotes/{quote}', [PcbQuoteController::class, 'show']);
+});
+
+// Public PCB endpoints (no auth required for initial quote)
+Route::prefix('v1/pcb/public')->group(function () {
+    // Route::post('quote/calculate', [PcbPublicQuoteController::class, 'calculate']);
+    // Route::get('capabilities', [PcbCapabilitiesController::class, 'index']);
+});
+
