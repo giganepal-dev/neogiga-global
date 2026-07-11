@@ -67,6 +67,7 @@ Route::prefix('admin')->group(function () {
         Route::get('users', [AdminDash::class, 'users']);
         Route::get('lms', [AdminDash::class, 'lms']);
         Route::get('lms/courses/{course}', [AdminDash::class, 'lmsCourse'])->whereNumber('course');
+        Route::get('bom-imports', [AdminDash::class, 'bomImports']);
         Route::get('inventory', [AdminDash::class, 'inventory']);
         Route::get('pos', [AdminDash::class, 'pos']);
         Route::get('pos/sales/{sale}', [AdminDash::class, 'posSale'])->whereNumber('sale');

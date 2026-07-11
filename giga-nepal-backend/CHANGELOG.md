@@ -44,6 +44,7 @@
 - Tightened public image candidate discovery with a configurable confidence floor so generic source-page images are skipped instead of filling the review queue.
 - Added product image candidate listing/export and review-status commands so operations can prepare licensed image manifests and approve/reject candidates without changing public product images.
 - Added the BOM procurement import API: authenticated users can upload/paste BOM CSVs, auto-match lines by normalized MPN, manually review ambiguous lines, and convert the full BOM into an RFQ.
+- Connected BOM imports to the Admin Console with `/admin/bom-imports`, sidebar navigation, KPIs, customer/RFQ links, and line-level match visibility.
 
 ## 2026-07-09 - Complete System Audit
 

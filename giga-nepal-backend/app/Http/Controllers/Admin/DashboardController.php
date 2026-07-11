@@ -1213,6 +1213,56 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function bomImports(\Illuminate\Http\Request $request): View
+    {
+        abort_unless(Schema::hasTable('bom_imports') && Schema::hasTable('bom_import_lines'), 404);
+
+        $status = (string) $request->query('status', '');
+        $likeOperator = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+        $imports = DB::table('bom_imports as bi')
+            ->leftJoin('users as u', 'u.id', '=', 'bi.user_id')
+            ->leftJoin('rfq_requests as rfq', 'rfq.id', '=', 'bi.rfq_request_id')
+            ->when($status !== '', fn ($query) => $query->where('bi.status', $status))
+            ->when($request->query('q'), function ($query, $term) use ($likeOperator) {
+                $query->where(function ($inner) use ($term, $likeOperator) {
+                    $inner->where('bi.name', $likeOperator, "%{$term}%")
+                        ->orWhere('u.email', $likeOperator, "%{$term}%")
+                        ->orWhere('rfq.rfq_number', $likeOperator, "%{$term}%");
+                });
+            })
+            ->select(
+                'bi.*',
+                'u.name as user_name',
+                'u.email as user_email',
+                'rfq.rfq_number',
+                'rfq.status as rfq_status'
+            )
+            ->orderByDesc('bi.id')
+            ->paginate(20)
+            ->withQueryString();
+
+        $importIds = collect($imports->items())->pluck('id')->all();
+        $lines = DB::table('bom_import_lines as bil')
+            ->leftJoin('products as p', 'p.id', '=', 'bil.matched_product_id')
+            ->whereIn('bil.bom_import_id', $importIds ?: [0])
+            ->select('bil.*', 'p.name as matched_product_name', 'p.sku as matched_product_sku')
+            ->orderBy('bil.line_no')
+            ->get()
+            ->groupBy('bom_import_id');
+
+        return view('admin.bom-imports', [
+            'imports' => $imports,
+            'lines' => $lines,
+            'statusFilter' => $status,
+            'stats' => [
+                'total' => $this->safeCount('bom_imports'),
+                'matched' => $this->safeWhereCount('bom_imports', 'status', 'matched'),
+                'converted' => $this->safeWhereCount('bom_imports', 'status', 'converted'),
+                'openLines' => (int) DB::table('bom_import_lines')->whereNull('matched_product_id')->count(),
+            ],
+        ]);
+    }
+
     public function applications(): View
     {
         return view('admin.applications', [
