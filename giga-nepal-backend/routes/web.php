@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
 use App\Http\Controllers\Admin\CommerceOpsController as AdminCommerce;
 use App\Http\Controllers\Admin\DashboardController as AdminDash;
+use App\Http\Controllers\Admin\MarketplaceConfigController as AdminMarketplaceConfig;
 use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\CategoryController;
@@ -50,6 +51,15 @@ Route::prefix('admin')->group(function () {
         Route::post('imports/jlcpcb/{source}/publish', [AdminCommerce::class, 'publishJlcpcbImport'])->whereNumber('source')->middleware('throttle:10,1');
         Route::post('imports/jlcpcb/{source}/reject', [AdminCommerce::class, 'rejectJlcpcbImport'])->whereNumber('source')->middleware('throttle:20,1');
         Route::get('marketplaces', [AdminDash::class, 'marketplaces']);
+        // Marketplace domain/SEO/status configuration UI (codex §3, §11).
+        Route::get('marketplaces/{id}/config', [AdminMarketplaceConfig::class, 'edit'])->whereNumber('id');
+        Route::post('marketplaces/{id}/config', [AdminMarketplaceConfig::class, 'update'])->whereNumber('id')->middleware('throttle:30,1');
+        Route::post('marketplaces/{id}/enable', [AdminMarketplaceConfig::class, 'enable'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('marketplaces/{id}/disable', [AdminMarketplaceConfig::class, 'disable'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('marketplaces/{id}/generate-domain', [AdminMarketplaceConfig::class, 'generateDomain'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('marketplaces/{id}/verify-domain', [AdminMarketplaceConfig::class, 'verifyDomain'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('marketplaces/{id}/generate-seo', [AdminMarketplaceConfig::class, 'generateSeo'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('marketplaces/{id}/clear-cache', [AdminMarketplaceConfig::class, 'clearCache'])->whereNumber('id')->middleware('throttle:20,1');
         Route::get('vendors', [AdminDash::class, 'vendors']);
         Route::get('distributors', [AdminDash::class, 'distributors']);
         Route::get('users', [AdminDash::class, 'users']);
