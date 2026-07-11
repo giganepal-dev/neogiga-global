@@ -42,13 +42,24 @@
     </form>
 
     <form id="bulkImportApprove" method="post" action="/admin/imports/jlcpcb/bulk-approve">@csrf</form>
-        <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:#fff">
-            <div class="sub">Select up to 100 non-final rows, then approve. Public publishing is optional and off by default.</div>
-            <div class="actions">
-                <label class="sub"><input form="bulkImportApprove" type="checkbox" name="publish_public" value="1"> Publish public</label>
-                <label class="sub"><input form="bulkImportApprove" type="checkbox" name="queue_rebuild" value="1" checked> Queue search rebuild</label>
-                <input form="bulkImportApprove" class="control" name="note" placeholder="Review note" style="min-width:220px">
-                <button form="bulkImportApprove" class="btn btn-primary" type="submit" onclick="return confirm('Approve selected imported products?')">Bulk Approve</button>
+    <form id="bulkImportPublish" method="post" action="/admin/imports/jlcpcb/bulk-publish">@csrf</form>
+        <div style="display:grid;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);background:#fff">
+            <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+                <div class="sub">Select up to 100 non-final rows, then approve. Public publishing is optional and off by default.</div>
+                <div class="actions">
+                    <label class="sub"><input form="bulkImportApprove" type="checkbox" name="publish_public" value="1"> Publish public</label>
+                    <label class="sub"><input form="bulkImportApprove" type="checkbox" name="queue_rebuild" value="1" checked> Queue search rebuild</label>
+                    <input form="bulkImportApprove" class="control" name="note" placeholder="Review note" style="min-width:220px">
+                    <button form="bulkImportApprove" class="btn btn-primary" type="submit" onclick="return confirm('Approve selected imported products?')">Bulk Approve</button>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+                <div class="sub">Select approved hidden rows to publish publicly. This is deliberate and never automatic.</div>
+                <div class="actions">
+                    <label class="sub"><input form="bulkImportPublish" type="checkbox" name="queue_rebuild" value="1" checked> Queue search rebuild</label>
+                    <input form="bulkImportPublish" class="control" name="note" placeholder="Publication note" style="min-width:220px">
+                    <button form="bulkImportPublish" class="btn btn-primary" type="submit" onclick="return confirm('Publish selected approved imports publicly?')">Bulk Publish</button>
+                </div>
             </div>
         </div>
         <div class="scroll-x"><table class="tbl">
@@ -65,6 +76,8 @@
                     <td>
                         @if(! in_array($review, ['approved', 'rejected'], true))
                             <input form="bulkImportApprove" type="checkbox" name="source_ids[]" value="{{ $row->id }}">
+                        @elseif($review === 'approved' && ($row->visibility_status ?? '') !== 'public')
+                            <input form="bulkImportPublish" type="checkbox" name="source_ids[]" value="{{ $row->id }}">
                         @endif
                     </td>
                     <td>
