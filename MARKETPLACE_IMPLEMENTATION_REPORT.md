@@ -103,11 +103,21 @@ Commit `9c99ebc`, live behind `admin.web`.
 - Verified live: `/admin/marketplaces/{id}/config` + list redirect unauthenticated → `/admin/login`;
   enable POST without session/CSRF → 419 (does not execute). Tests: MarketplaceAdminUiTest (6).
 
+## 7d. BUILT + DEPLOYED — host-spoofing guard (codex §6) + list filters/bulk (§11)
+- `EnsureAllowedHost` middleware (commit `fe6cf38`) — appended globally, **flag-gated OFF**
+  (`MARKETPLACE_HOST_GUARD`, default false) and **fail-open**; builds a data-driven allow-list from
+  all marketplace domains + config hosts (www/non-www variants, cached). Deployed inert
+  (`guard_enabled=false`); enable only after verifying every live host resolves. Tests: HostGuardTest (4).
+- List filters/search + bulk actions — commit `44aa284`, live.
+
 ## 7. STILL DEFERRED
-- **Host-spoofing allow-list middleware** + fine-grained `permission:marketplaces.*` RBAC (the
-  UI/API currently use the fail-closed `admin.web` / `admin.token` gates, consistent with the rest
-  of the admin console).
-- List **filters/search** and bulk actions (list columns + per-row Configure are done).
+- Fine-grained `permission:marketplaces.*` RBAC (UI/API use the fail-closed `admin.web`/`admin.token`
+  gates today, consistent with the rest of the admin console).
+- **KNOWN PRE-EXISTING TEST FAILURE (not host-guard):** `GlobalCommerceMarketplaceTest ::
+  test_active_marketplace_landing_does_not_say_coming_soon` fails — `/np` renders the "Coming soon"
+  preview badge for the test's active-NEPAL setup. Proven pre-existing (fails with all host-guard
+  code removed); the landing controller/seeder in this externally-synced area now treats that
+  marketplace as preview. Needs a focused look at `MarketplaceLandingController` + the seed.
 - **Host-spoofing allow-list middleware** (the resolver stack exists; the explicit allowed-host
   rejection + trusted-proxy hardening is not yet wired).
 - **Permission enforcement** wiring + role gates; **domain verification** (real DNS/HTTP).
