@@ -1,40 +1,138 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NeoGiga — Engineer the Future at Scale</title>
 <meta name="robots" content="noindex,nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script id="tailwind-config">try{tailwind.config={darkMode:"class",theme:{extend:{
-  colors:{"tertiary":"#f9bd2c","tertiary-container":"#1e1300","on-tertiary-container":"#a37800","success":"#10B981",
-  "surface-container":"#1d2023","surface-container-lowest":"#0b0f11","surface-container-low":"#181c1f","surface-dim":"#101417",
-  "surface-elevated":"#111E2F","surface-bright":"#363a3d","surface-container-high":"#272a2d","secondary":"#80e5ff",
-  "on-primary":"#253144","outline":"#8f9097","on-surface":"#e0e3e6","secondary-fixed-dim":"#28d8fb",
-  "border-subtle":"rgba(255,255,255,0.08)","on-secondary":"#003640","surface":"#101417","background":"#101417",
-  "outline-variant":"#44474c","error":"#EF4444","on-surface-variant":"#c5c6cd","primary-container":"#081527",
-  "surface-variant":"#323538","primary":"#bbc7e0","secondary-container":"#00cdef","on-primary-container":"#737f96"},
-  borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
-  spacing:{"margin-desktop":"64px","gutter":"24px","sm":"12px","md":"24px","xs":"4px","xl":"80px","margin-mobile":"16px","lg":"48px","base":"8px"},
-  fontFamily:{"label-sm":["Inter"],"body-md":["Inter"],"technical-data":["JetBrains Mono"],"headline-lg":["Inter"],"display-lg":["Inter"]},
-  fontSize:{"label-sm":["12px",{"lineHeight":"16px","fontWeight":"600"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],
-  "technical-data":["14px",{"lineHeight":"20px","letterSpacing":"0.02em","fontWeight":"500"}],
-  "headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}],
-  "display-lg":["64px",{"lineHeight":"72px","letterSpacing":"-0.02em","fontWeight":"700"}]}}}}catch(_e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
-  body{background:#101417;color:#e0e3e6;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
-  .font-technical-data{font-family:'JetBrains Mono',ui-monospace,monospace}
-  .material-symbols-outlined{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr}
-  .glass-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(12px)}
-  .hero-gradient{background:radial-gradient(circle at 20% 15%,rgba(128,229,255,.14),transparent 40rem),radial-gradient(circle at 82% 10%,rgba(249,189,44,.08),transparent 34rem),linear-gradient(180deg,#0b1220,#101417 60%,#0b0f11)}
-  .text-glow{text-shadow:0 0 40px rgba(128,229,255,.25)}
+/* NeoGiga "Precision Engineering" — self-contained (no runtime CDN dependency) */
+:root{
+  --bg:#101417;--surface:#0b0f11;--surface-1:#181c1f;--surface-2:#1d2023;--surface-3:#272a2d;
+  --on:#e0e3e6;--muted:#c5c6cd;--faint:#8f9097;
+  --primary:#bbc7e0;--secondary:#28d8fb;--secondary-soft:rgba(40,216,251,.12);
+  --tertiary:#f9bd2c;--success:#10b981;
+  --line:rgba(255,255,255,.08);--glass:rgba(255,255,255,.03);
+  --max:1440px;--r:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:
+  radial-gradient(circle at 18% 0%,rgba(40,216,251,.10),transparent 42rem),
+  radial-gradient(circle at 85% 2%,rgba(249,189,44,.06),transparent 36rem),
+  var(--bg);
+  color:var(--on);font-family:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}
+.wrap{width:min(var(--max),calc(100% - 48px));margin-inline:auto}
+@media(max-width:640px){.wrap{width:calc(100% - 32px)}}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:50;background:rgba(16,20,23,.8);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav-in{height:80px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:1.35rem;color:var(--primary);letter-spacing:-.02em}
+.brand .mk{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--secondary-soft);border:1px solid rgba(40,216,251,.4)}
+.nav-links{display:flex;gap:32px}
+.nav-links a{font-size:.82rem;font-weight:600;color:var(--muted);transition:color .2s}
+.nav-links a:hover{color:var(--secondary)}
+.nav-cta{display:flex;align-items:center;gap:16px}
+.pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 22px;font-size:.82rem;font-weight:600;transition:.15s}
+.pill-solid{background:var(--secondary);color:#003640}.pill-solid:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.pill-ghost{color:var(--muted)}.pill-ghost:hover{color:var(--secondary)}
+@media(max-width:900px){.nav-links{display:none}}
+
+/* Hero */
+.hero{min-height:640px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 0}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.75rem;color:var(--muted);margin-bottom:24px}
+.dot{width:8px;height:8px;border-radius:999px;background:var(--success);box-shadow:0 0 10px var(--success)}
+.hero h1{font-size:clamp(2.6rem,6vw,4rem);font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:0 0 36px;text-shadow:0 0 44px rgba(40,216,251,.22)}
+.hero h1 em{font-style:normal;color:var(--secondary)}
+.searchbox{position:relative;max-width:820px;margin:0 auto;width:100%}
+.searchbox::before{content:"";position:absolute;inset:-2px;border-radius:999px;background:linear-gradient(90deg,var(--secondary),var(--primary));filter:blur(14px);opacity:.25;transition:opacity .6s}
+.searchbox:focus-within::before{opacity:.5}
+.searchbar{position:relative;display:flex;align-items:center;gap:16px;background:var(--surface-1);border:1px solid var(--line);border-radius:999px;padding:14px 18px 14px 26px;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.searchbar svg{flex:none;color:var(--secondary)}
+.searchbar input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--on);font-size:1.05rem;font-family:'JetBrains Mono',monospace}
+.searchbar input::placeholder{color:rgba(197,198,205,.4)}
+.kbd{font-size:.7rem;color:var(--faint);background:var(--surface-3);border-radius:6px;padding:4px 8px}
+.hero .note{margin-top:32px;color:var(--muted);font-size:.9rem}
+@media(max-width:640px){.kbd{display:none}.searchbar{padding:10px 12px 10px 18px}}
+
+/* Sections */
+section.block{padding:80px 0}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:48px}
+.head h2{font-size:clamp(1.6rem,3vw,2rem);font-weight:600;letter-spacing:-.01em;margin:0 0 8px}
+.head p{margin:0;color:var(--muted)}
+.link{color:var(--secondary);font-size:.82rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.link:hover{text-decoration:underline}
+
+/* Cards */
+.grid{display:grid;gap:24px}
+.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:1000px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.g4,.g3{grid-template-columns:1fr}}
+.glass{background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px)}
+.cat{border-radius:var(--r);padding:32px;display:block;transition:.2s}
+.cat:hover{border-color:rgba(40,216,251,.5);transform:translateY(-3px)}
+.chip{width:48px;height:48px;border-radius:12px;background:var(--secondary-soft);color:var(--secondary);display:grid;place-items:center;margin-bottom:24px;transition:transform .2s}
+.cat:hover .chip{transform:scale(1.1)}
+.cat h3{font-size:1.25rem;font-weight:600;margin:0 0 8px}
+.cat p{color:var(--muted);font-size:.9rem;margin:0 0 16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cat .go{color:var(--secondary);font-size:.78rem}
+
+/* Partners */
+.partners{border-block:1px solid var(--line);background:var(--surface)}
+.partners .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:32px;padding:32px 0;opacity:.55;transition:opacity .5s;font-weight:700;color:var(--muted);letter-spacing:.05em}
+.partners:hover .wrap{opacity:1}
+
+/* Products */
+.pcard{border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.pcard .media{height:210px;background:var(--surface-2);display:grid;place-items:center;position:relative}
+.pcard .media svg{width:76px;height:76px;color:rgba(197,198,205,.25)}
+.badge{position:absolute;top:16px;left:16px;font-size:.7rem;padding:4px 8px;border-radius:6px;border:1px solid}
+.badge.in{background:rgba(16,185,129,.15);color:var(--success);border-color:rgba(16,185,129,.3)}
+.badge.low{background:rgba(249,189,44,.15);color:var(--tertiary);border-color:rgba(249,189,44,.3)}
+.pbody{padding:24px;display:flex;flex-direction:column;flex:1}
+.prow1{display:flex;justify-content:space-between;gap:12px;margin-bottom:16px}
+.prow1 h4{margin:0 0 4px;font-size:1.05rem;font-weight:600}
+.prow1 .mpn{font-size:.72rem;color:var(--muted)}
+.price{color:var(--secondary);font-size:1.25rem;font-weight:600;text-align:right}
+.price small{display:block;font-size:.62rem;color:var(--muted);font-weight:400}
+.specs{margin-bottom:24px}
+.specs div{display:flex;justify-content:space-between;font-size:.76rem;padding:2px 0}
+.specs span{color:var(--muted)}
+.pbtn{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;background:var(--surface-3);color:var(--on);font-size:.82rem;font-weight:600;transition:.2s}
+.pbtn:hover{background:var(--secondary);color:#003640}
+
+/* Newsletter */
+.news{border-radius:28px;padding:clamp(32px,5vw,80px)}
+.news h2{font-size:clamp(1.8rem,4vw,2.4rem);font-weight:700;margin:0 0 24px}
+.news h2 em{font-style:normal;color:var(--secondary)}
+.news p{color:var(--muted);font-size:1.05rem;max-width:60ch;margin:0 0 32px}
+.news form{display:flex;gap:16px;flex-wrap:wrap}
+.news input{flex:1;min-width:220px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:15px 22px;color:var(--on);outline:0}
+.news input:focus{border-color:var(--secondary)}
+.news button{background:var(--secondary);color:#003640;border:0;border-radius:12px;padding:15px 32px;font-weight:600;font-size:.85rem;cursor:pointer;transition:.15s}
+.news button:hover{filter:brightness(1.1)}
+
+/* Footer */
+footer{border-top:1px solid var(--line);background:var(--surface);margin-top:80px}
+footer .wrap{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:24px;padding:80px 0}
+@media(max-width:800px){footer .wrap{grid-template-columns:1fr 1fr}}
+footer h5{font-size:.8rem;font-weight:600;margin:0 0 24px;color:var(--on)}
+footer li{list-style:none;margin:0 0 16px}
+footer ul{padding:0;margin:0}
+footer a{color:var(--muted);font-size:.85rem}
+footer a:hover{color:var(--secondary)}
+footer .copy{color:var(--muted);font-size:.75rem;max-width:34ch}
 </style>
 </head>
-<body class="font-body-md text-body-md overflow-x-hidden">
+<body>
 @php
-  $catIcons = ['memory','smart_toy','sensors','bolt','developer_board','cable','battery_charging_full','precision_manufacturing'];
+  $catIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M4 9h2M4 15h2M18 9h2M18 15h2M9 4v2M15 4v2M9 18v2M15 18v2"/></svg>';
   $sampleCats = collect([
     (object)['name'=>'Semiconductors','description'=>'MCUs, FPGAs and specialized ASICs for high-performance computing.','slug'=>'semiconductors'],
     (object)['name'=>'Robotics','description'=>'Servo controllers, lidar modules and kinetic drive systems.','slug'=>'robotics'],
@@ -50,164 +148,96 @@
   $prods = ($products ?? collect())->isNotEmpty() ? $products : $sampleProducts;
 @endphp
 
-<header class="fixed top-0 inset-x-0 z-50 border-b border-subtle backdrop-blur-md bg-surface/80">
-<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-20 max-w-[1440px] mx-auto">
-<a href="/" class="flex items-center gap-3">
-<span class="w-9 h-9 rounded-lg grid place-items-center bg-secondary-container/20 border border-secondary/40 text-secondary"><svg width="20" height="20" viewBox="0 0 32 32" fill="none"><path d="M9 22V10l14 12V10" stroke="#28d8fb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-<span class="font-headline-lg text-2xl font-bold text-primary tracking-tighter">NeoGiga</span>
-</a>
-<nav class="hidden md:flex items-center gap-8">
-<a href="/products" class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors">Products</a>
-<a href="/categories" class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors">Categories</a>
-<a href="/ai-commerce" class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors">AI Builder</a>
-<a href="/rfq" class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors">RFQ</a>
-<a href="/sell-on-neogiga" class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors">Sell</a>
-</nav>
-<div class="flex items-center gap-4">
-<a href="/admin/login" class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors">Login</a>
-<a href="/products" class="bg-secondary text-on-secondary px-6 py-2 rounded-full font-label-sm text-label-sm hover:brightness-110 hover:scale-105 active:scale-95 transition-all">Get Started</a>
-</div>
-</div>
-</header>
+<header class="nav"><div class="wrap nav-in">
+  <a class="brand" href="/"><span class="mk"><svg width="20" height="20" viewBox="0 0 32 32" fill="none"><path d="M9 22V10l14 12V10" stroke="#28d8fb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>NeoGiga</a>
+  <nav class="nav-links">
+    <a href="/products">Products</a><a href="/categories">Categories</a><a href="/ai-commerce">AI Builder</a><a href="/rfq">RFQ</a><a href="/sell-on-neogiga">Sell</a>
+  </nav>
+  <div class="nav-cta"><a class="pill pill-ghost" href="/admin/login">Login</a><a class="pill pill-solid" href="/products">Get Started</a></div>
+</div></header>
 
-<main class="pt-20">
-<!-- Hero -->
-<section class="relative min-h-[780px] flex flex-col items-center justify-center px-margin-mobile md:px-margin-desktop hero-gradient overflow-hidden">
-<div class="relative z-10 w-full max-w-4xl text-center">
-<div class="inline-flex items-center gap-2 mb-6 px-3 py-1 rounded-full border border-subtle text-on-surface-variant font-technical-data text-xs">
-<span class="w-2 h-2 rounded-full bg-success"></span> Global engineering marketplace · single MPN catalog
-</div>
-<h1 class="font-display-lg text-5xl md:text-display-lg text-glow mb-8 tracking-tight leading-tight">
-Engineer the <span class="text-secondary">Future</span> at Scale
-</h1>
-<form action="/products" method="get" class="relative w-full group">
-<div class="absolute -inset-1 bg-gradient-to-r from-secondary to-primary rounded-full blur opacity-25 group-focus-within:opacity-50 transition duration-1000"></div>
-<div class="relative flex items-center bg-surface-container-low border border-subtle rounded-full px-6 md:px-8 py-4 md:py-6 shadow-2xl">
-<span class="material-symbols-outlined text-secondary mr-3 md:mr-4" style="font-variation-settings:'FILL' 1;">auto_awesome</span>
-<input name="q" class="w-full bg-transparent border-none focus:ring-0 text-lg md:text-2xl font-technical-data placeholder:text-on-surface-variant/40" placeholder='Try "ESP32 dev board" or "LiFePO4 cell"' type="text">
-<div class="flex items-center gap-3">
-<span class="hidden md:block font-technical-data text-on-surface-variant/50 text-xs bg-surface-variant px-2 py-1 rounded">CMD + K</span>
-<button type="submit" class="bg-secondary text-on-secondary px-5 md:px-6 py-2.5 md:py-3 rounded-full font-label-sm hover:brightness-110 transition-all flex items-center gap-2">
-<span class="material-symbols-outlined text-sm">search</span> Search
-</button>
-</div>
-</div>
-</form>
-<p class="mt-8 text-on-surface-variant font-technical-data text-sm">
-Cross-referenced with global technical datasheets and live regional inventory.
-</p>
-</div>
-</section>
+<main>
+<section class="hero"><div class="wrap">
+  <div class="eyebrow"><span class="dot"></span> Global engineering marketplace · single MPN catalog</div>
+  <h1>Engineer the <em>Future</em> at Scale</h1>
+  <form class="searchbox" action="/products" method="get"><div class="searchbar">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z"/></svg>
+    <input name="q" type="text" placeholder='Try "ESP32 dev board" or "LiFePO4 cell"'>
+    <span class="kbd mono">CMD + K</span>
+    <button class="pill pill-solid" type="submit">Search</button>
+  </div></form>
+  <p class="note mono">Cross-referenced with global technical datasheets and live regional inventory.</p>
+</div></section>
 
-<!-- Technical Categories -->
-<section class="py-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto">
-<div class="flex items-end justify-between mb-lg">
-<div>
-<h2 class="font-headline-lg text-headline-lg mb-2">Technical Categories</h2>
-<p class="text-on-surface-variant font-body-md">Precision components for every engineering vertical.</p>
-</div>
-<a href="/categories" class="text-secondary font-label-sm flex items-center gap-2 hover:underline whitespace-nowrap">View all <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
-</div>
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-gutter">
-@foreach($cats->take(4) as $i => $c)
-<a href="/products?category={{ $c->slug ?? '' }}" class="glass-card p-8 rounded-2xl group hover:border-secondary/50 transition-all cursor-pointer block">
-<div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mb-6 text-secondary group-hover:scale-110 transition-transform">
-<span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">{{ $catIcons[$i % count($catIcons)] }}</span>
-</div>
-<h3 class="font-headline-lg text-xl mb-2">{{ $c->name }}</h3>
-<p class="text-on-surface-variant text-sm mb-4 line-clamp-2">{{ $c->description ?: 'Precision components for advanced engineering builds.' }}</p>
-<div class="font-technical-data text-secondary text-xs">Explore catalog →</div>
-</a>
-@endforeach
-</div>
-</section>
+<section class="block"><div class="wrap">
+  <div class="head">
+    <div><h2>Technical Categories</h2><p>Precision components for every engineering vertical.</p></div>
+    <a class="link" href="/categories">View all →</a>
+  </div>
+  <div class="grid g4">
+    @foreach($cats->take(4) as $c)
+    <a class="glass cat" href="/products?category={{ $c->slug ?? '' }}">
+      <div class="chip">{!! $catIcon !!}</div>
+      <h3>{{ $c->name }}</h3>
+      <p>{{ $c->description ?: 'Precision components for advanced engineering builds.' }}</p>
+      <div class="go mono">Explore catalog →</div>
+    </a>
+    @endforeach
+  </div>
+</div></section>
 
-<!-- Partner strip -->
-<section class="py-lg border-y border-subtle bg-surface-container-lowest">
-<div class="px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-8 md:gap-xl opacity-50 hover:opacity-100 transition-all duration-500 font-bold text-on-surface-variant text-sm md:text-lg tracking-wide">
-<div>ESP32</div><div>STMICRO</div><div>RASPBERRY PI</div><div>TEXAS INSTRUMENTS</div><div>NORDIC</div>
-</div>
-</section>
+<section class="partners"><div class="wrap"><div>ESP32</div><div>STMICRO</div><div>RASPBERRY PI</div><div>TEXAS INSTRUMENTS</div><div>NORDIC</div></div></section>
 
-<!-- Featured products -->
-<section class="py-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto">
-<div class="flex items-center justify-between mb-lg">
-<h2 class="font-headline-lg text-headline-lg">Active Supply Intelligence</h2>
-<a href="/products" class="text-secondary font-label-sm flex items-center gap-2 hover:underline whitespace-nowrap">Browse all <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-@foreach($prods->take(3) as $i => $p)
-@php $stock = $p->stock ?? (($i % 3 === 1) ? 'low' : 'in'); @endphp
-<div class="glass-card rounded-2xl overflow-hidden group flex flex-col">
-<div class="relative h-56 overflow-hidden bg-surface-container grid place-items-center">
-<span class="material-symbols-outlined text-6xl text-on-surface-variant/30" style="font-variation-settings:'FILL' 1;">{{ $catIcons[$i % count($catIcons)] }}</span>
-<div class="absolute top-4 left-4 {{ $stock==='low' ? 'bg-tertiary/20 text-tertiary border-tertiary/30' : 'bg-success/20 text-success border-success/30' }} text-xs font-technical-data px-2 py-1 rounded border backdrop-blur-md">{{ $stock==='low' ? 'LOW STOCK' : 'IN STOCK' }}</div>
-</div>
-<div class="p-6 flex flex-col flex-1">
-<div class="flex justify-between items-start mb-4 gap-3">
-<div>
-<h4 class="font-headline-lg text-lg mb-1">{{ $p->name }}</h4>
-<p class="font-technical-data text-on-surface-variant text-xs">MPN: {{ $p->mpn ?? $p->sku ?? '—' }}</p>
-</div>
-<div class="text-right shrink-0">
-<div class="text-secondary font-headline-lg text-xl">${{ number_format((float)($p->base_price ?? 0), 2) }}</div>
-<div class="text-on-surface-variant text-[10px] font-technical-data">per unit</div>
-</div>
-</div>
-<div class="space-y-3 mb-6">
-<div class="flex justify-between text-xs font-technical-data"><span class="text-on-surface-variant">Spec</span><span>{{ $p->spec ?? 'See datasheet' }}</span></div>
-<div class="flex justify-between text-xs font-technical-data"><span class="text-on-surface-variant">Availability</span><span>{{ $p->avail ?? 'Live inventory' }}</span></div>
-</div>
-<a href="{{ $p->slug ? '/products/'.$p->slug : '/products' }}" class="mt-auto w-full py-3 bg-surface-variant hover:bg-secondary hover:text-on-secondary transition-all rounded-lg font-label-sm flex items-center justify-center gap-2">
-<span class="material-symbols-outlined text-sm">shopping_cart</span> View product
-</a>
-</div>
-</div>
-@endforeach
-</div>
-</section>
+<section class="block"><div class="wrap">
+  <div class="head"><div><h2>Active Supply Intelligence</h2></div><a class="link" href="/products">Browse all →</a></div>
+  <div class="grid g3">
+    @foreach($prods->take(3) as $i => $p)
+    @php $stock = $p->stock ?? (($i % 3 === 1) ? 'low' : 'in'); @endphp
+    <div class="glass pcard">
+      <div class="media">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM4 10h2M4 14h2M18 10h2M18 14h2M10 4v2M14 4v2M10 18v2M14 18v2"/></svg>
+        <span class="badge {{ $stock }}">{{ $stock==='low' ? 'LOW STOCK' : 'IN STOCK' }}</span>
+      </div>
+      <div class="pbody">
+        <div class="prow1">
+          <div><h4>{{ $p->name }}</h4><div class="mpn mono">MPN: {{ $p->mpn ?? $p->sku ?? '—' }}</div></div>
+          <div class="price">${{ number_format((float)($p->base_price ?? 0), 2) }}<small class="mono">per unit</small></div>
+        </div>
+        <div class="specs mono">
+          <div><span>Spec</span><b>{{ $p->spec ?? 'See datasheet' }}</b></div>
+          <div><span>Availability</span><b>{{ $p->avail ?? 'Live inventory' }}</b></div>
+        </div>
+        <a class="pbtn" href="{{ $p->slug ? '/products/'.$p->slug : '/products' }}">View product →</a>
+      </div>
+    </div>
+    @endforeach
+  </div>
+</div></section>
 
-<!-- Newsletter -->
-<section class="py-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto">
-<div class="glass-card rounded-[2rem] p-10 md:p-20 relative overflow-hidden">
-<div class="relative z-10 max-w-2xl">
-<h2 class="font-display-lg text-3xl md:text-4xl mb-6">Design with <span class="text-secondary">Intelligence</span>.</h2>
-<p class="text-on-surface-variant text-base md:text-lg mb-8 leading-relaxed">Get AI-curated hardware insights and regional supply alerts for your builds.</p>
-<form action="/api/v1/newsletter/subscribe" method="post" class="flex flex-col sm:flex-row gap-4">
-<input name="email" class="flex-1 bg-surface-container border border-subtle rounded-xl px-6 py-4 focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Professional email" type="email">
-<button type="submit" class="bg-secondary text-on-secondary px-8 py-4 rounded-xl font-label-sm hover:brightness-110 hover:scale-105 active:scale-95 transition-all">Subscribe</button>
-</form>
-</div>
-</div>
-</section>
+<section class="block"><div class="wrap">
+  <div class="glass news">
+    <h2>Design with <em>Intelligence</em>.</h2>
+    <p>Get AI-curated hardware insights and regional supply alerts for your builds.</p>
+    <form action="/api/v1/newsletter/subscribe" method="post">
+      <input type="email" name="email" placeholder="Professional email">
+      <button type="submit">Subscribe</button>
+    </form>
+  </div>
+</div></section>
 </main>
 
-<footer class="w-full py-xl px-margin-mobile md:px-margin-desktop grid grid-cols-2 md:grid-cols-4 gap-gutter max-w-[1440px] mx-auto bg-surface-container-lowest border-t border-subtle mt-xl">
-<div class="col-span-2 md:col-span-1">
-<div class="font-headline-lg text-2xl font-bold text-primary mb-6">NeoGiga</div>
-<p class="text-on-surface-variant font-technical-data text-xs leading-relaxed">© {{ date('Y') }} NeoGiga. Precision engineering for global innovation.</p>
-</div>
-<div><h5 class="text-on-surface font-label-sm mb-6">Catalog</h5><ul class="space-y-4">
-<li><a class="text-on-surface-variant font-technical-data text-sm hover:text-secondary transition-all" href="/products">Products</a></li>
-<li><a class="text-on-surface-variant font-technical-data text-sm hover:text-secondary transition-all" href="/categories">Categories</a></li>
-<li><a class="text-on-surface-variant font-technical-data text-sm hover:text-secondary transition-all" href="/rfq">Bulk RFQ</a></li>
-</ul></div>
-<div><h5 class="text-on-surface font-label-sm mb-6">Platform</h5><ul class="space-y-4">
-<li><a class="text-on-surface-variant font-technical-data text-sm hover:text-secondary transition-all" href="/ai-commerce">AI Builder</a></li>
-<li><a class="text-on-surface-variant font-technical-data text-sm hover:text-secondary transition-all" href="/learn">Learning Hub</a></li>
-<li><a class="text-on-surface-variant font-technical-data text-sm hover:text-secondary transition-all" href="/sell-on-neogiga">Become a Seller</a></li>
-</ul></div>
-<div><h5 class="text-on-surface font-label-sm mb-6">Editions</h5><ul class="space-y-4">
-<li><a class="text-on-surface-variant font-technical-data text-sm hover:text-secondary transition-all" href="https://neogiga.com">Global · neogiga.com</a></li>
-<li><a class="text-on-surface-variant font-technical-data text-sm hover:text-secondary transition-all" href="https://neogiga.in">India · neogiga.in</a></li>
-<li><a class="text-on-surface-variant font-technical-data text-sm hover:text-secondary transition-all" href="https://giganepal.com">Nepal · giganepal.com</a></li>
-</ul></div>
-</footer>
+<footer><div class="wrap">
+  <div>
+    <a class="brand" href="/" style="margin-bottom:24px"><span class="mk"><svg width="20" height="20" viewBox="0 0 32 32" fill="none"><path d="M9 22V10l14 12V10" stroke="#28d8fb" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>NeoGiga</a>
+    <p class="copy mono">© {{ date('Y') }} NeoGiga. Precision engineering for global innovation.</p>
+  </div>
+  <div><h5>Catalog</h5><ul><li><a href="/products">Products</a></li><li><a href="/categories">Categories</a></li><li><a href="/rfq">Bulk RFQ</a></li></ul></div>
+  <div><h5>Platform</h5><ul><li><a href="/ai-commerce">AI Builder</a></li><li><a href="/learn">Learning Hub</a></li><li><a href="/sell-on-neogiga">Become a Seller</a></li></ul></div>
+  <div><h5>Editions</h5><ul><li><a href="https://neogiga.com">Global · neogiga.com</a></li><li><a href="https://neogiga.in">India · neogiga.in</a></li><li><a href="https://giganepal.com">Nepal · giganepal.com</a></li></ul></div>
+</div></footer>
 
 <script>
-  document.addEventListener('keydown',function(e){
-    if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();document.querySelector('input[name=q]')?.focus();}
-  });
+document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();document.querySelector('input[name=q]')?.focus();}});
 </script>
 </body>
 </html>
