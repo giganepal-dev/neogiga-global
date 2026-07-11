@@ -233,7 +233,7 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    // Inventory (availability reads public; mutations Phase 1)
+    // Inventory (availability reads public; reservations require API token)
     Route::prefix('inventory')->group(function () {
         Route::get('/product/{product}', [InventoryController::class, 'byProduct'])->whereNumber('product');
         Route::get('/marketplace/{marketplace}', [InventoryController::class, 'byMarketplace'])->whereNumber('marketplace');
@@ -242,7 +242,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/release-reservation', [InventoryController::class, 'releaseReservation'])->middleware('api.token');
     });
 
-    // Commerce (contract stable; 501 until Phase 1 — requires auth + payments)
+    // Commerce (cart and manual checkout APIs require auth/permissions)
     Route::prefix('cart')->middleware(['api.token', 'permission:cart.manage'])->group(function () {
         Route::get('/', [CartController::class, 'index']);
         Route::post('/items', [CartController::class, 'addItem']);
@@ -268,7 +268,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/create-pos-invoice', [AiCommerceController::class, 'createPosInvoice']);
     });
 
-    // POS (contract stable; 501 until device auth + payments)
+    // POS (product search public; terminal/session/sale mutations require API token)
     Route::prefix('pos')->group(function () {
         Route::get('/products/search', [PosController::class, 'searchProducts']);
         Route::middleware('api.token')->group(function () {
@@ -281,7 +281,7 @@ Route::prefix('v1')->group(function () {
         });
     });
 
-    // LMS (501 until schema reconciliation)
+    // LMS (public catalog/project reads; learner actions require API token)
     Route::prefix('lms')->group(function () {
         Route::get('/courses', [LmsController::class, 'courses']);
         Route::get('/courses/{course}/modules', [LmsController::class, 'courseModules'])->whereNumber('course');
