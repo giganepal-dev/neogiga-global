@@ -35,6 +35,117 @@ class MarketplaceConfigController extends Controller
     ) {
     }
 
+    /** Filterable + searchable marketplace list (codex §11). */
+    public function index(Request $request): View
+    {
+        $q = Marketplace::with(['country', 'currency', 'domains']);
+
+        if ($s = trim((string) $request->query('q', ''))) {
+            $q->where(function ($w) use ($s) {
+                $w->where('name', 'ilike', "%{$s}%")
+                    ->orWhere('code', 'ilike', "%{$s}%")
+                    ->orWhere('domain', 'ilike', "%{$s}%")
+                    ->orWhere('generated_domain', 'ilike', "%{$s}%")
+                    ->orWhereHas('country', fn ($c) => $c->where('name', 'ilike', "%{$s}%"));
+            });
+        }
+        if (($v = $request->query('status')) !== null && $v !== '') {
+            $q->where('is_active', $v === 'active');
+        }
+        if (($v = $request->query('visibility')) !== null && $v !== '') {
+            $q->where('is_visible', $v === 'visible');
+        }
+        if (($v = $request->query('domain_status')) !== null && $v !== '') {
+            $v === 'verified' ? $q->whereNotNull('domain_verified_at') : $q->whereNull('domain_verified_at');
+        }
+        if (($v = $request->query('seo_status')) !== null && $v !== '') {
+            $v === 'complete'
+                ? $q->whereNotNull('seo_title')->whereNotNull('seo_description')
+                : $q->where(fn ($w) => $w->whereNull('seo_title')->orWhereNull('seo_description'));
+        }
+        if ($cid = $request->query('country_id')) {
+            $q->where('country_id', $cid);
+        }
+        if ($cur = $request->query('currency_id')) {
+            $q->where('currency_id', $cur);
+        }
+        if ($request->boolean('missing_domain')) {
+            $q->whereNull('domain')->whereNull('generated_domain');
+        }
+        if ($request->boolean('missing_seo')) {
+            $q->where(fn ($w) => $w->whereNull('seo_title')->orWhereNull('seo_description'));
+        }
+
+        return view('admin.marketplaces', [
+            'marketplaces' => $q->orderByDesc('is_active')->orderBy('name')->get(),
+            'countries' => Country::orderBy('name')->get(['id', 'name']),
+            'currencies' => Currency::orderBy('code')->get(['id', 'code']),
+            'filters' => $request->query(),
+        ]);
+    }
+
+    /** Bulk actions on selected marketplaces (codex §4). */
+    public function bulk(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'action' => 'required|in:enable,disable,set_visible,set_hidden,generate_missing_domains,generate_default_seo',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+            'reason' => 'nullable|string|max:1000',
+        ]);
+
+        $isSuper = (Auth::user()?->role->name ?? null) === 'super_admin';
+        $userId = Auth::id();
+        $marketplaces = Marketplace::with('country')->whereIn('id', $data['ids'])->get();
+        $done = 0;
+        $skipped = 0;
+
+        foreach ($marketplaces as $m) {
+            switch ($data['action']) {
+                case 'enable':
+                    $res = $this->status->enable($m, force: false, isSuperAdmin: $isSuper, userId: $userId);
+                    $res['ok'] ? $done++ : $skipped++;
+                    break;
+                case 'disable':
+                    $reason = trim((string) ($data['reason'] ?? ''));
+                    if ($reason === '') {
+                        return back()->withErrors(['reason' => 'A reason is required to disable marketplaces.']);
+                    }
+                    $this->status->disable($m, $reason, $userId);
+                    $done++;
+                    break;
+                case 'set_visible':
+                    $m->is_visible = true;
+                    $m->save();
+                    MarketplaceAuditLog::record($m->id, 'set_visible', [], [], $userId);
+                    $done++;
+                    break;
+                case 'set_hidden':
+                    $m->is_visible = false;
+                    $m->save();
+                    MarketplaceAuditLog::record($m->id, 'set_hidden', [], [], $userId);
+                    $done++;
+                    break;
+                case 'generate_missing_domains':
+                    if (empty($m->generated_domain) && ! $m->is_domain_locked) {
+                        $this->domains->backfillGeneratedDomain($m);
+                        MarketplaceAuditLog::record($m->id, 'domain_generated', [], ['generated_domain' => $m->generated_domain], $userId);
+                        $done++;
+                    } else {
+                        $skipped++;
+                    }
+                    break;
+                case 'generate_default_seo':
+                    $this->seo->apply($m, onlyEmpty: true);
+                    MarketplaceAuditLog::record($m->id, 'seo_changed', [], ['bulk' => true], $userId);
+                    $done++;
+                    break;
+            }
+        }
+
+        return back()->with('status', "Bulk {$data['action']}: {$done} updated, {$skipped} skipped.");
+    }
+
     public function edit(int $id): View
     {
         $marketplace = Marketplace::with(['country', 'currency', 'domains'])->findOrFail($id);
