@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Marketplace extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -37,6 +39,20 @@ class Marketplace extends Model
         'local_seller_support',
         'local_warehouse_support',
         'local_payment_support',
+        // Domain/SEO configuration system
+        'country_iso2', 'country_iso3', 'currency_code', 'currency_symbol',
+        'domain', 'domain_mode', 'domain_prefix', 'generated_domain', 'canonical_domain',
+        'force_https', 'redirect_to_canonical', 'www_redirect_mode', 'domain_verified_at',
+        'ssl_status', 'is_domain_locked',
+        'is_visible', 'allow_customer_registration', 'maintenance_mode', 'maintenance_message',
+        'launch_at', 'disabled_at', 'disabled_reason',
+        'seo_title', 'seo_description', 'seo_keywords', 'seo_h1', 'seo_canonical_url', 'seo_robots',
+        'seo_og_title', 'seo_og_description', 'seo_og_image', 'seo_twitter_title',
+        'seo_twitter_description', 'seo_twitter_image', 'seo_schema_json', 'seo_header_scripts',
+        'seo_footer_scripts', 'sitemap_enabled', 'hreflang_enabled', 'indexable',
+        'seo_is_auto_generated', 'seo_last_generated_at', 'seo_manual_override_fields',
+        'short_description', 'marketplace_description', 'homepage_heading', 'homepage_subheading',
+        'logo', 'favicon', 'banner_image', 'created_by', 'updated_by',
     ];
 
     protected $casts = [
@@ -53,6 +69,23 @@ class Marketplace extends Model
         'local_seller_support' => 'boolean',
         'local_warehouse_support' => 'boolean',
         'local_payment_support' => 'boolean',
+        // Domain/SEO configuration system
+        'force_https' => 'boolean',
+        'redirect_to_canonical' => 'boolean',
+        'is_domain_locked' => 'boolean',
+        'domain_verified_at' => 'datetime',
+        'is_visible' => 'boolean',
+        'allow_customer_registration' => 'boolean',
+        'maintenance_mode' => 'boolean',
+        'launch_at' => 'datetime',
+        'disabled_at' => 'datetime',
+        'seo_schema_json' => 'array',
+        'seo_manual_override_fields' => 'array',
+        'sitemap_enabled' => 'boolean',
+        'hreflang_enabled' => 'boolean',
+        'indexable' => 'boolean',
+        'seo_is_auto_generated' => 'boolean',
+        'seo_last_generated_at' => 'datetime',
     ];
 
     public function country(): BelongsTo
