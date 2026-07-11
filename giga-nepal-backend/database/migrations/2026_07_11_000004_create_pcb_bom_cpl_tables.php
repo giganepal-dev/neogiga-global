@@ -18,7 +18,7 @@ return new class extends Migration
             Schema::create('pcb_cpl_imports', function (Blueprint $table) {
                 $table->uuid('id')->primary();
                 $table->foreignUuid('project_id')->constrained('pcb_projects')->onDelete('cascade');
-                $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
+                $table->foreignId('user_id')->constrained()->onDelete('cascade');
                 $table->string('filename_original');
                 $table->string('filename_stored');
                 $table->unsignedBigInteger('file_size');
@@ -57,7 +57,7 @@ return new class extends Migration
                 // Validation
                 $table->boolean('bom_matched')->default(false);
                 $table->foreignUuid('matched_bom_line_id')->nullable();
-                $table->foreignUuid('matched_product_id')->nullable()->constrained('products')->nullOnDelete();
+                $table->foreignId('matched_product_id')->nullable()->constrained('products')->nullOnDelete();
                 $table->boolean('placement_validated')->default(false);
                 
                 // Errors
@@ -73,13 +73,13 @@ return new class extends Migration
             Schema::create('pcb_cpl_validation_errors', function (Blueprint $table) {
                 $table->id();
                 $table->foreignUuid('cpl_import_id')->constrained('pcb_cpl_imports')->onDelete('cascade');
-                $table->foreignUuid('cpl_line_id')->nullable()->constrained('pcb_cpl_lines')->nullOnDelete();
+                $table->foreignId('cpl_line_id')->nullable()->constrained('pcb_cpl_lines')->nullOnDelete();
                 $table->unsignedInteger('line_number');
                 $table->string('error_code'); // DUPLICATE_DESIGNATOR, MISSING_BOM, INVALID_COORDS, etc.
                 $table->text('error_message');
                 $table->json('error_details')->nullable();
                 $table->boolean('resolved')->default(false);
-                $table->foreignUuid('resolved_by_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('resolved_by_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamp('resolved_at')->nullable();
                 $table->text('resolution_notes')->nullable();
                 $table->timestamps();
@@ -100,7 +100,7 @@ return new class extends Migration
                 $table->string('requested_package')->nullable();
                 
                 // Match result
-                $table->foreignUuid('matched_product_id')->nullable()->constrained('products')->nullOnDelete();
+                $table->foreignId('matched_product_id')->nullable()->constrained('products')->nullOnDelete();
                 $table->string('matched_mpn')->nullable();
                 $table->string('matched_manufacturer')->nullable();
                 $table->enum('match_confidence', ['exact', 'high', 'medium', 'low', 'no_match'])->default('no_match');
@@ -108,10 +108,10 @@ return new class extends Migration
                 
                 // Approval status
                 $table->boolean('customer_approved')->default(false);
-                $table->foreignUuid('approved_by_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('approved_by_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamp('approved_at')->nullable();
                 $table->boolean('engineer_approved')->default(false);
-                $table->foreignUuid('engineer_approved_by_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('engineer_approved_by_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamp('engineer_approved_at')->nullable();
                 
                 // Alternatives
@@ -128,13 +128,13 @@ return new class extends Migration
             Schema::create('pcb_component_substitutions', function (Blueprint $table) {
                 $table->id();
                 $table->foreignUuid('component_match_id')->constrained('pcb_component_matches')->onDelete('cascade');
-                $table->foreignUuid('original_product_id')->nullable()->constrained('products')->nullOnDelete();
-                $table->foreignUuid('substitute_product_id')->constrained('products');
+                $table->foreignId('original_product_id')->nullable()->constrained('products')->nullOnDelete();
+                $table->foreignId('substitute_product_id')->constrained('products');
                 $table->enum('substitution_type', ['manufacturer_alternate', 'functional_equivalent', 'upgrade', 'cost_reduction']);
                 $table->text('justification');
                 $table->boolean('requires_approval')->default(true);
                 $table->boolean('approved')->default(false);
-                $table->foreignUuid('approved_by_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('approved_by_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamp('approved_at')->nullable();
                 $table->timestamps();
                 

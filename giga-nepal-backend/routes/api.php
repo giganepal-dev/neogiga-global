@@ -801,7 +801,7 @@ Route::prefix('v1/products/{product}')->group(function () {
 });
 
 // Add PCB routes before the final closing brackets
-Route::prefix('v1/pcb')->middleware('api.token)->group(function () {
+Route::prefix('v1/pcb')->middleware('api.token')->group(function () {
     // PCB Projects
     Route::apiResource('projects', \App\Http\Controllers\Pcb\PcbProjectController::class);
     Route::get('projects/{project}/activity', [\App\Http\Controllers\Pcb\PcbProjectController::class, 'activity']);
@@ -820,4 +820,3 @@ Route::prefix('v1/pcb/public')->group(function () {
     // Route::post('quote/calculate', [PcbPublicQuoteController::class, 'calculate']);
     // Route::get('capabilities', [PcbCapabilitiesController::class, 'index']);
 });
-

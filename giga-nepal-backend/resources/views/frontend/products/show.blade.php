@@ -1,6 +1,6 @@
 @extends('frontend.layout')
-@section('title', $product->name.' - NeoGiga')
-@section('description', \Illuminate\Support\Str::limit(strip_tags($product->short_description ?: ($product->description ?: 'Datasheet, technical specifications, stock and RFQ for '.$product->name.' on NeoGiga.')), 155))
+@section('title', \Illuminate\Support\Str::limit(trim((string) (data_get($product->seo_meta, 'title') ?: $product->meta_title ?: $product->name.' - NeoGiga')), 60))
+@section('description', \Illuminate\Support\Str::limit(strip_tags(trim((string) (data_get($product->seo_meta, 'description') ?: $product->meta_description ?: $product->short_description ?: ($product->description ?: 'Datasheet, technical specifications, stock and RFQ for '.$product->name.' on NeoGiga.')))), 155))
 @section('og_type','product')
 
 @push('head')
@@ -55,6 +55,16 @@
     $priceCurrency = $marketplacePrice?->currency_native_symbol ?: ($marketplacePrice?->currency_symbol ?: ($marketplacePrice?->currency_code ?: ($marketplaceContext['currency_code'] ?? 'USD')));
     $displayPrice = $marketplacePrice ? ($marketplacePrice->sale_price ?: $marketplacePrice->base_price) : ($product->sale_price ?: $product->base_price);
     $displayCurrency = $marketplacePrice ? $priceCurrency : ($marketplaceContext['currency_code'] ?? 'USD');
+    $shortSummary = trim(strip_tags($product->short_description ?: ''));
+    $productDetailText = trim(strip_tags($product->description ?: ''));
+    $productSummary = $shortSummary !== '' ? $shortSummary : \Illuminate\Support\Str::limit($productDetailText, 360);
+    $productSummary = $productSummary !== '' ? $productSummary : 'Browse '.$product->name.' with verified engineering details, sourcing support, and regional availability from NeoGiga.';
+    $showProductOverview = $productDetailText !== '' && $productDetailText !== $shortSummary;
+    $productOverviewParagraphs = collect(preg_split('/\R{2,}|\r\n|\r|\n/', $productDetailText))
+        ->map(fn ($line) => trim($line))
+        ->filter(fn ($line) => $line !== '')
+        ->values()
+        ->all();
 @endphp
 <section class="section" style="padding-top:18px">
     <div class="wrap">
@@ -70,7 +80,17 @@
                 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><span class="badge b-info">{{ $product->category->name ?? 'Engineering part' }}</span><span class="badge {{ ($product->stock_quantity ?? 0) > 0 ? 'b-ok' : 'b-warn' }}">{{ ($product->stock_quantity ?? 0) > 0 ? 'In stock' : 'RFQ only' }}</span></div>
                 <h1 style="font-size:clamp(1.8rem,4vw,3.1rem);line-height:1.05;margin:0 0 10px">{{ $product->name }}</h1>
                 <p class="sub">{{ implode(' · ', $productMeta) }}</p>
-                @if($product->short_description || $product->description)<p>{{ strip_tags($product->short_description ?: \Illuminate\Support\Str::limit(strip_tags($product->description), 540)) }}</p>@endif
+                @if($productSummary)<p style="max-width:72ch;line-height:1.75;color:#475569;margin:0 0 16px">{{ $productSummary }}</p>@endif
+                @if($showProductOverview && !empty($productOverviewParagraphs))
+                    <section aria-labelledby="product-overview" style="margin:0 0 20px;padding:14px 16px;border:1px solid #e5eef7;border-radius:12px;background:#f9fcff">
+                        <h2 id="product-overview" style="font-size:1.05rem;margin:0 0 8px">Product overview</h2>
+                        <div style="display:grid;gap:8px">
+                            @foreach($productOverviewParagraphs as $paragraph)
+                                <p style="margin:0;line-height:1.7;color:#334155">{{ $paragraph }}</p>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
                 <h2 style="font-size:1.2rem;margin-top:24px">Technical Specifications</h2>
                 <table class="spec-table">
                     @foreach($advancedSpecs->groupBy(fn($s) => $s->group_name ?: ($s->template_name ?: 'Advanced Specifications')) as $groupName => $rows)
@@ -79,7 +99,7 @@
                             <tr><th>{{ $s->field_label }}</th><td>{{ $s->value }}{{ $s->unit_override ? ' '.$s->unit_override : ($s->unit ? ' '.$s->unit : '') }}</td></tr>
                         @endforeach
                     @endforeach
-                    @forelse($product->specs->sortBy('sort_order') as $s)
+                    @forelse($product->specs->where('is_visible', true)->sortBy('sort_order') as $s)
                         <tr><th>{{ $s->name }}</th><td>{{ $s->value }}{{ $s->unit ? ' '.$s->unit : '' }}</td></tr>
                     @empty
                         @if($product->mpn)<tr><th>Manufacturer Part Number</th><td>{{ $product->mpn }}</td></tr>@endif

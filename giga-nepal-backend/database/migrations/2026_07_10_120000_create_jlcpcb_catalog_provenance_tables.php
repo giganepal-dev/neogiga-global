@@ -9,7 +9,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'pgsql') {
+            DB::statement('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+        }
 
         Schema::create('catalog_sources', function (Blueprint $table) {
             $table->id();
@@ -21,8 +25,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('catalog_import_batches', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
+        Schema::create('catalog_import_batches', function (Blueprint $table) use ($driver) {
+            $id = $table->uuid('id')->primary();
+            if ($driver === 'pgsql') {
+                $id->default(DB::raw('gen_random_uuid()'));
+            }
             $table->foreignId('source_id')->constrained('catalog_sources')->cascadeOnDelete();
             $table->string('checksum')->nullable()->index();
             $table->string('status')->index();

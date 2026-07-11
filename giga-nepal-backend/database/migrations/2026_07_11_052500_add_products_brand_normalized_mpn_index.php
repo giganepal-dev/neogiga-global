@@ -5,15 +5,23 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    public bool $withinTransaction = false;
+    public $withinTransaction = false;
 
     public function up(): void
     {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
         DB::statement("CREATE INDEX CONCURRENTLY IF NOT EXISTS products_brand_normalized_mpn_idx ON products (brand_id, upper(regexp_replace(coalesce(mpn, ''), '\\s+', '', 'g')))");
     }
 
     public function down(): void
     {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
         DB::statement('DROP INDEX CONCURRENTLY IF EXISTS products_brand_normalized_mpn_idx');
     }
 };
