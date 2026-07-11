@@ -18,6 +18,10 @@ class MarketplaceDomain extends Model
         'ssl_certificate_path',
         'ssl_expires_at',
         'redirect_rules',
+        'domain_type',
+        'redirect_url',
+        'verified_at',
+        'ssl_status',
     ];
 
     protected $casts = [
@@ -25,6 +29,7 @@ class MarketplaceDomain extends Model
         'is_active' => 'boolean',
         'ssl_expires_at' => 'datetime',
         'redirect_rules' => 'array',
+        'verified_at' => 'datetime',
     ];
 
     public function marketplace(): BelongsTo
