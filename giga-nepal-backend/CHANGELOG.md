@@ -23,6 +23,7 @@
 - Added a read-only JLCPCB taxonomy review gate in admin to surface imported brand/category counts and flag generic labels before larger-scale catalog imports.
 - Added an explicit guarded JLCPCB `--scale-import` ETL flag for hidden/pending NeoGiga imports up to 20,000 rows, plus generated localized noindex SEO metadata for imported products, brands, and categories.
 - Ran the guarded 20,000-row JLCPCB production import on live: 18,947 new products, 1,053 existing products refreshed, 19,947 source links, 238 brands, 166 categories, 18,947 offers, localized noindex SEO metadata, and 53 canonical duplicate source rows skipped without public exposure.
+- Upgraded JLCPCB localized SEO templates to professional country-specific commercial titles/descriptions for Global, India, and Nepal, including category/product/brand tags and keywords such as local stock, fast dispatch, and RFQ sourcing while keeping imported records noindex until review.
 
 ## 2026-07-09 - Complete System Audit
 

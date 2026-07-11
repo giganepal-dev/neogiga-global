@@ -45,6 +45,19 @@ def test_product_seo_meta_is_localized_and_noindex():
     assert "india" in meta["localized"]
     assert "nepal" in meta["localized"]
     assert "ABC-1" in meta["keywords"]
+    assert "Buy ABC-1 Online in India" in meta["localized"]["india"]["title"]
+    assert "Local Stock" in meta["localized"]["india"]["title"]
+    assert "Buy ABC-1 in Nepal" in meta["localized"]["nepal"]["title"]
+
+
+def test_category_seo_meta_uses_professional_country_templates():
+    adapter = NeoGigaCanonicalAdapter("postgresql://not-used", source_checksum="abc", dry_run=True)
+
+    meta = adapter._category_seo_meta("Resistor", "Electronic Components/Resistor")
+
+    assert meta["localized"]["india"]["title"] == "Buy Resistors Online in India | Local Stock & Fast Dispatch | NeoGiga India"
+    assert meta["localized"]["nepal"]["title"] == "Buy Resistors in Nepal | Local Stock & Fast Delivery | GigaNepal"
+    assert "buy online" in meta["keywords"]
 
 
 def test_source_link_preserves_final_review_status_sql():
