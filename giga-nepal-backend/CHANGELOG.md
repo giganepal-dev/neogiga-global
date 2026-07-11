@@ -40,6 +40,7 @@
 - Replaced scheduled marketing placeholder jobs with first-party safe-mode implementations for trending products/categories, top searches, abandoned cart capture/reminders, segment refresh, regional sales reports, and transactional email queue processing.
 - Added a Composer post-autoload patch and app database config fallback for Laravel 11's deprecated `PDO::MYSQL_ATTR_SSL_CA` default so PHP 8.5 local/CI runs stay clean without a major framework upgrade.
 - Added licensed product image source metadata columns plus dry-run-first `product-images:audit` and `product-images:import-licensed-manifest` commands, so placeholder images can be replaced only from local files with explicit redistribution permission.
+- Added a hidden `product_image_candidates` review queue and `product-images:discover-candidates` command that can collect public source-page image URL candidates by product/MPN without downloading or publishing unapproved media.
 
 ## 2026-07-09 - Complete System Audit
 
