@@ -34,6 +34,28 @@ def test_quality_score_penalizes_missing_datasheet():
     assert adapter._quality_score(part) < 1
 
 
+def test_product_seo_meta_is_localized_and_noindex():
+    part = transform_record(sample_record(), MAPPING)
+    adapter = NeoGigaCanonicalAdapter("postgresql://not-used", source_checksum="abc", dry_run=True)
+
+    meta = adapter._product_seo_meta(part, "Texas Instruments ABC-1")
+
+    assert meta["robots"] == "noindex,nofollow"
+    assert "global" in meta["localized"]
+    assert "india" in meta["localized"]
+    assert "nepal" in meta["localized"]
+    assert "ABC-1" in meta["keywords"]
+
+
+def test_source_link_preserves_final_review_status_sql():
+    adapter = NeoGigaCanonicalAdapter("postgresql://not-used", source_checksum="abc", dry_run=True)
+
+    import inspect
+
+    body = inspect.getsource(adapter._source_link)
+    assert "WHEN catalog_product_sources.review_status IN ('approved', 'rejected')" in body
+
+
 def test_create_batch_returns_string_uuid():
     class Result:
         def fetchone(self):

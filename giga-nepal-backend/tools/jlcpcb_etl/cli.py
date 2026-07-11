@@ -39,6 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--target", choices=["standalone", "neogiga"], default="standalone", help="Catalog write target")
     parser.add_argument("--publish", action="store_true", help="Allow writes for the selected target")
     parser.add_argument("--pilot", action="store_true", help="Mark this run as the controlled NeoGiga pilot import")
+    parser.add_argument("--scale-import", action="store_true", help="Allow a guarded NeoGiga hidden/pending scale import above 1,000 rows and up to 20,000 rows")
     parser.add_argument("--connection-check", action="store_true", help="Resolve the target database connection and run SELECT 1")
     parser.add_argument("--print-connection-source", action="store_true", help="Print only DATABASE_URL, LARAVEL_ENV, or CLI")
     parser.add_argument("--connection-dsn", default=None, help="Development-only PostgreSQL DSN override")
@@ -226,8 +227,9 @@ def run(argv: list[str] | None = None) -> int:
         if args.target == "neogiga":
             if not args.publish or not args.pilot:
                 raise RuntimeError("Refusing NeoGiga canonical writes without --publish --pilot")
-            if args.limit is None or args.limit > 1000:
-                raise RuntimeError("NeoGiga pilot writes are capped at --limit 1000 for this execution")
+            max_neogiga_rows = 20000 if args.scale_import else 1000
+            if args.limit is None or args.limit > max_neogiga_rows:
+                raise RuntimeError(f"NeoGiga writes are capped at --limit {max_neogiga_rows} for this execution")
             adapter = TargetAdapterRegistry.create_neogiga(
                 resolved.dsn,
                 source_checksum=result.checksum,
@@ -236,7 +238,7 @@ def run(argv: list[str] | None = None) -> int:
                 no_seo=args.no_seo,
             )
             adapter_result = adapter.publish(processed)
-            _write_adapter_report(adapter_result, settings.output_dir, mode="neogiga_pilot")
+            _write_adapter_report(adapter_result, settings.output_dir, mode="neogiga_scale_hidden_pending" if args.scale_import else "neogiga_pilot")
             if adapter_result.skipped:
                 raise RuntimeError(f"NeoGiga pilot stopped with {adapter_result.skipped} adapter errors")
             checkpoint_store.write(

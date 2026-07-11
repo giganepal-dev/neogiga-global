@@ -33,3 +33,10 @@ def test_dry_run_does_not_write_catalog(tmp_path, monkeypatch):
     result = cli.run(["--dry-run", "--sqlite-file", str(sqlite_path), "--limit", "100", "--log-level", "ERROR"])
     assert result == 0
     assert calls == {"ensure_schema": 0, "load_batch": 0}
+
+
+def test_scale_import_flag_is_explicit():
+    args = cli.build_parser().parse_args(["--target", "neogiga", "--publish", "--pilot", "--scale-import", "--limit", "20000"])
+
+    assert args.scale_import is True
+    assert args.limit == 20000
