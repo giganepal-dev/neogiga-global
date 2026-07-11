@@ -104,4 +104,60 @@ class MarketplaceAdminUiTest extends TestCase
             ->assertSessionHasErrors('enable');
         $this->assertFalse((bool) $m->fresh()->is_active);
     }
+
+    public function test_list_search_filters_results(): void
+    {
+        $this->marketplace(['code' => 'ALPHA', 'name' => 'Alpha Store']);
+        $this->marketplace(['code' => 'BETA', 'name' => 'Beta Store']);
+
+        $this->actingAs($this->admin())
+            ->get('/admin/marketplaces?q=Alpha')
+            ->assertOk()
+            ->assertSee('Alpha Store')
+            ->assertDontSee('Beta Store');
+    }
+
+    public function test_list_missing_seo_filter(): void
+    {
+        $withSeo = $this->marketplace(['code' => 'HASSEO', 'name' => 'Has SEO', 'seo_title' => 'T', 'seo_description' => 'D']);
+        $noSeo = $this->marketplace(['code' => 'NOSEO', 'name' => 'No SEO']);
+
+        $this->actingAs($this->admin())
+            ->get('/admin/marketplaces?missing_seo=1')
+            ->assertOk()
+            ->assertSee('No SEO')
+            ->assertDontSee('Has SEO');
+    }
+
+    public function test_bulk_set_visible(): void
+    {
+        $a = $this->marketplace(['code' => 'A', 'is_visible' => false]);
+        $b = $this->marketplace(['code' => 'B', 'is_visible' => false]);
+
+        $this->actingAs($this->admin())
+            ->post('/admin/marketplaces/bulk', ['action' => 'set_visible', 'ids' => [$a->id, $b->id]])
+            ->assertRedirect();
+
+        $this->assertTrue((bool) $a->fresh()->is_visible);
+        $this->assertTrue((bool) $b->fresh()->is_visible);
+    }
+
+    public function test_bulk_generate_default_seo(): void
+    {
+        $m = $this->marketplace(['code' => 'C']);
+        $this->actingAs($this->admin())
+            ->post('/admin/marketplaces/bulk', ['action' => 'generate_default_seo', 'ids' => [$m->id]])
+            ->assertRedirect();
+
+        $this->assertNotEmpty($m->fresh()->seo_title);
+    }
+
+    public function test_bulk_disable_requires_reason(): void
+    {
+        $m = $this->marketplace(['is_active' => true]);
+        $this->actingAs($this->admin())
+            ->post('/admin/marketplaces/bulk', ['action' => 'disable', 'ids' => [$m->id]])
+            ->assertSessionHasErrors('reason');
+        $this->assertTrue((bool) $m->fresh()->is_active);
+    }
 }
