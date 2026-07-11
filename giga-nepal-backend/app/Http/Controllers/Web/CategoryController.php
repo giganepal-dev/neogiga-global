@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class CategoryController extends Controller
@@ -46,8 +49,9 @@ class CategoryController extends Controller
             ->get();
 
         $breadcrumb = $this->breadcrumb($category);
+        $relatedLessons = $this->relatedLessons($category);
 
-        return view('frontend.categories.show', compact('category', 'children', 'products', 'breadcrumb'));
+        return view('frontend.categories.show', compact('category', 'children', 'products', 'breadcrumb', 'relatedLessons'));
     }
 
     /**
@@ -71,5 +75,37 @@ class CategoryController extends Controller
             ],
             $chain,
         );
+    }
+
+    /**
+     * @return Collection<int, object>
+     */
+    private function relatedLessons(ProductCategory $category): Collection
+    {
+        try {
+            if (! Schema::hasTable('category_lms_links')) {
+                return collect();
+            }
+
+            $links = DB::table('category_lms_links as l')
+                ->leftJoin('lms_courses as c', 'c.id', '=', 'l.lms_course_id')
+                ->leftJoin('lms_projects as p', 'p.id', '=', 'l.lms_project_id')
+                ->where('l.product_category_id', $category->id)
+                ->where('l.is_active', true)
+                ->select('l.title', 'l.relation_type', 'c.slug as course_slug', 'p.slug as project_slug')
+                ->orderByDesc('l.id')
+                ->limit(6)
+                ->get();
+
+            return $links->map(function ($link) {
+                $link->url = $link->project_slug
+                    ? '/learn/projects/'.$link->project_slug
+                    : ($link->course_slug ? '/learn?course='.$link->course_slug : '/learn');
+
+                return $link;
+            });
+        } catch (\Throwable) {
+            return collect();
+        }
     }
 }
