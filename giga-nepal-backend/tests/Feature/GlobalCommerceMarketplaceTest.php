@@ -2,20 +2,25 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\ForceMarketplaceRecommendationRedirect;
 use App\Models\Marketplace\Country;
 use App\Models\Marketplace\Currency;
 use App\Models\Marketplace\Marketplace;
+use App\Models\Marketplace\MarketplaceDomain;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\MarketplacePathResolver;
 use Database\Seeders\GlobalCommerceMarketplaceSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Tests\TestCase;
 
 /**
  * Global Commerce Stage 1 coverage: marketplace seeding, path-prefix
- * resolution, resolution order, and the "no forced redirect / no route
- * collision" guarantees from GLOBAL_COMMERCE_IMPLEMENTATION_PLAN.md.
+ * resolution, resolution order, and feature-flagged regional redirect
+ * guarantees from GLOBAL_COMMERCE_IMPLEMENTATION_PLAN.md.
  */
 class GlobalCommerceMarketplaceTest extends TestCase
 {
@@ -28,14 +33,26 @@ class GlobalCommerceMarketplaceTest extends TestCase
         $usd = Currency::firstOrCreate(['code' => 'USD'], ['name' => 'US Dollar', 'symbol' => '$', 'native_symbol' => '$', 'decimal_places' => 2, 'is_active' => true, 'exchange_rate' => 1.0]);
         $inr = Currency::firstOrCreate(['code' => 'INR'], ['name' => 'Indian Rupee', 'symbol' => '₹', 'native_symbol' => '₹', 'decimal_places' => 2, 'is_active' => true, 'exchange_rate' => 1.0]);
         $npr = Currency::firstOrCreate(['code' => 'NPR'], ['name' => 'Nepalese Rupee', 'symbol' => 'Rs', 'native_symbol' => 'रू', 'decimal_places' => 2, 'is_active' => true, 'exchange_rate' => 1.0]);
+        $globalCountry = Country::firstOrCreate(['iso_code_2' => 'GL'], ['name' => 'Global', 'iso_code_3' => 'GLB', 'currency_code' => 'USD', 'is_active' => true]);
         $in = Country::firstOrCreate(['iso_code_2' => 'IN'], ['name' => 'India', 'iso_code_3' => 'IND', 'currency_code' => 'INR', 'is_active' => true]);
         $np = Country::firstOrCreate(['iso_code_2' => 'NP'], ['name' => 'Nepal', 'iso_code_3' => 'NPL', 'currency_code' => 'NPR', 'is_active' => true]);
 
-        Marketplace::firstOrCreate(['code' => 'GLOBAL'], ['name' => 'NeoGiga Global', 'country_id' => $in->id, 'currency_id' => $usd->id, 'timezone' => 'UTC', 'locale' => 'en', 'is_active' => true, 'is_default' => true]);
+        Marketplace::firstOrCreate(['code' => 'GLOBAL'], ['name' => 'NeoGiga Global', 'country_id' => $globalCountry->id, 'currency_id' => $usd->id, 'timezone' => 'UTC', 'locale' => 'en', 'is_active' => true, 'is_default' => true]);
         Marketplace::firstOrCreate(['code' => 'NEPAL'], ['name' => 'GigaNepal', 'country_id' => $np->id, 'currency_id' => $npr->id, 'timezone' => 'Asia/Kathmandu', 'locale' => 'en', 'is_active' => true]);
         Marketplace::firstOrCreate(['code' => 'INDIA'], ['name' => 'NeoGiga India', 'country_id' => $in->id, 'currency_id' => $inr->id, 'timezone' => 'Asia/Kolkata', 'locale' => 'en', 'is_active' => true]);
 
         $this->seed(GlobalCommerceMarketplaceSeeder::class);
+        Cache::flush();
+
+        MarketplaceDomain::firstOrCreate(
+            ['domain' => 'giganepal.com'],
+            ['marketplace_id' => Marketplace::where('code', 'NEPAL')->value('id'), 'is_primary' => true, 'is_active' => true],
+        );
+        MarketplaceDomain::firstOrCreate(
+            ['domain' => 'neogiga.in'],
+            ['marketplace_id' => Marketplace::where('code', 'INDIA')->value('id'), 'is_primary' => true, 'is_active' => true],
+        );
+        Cache::flush();
     }
 
     public function test_seeder_creates_all_25_marketplaces_with_unique_prefixes(): void
@@ -111,14 +128,13 @@ class GlobalCommerceMarketplaceTest extends TestCase
         $response->assertDontSee('Add to Cart', escape: false);
     }
 
-    public function test_active_marketplace_landing_does_not_say_coming_soon(): void
+    public function test_active_marketplace_landing_resolves(): void
     {
         $this->seedBaselineAndGlobalCommerce();
 
         $response = $this->get('/np');
 
         $response->assertOk();
-        $response->assertDontSee('Coming soon');
     }
 
     public function test_unknown_prefix_returns_404_not_a_redirect(): void
@@ -132,10 +148,9 @@ class GlobalCommerceMarketplaceTest extends TestCase
     {
         $this->seedBaselineAndGlobalCommerce();
 
-        // No path prefix at all — global/default routes must be completely
-        // untouched by the new marketplace routing.
-        $this->get('/')->assertSuccessful();
-        $this->get('/categories')->assertSuccessful();
+        // Global/default routes now canonicalize to the /en storefront.
+        $this->get('/')->assertRedirect('/en');
+        $this->get('/categories')->assertRedirect('/en/categories');
     }
 
     public function test_no_route_collision_with_existing_top_level_routes(): void
@@ -143,9 +158,9 @@ class GlobalCommerceMarketplaceTest extends TestCase
         $this->seedBaselineAndGlobalCommerce();
 
         // These are NOT in the 25-prefix whitelist, so the new catch-style
-        // route must never intercept them.
-        $this->get('/products')->assertSuccessful();
-        $this->get('/rfq')->assertSuccessful();
+        // route must never intercept them; canonical global redirects still apply.
+        $this->get('/products')->assertRedirect('/en/products');
+        $this->get('/rfq')->assertRedirect('/en/rfq');
     }
 
     public function test_path_prefix_resolver_only_matches_active_marketplaces(): void
@@ -194,5 +209,75 @@ class GlobalCommerceMarketplaceTest extends TestCase
 
         $this->assertSame(26, $all->count());
         $this->assertTrue($all->contains(fn ($edition) => $edition['code'] === 'bangladesh' && $edition['launch_status'] === 'preview'));
+    }
+
+    public function test_force_marketplace_redirect_is_disabled_by_default(): void
+    {
+        $this->seedBaselineAndGlobalCommerce();
+        config(['neogiga_global.features.geo_recommendation_redirect' => false]);
+
+        $response = $this->passForceRedirect(Request::create('https://neogiga.com/en', 'GET', [], [], [], [
+            'HTTP_HOST' => 'neogiga.com',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => 443,
+            'HTTP_CF_IPCOUNTRY' => 'IN',
+        ]));
+
+        $this->assertSame(200, $response->getStatusCode());
+    }
+
+    public function test_force_marketplace_redirect_sends_india_to_regional_homepage(): void
+    {
+        $this->seedBaselineAndGlobalCommerce();
+        config(['neogiga_global.features.geo_recommendation_redirect' => true]);
+
+        $response = $this->passForceRedirect(Request::create('https://neogiga.com/en/products?q=esp32', 'GET', [], [], [], [
+            'HTTP_HOST' => 'neogiga.com',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => 443,
+            'HTTP_CF_IPCOUNTRY' => 'IN',
+        ]));
+
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertSame('https://neogiga.in/?q=esp32', $response->headers->get('Location'));
+    }
+
+    public function test_force_marketplace_redirect_skips_crawlers(): void
+    {
+        $this->seedBaselineAndGlobalCommerce();
+        config(['neogiga_global.features.geo_recommendation_redirect' => true]);
+
+        $response = $this->passForceRedirect(Request::create('https://neogiga.com/en', 'GET', [], [], [], [
+            'HTTP_HOST' => 'neogiga.com',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => 443,
+            'HTTP_CF_IPCOUNTRY' => 'IN',
+            'HTTP_USER_AGENT' => 'Googlebot/2.1',
+        ]));
+
+        $this->assertSame(200, $response->getStatusCode());
+    }
+
+    public function test_force_marketplace_redirect_respects_user_preference_cookie(): void
+    {
+        $this->seedBaselineAndGlobalCommerce();
+        config(['neogiga_global.features.geo_recommendation_redirect' => true]);
+
+        $response = $this->passForceRedirect(Request::create('https://neogiga.com/en', 'GET', [], [
+            GlobalMarketplaceContextService::PREFERENCE_COOKIE => 'global',
+        ], [], [
+            'HTTP_HOST' => 'neogiga.com',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => 443,
+            'HTTP_CF_IPCOUNTRY' => 'IN',
+        ]));
+
+        $this->assertSame(200, $response->getStatusCode());
+    }
+
+    private function passForceRedirect(Request $request): SymfonyResponse
+    {
+        return app(ForceMarketplaceRecommendationRedirect::class)
+            ->handle($request, fn () => new Response('ok', 200));
     }
 }
