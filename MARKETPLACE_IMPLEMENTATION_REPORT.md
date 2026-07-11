@@ -80,9 +80,22 @@ green afterward (227 assertions, no regressions).
   `/api/v1/marketplaces/active` (excludes hidden) + `/api/v1/marketplace/current`. Verified on prod:
   admin no-token → 401, public active → 200. Tests: MarketplaceStatusTest (7) + MarketplaceAdminApiTest (8).
 
+## 7b. BUILT + DEPLOYED — frontend SEO rendering + sitemap (codex §7)
+Commit `e8fd44a`, live. User-approved ("align data, then wire live").
+- `MarketplaceSeoRenderer` + a `frontend.*` view composer (reconciled onto prod's advanced layout,
+  which had raced ahead — hreflang/editions/switcher preserved; only the head SEO block changed).
+  robots/canonical/title/og/twitter/JSON-LD now come from the resolved marketplace with `??`
+  fallbacks; a page with no marketplace keeps the legacy defaults + `index, follow` (no regression).
+- `SitemapController`: per-host cache key; excludes catalog for a non-indexable marketplace.
+- `MarketplaceLiveAlignmentSeeder`: aligned the 3 locked custom-domain production marketplaces to
+  visible+indexable+`index,follow`, `ssl_status=active`, `domain_verified_at` set — each gated by a
+  REAL HTTPS 200 check. Deployed **data-first** (align before rendering) to avoid a noindex window.
+- Verified live: neogiga.com robots meta = `index,follow` (not noindex); homepage title unchanged;
+  wallet 401, home/products 200. Tests: MarketplaceSeoRenderTest (5).
+
 ## 7. STILL DEFERRED
 - Tabbed **admin UI** (General/Domain/Status/SEO/Branding/Advanced), list columns, filters, wizards.
-- **Frontend SEO rendering** + per-marketplace **sitemap** indexes + hreflang emission.
+- **Host-spoofing allow-list middleware** + fine-grained `permission:marketplaces.*` RBAC.
 - **Host-spoofing allow-list middleware** (the resolver stack exists; the explicit allowed-host
   rejection + trusted-proxy hardening is not yet wired).
 - **Permission enforcement** wiring + role gates; **domain verification** (real DNS/HTTP).
