@@ -6,9 +6,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import psycopg
-from psycopg.rows import dict_row
-
 from .marketplaces import localized_overlays
 from .models import CatalogProductCandidate, SourceManifest
 from .normalization import canonical_identity, normalize_mpn, payload_checksum, slugify, stable_sku
@@ -61,6 +58,9 @@ class CanonicalCatalogWriter:
         if self.dry_run:
             self._simulate(products, result)
             return result
+        import psycopg
+        from psycopg.rows import dict_row
+
         with psycopg.connect(self.dsn, row_factory=dict_row) as conn:
             with conn.transaction():
                 self._lock(conn)
@@ -310,4 +310,3 @@ class CanonicalCatalogWriter:
         result.seo_pages_generated += len(self.marketplaces) + 1
         result.images_imported += len([image for image in product.images if image.local_path and image.redistribution_allowed])
         result.images_skipped += len([image for image in product.images if not image.local_path or not image.redistribution_allowed])
-
