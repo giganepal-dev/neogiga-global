@@ -1,5 +1,12 @@
 <!DOCTYPE html>
 <html lang="{{ $locale ?? 'en' }}">
+@php
+    $activePrefix = strtolower((string) request()->segment(1));
+    $activePrefix = array_key_exists($activePrefix, config('neogiga_global.prefixes', []))
+        ? $activePrefix
+        : config('neogiga_global.default_prefix', 'en');
+    $publicBase = '/'.$activePrefix;
+@endphp
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -79,11 +86,11 @@
 </div>
 <header class="site-head">
     <div class="wrap head-main">
-        <a class="brand" href="/" aria-label="NeoGiga home">
+        <a class="brand" href="{{ $publicBase }}" aria-label="NeoGiga home">
             <span class="mark"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M9 22V10l14 12V10" stroke="#19D3F5" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             <span>NeoGiga<small>Engineering Marketplace</small></span>
         </a>
-        <form class="search" method="get" action="/products" role="search">
+        <form class="search" method="get" action="{{ $publicBase }}/products" role="search">
             <select name="category" aria-label="Category"><option value="">All categories</option><option value="semiconductors">Semiconductors</option><option value="robotics">Robotics</option><option value="battery-technology">Battery</option><option value="industrial-automation">Automation</option></select>
             <input name="q" type="search" value="{{ request('q') }}" placeholder="Search products, MPN, SKU, category..." aria-label="Search NeoGiga">
             <button type="submit">Search</button>
@@ -102,7 +109,7 @@
             <select class="select-lite" aria-label="Language"><option>EN</option><option>HI</option><option>NE</option></select>
             <a class="icon-btn" href="/cart">Cart</a>
             <a class="icon-btn" href="/admin/login">B2B Login</a>
-            <a class="icon-btn gold" href="/sell-on-neogiga">Seller</a>
+            <a class="icon-btn gold" href="{{ $publicBase }}/sell-on-neogiga">Seller</a>
         </div>
     </div>
     <div class="nav-row">
@@ -110,13 +117,13 @@
             <details class="mega">
                 <summary>☰ Categories</summary>
                 <div class="mega-panel">
-                    <div class="mega-col"><h3>Featured Categories</h3><a href="/products?category=semiconductors">Semiconductors</a><a href="/products?category=electronic-components">Electronic Components</a><a href="/products?category=iot-wireless">IoT & Wireless</a><a href="/products?category=robotics">Robotics</a><a href="/products?category=battery-technology">Battery Technology</a></div>
-                    <div class="mega-col"><h3>Build</h3><a href="/ai-commerce">AI Project Builder</a><a href="/learn">Learning Hub</a><a href="/rfq">Bulk RFQ</a><a href="/sell-on-neogiga">Become a Seller</a></div>
-                    <div class="mega-col"><h3>Popular searches</h3><a href="/products?q=ESP32">ESP32</a><a href="/products?q=LiFePO4">LiFePO4</a><a href="/products?q=PLC">PLC</a><a href="/products?q=robot">Robot kits</a></div>
+                    <div class="mega-col"><h3>Featured Categories</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=electronic-components">Electronic Components</a><a href="{{ $publicBase }}/products?category=iot-wireless">IoT & Wireless</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/products?category=battery-technology">Battery Technology</a></div>
+                    <div class="mega-col"><h3>Build</h3><a href="{{ $publicBase }}/ai-commerce">AI Project Builder</a><a href="{{ $publicBase }}/lms">Learning Hub</a><a href="{{ $publicBase }}/rfq">Bulk RFQ</a><a href="{{ $publicBase }}/sell-on-neogiga">Become a Seller</a></div>
+                    <div class="mega-col"><h3>Popular searches</h3><a href="{{ $publicBase }}/products?q=ESP32">ESP32</a><a href="{{ $publicBase }}/products?q=LiFePO4">LiFePO4</a><a href="{{ $publicBase }}/products?q=PLC">PLC</a><a href="{{ $publicBase }}/products?q=robot">Robot kits</a></div>
                 </div>
             </details>
             <nav class="primary-nav" aria-label="Primary navigation">
-                <a href="/products">Products</a><a href="/categories">Categories</a><a href="/ai-commerce">AI Builder</a><a href="/rfq">RFQ</a><a href="/learn">LMS</a><a href="/distributors">Warehouses</a>
+                <a href="{{ $publicBase }}/products">Products</a><a href="{{ $publicBase }}/categories">Categories</a><a href="{{ $publicBase }}/ai-commerce">AI Builder</a><a href="{{ $publicBase }}/rfq">RFQ</a><a href="{{ $publicBase }}/lms">LMS</a><a href="{{ $publicBase }}/distributors">Warehouses</a>
             </nav>
         </div>
     </div>
@@ -124,15 +131,15 @@
 <main id="main">@yield('content')</main>
 <footer class="footer">
     <div class="wrap foot-grid">
-        <div><a class="brand" href="/"><span class="mark">NG</span><span>NeoGiga<small>Engineering the Future</small></span></a><p>Premium marketplace for semiconductors, IoT, robotics, automation, battery technology, power storage and industrial engineering tools.</p><form class="newsletter" method="post" action="/api/v1/newsletter/subscribe"><input type="email" name="email" placeholder="Engineering newsletter" aria-label="Email"><button class="btn btn-gold" type="submit">Subscribe</button></form></div>
-        <div><h3>Products</h3><a href="/products?category=semiconductors">Semiconductors</a><a href="/products?category=sensors">Sensors</a><a href="/products?category=robotics">Robotics</a><a href="/products?category=power-storage">Power storage</a></div>
-        <div><h3>Company</h3><a href="/ai-commerce">AI commerce</a><a href="/learn">Learning hub</a><a href="/rfq">RFQ sourcing</a><a href="/distributors">Distributors</a></div>
-        <div><h3>Seller</h3><a href="/sell-on-neogiga">Become a seller</a><a href="/seller-early-access">Early access</a><a href="/admin/login">Seller portal</a><a href="/admin/login">B2B login</a></div>
+        <div><a class="brand" href="{{ $publicBase }}"><span class="mark">NG</span><span>NeoGiga<small>Engineering the Future</small></span></a><p>Premium marketplace for semiconductors, IoT, robotics, automation, battery technology, power storage and industrial engineering tools.</p><form class="newsletter" method="post" action="/api/v1/newsletter/subscribe"><input type="email" name="email" placeholder="Engineering newsletter" aria-label="Email"><button class="btn btn-gold" type="submit">Subscribe</button></form></div>
+        <div><h3>Products</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=sensors">Sensors</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/products?category=power-storage">Power storage</a></div>
+        <div><h3>Company</h3><a href="{{ $publicBase }}/ai-commerce">AI commerce</a><a href="{{ $publicBase }}/lms">Learning hub</a><a href="{{ $publicBase }}/rfq">RFQ sourcing</a><a href="{{ $publicBase }}/distributors">Distributors</a></div>
+        <div><h3>Seller</h3><a href="{{ $publicBase }}/sell-on-neogiga">Become a seller</a><a href="{{ $publicBase }}/seller-early-access">Early access</a><a href="/admin/login">Seller portal</a><a href="/admin/login">B2B login</a></div>
         <div><h3>Countries</h3>@foreach(($marketplaceContext['editions'] ?? []) as $edition)<a href="{{ $edition['url'] }}">{{ $edition['name'] }}</a>@endforeach<a href="#">Bangladesh</a><a href="#">Sri Lanka</a></div>
     </div>
 </footer>
-<a class="float-ai" href="/ai-commerce" aria-label="Open NeoGiga AI assistant">Ask AI</a>
-<nav class="mobile-bottom" aria-label="Mobile shortcuts"><a href="/">Home</a><a href="/products">Search</a><a href="/categories">Categories</a><a href="/cart">Cart</a><a href="/ai-commerce">AI</a></nav>
+<a class="float-ai" href="{{ $publicBase }}/ai-commerce" aria-label="Open NeoGiga AI assistant">Ask AI</a>
+<nav class="mobile-bottom" aria-label="Mobile shortcuts"><a href="{{ $publicBase }}">Home</a><a href="{{ $publicBase }}/products">Search</a><a href="{{ $publicBase }}/categories">Categories</a><a href="/cart">Cart</a><a href="{{ $publicBase }}/ai-commerce">AI</a></nav>
 @stack('foot')
 </body>
 </html>

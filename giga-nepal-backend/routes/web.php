@@ -228,8 +228,8 @@ Route::get('/sso/start', [SsoController::class, 'start'])
 Route::get('/sso/consume', [SsoController::class, 'consume'])
     ->middleware('throttle:20,1')
     ->name('sso.consume');
-Route::get('/learn', [LmsPageController::class, 'index']);
-Route::get('/learning', [LmsPageController::class, 'index']);
+Route::redirect('/learn', '/en/lms', 301);
+Route::redirect('/learning', '/en/lms', 301);
 Route::get('/learn/projects/{slug}', [LmsPageController::class, 'project']);
 Route::redirect('/', '/en', 301);
 // Stitch "Precision Engineering" redesign preview (noindex; does not touch the
@@ -263,12 +263,12 @@ Route::get('/reset-password/{token}', [PasswordResetController::class, 'showRese
 Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1')->name('password.update');
 
 // Public seller/partner landing pages
-Route::get('/sell-on-neogiga', [SellOnNeoGigaController::class, 'sell']);
-Route::get('/distributors', [SellOnNeoGigaController::class, 'distributors']);
-Route::get('/ai-commerce', [AiCommercePageController::class, 'index']);
+Route::redirect('/sell-on-neogiga', '/en/sell-on-neogiga', 301);
+Route::redirect('/distributors', '/en/distributors', 301);
+Route::redirect('/ai-commerce', '/en/ai-commerce', 301);
 Route::post('/ai-commerce/build', [AiCommercePageController::class, 'build'])->middleware('throttle:12,1');
 Route::post('/ai-commerce/save', [AiCommercePageController::class, 'save'])->middleware('throttle:8,1');
-Route::get('/seller-early-access', [SellOnNeoGigaController::class, 'earlyAccess']);
+Route::redirect('/seller-early-access', '/en/seller-early-access', 301);
 
 if (config('neogiga_global.features.locale_prefix_routes', true)) {
     $localePrefixes = array_keys(config('neogiga_global.prefixes', []));
@@ -287,6 +287,8 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
             Route::get('/projects', fn (string $localePrefix) => redirect('/learn'))->name('localized.projects.index');
             Route::get('/rfq', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(\App\Http\Controllers\Web\RfqPageController::class)->create($request))->name('localized.rfq.create');
             Route::get('/sell-on-neogiga', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->sell())->name('localized.seller');
+            Route::get('/seller-early-access', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->earlyAccess())->name('localized.seller.early-access');
+            Route::get('/distributors', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->distributors())->name('localized.distributors');
             Route::get('/ai-commerce', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(AiCommercePageController::class)->index($request, app(\App\Services\CommerceAi\CommerceAiService::class)))->name('localized.ai');
         });
 }

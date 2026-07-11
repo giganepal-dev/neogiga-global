@@ -1,6 +1,13 @@
 @extends('frontend.layout')
 @section('title', ($category->name ?? 'Products').' — NeoGiga Engineering Marketplace')
 @section('description','Browse engineering components and tools: semiconductors, electronics, IoT, robotics, batteries, power and automation. Search by part number, SKU or keyword.')
+@php
+    $activePrefix = strtolower((string) request()->segment(1));
+    $activePrefix = array_key_exists($activePrefix, config('neogiga_global.prefixes', []))
+        ? $activePrefix
+        : config('neogiga_global.default_prefix', 'en');
+    $publicBase = '/'.$activePrefix;
+@endphp
 
 @section('content')
 <style>
@@ -23,11 +30,11 @@
 </style>
 
 <div class="wrap">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <span>Products</span>@if($category) › <span>{{ $category->name }}</span>@endif</nav>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a> › <span>Products</span>@if($category) › <span>{{ $category->name }}</span>@endif</nav>
 
     <div class="plist-head">
         <h1>{{ $category->name ?? 'All Products' }}</h1>
-        <form class="psearch" method="get" action="/products">
+        <form class="psearch" method="get" action="{{ $publicBase }}/products">
             <input type="search" name="q" value="{{ $q }}" placeholder="Search part number, SKU, keyword…" aria-label="Search products">
             <select name="category" aria-label="Category">
                 <option value="">All categories</option>
@@ -100,7 +107,7 @@
             @foreach ($products as $p)
                 <div class="pcard">
                     @if($p->brand)<span class="ptag">{{ $p->brand->name }}</span>@endif
-                    <h2><a href="/products/{{ $p->slug }}">{{ $p->name }}</a></h2>
+                    <h2><a href="{{ $publicBase }}/products/{{ $p->slug }}">{{ $p->name }}</a></h2>
                     <div class="pmeta">
                         @if($p->mpn)MPN: <strong>{{ $p->mpn }}</strong> · @endif
                         SKU: {{ $p->sku ?? '—' }}
@@ -109,7 +116,7 @@
                     @if($p->track_inventory)
                         <span class="pstock {{ $p->stock_quantity > 0 ? 'in' : 'out' }}">{{ $p->stock_quantity > 0 ? 'In stock' : 'Out of stock' }}</span>
                     @endif
-                    <div style="margin-top:auto"><a class="btn btn-ghost" href="/products/{{ $p->slug }}">View specs &amp; RFQ</a></div>
+                    <div style="margin-top:auto"><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $p->slug }}">View specs &amp; RFQ</a></div>
                 </div>
             @endforeach
         </div>
@@ -117,7 +124,7 @@
     @else
         <div class="pempty">
             <h2>No products match yet</h2>
-            <p>The catalog is being loaded. Meanwhile, browse <a href="/categories">all categories</a> or <a href="/sell-on-neogiga">sell on NeoGiga</a>.</p>
+            <p>The catalog is being loaded. Meanwhile, browse <a href="{{ $publicBase }}/categories">all categories</a> or <a href="{{ $publicBase }}/sell-on-neogiga">sell on NeoGiga</a>.</p>
         </div>
     @endif
 </div>
