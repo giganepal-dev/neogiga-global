@@ -8,7 +8,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 
-// Marketing Phase 2 scheduler. Jobs are queue-safe placeholders until providers are enabled.
+// Marketing Phase 2 scheduler. Jobs aggregate first-party data and keep external providers disabled until explicitly configured.
 use App\Jobs\Marketing\CalculateTopSearchTermsJob;
 use App\Jobs\Marketing\CalculateTrendingCategoriesJob;
 use App\Jobs\Marketing\CalculateTrendingProductsJob;
