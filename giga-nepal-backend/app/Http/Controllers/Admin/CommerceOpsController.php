@@ -11,6 +11,7 @@ use App\Services\Catalog\CatalogSearchRebuildService;
 use App\Services\Product\ProductApprovalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -1395,6 +1396,7 @@ class CommerceOpsController extends Controller
                 'reason' => $data['reason'],
             ]);
         });
+        Cache::forget('seo:sitemap');
 
         return back()->with('status', 'Imported product rejected and hidden.');
     }
@@ -1501,6 +1503,7 @@ class CommerceOpsController extends Controller
                 'note' => $note,
             ]);
         });
+        Cache::forget('seo:sitemap');
     }
 
     private function publishImportedProduct(Request $request, int $sourceId, int $productId, ?string $note): void
@@ -1550,6 +1553,7 @@ class CommerceOpsController extends Controller
                 'note' => $note,
             ]);
         });
+        Cache::forget('seo:sitemap');
     }
 
     // ---- Users and roles ---------------------------------------------------
