@@ -33,7 +33,6 @@ class CatalogSearchService
                             ->from('product_search_documents as psd')
                             ->whereColumn('psd.product_id', 'products.id')
                             ->where('psd.source_code', self::INDEXED_SOURCE)
-                            ->where('psd.review_status', 'approved')
                             ->where(function ($doc) use ($like) {
                                 $doc->where('psd.searchable_text', $this->likeOperator(), $like)
                                     ->orWhere('psd.title', $this->likeOperator(), $like)
@@ -79,7 +78,6 @@ class CatalogSearchService
             })
             ->join('products as p', 'p.id', '=', 'pfv.product_id')
             ->where('pfv.source_code', self::INDEXED_SOURCE)
-            ->where('psd.review_status', 'approved')
             ->whereIn('p.status', self::PUBLIC_STATUSES)
             ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('p.visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->whereIn('pfv.facet_name', ['manufacturer', 'category', 'stock', 'package', 'quality_band'])
@@ -105,6 +103,9 @@ class CatalogSearchService
         return [
             'documents' => DB::table('product_search_documents')->count(),
             'facets' => DB::table('product_facet_values')->count(),
+            'searchable_documents' => DB::table('product_search_documents')
+                ->where('source_code', self::INDEXED_SOURCE)
+                ->count(),
             'approved_documents' => DB::table('product_search_documents')
                 ->where('source_code', self::INDEXED_SOURCE)
                 ->where('review_status', 'approved')
@@ -123,7 +124,6 @@ class CatalogSearchService
                 })
                 ->whereColumn('pfv.product_id', 'products.id')
                 ->where('pfv.source_code', self::INDEXED_SOURCE)
-                ->where('psd.review_status', 'approved')
                 ->where('pfv.facet_name', $name)
                 ->where('pfv.facet_value', $value);
         };

@@ -21,7 +21,7 @@ class CatalogSearchRebuildService
         ]);
 
         try {
-            $rows = $this->approvedImportRows($sourceCode);
+            $rows = $this->importRows($sourceCode);
             $indexed = 0;
             $facetCount = 0;
 
@@ -42,8 +42,8 @@ class CatalogSearchRebuildService
                 'completed_at' => now(),
                 'metadata' => json_encode([
                     'source_code' => $sourceCode,
-                    'mode' => 'approved_imports',
-                    'public_visibility_note' => 'Index records include visibility_status; public search integration is a later gate.',
+                    'mode' => 'all_imports',
+                    'public_visibility_note' => 'Index records include review_status and visibility_status; sitemap publication remains a separate gate.',
                 ]),
                 'updated_at' => now(),
             ]);
@@ -67,7 +67,7 @@ class CatalogSearchRebuildService
 
         return DB::table('catalog_index_rebuild_jobs')->insertGetId([
             'source_code' => $sourceCode,
-            'scope' => 'approved_imports',
+            'scope' => 'all_imports',
             'status' => 'queued',
             'queued_by' => $userId,
             'metadata' => json_encode(['queued_from' => 'admin.import_review']),
@@ -76,7 +76,7 @@ class CatalogSearchRebuildService
         ]);
     }
 
-    private function approvedImportRows(string $sourceCode): Collection
+    private function importRows(string $sourceCode): Collection
     {
         $attributesSelect = DB::connection()->getDriverName() === 'pgsql'
             ? DB::raw('p.attributes::text as attributes')
@@ -92,7 +92,6 @@ class CatalogSearchRebuildService
             ->leftJoin('product_categories as c', 'c.id', '=', 'p.category_id')
             ->leftJoin('catalog_distributor_offers as offer', 'offer.product_id', '=', 'p.id')
             ->where('cs.code', $sourceCode)
-            ->where('cps.review_status', 'approved')
             ->select([
                 'cps.product_id',
                 'cps.review_status',
