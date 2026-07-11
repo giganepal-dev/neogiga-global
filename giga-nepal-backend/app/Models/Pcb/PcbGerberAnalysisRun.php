@@ -56,12 +56,12 @@ class PcbGerberAnalysisRun extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(PcbProject::class);
+        return $this->belongsTo(PcbProject::class, 'project_id');
     }
 
     public function file(): BelongsTo
     {
-        return $this->belongsTo(PcbFile::class);
+        return $this->belongsTo(PcbFile::class, 'file_id');
     }
 
     public function triggeredBy(): BelongsTo
@@ -76,11 +76,11 @@ class PcbGerberAnalysisRun extends Model
 
     public function detectedLayers(): HasMany
     {
-        return $this->hasMany(PcbDetectedLayer::class);
+        return $this->hasMany(PcbDetectedLayer::class, 'analysis_run_id');
     }
 
     public function warnings(): HasMany
     {
-        return $this->hasMany(PcbAnalysisWarning::class);
+        return $this->hasMany(PcbAnalysisWarning::class, 'analysis_run_id');
     }
 }

@@ -21,7 +21,7 @@ class PcbAnalysisWarning extends Model
 
     public function analysisRun(): BelongsTo
     {
-        return $this->belongsTo(PcbGerberAnalysisRun::class);
+        return $this->belongsTo(PcbGerberAnalysisRun::class, 'analysis_run_id');
     }
 
     public function resolvedBy(): BelongsTo

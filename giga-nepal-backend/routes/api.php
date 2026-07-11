@@ -811,21 +811,16 @@ Route::prefix('v1/products/{product}')->group(function () {
 
 // Add PCB routes before the final closing brackets
 Route::prefix('v1/pcb')->middleware('api.token')->group(function () {
-    // PCB Projects
     Route::apiResource('projects', \App\Http\Controllers\Pcb\PcbProjectController::class);
     Route::get('projects/{project}/activity', [\App\Http\Controllers\Pcb\PcbProjectController::class, 'activity']);
-    
-    // PCB Files (to be implemented)
-    // Route::post('projects/{project}/files', [PcbFileController::class, 'store']);
-    // Route::get('files/{file}/download', [PcbFileController::class, 'download']);
-    
-    // PCB Quotes (to be implemented)
-    // Route::post('projects/{project}/quote', [PcbQuoteController::class, 'create']);
-    // Route::get('quotes/{quote}', [PcbQuoteController::class, 'show']);
+    Route::post('projects/{project}/files', [\App\Http\Controllers\Pcb\PcbFileController::class, 'store']);
+    Route::get('projects/{project}/files/{file}/download', [\App\Http\Controllers\Pcb\PcbFileController::class, 'download']);
+    Route::delete('projects/{project}/files/{file}', [\App\Http\Controllers\Pcb\PcbFileController::class, 'destroy']);
+    Route::post('projects/{project}/quotes', [\App\Http\Controllers\Pcb\PcbQuoteController::class, 'store']);
+    Route::get('projects/{project}/quotes/{quote}', [\App\Http\Controllers\Pcb\PcbQuoteController::class, 'show']);
+    Route::post('projects/{project}/quotes/{quote}/approve', [\App\Http\Controllers\Pcb\PcbQuoteController::class, 'approve']);
 });
 
-// Public PCB endpoints (no auth required for initial quote)
 Route::prefix('v1/pcb/public')->group(function () {
-    // Route::post('quote/calculate', [PcbPublicQuoteController::class, 'calculate']);
-    // Route::get('capabilities', [PcbCapabilitiesController::class, 'index']);
+    Route::get('capabilities', \App\Http\Controllers\Pcb\PcbCapabilitiesController::class)->middleware('throttle:api');
 });

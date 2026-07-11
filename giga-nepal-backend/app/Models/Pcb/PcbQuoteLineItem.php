@@ -24,6 +24,6 @@ class PcbQuoteLineItem extends Model
 
     public function quote(): BelongsTo
     {
-        return $this->belongsTo(PcbQuoteConfiguration::class);
+        return $this->belongsTo(PcbQuoteConfiguration::class, 'quote_id');
     }
 }

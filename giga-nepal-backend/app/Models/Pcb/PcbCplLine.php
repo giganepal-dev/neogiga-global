@@ -29,7 +29,7 @@ class PcbCplLine extends Model
 
     public function cplImport(): BelongsTo
     {
-        return $this->belongsTo(PcbCplImport::class);
+        return $this->belongsTo(PcbCplImport::class, 'cpl_import_id');
     }
 
     public function matchedProduct(): BelongsTo

@@ -5,9 +5,12 @@ namespace App\Models\Pcb;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PcbFile extends Model
 {
+    use SoftDeletes;
+
     protected $keyType = 'string';
     public $incrementing = false;
 
@@ -48,7 +51,7 @@ class PcbFile extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(PcbProject::class);
+        return $this->belongsTo(PcbProject::class, 'project_id');
     }
 
     public function user(): BelongsTo
@@ -63,27 +66,27 @@ class PcbFile extends Model
 
     public function versions(): HasMany
     {
-        return $this->hasMany(PcbFileVersion::class);
+        return $this->hasMany(PcbFileVersion::class, 'file_id');
     }
 
     public function accessLogs(): HasMany
     {
-        return $this->hasMany(PcbFileAccessLog::class);
+        return $this->hasMany(PcbFileAccessLog::class, 'file_id');
     }
 
     public function shares(): HasMany
     {
-        return $this->hasMany(PcbFileShare::class);
+        return $this->hasMany(PcbFileShare::class, 'file_id');
     }
 
     public function scanResults(): HasMany
     {
-        return $this->hasMany(PcbFileScanResult::class);
+        return $this->hasMany(PcbFileScanResult::class, 'file_id');
     }
 
     public function gerberAnalysisRuns(): HasMany
     {
-        return $this->hasMany(PcbGerberAnalysisRun::class);
+        return $this->hasMany(PcbGerberAnalysisRun::class, 'file_id');
     }
 
     public function isSecure(): bool

@@ -22,7 +22,7 @@ class PcbComponentSubstitution extends Model
 
     public function componentMatch(): BelongsTo
     {
-        return $this->belongsTo(PcbComponentMatch::class);
+        return $this->belongsTo(PcbComponentMatch::class, 'component_match_id');
     }
 
     public function originalProduct(): BelongsTo

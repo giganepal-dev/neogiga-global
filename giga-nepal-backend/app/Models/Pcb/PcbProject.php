@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -71,52 +72,53 @@ class PcbProject extends Model
 
     public function preferredWarehouse(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Warehouse::class, 'preferred_warehouse_id');
+        return $this->belongsTo(\App\Models\Marketplace\Warehouse::class, 'preferred_warehouse_id');
     }
 
     public function members(): HasMany
     {
-        return $this->hasMany(PcbProjectMember::class);
+        return $this->hasMany(PcbProjectMember::class, 'project_id');
     }
 
     public function versions(): HasMany
     {
-        return $this->hasMany(PcbProjectVersion::class);
+        return $this->hasMany(PcbProjectVersion::class, 'project_id');
     }
 
     public function files(): HasMany
     {
-        return $this->hasMany(PcbFile::class);
+        return $this->hasMany(PcbFile::class, 'project_id');
     }
 
     public function activityLogs(): HasMany
     {
-        return $this->hasMany(PcbProjectActivityLog::class);
+        return $this->hasMany(PcbProjectActivityLog::class, 'project_id');
     }
 
     public function gerberAnalysisRuns(): HasMany
     {
-        return $this->hasMany(PcbGerberAnalysisRun::class);
+        return $this->hasMany(PcbGerberAnalysisRun::class, 'project_id');
     }
 
     public function quoteConfigurations(): HasMany
     {
-        return $this->hasMany(PcbQuoteConfiguration::class);
+        return $this->hasMany(PcbQuoteConfiguration::class, 'project_id');
     }
 
     public function cplImports(): HasMany
     {
-        return $this->hasMany(PcbCplImport::class);
+        return $this->hasMany(PcbCplImport::class, 'project_id');
     }
 
     public function componentMatches(): HasMany
     {
-        return $this->hasMany(PcbComponentMatch::class);
+        return $this->hasMany(PcbComponentMatch::class, 'project_id');
     }
 
-    public function currentVersion(): BelongsTo
+    public function currentVersion(): HasOne
     {
-        return $this->belongsTo(PcbProjectVersion::class, 'current_version');
+        return $this->hasOne(PcbProjectVersion::class, 'project_id')
+            ->whereColumn('pcb_project_versions.version_number', 'pcb_projects.current_version');
     }
 
     public function canBeAccessedBy($user): bool
@@ -130,13 +132,35 @@ class PcbProject extends Model
             return true;
         }
 
-        // Check organization membership
-        if ($this->organization_id && $user->organization_id === $this->organization_id) {
+        // Organization access is intentionally scoped to the same organization.
+        if ($this->organization_id && (int) ($user->organization_id ?? 0) === (int) $this->organization_id) {
             return true;
         }
 
-        // Check explicit project membership
-        return $this->members()->where('user_id', $user->id)->exists();
+        $member = $this->members()->where('user_id', $user->id)->first();
+
+        if (! $member || $member->hasExpired()) {
+            return false;
+        }
+
+        return $this->confidentiality !== 'nda_required' || $member->nda_accepted;
+    }
+
+    public function canBeEditedBy($user): bool
+    {
+        if (! $this->canBeAccessedBy($user)) {
+            return false;
+        }
+
+        if ((int) $this->user_id === (int) $user->id) {
+            return true;
+        }
+
+        return $this->members()
+            ->where('user_id', $user->id)
+            ->whereIn('role', ['owner', 'admin', 'editor', 'engineer'])
+            ->where(fn ($query) => $query->whereNull('access_expires_at')->orWhere('access_expires_at', '>', now()))
+            ->exists();
     }
 
     public function getStatusBadgeAttribute(): string

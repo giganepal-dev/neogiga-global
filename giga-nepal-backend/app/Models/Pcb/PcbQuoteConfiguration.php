@@ -42,6 +42,8 @@ class PcbQuoteConfiguration extends Model
         'setup_charge', 'engineering_charge',
         'fabrication_unit_price', 'total_fabrication_price',
         'currency', 'requires_engineering_quote', 'engineering_notes',
+        'order_id', 'submitted_at', 'quoted_at', 'quote_valid_until',
+        'customer_approved_at', 'customer_rejected_at', 'customer_notes',
     ];
 
     protected $casts = [
@@ -65,11 +67,16 @@ class PcbQuoteConfiguration extends Model
         'fabrication_unit_price' => 'decimal:2',
         'total_fabrication_price' => 'decimal:2',
         'requires_engineering_quote' => 'boolean',
+        'submitted_at' => 'datetime',
+        'quoted_at' => 'datetime',
+        'quote_valid_until' => 'date',
+        'customer_approved_at' => 'datetime',
+        'customer_rejected_at' => 'datetime',
     ];
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(PcbProject::class);
+        return $this->belongsTo(PcbProject::class, 'project_id');
     }
 
     public function createdBy(): BelongsTo
@@ -84,7 +91,12 @@ class PcbQuoteConfiguration extends Model
 
     public function lineItems(): HasMany
     {
-        return $this->hasMany(PcbQuoteLineItem::class);
+        return $this->hasMany(PcbQuoteLineItem::class, 'quote_id');
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Order::class);
     }
 
     public function getTotalPriceAttribute(): ?float
