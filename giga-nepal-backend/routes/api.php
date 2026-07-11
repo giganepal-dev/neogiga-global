@@ -42,6 +42,7 @@ use App\Http\Controllers\Api\Distributor\DistributorResourceController;
 use App\Http\Controllers\Api\B2B\B2BAccountController;
 use App\Http\Controllers\Api\B2B\B2BRfqController;
 use App\Http\Controllers\Api\B2B\B2BQuotationController;
+use App\Http\Controllers\Api\Bom\BomImportController;
 use App\Http\Controllers\Api\Bom\BomProjectController;
 use App\Http\Controllers\Api\CommerceAi\CommerceAiDemoController;
 use App\Http\Controllers\Api\Onboarding\SellerApplicationController;
@@ -230,6 +231,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/build-custom', [BomProjectController::class, 'buildCustom'])->middleware('throttle:writes');
             Route::post('/user-builds', [BomProjectController::class, 'storeUserBuild'])->middleware('throttle:writes');
             Route::get('/user-builds/{build}', [BomProjectController::class, 'showUserBuild'])->whereNumber('build');
+
+            // BOM procurement import: upload parts list -> match catalog -> RFQ.
+            Route::get('/imports', [BomImportController::class, 'index']);
+            Route::post('/imports', [BomImportController::class, 'store'])->middleware('throttle:writes');
+            Route::get('/imports/{import}', [BomImportController::class, 'show'])->whereNumber('import');
+            Route::post('/imports/{import}/rematch', [BomImportController::class, 'rematch'])->whereNumber('import')->middleware('throttle:writes');
+            Route::patch('/imports/{import}/lines/{line}', [BomImportController::class, 'updateLine'])->whereNumber('import')->whereNumber('line')->middleware('throttle:writes');
+            Route::post('/imports/{import}/convert-to-rfq', [BomImportController::class, 'convertToRfq'])->whereNumber('import')->middleware('throttle:writes');
         });
     });
 
