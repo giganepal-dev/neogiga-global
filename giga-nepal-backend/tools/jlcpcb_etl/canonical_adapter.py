@@ -24,6 +24,11 @@ from .transformer import TransformedPart
 SOURCE_CODE = "jlcpcb_parts_database"
 SOURCE_NAME = "JLCPCB/LCSC open parts database"
 SOURCE_URL = "https://github.com/CDFER/jlcpcb-parts-database"
+LOCALIZED_MARKETS = {
+    "global": {"locale": "en", "country": "Global", "currency": "USD", "domain": "neogiga.com"},
+    "india": {"locale": "en-IN", "country": "India", "currency": "INR", "domain": "neogiga.in"},
+    "nepal": {"locale": "en-NP", "country": "Nepal", "currency": "NPR", "domain": "giganepal.com"},
+}
 
 
 @dataclass
@@ -216,7 +221,7 @@ class NeoGigaCanonicalAdapter:
                 slug,
                 "Imported manufacturer pending NeoGiga catalog review.",
                 json.dumps({"global": True, "nepal": False, "india": False}),
-                json.dumps({"review_status": "pending_review", "source": SOURCE_CODE}),
+                json.dumps(self._brand_seo_meta(part.manufacturer.display_name)),
             ),
         ).fetchone()
         return row["id"], True
@@ -246,7 +251,7 @@ class NeoGigaCanonicalAdapter:
                     slug,
                     "Imported category pending NeoGiga catalog review.",
                     json.dumps({"global": True, "nepal": False, "india": False}),
-                    json.dumps({"review_status": "pending_review", "source": SOURCE_CODE}),
+                    json.dumps(self._category_seo_meta(name, path)),
                 ),
             ).fetchone()
             parent_id = row["id"]
@@ -257,7 +262,7 @@ class NeoGigaCanonicalAdapter:
         normalized_mpn = part.normalized_mpn
         existing = conn.execute(
             """
-            SELECT p.id, p.name, p.short_description, p.description, p.metadata
+            SELECT p.id, p.name, p.short_description, p.description, p.metadata, p.seo_meta
             FROM catalog_product_sources cps
             JOIN products p ON p.id = cps.product_id
             WHERE cps.source_id = %s AND cps.source_part_id = %s
@@ -267,12 +272,12 @@ class NeoGigaCanonicalAdapter:
         ).fetchone()
         if not existing:
             existing = conn.execute(
-                "SELECT id, name, short_description, description, metadata FROM products WHERE sku = %s LIMIT 1",
+                "SELECT id, name, short_description, description, metadata, seo_meta FROM products WHERE sku = %s LIMIT 1",
                 (stable_sku(part.source_part_id),),
             ).fetchone()
         if not existing:
             existing = conn.execute(
-                r"SELECT id, name, short_description, description, metadata FROM products WHERE brand_id = %s AND upper(regexp_replace(coalesce(mpn,''), '\s+', '', 'g')) = %s LIMIT 1",
+                r"SELECT id, name, short_description, description, metadata, seo_meta FROM products WHERE brand_id = %s AND upper(regexp_replace(coalesce(mpn,''), '\s+', '', 'g')) = %s LIMIT 1",
                 (brand_id, normalized_mpn),
             ).fetchone()
         metadata = {
@@ -290,6 +295,9 @@ class NeoGigaCanonicalAdapter:
         if existing:
             merged = existing.get("metadata") or {}
             merged.setdefault("jlcpcb_import", metadata)
+            seo_meta = existing.get("seo_meta") or {}
+            if not seo_meta or seo_meta.get("source") == SOURCE_CODE:
+                seo_meta = self._product_seo_meta(part, f"{part.manufacturer.display_name} {part.mpn}".strip())
             conn.execute(
                 """
                 UPDATE products
@@ -297,10 +305,11 @@ class NeoGigaCanonicalAdapter:
                     short_description = COALESCE(NULLIF(short_description, ''), %s),
                     description = COALESCE(NULLIF(description, ''), %s),
                     metadata = %s::json,
+                    seo_meta = %s::json,
                     updated_at = now()
                 WHERE id = %s
                 """,
-                (category_id, part.description, part.description, json.dumps(merged), existing["id"]),
+                (category_id, part.description, part.description, json.dumps(merged), json.dumps(seo_meta), existing["id"]),
             )
             return existing["id"], False
         name = f"{part.manufacturer.display_name} {part.mpn}".strip()
@@ -336,9 +345,9 @@ class NeoGigaCanonicalAdapter:
                 json.dumps({"global": True, "nepal": False, "india": False}),
                 json.dumps(part.attributes),
                 json.dumps({"jlcpcb_import": metadata}),
-                json.dumps({"robots": "noindex,nofollow", "source": SOURCE_CODE}),
+                json.dumps(self._product_seo_meta(part, name)),
                 part.manufacturer.display_name,
-                " ".join([part.mpn, part.manufacturer.display_name, part.description or ""]),
+                " ".join(self._product_keywords(part)),
                 name,
                 (part.description or "")[:300],
             ),
@@ -357,7 +366,11 @@ class NeoGigaCanonicalAdapter:
             ON CONFLICT (source_id, source_part_id)
             DO UPDATE SET product_id = EXCLUDED.product_id, import_batch_id = EXCLUDED.import_batch_id,
               source_payload_hash = EXCLUDED.source_payload_hash, last_synced_at = now(),
-              data_quality_score = EXCLUDED.data_quality_score, review_status = EXCLUDED.review_status,
+              data_quality_score = EXCLUDED.data_quality_score,
+              review_status = CASE
+                WHEN catalog_product_sources.review_status IN ('approved', 'rejected') THEN catalog_product_sources.review_status
+                ELSE EXCLUDED.review_status
+              END,
               raw_snapshot = EXCLUDED.raw_snapshot, updated_at = now()
             RETURNING (xmax = 0) AS inserted
             """,
@@ -485,3 +498,96 @@ class NeoGigaCanonicalAdapter:
         if part.warnings:
             score -= Decimal("0.05")
         return max(score, Decimal("0.10"))
+
+    def _product_keywords(self, part: TransformedPart) -> list[str]:
+        terms = [
+            part.mpn,
+            part.normalized_mpn,
+            part.manufacturer.display_name,
+            part.manufacturer.normalized_name,
+            part.category.path,
+            part.package or "",
+            "electronic component",
+            "semiconductor",
+            "LCSC",
+            "JLCPCB",
+            "NeoGiga",
+        ]
+        for payload in part.attributes.values():
+            if isinstance(payload, dict):
+                terms.append(str(payload.get("normalized_value") or payload.get("raw_value") or ""))
+                terms.append(str(payload.get("normalized_unit") or ""))
+        cleaned = []
+        seen = set()
+        for term in terms:
+            value = re.sub(r"\s+", " ", str(term or "")).strip()
+            key = value.casefold()
+            if value and key not in seen:
+                cleaned.append(value)
+                seen.add(key)
+        return cleaned[:40]
+
+    def _product_seo_meta(self, part: TransformedPart, name: str) -> dict[str, Any]:
+        description = part.description or f"{part.manufacturer.display_name} {part.mpn} electronic component."
+        keywords = self._product_keywords(part)
+        localized = {}
+        for market, info in LOCALIZED_MARKETS.items():
+            localized[market] = {
+                "locale": info["locale"],
+                "country": info["country"],
+                "currency": info["currency"],
+                "domain": info["domain"],
+                "title": f"{name} | NeoGiga {info['country']}",
+                "description": f"Review-pending {part.mpn} from {part.manufacturer.display_name}. {description[:180]}",
+                "keywords": keywords + [info["country"], info["currency"]],
+                "canonical_path": f"/products/{slugify(f'{name}-{part.source_part_id}')}",
+                "hreflang": info["locale"],
+            }
+        return {
+            "robots": "noindex,nofollow",
+            "source": SOURCE_CODE,
+            "review_status": "pending_review",
+            "tags": keywords[:20],
+            "keywords": keywords,
+            "localized": localized,
+            "source_notes": "Generated from JLCPCB/LCSC open parts database; hidden until NeoGiga review.",
+            "confidence_level": "source_imported",
+            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "advisory": "Advisory only",
+        }
+
+    def _brand_seo_meta(self, brand: str) -> dict[str, Any]:
+        keywords = [brand, "manufacturer", "electronic components", "NeoGiga"]
+        return {
+            "review_status": "pending_review",
+            "source": SOURCE_CODE,
+            "robots": "noindex,nofollow",
+            "keywords": keywords,
+            "localized": {
+                market: {
+                    "locale": info["locale"],
+                    "title": f"{brand} components | NeoGiga {info['country']}",
+                    "description": f"Review-pending manufacturer page for {brand} electronic components in {info['country']}.",
+                    "keywords": keywords + [info["country"]],
+                }
+                for market, info in LOCALIZED_MARKETS.items()
+            },
+        }
+
+    def _category_seo_meta(self, name: str, path: str) -> dict[str, Any]:
+        keywords = [name, path, "electronic components", "engineering marketplace", "NeoGiga"]
+        return {
+            "review_status": "pending_review",
+            "source": SOURCE_CODE,
+            "robots": "noindex,nofollow",
+            "keywords": keywords,
+            "localized": {
+                market: {
+                    "locale": info["locale"],
+                    "title": f"{name} | NeoGiga {info['country']}",
+                    "description": f"Review-pending category for {name} products in {info['country']}.",
+                    "keywords": keywords + [info["country"]],
+                }
+                for market, info in LOCALIZED_MARKETS.items()
+            },
+        }
