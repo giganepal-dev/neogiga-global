@@ -75,6 +75,34 @@ class RegionalCommerceBoundaryTest extends TestCase
         $this->assertSame($ordersBefore, DB::table('orders')->count());
     }
 
+    public function test_checkout_enabled_flag_still_requires_real_regional_commerce_data(): void
+    {
+        $regional = $this->marketplace('configured-flag-boundary.test', checkoutEnabled: true);
+        $product = $this->product();
+        DB::table('marketplace_product_prices')->insert([
+            'product_id' => $product['id'],
+            'marketplace_id' => $regional['id'],
+            'base_price' => 25.00,
+            'currency_code' => $regional['currency_code'],
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $server = ['HTTP_HOST' => $regional['domain']];
+        $this->withServerVariables($server)
+            ->post('/cart/items', ['product_id' => $product['id'], 'quantity' => 1])
+            ->assertRedirect('/cart');
+
+        $ordersBefore = DB::table('orders')->count();
+        $this->withServerVariables($server)
+            ->post('/checkout')
+            ->assertRedirect('/rfq')
+            ->assertSessionHas('error');
+
+        $this->assertSame($ordersBefore, DB::table('orders')->count());
+    }
+
     /** @return array{id:int,country_id:int,currency_code:string,domain:string} */
     private function marketplace(string $domain, bool $checkoutEnabled): array
     {

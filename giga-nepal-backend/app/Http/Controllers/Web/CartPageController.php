@@ -8,6 +8,7 @@ use App\Models\Marketplace\Product;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
+use App\Services\Marketplace\MarketplaceCommerceReadinessService;
 use App\Services\Marketplace\RegionalCommerceService;
 use App\Services\Marketplace\RegionalVisibilityService;
 use Illuminate\Http\RedirectResponse;
@@ -21,13 +22,13 @@ class CartPageController extends Controller
     public function show(Request $request): View
     {
         $cart = app(RegionalCommerceService::class)->applyCartEstimates($this->activeCart($request));
-        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
+        $availability = $this->checkoutAvailability($request);
 
         return view('frontend.cart.show', [
             'cart' => $cart->load(['items.product.brand', 'items.product.category']),
             'routes' => app(RegionalCommerceService::class)->cartRoutes($cart),
-            'checkoutEnabled' => (bool) ($marketplaceContext['current']?->checkout_enabled ?? true),
-            'marketplaceName' => $marketplaceContext['current']?->name ?? 'NeoGiga',
+            'checkoutEnabled' => $availability['enabled'],
+            'marketplaceName' => $availability['marketplace_name'],
         ]);
     }
 
@@ -101,23 +102,22 @@ class CartPageController extends Controller
     public function checkout(Request $request): View
     {
         $cart = app(RegionalCommerceService::class)->applyCartEstimates($this->activeCart($request));
-        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
+        $availability = $this->checkoutAvailability($request);
 
         return view('frontend.cart.checkout', [
             'cart' => $cart->load(['items.product.brand']),
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'routes' => app(RegionalCommerceService::class)->cartRoutes($cart),
-            'checkoutEnabled' => (bool) ($marketplaceContext['current']?->checkout_enabled ?? true),
-            'marketplaceName' => $marketplaceContext['current']?->name ?? 'NeoGiga',
+            'checkoutEnabled' => $availability['enabled'],
+            'marketplaceName' => $availability['marketplace_name'],
         ]);
     }
 
     public function placeOrder(Request $request): RedirectResponse
     {
-        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
-        $marketplace = $marketplaceContext['current'] ?? null;
-        if ($marketplace && ! $marketplace->checkout_enabled) {
-            return redirect('/rfq')->with('error', "{$marketplace->name} currently accepts sourcing requests by RFQ only.");
+        $availability = $this->checkoutAvailability($request);
+        if (! $availability['enabled']) {
+            return redirect('/rfq')->with('error', "{$availability['marketplace_name']} currently accepts sourcing requests by RFQ only until regional price, stock, tax, and delivery configuration is complete.");
         }
 
         $data = $request->validate([
@@ -247,6 +247,23 @@ class CartPageController extends Controller
         }
 
         return $cart;
+    }
+
+    /** @return array{enabled:bool,marketplace_name:string} */
+    private function checkoutAvailability(Request $request): array
+    {
+        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
+        $marketplace = $marketplaceContext['current'] ?? null;
+        if (! $marketplace) {
+            return ['enabled' => true, 'marketplace_name' => 'NeoGiga'];
+        }
+
+        $readiness = app(MarketplaceCommerceReadinessService::class)->assess($marketplace);
+
+        return [
+            'enabled' => (bool) $marketplace->checkout_enabled && $readiness['can_enable_checkout'],
+            'marketplace_name' => $marketplace->name ?: 'NeoGiga',
+        ];
     }
 
     private function regionalPrice(Request $request, Product $product): array
