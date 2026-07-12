@@ -174,7 +174,10 @@ class SeedGlobalCatalogCommerce extends Command
         $stats = ['created' => 0, 'updated' => 0, 'skipped' => 0];
         $query = DB::table('products')->select('id', 'sku')->orderBy('id');
         if ($limit !== null) {
-            $query->limit($limit);
+            // chunkById rewrites a query limit while it advances its cursor. Bound the
+            // candidate IDs first so regional samples cannot expand to the full catalog.
+            $sampleIds = DB::table('products')->orderBy('id')->limit($limit)->pluck('id');
+            $query->whereIn('id', $sampleIds);
         }
         $query->chunkById(1000, function ($products) use ($warehouse, $marketplace, $countryId, $quantity, &$stats): void {
             $existing = DB::table('inventory_stocks')->where('warehouse_id', $warehouse['id'])
