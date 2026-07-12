@@ -53,7 +53,9 @@
         $productMeta[] = 'Rating: '.number_format((float) $reviewAverage, 1).'/5 from '.$reviewCount.' reviews';
     }
     $priceCurrency = $marketplacePrice?->currency_native_symbol ?: ($marketplacePrice?->currency_symbol ?: ($marketplacePrice?->currency_code ?: ($marketplaceContext['currency_code'] ?? 'USD')));
-    $displayPrice = $marketplacePrice ? ($marketplacePrice->sale_price ?: $marketplacePrice->base_price) : ($product->sale_price ?: $product->base_price);
+    $displayPrice = $marketplacePrice
+        ? ($marketplacePrice->sale_price ?: $marketplacePrice->base_price)
+        : (strtolower((string) ($marketplaceContext['current']?->code ?? 'global')) === 'global' ? ($product->sale_price ?: $product->base_price) : null);
     $displayCurrency = $marketplacePrice ? $priceCurrency : ($marketplaceContext['currency_code'] ?? 'USD');
     $shortSummary = trim(strip_tags($product->short_description ?: ''));
     $productDetailText = trim(strip_tags($product->description ?: ''));
@@ -77,7 +79,7 @@
                 </div>
             </section>
             <section class="panel" style="padding:22px">
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><span class="badge b-info">{{ $product->category->name ?? 'Engineering part' }}</span><span class="badge {{ ($product->stock_quantity ?? 0) > 0 ? 'b-ok' : 'b-warn' }}">{{ ($product->stock_quantity ?? 0) > 0 ? 'In stock' : 'RFQ only' }}</span></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><span class="badge b-info">{{ $product->category->name ?? 'Engineering part' }}</span><span class="badge {{ $regionalStockTotal > 0 ? 'b-ok' : 'b-warn' }}">{{ $regionalStockTotal > 0 ? 'Regional stock' : 'RFQ availability' }}</span></div>
                 <h1 style="font-size:clamp(1.8rem,4vw,3.1rem);line-height:1.05;margin:0 0 10px">{{ $product->name }}</h1>
                 <p class="sub">{{ implode(' · ', $productMeta) }}</p>
                 @if($productSummary)<p style="max-width:72ch;line-height:1.75;color:#475569;margin:0 0 16px">{{ $productSummary }}</p>@endif

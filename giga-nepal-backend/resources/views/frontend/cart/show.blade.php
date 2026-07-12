@@ -42,7 +42,11 @@
                 <p class="sub">Routing appears after products are added.</p>
             @endforelse
             <div class="grid" style="margin-top:14px">
-                <a class="btn btn-primary" href="/checkout">Proceed to Checkout</a>
+                @if($checkoutEnabled)
+                    <a class="btn btn-primary" href="/checkout">Proceed to Checkout</a>
+                @else
+                    <span class="badge b-warn">{{ $marketplaceName }} is currently RFQ-only.</span>
+                @endif
                 <a class="btn btn-ghost" href="/rfq">Request Bulk RFQ</a>
                 <a class="btn btn-gold" href="/ai-commerce">Ask AI Engineer</a>
             </div>

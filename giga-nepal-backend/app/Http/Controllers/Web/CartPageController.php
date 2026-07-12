@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Cart;
-use App\Models\Marketplace\MarketplaceProductPrice;
 use App\Models\Marketplace\Product;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\RegionalCommerceService;
+use App\Services\Marketplace\RegionalVisibilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,10 +21,13 @@ class CartPageController extends Controller
     public function show(Request $request): View
     {
         $cart = app(RegionalCommerceService::class)->applyCartEstimates($this->activeCart($request));
+        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
 
         return view('frontend.cart.show', [
             'cart' => $cart->load(['items.product.brand', 'items.product.category']),
             'routes' => app(RegionalCommerceService::class)->cartRoutes($cart),
+            'checkoutEnabled' => (bool) ($marketplaceContext['current']?->checkout_enabled ?? true),
+            'marketplaceName' => $marketplaceContext['current']?->name ?? 'NeoGiga',
         ]);
     }
 
@@ -98,16 +101,25 @@ class CartPageController extends Controller
     public function checkout(Request $request): View
     {
         $cart = app(RegionalCommerceService::class)->applyCartEstimates($this->activeCart($request));
+        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
 
         return view('frontend.cart.checkout', [
             'cart' => $cart->load(['items.product.brand']),
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'routes' => app(RegionalCommerceService::class)->cartRoutes($cart),
+            'checkoutEnabled' => (bool) ($marketplaceContext['current']?->checkout_enabled ?? true),
+            'marketplaceName' => $marketplaceContext['current']?->name ?? 'NeoGiga',
         ]);
     }
 
     public function placeOrder(Request $request): RedirectResponse
     {
+        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
+        $marketplace = $marketplaceContext['current'] ?? null;
+        if ($marketplace && ! $marketplace->checkout_enabled) {
+            return redirect('/rfq')->with('error', "{$marketplace->name} currently accepts sourcing requests by RFQ only.");
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:180'],
             'email' => ['required', 'email', 'max:190'],
@@ -123,6 +135,10 @@ class CartPageController extends Controller
         $cart = $this->activeCart($request)->load(['items.product']);
         if ($cart->items->isEmpty()) {
             return redirect('/cart')->with('error', 'Cart is empty.');
+        }
+
+        if ($cart->items->contains(fn ($item) => (float) $item->unit_price <= 0)) {
+            return redirect('/cart')->with('error', 'One or more products need a regional quote before checkout.');
         }
 
         $order = DB::transaction(function () use ($cart, $data) {
@@ -242,18 +258,7 @@ class CartPageController extends Controller
         $source = 'global_catalog';
 
         if ($marketplace) {
-            $overlay = MarketplaceProductPrice::query()
-                ->where('product_id', $product->id)
-                ->where('marketplace_id', $marketplace->id)
-                ->where('is_active', true)
-                ->where(function ($query) {
-                    $query->whereNull('sale_start_date')->orWhere('sale_start_date', '<=', now());
-                })
-                ->where(function ($query) {
-                    $query->whereNull('sale_end_date')->orWhere('sale_end_date', '>=', now());
-                })
-                ->orderByRaw('CASE WHEN sale_price IS NOT NULL THEN 0 ELSE 1 END')
-                ->first();
+            $overlay = app(RegionalVisibilityService::class)->marketplacePrice($product->id, $marketplace);
 
             if ($overlay) {
                 $price = (float) ($overlay->sale_price ?: $overlay->base_price ?: 0);
@@ -263,7 +268,9 @@ class CartPageController extends Controller
         }
 
         if ($price === null) {
-            $price = (float) ($product->sale_price ?: $product->base_price ?: 0);
+            $price = $marketplace && strtolower((string) $marketplace->code) !== 'global'
+                ? 0.0
+                : (float) ($product->sale_price ?: $product->base_price ?: 0);
         }
 
         return [

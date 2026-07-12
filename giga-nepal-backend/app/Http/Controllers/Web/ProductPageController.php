@@ -7,6 +7,7 @@ use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
 use App\Services\Catalog\CatalogSearchService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
+use App\Services\Marketplace\RegionalVisibilityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -88,6 +89,7 @@ class ProductPageController extends Controller
     public function show(string $slug): View
     {
         $marketplaceContext = app(GlobalMarketplaceContextService::class)->context(request());
+        $marketplace = $marketplaceContext['current'] ?? null;
         $product = Product::with(['brand', 'category', 'specs', 'images'])
             ->where('slug', $slug)
             ->whereIn('status', self::VISIBLE)
@@ -102,13 +104,17 @@ class ProductPageController extends Controller
             ->limit(6)
             ->get();
 
+        $regionalVisibility = app(RegionalVisibilityService::class);
+        $stockRows = $regionalVisibility->stockRows($product->id, $marketplace);
+
         return view('frontend.products.show', [
             'product' => $product,
             'related' => $related,
             'marketplaceContext' => $marketplaceContext,
-            'stockRows' => $this->stockRows($product->id, (int) ($marketplaceContext['country_id'] ?: 0)),
-            'marketplacePrice' => $this->marketplacePrice($product->id, (int) ($marketplaceContext['current']?->id ?? 0)),
-            'sellerOffers' => $this->sellerOffers($product->id, (int) ($marketplaceContext['current']?->id ?? 0)),
+            'stockRows' => $stockRows,
+            'regionalStockTotal' => (int) $stockRows->sum('quantity_available'),
+            'marketplacePrice' => $regionalVisibility->marketplacePrice($product->id, $marketplace),
+            'sellerOffers' => $regionalVisibility->sellerOffers($product->id, $marketplace),
             'documents' => $this->productDocuments($product->id),
             'lmsLinks' => $this->productLmsLinks($product->id),
             'alternatives' => $this->alternatives($product->id),

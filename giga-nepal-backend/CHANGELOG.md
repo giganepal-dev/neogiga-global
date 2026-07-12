@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-12 - Regional Commerce Boundary Enforcement
+
+- Routed public product detail prices, seller offers, and warehouse stock through the existing marketplace visibility policy so regional storefronts cannot show a foreign marketplace's commercial overlays as local availability.
+- Corrected regional inventory queries to use the deployed warehouse country relationship and to tolerate installations without an `inventory_stocks.quote_only` column, eliminating the product-detail query failure path.
+- Made unpriced regional products RFQ-only instead of presenting a global catalog price in a regional currency.
+- Enforced `checkout_enabled` on the server before a manual order is created; RFQ-only marketplaces now show an RFQ path and cannot create pending orders by posting directly to checkout.
+- Added regional commerce boundary coverage for price/stock isolation and checkout-disabled order prevention.
+
 ## 2026-07-12 - Active Regional Storefronts
 
 - Corrected marketplace resolution so a dedicated regional domain wins over the shared `/en` locale path; `np`, `in`, `bd`, `bt`, `pk`, `lk`, and `au` storefront hosts now retain their own marketplace context, currency, canonical URL, structured data, and hreflang links.

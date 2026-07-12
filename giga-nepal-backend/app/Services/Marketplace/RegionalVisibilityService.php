@@ -107,7 +107,7 @@ class RegionalVisibilityService
 
         $query = DB::table('inventory_stocks as s')
             ->leftJoin('warehouses as w', 'w.id', '=', 's.warehouse_id')
-            ->leftJoin('countries as c', 'c.id', '=', 's.country_id')
+            ->leftJoin('countries as c', 'c.id', '=', 'w.country_id')
             ->where('s.product_id', $productId)
             ->where('s.is_active', true);
 
@@ -126,14 +126,14 @@ class RegionalVisibilityService
         }
 
         if ($marketplace?->country_id && ! $this->policy->allowsGlobalFallback($marketplace->code)) {
-            $query->where(function ($q) use ($marketplace) {
-                $q->where('s.country_id', $marketplace->country_id)
-                    ->orWhere('w.country_id', $marketplace->country_id);
-            });
+            $query->where('w.country_id', $marketplace->country_id);
         }
 
+        $quoteOnly = Schema::hasColumn('inventory_stocks', 'quote_only') ? 's.quote_only' : 'false as quote_only';
+
         return $query
-            ->select('s.*', 'w.name as warehouse_name', 'c.name as country_name')
+            ->select('s.*', 'w.country_id as country_id', 'w.name as warehouse_name', 'c.name as country_name')
+            ->selectRaw($quoteOnly)
             ->orderByDesc('s.quantity_available')
             ->limit(12)
             ->get();

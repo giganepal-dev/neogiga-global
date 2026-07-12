@@ -6,6 +6,7 @@ use App\Models\Marketplace\Cart;
 use App\Models\Marketplace\Product;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class RegionalCommerceService
 {
@@ -153,12 +154,13 @@ class RegionalCommerceService
     {
         $stock = DB::table('inventory_stocks as s')
             ->leftJoin('warehouses as w', 'w.id', '=', 's.warehouse_id')
-            ->leftJoin('countries as c', 'c.id', '=', 's.country_id')
+            ->leftJoin('countries as c', 'c.id', '=', 'w.country_id')
             ->where('s.product_id', $productId)
             ->where('s.is_active', true)
-            ->when($marketplaceId, fn ($query) => $query->where(fn ($q) => $q->where('s.marketplace_id', $marketplaceId)->orWhereNull('s.marketplace_id')))
-            ->select('s.id', 's.quantity_available', 's.quote_only', 's.country_id', 'w.id as warehouse_id', 'w.name as warehouse_name', 'w.code as warehouse_code', 'c.name as country_name')
-            ->when($countryId, fn ($query) => $query->orderByRaw('CASE WHEN s.country_id = ? THEN 0 ELSE 1 END', [$countryId]))
+            ->when($marketplaceId, fn ($query) => $query->where(fn ($q) => $q->where('s.marketplace_id', $marketplaceId)->orWhere('w.marketplace_id', $marketplaceId)))
+            ->when($countryId, fn ($query) => $query->where('w.country_id', $countryId))
+            ->select('s.id', 's.quantity_available', 'w.country_id', 'w.id as warehouse_id', 'w.name as warehouse_name', 'w.code as warehouse_code', 'c.name as country_name')
+            ->selectRaw(Schema::hasColumn('inventory_stocks', 'quote_only') ? 's.quote_only' : 'false as quote_only')
             ->orderByDesc('s.quantity_available')
             ->first();
 
