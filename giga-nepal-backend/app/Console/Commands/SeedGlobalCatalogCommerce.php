@@ -264,7 +264,13 @@ class SeedGlobalCatalogCommerce extends Command
 
     private function marketplaces(): array
     {
-        $rows = DB::table('marketplaces')->whereIn(DB::raw('UPPER(code)'), ['NEPAL', 'INDIA', 'UAE'])->get()->keyBy(fn ($row) => strtoupper($row->code));
+        $rows = DB::table('marketplaces')
+            ->whereIn(DB::raw('UPPER(code)'), ['NEPAL', 'INDIA', 'UAE', 'UNITEDARABEMIRATES'])
+            ->get()
+            ->keyBy(fn ($row) => strtoupper($row->code));
+        if (! isset($rows['UAE']) && isset($rows['UNITEDARABEMIRATES'])) {
+            $rows['UAE'] = $rows['UNITEDARABEMIRATES'];
+        }
         foreach (['NEPAL', 'INDIA'] as $code) {
             if (! isset($rows[$code])) {
                 throw new \RuntimeException("{$code} marketplace is required for regional warehouse seeding.");
