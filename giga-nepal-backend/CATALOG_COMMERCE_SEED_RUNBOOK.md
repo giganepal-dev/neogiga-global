@@ -2,7 +2,7 @@
 
 ## Source and price rule
 
-The command reads `catalog_distributor_offers` from the active `jlcpcb_parts_database` catalog source. It uses the quantity-1 USD price break as the source cost and creates a Global marketplace price at `source cost x 1.05`.
+The command reads `catalog_distributor_offers` from the active `jlcpcb_parts_database` catalog source. It uses the lowest valid USD quantity break as the source cost and creates a Global marketplace price at `source cost x 1.05`. The minimum source quantity is retained in the pricing rule.
 
 The values are source-backed LCSC/JLCPCB distributor prices, not manufacturer price claims. The source URL, offer ID, fetch time, source unit price, pricing rule, and source review status are retained on every generated marketplace price. Pending source review status is never promoted by this command.
 

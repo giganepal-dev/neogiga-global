@@ -49,7 +49,7 @@ class SeedGlobalCatalogCommerce extends Command
         $this->table(['Metric', 'Value'], [
             ['Catalog products', number_format($productCount)],
             ['USD LCSC/JLCPCB source offers', number_format($sourceOfferCount)],
-            ['Pricing rule', 'quantity-1 source price x 1.05'],
+            ['Pricing rule', 'lowest valid source quantity break x 1.05'],
             ['Shenzhen stock', '10 units for every product'],
             ['Regional sample', "{$sampleSize} products x {$sampleQuantity} units per warehouse"],
             ['Delivery zones', 'operator-supplied fees; unspecified service times remain unconfirmed'],
@@ -106,12 +106,12 @@ class SeedGlobalCatalogCommerce extends Command
         DB::table('catalog_distributor_offers')->where('currency', 'USD')->whereNotNull('price_breaks')->orderBy('id')->chunkById(1000, function ($offers) use ($global, $source, &$stats): void {
             $offerPrices = [];
             foreach ($offers as $offer) {
-                $unitPrice = $this->quantityOnePrice($offer->price_breaks);
-                if ($unitPrice === null) {
+                $sourceBreak = $this->lowestPriceBreak($offer->price_breaks);
+                if ($sourceBreak === null) {
                     $stats['skipped']++;
                     continue;
                 }
-                $offerPrices[$offer->product_id] = [$offer, $unitPrice];
+                $offerPrices[$offer->product_id] = [$offer, $sourceBreak['price'], $sourceBreak['quantity']];
             }
             if ($offerPrices === []) {
                 return;
@@ -126,7 +126,7 @@ class SeedGlobalCatalogCommerce extends Command
             $inserts = [];
             $updates = [];
             $now = now();
-            foreach ($offerPrices as $productId => [$offer, $sourcePrice]) {
+            foreach ($offerPrices as $productId => [$offer, $sourcePrice, $sourceQuantity]) {
                 $payload = [
                     'product_id' => $productId,
                     'product_variant_id' => null,
@@ -143,7 +143,7 @@ class SeedGlobalCatalogCommerce extends Command
                     'source_offer_id' => $offer->id,
                     'source_fetched_at' => $offer->fetched_at,
                     'source_unit_price' => $sourcePrice,
-                    'pricing_rule' => 'source_quantity_1_price_x_1_05',
+                    'pricing_rule' => "source_minimum_quantity_{$sourceQuantity}_price_x_1_05",
                     'source_review_status' => $offer->review_status,
                     'updated_at' => $now,
                 ];
@@ -326,19 +326,25 @@ class SeedGlobalCatalogCommerce extends Command
         return DB::table('marketplaces as m')->leftJoin('currencies as c', 'c.id', '=', 'm.currency_id')->where('m.id', $marketplaceId)->value('c.code');
     }
 
-    private function quantityOnePrice(mixed $raw): ?float
+    /** @return array{price:float,quantity:int}|null */
+    private function lowestPriceBreak(mixed $raw): ?array
     {
         $breaks = is_string($raw) ? json_decode($raw, true) : $raw;
         if (! is_array($breaks)) {
             return null;
         }
+        $selected = null;
         foreach ($breaks as $break) {
-            if ((int) ($break['qFrom'] ?? 0) === 1 && isset($break['price']) && is_numeric($break['price']) && (float) $break['price'] > 0) {
-                return (float) $break['price'];
+            $quantity = (int) ($break['qFrom'] ?? 0);
+            if ($quantity < 1 || ! isset($break['price']) || ! is_numeric($break['price']) || (float) $break['price'] <= 0) {
+                continue;
+            }
+            if ($selected === null || $quantity < $selected['quantity']) {
+                $selected = ['price' => (float) $break['price'], 'quantity' => $quantity];
             }
         }
 
-        return null;
+        return $selected;
     }
 
     private function withLock(callable $callback): void

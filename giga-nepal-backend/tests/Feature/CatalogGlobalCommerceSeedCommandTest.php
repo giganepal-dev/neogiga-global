@@ -30,7 +30,7 @@ class CatalogGlobalCommerceSeedCommandTest extends TestCase
             'cost_price' => 10,
             'base_price' => 10.5,
             'source_name' => 'jlcpcb_parts_database',
-            'pricing_rule' => 'source_quantity_1_price_x_1_05',
+            'pricing_rule' => 'source_minimum_quantity_1_price_x_1_05',
         ]);
         $this->assertDatabaseHas('warehouses', ['code' => 'NG-SHENZHEN-CN', 'marketplace_id' => $globalId]);
         $this->assertDatabaseHas('inventory_stocks', ['product_id' => $productId, 'warehouse_id' => DB::table('warehouses')->where('code', 'NG-SHENZHEN-CN')->value('id'), 'quantity_available' => 10]);
