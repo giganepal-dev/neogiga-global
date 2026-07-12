@@ -16,11 +16,16 @@ class LandingController extends Controller
     public function __invoke(): Response
     {
         $marketplaceContext = app(GlobalMarketplaceContextService::class)->context(request());
-        $prefix = strtolower((string) request()->segment(1));
-        $marketplace = config("neogiga_global.prefixes.{$prefix}");
-        $canonicalPath = $marketplace ? "/{$prefix}" : '/en';
-        $canonicalUrl = url($canonicalPath);
-        $locale = $marketplace['locale'] ?? 'en';
+        $currentMarketplace = $marketplaceContext['current'];
+        $storefrontPath = '/' . trim((string) request()->segment(1), '/');
+        $storefrontPath = $storefrontPath === '/' ? '/en' : $storefrontPath;
+        $canonicalUrl = request()->getSchemeAndHttpHost() . $storefrontPath;
+        $locale = $currentMarketplace?->locale ?: 'en';
+        $marketplaceName = $currentMarketplace?->regional_brand_name ?: $currentMarketplace?->name ?: config('seo.site_name');
+        $countryName = $currentMarketplace?->country?->name ?: 'Global';
+        $currencyCode = $marketplaceContext['currency_code'] ?? 'USD';
+        $title = $currentMarketplace?->seo_title ?: "{$marketplaceName} | Electronics and Engineering Marketplace";
+        $description = $currentMarketplace?->seo_description ?: "Discover electronics, semiconductors, IoT, robotics and industrial components with {$marketplaceName}. Browse the catalog or request a bulk quote in {$currencyCode}.";
 
         $categories = [
             ['name' => 'Semiconductors', 'slug' => 'semiconductors', 'icon' => '⚡', 'blurb' => 'ICs, MCUs, discretes, memory and logic from leading manufacturers.'],
@@ -40,9 +45,9 @@ class LandingController extends Controller
                 [
                     '@type' => 'Organization',
                     '@id' => 'https://neogiga.com/#organization',
-                    'name' => config('seo.site_name'),
+                    'name' => $marketplaceName,
                     'legalName' => config('seo.organization.legal_name'),
-                    'url' => 'https://neogiga.com/en',
+                    'url' => $canonicalUrl,
                     'email' => config('seo.organization.email'),
                     'sameAs' => array_values(array_filter([
                         config('seo.social.twitter'),
@@ -57,13 +62,13 @@ class LandingController extends Controller
                     '@type' => 'WebSite',
                     '@id' => $canonicalUrl . '#website',
                     'url' => $canonicalUrl,
-                    'name' => config('seo.site_name'),
+                    'name' => $marketplaceName,
                     'publisher' => ['@id' => 'https://neogiga.com/#organization'],
                     'potentialAction' => [
                         '@type' => 'SearchAction',
                         'target' => [
                             '@type' => 'EntryPoint',
-                            'urlTemplate' => url($canonicalPath . '/products') . '?q={search_term_string}',
+                            'urlTemplate' => request()->getSchemeAndHttpHost() . $storefrontPath . '/products?q={search_term_string}',
                         ],
                         'query-input' => 'required name=search_term_string',
                     ],
@@ -106,6 +111,12 @@ class LandingController extends Controller
                 'jsonLd' => $jsonLd,
                 'canonical' => $canonicalUrl,
                 'locale' => $locale,
+                'title' => $title,
+                'description' => $description,
+                'marketplaceName' => $marketplaceName,
+                'countryName' => $countryName,
+                'currencyCode' => $currencyCode,
+                'storefrontPath' => $storefrontPath,
                 'marketplaceContext' => $marketplaceContext,
             ])
             ->header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');

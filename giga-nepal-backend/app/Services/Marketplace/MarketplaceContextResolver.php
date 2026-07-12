@@ -17,31 +17,29 @@ class MarketplaceContextResolver
 
     /**
      * Global Commerce Stage 1 resolution order:
-     * 1. URL path prefix (/in, /np, ...)
-     * 2. active domain/subdomain marketplace rules always win on their own
-     *    host; the global root is the only host where a cookie can override
+     * 1. active domain/subdomain marketplace rules always win on their own
+     *    host, including when the storefront is served below `/en`
+     * 2. URL path prefix (/in, /np, ...), available on the global host
      * 3. cookie preference
      * 4. authenticated user preference (inert until users.marketplace_id
      *    exists — reading an undefined attribute is a safe null in Eloquent)
-     * 5. domain rules
-     * 6. global fallback
+     * 5. global fallback
      */
     public function resolve(Request $request): ?Marketplace
     {
-        if ($prefixMarketplace = $this->paths->resolve($request)) {
-            return $prefixMarketplace;
-        }
-
         $domainMarketplace = $this->domains->resolve($request);
         $host = strtolower(parse_url('//' . $request->getHost(), PHP_URL_HOST) ?: $request->getHost());
 
         if ($domainMarketplace && ! in_array($host, ['neogiga.com', 'www.neogiga.com'], true)) {
-            return $domainMarketplace ?: $this->fallback();
+            return $domainMarketplace;
+        }
+
+        if ($prefixMarketplace = $this->paths->resolve($request)) {
+            return $prefixMarketplace;
         }
 
         return $this->preferences->preferredMarketplace($request)
             ?: $this->authenticatedPreference($request)
-            ?: $domainMarketplace
             ?: $this->fallback();
     }
 

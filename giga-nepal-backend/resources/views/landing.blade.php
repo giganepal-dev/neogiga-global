@@ -8,11 +8,10 @@
     <meta name="description" content="{{ $description ?? config('seo.default_description') }}">
     <link rel="canonical" href="{{ $canonical ?? url('/') }}">
 
-    {{-- hreflang cluster: canonical global edition lives at /en; country storefronts use locale prefixes. --}}
-    @foreach (config('neogiga_global.prefixes', []) as $prefix => $edition)
-        <link rel="alternate" hreflang="{{ $edition['locale'] }}" href="{{ url('/'.$prefix) }}">
+    {{-- Each alternate keeps its own marketplace host; it must never inherit this host. --}}
+    @foreach (($marketplaceContext['hreflang'] ?? []) as $alternate)
+        <link rel="alternate" hreflang="{{ $alternate['hreflang'] }}" href="{{ $alternate['url'] }}">
     @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ url('/en') }}">
 
     {{-- OpenGraph --}}
     <meta property="og:type" content="website">
@@ -102,6 +101,7 @@
         .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
         .card{background:var(--ng-navy-2);border:1px solid rgba(25,211,245,.12);
             border-radius:var(--ng-radius);padding:22px;transition:border-color .15s,transform .15s}
+        a.card{display:block;color:inherit;text-decoration:none}
         .card:hover{border-color:rgba(25,211,245,.45);transform:translateY(-2px)}
         .card .ic{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;
             background:rgba(25,211,245,.1);color:var(--ng-cyan);font-size:1.3rem;margin-bottom:14px}
@@ -119,6 +119,7 @@
         .newsletter input[type=email]{flex:1 1 260px;padding:12px 16px;border-radius:999px;
             border:1px solid rgba(25,211,245,.3);background:var(--ng-navy-2);color:var(--ng-white);font-size:1rem}
         .newsletter input::placeholder{color:var(--ng-gray-2)}
+        .notice{margin:0 0 18px;padding:12px 14px;border:1px solid rgba(25,211,245,.4);border-radius:10px;color:var(--ng-white);background:rgba(25,211,245,.1)}
         /* Footer */
         footer{border-top:1px solid rgba(25,211,245,.15);padding:48px 0 32px;font-size:.9rem}
         .foot-grid{display:grid;gap:28px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
@@ -160,39 +161,39 @@
 
 <header>
     <div class="wrap nav">
-        <a class="logo" href="/en" aria-label="NeoGiga home">
+        <a class="logo" href="{{ $storefrontPath }}" aria-label="{{ $marketplaceName }} home">
             {{-- NeoGiga mark: hex/circuit motif in cyan + gold --}}
             <svg width="34" height="34" viewBox="0 0 48 48" fill="none" aria-hidden="true">
                 <path d="M24 3 42 13.5v21L24 45 6 34.5v-21L24 3Z" stroke="#19D3F5" stroke-width="2.6"/>
                 <path d="M24 13v10l8.5 5" stroke="#F5B928" stroke-width="2.6" stroke-linecap="round"/>
                 <circle cx="24" cy="23" r="2.6" fill="#19D3F5"/>
             </svg>
-            Neo<em>Giga</em>
+            {{ $marketplaceName }}
         </a>
         <nav aria-label="Primary">
             <a href="#categories">Categories</a>
-            <a href="#ai">AI Commerce</a>
-            <a href="#learn">Learn</a>
-            <a href="/en/sell-on-neogiga">Sell</a>
-            <a href="/en/distributors">Distributors</a>
-            <a href="#b2b">B2B</a>
+            <a href="{{ $storefrontPath }}/products">Products</a>
+            <a href="{{ $storefrontPath }}/lms">Learn</a>
+            <a href="{{ $storefrontPath }}/sell-on-neogiga">Sell</a>
+            <a href="{{ $storefrontPath }}/rfq">B2B &amp; RFQ</a>
         </nav>
         <div class="spacer"></div>
-        <div class="switcher">
-            {{-- Country switcher placeholder — suggestion-only, never geo-redirects (Blueprint §42) --}}
+        <form class="switcher" method="post" action="{{ route('marketplace.preference') }}">
+            @csrf
             <label class="sr-only" for="ng-country" style="position:absolute;left:-9999px">Country</label>
-            <select id="ng-country" aria-label="Choose country edition" disabled title="Country selector — coming soon">
-                <option>🌐 Global (.com)</option>
-                <option>🇮🇳 India (.in)</option>
-                <option>🇳🇵 Nepal (giganepal.com)</option>
+            <select id="ng-country" name="marketplace" aria-label="Choose marketplace">
+                @foreach (($marketplaceContext['editions'] ?? []) as $edition)
+                    <option value="{{ $edition['code'] }}" @selected($edition['id'] === ($marketplaceContext['current']->id ?? null))>{{ $edition['name'] }} · {{ $edition['currency_code'] }}</option>
+                @endforeach
             </select>
+            <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
+            <input type="hidden" name="action" value="switch">
+            <button class="btn btn-ghost" style="padding:6px 10px;font-size:.85rem" type="submit">Go</button>
             <label for="ng-lang" style="position:absolute;left:-9999px">Language</label>
-            <select id="ng-lang" aria-label="Choose language" disabled title="Language selector — coming soon">
-                <option>EN</option>
-                <option>हिन्दी</option>
-                <option>नेपाली</option>
+            <select id="ng-lang" aria-label="Current language" disabled>
+                <option>{{ strtoupper(strtok($locale, '-')) }}</option>
             </select>
-        </div>
+        </form>
     </div>
 </header>
 
@@ -204,22 +205,18 @@
                 <path d="M24 3 42 13.5v21L24 45 6 34.5v-21L24 3Z" stroke="#19D3F5" stroke-width="1.2"/>
                 <path d="M24 13v10l8.5 5" stroke="#F5B928" stroke-width="1.2"/>
             </svg>
-            <span class="chip">India Edition · Preview</span>
-            <h1 id="hero-title" style="margin-top:16px">Engineering the <span>Future</span></h1>
+            <span class="chip">{{ $countryName === 'Global' ? 'Global marketplace' : $countryName . ' marketplace' }} · {{ $currencyCode }}</span>
+            <h1 id="hero-title" style="margin-top:16px">{{ $marketplaceName }} for <span>Engineers</span></h1>
             <p class="lead">
-                One platform for the entire engineering journey — discover semiconductors and components,
-                learn with hands-on projects, buy locally, and build with AI assistance.
-                From hobbyist benches to factory floors.
+                Source semiconductors, components, IoT, robotics and industrial tools. Browse the catalog,
+                compare technical details, and request a bulk quote for your next build.
             </p>
             <div class="cta-row">
-                <a class="btn btn-gold" href="/en/seller-early-access">Apply for Seller Early Access</a>
-                <a class="btn btn-ghost" href="/en/ai-commerce">Try AI Project Builder</a>
+                <a class="btn btn-gold" href="{{ $storefrontPath }}/products">Browse Products</a>
+                <a class="btn btn-ghost" href="{{ $storefrontPath }}/rfq">Request Bulk Quote</a>
             </div>
             <p class="domains">
-                Regional editions:
-                <a href="https://neogiga.com" rel="alternate">neogiga.com</a> ·
-                <a href="https://neogiga.in" rel="alternate">neogiga.in</a> ·
-                <a href="https://giganepal.com" rel="alternate">giganepal.com</a>
+                Current storefront: {{ request()->getHost() }} · Country, currency and stock availability are confirmed during checkout or quotation.
             </p>
         </div>
     </section>
@@ -231,11 +228,11 @@
             <p class="sec-sub">A global product master, localized inventory. Explore the core domains of the NeoGiga catalog.</p>
             <div class="grid">
                 @foreach ($categories as $category)
-                    <article class="card" aria-label="{{ $category['name'] }}">
+                    <a class="card" href="{{ $storefrontPath }}/products?category={{ $category['slug'] }}" aria-label="Browse {{ $category['name'] }}">
                         <div class="ic" aria-hidden="true">{{ $category['icon'] }}</div>
                         <h3>{{ $category['name'] }}</h3>
                         <p>{{ $category['blurb'] }}</p>
-                    </article>
+                    </a>
                 @endforeach
             </div>
         </div>
@@ -250,29 +247,28 @@
                 <article class="card">
                     <div class="ic" aria-hidden="true">AI</div>
                     <h3>AI Commerce for Engineers and Makers</h3>
-                    <p>From idea to component list, quote, cart, and learning guide. The public demo uses local
-                       NeoGiga rules to suggest components, alternatives, tutorials, stock checks, and buying
-                       options without creating an order or payment.</p>
-                    <p style="margin-top:12px"><a class="btn btn-ghost" href="/en/ai-commerce">Try AI Project Builder</a></p>
+                    <p>Use the engineering assistant to turn an idea into a component list, alternatives,
+                       tutorials and a sourcing path.</p>
+                    <p style="margin-top:12px"><a class="btn btn-ghost" href="{{ $storefrontPath }}/ai-commerce">Open AI Project Builder</a></p>
                 </article>
                 <article class="card" id="learn">
                     <div class="ic" aria-hidden="true">🎓</div>
                     <h3>Learn &amp; Build (LMS)</h3>
-                    <p>Courses and hands-on projects linked to real parts: finish a lesson, buy the exact kit.
-                       For students, universities and factory teams. <span class="chip">Coming soon</span></p>
+                    <p>Courses and hands-on projects linked to real parts for students, universities and factory teams.</p>
+                    <p style="margin-top:12px"><a class="btn btn-ghost" href="{{ $storefrontPath }}/lms">Explore Learning</a></p>
                 </article>
                 <article class="card" id="sellers">
                     <div class="ic" aria-hidden="true">S</div>
                     <h3>Sell on NeoGiga</h3>
                     <p>Reach engineers, makers, schools, labs, workshops, resellers, and B2B buyers across South Asia.
-                       Seller portal is launching soon; early applicants will be reviewed first for Nepal and India.</p>
-                    <p style="margin-top:12px"><a class="btn btn-ghost" href="/en/sell-on-neogiga">Apply for Seller Early Access</a></p>
+                       Submit your seller application and manage region-specific approval and offers.</p>
+                    <p style="margin-top:12px"><a class="btn btn-ghost" href="{{ $storefrontPath }}/sell-on-neogiga">Become a Seller</a></p>
                 </article>
                 <article class="card" id="b2b">
                     <div class="ic" aria-hidden="true">🏭</div>
                     <h3>B2B Procurement</h3>
-                    <p>Company accounts, RFQs, approval workflows, credit terms and contract pricing for
-                       factories, universities and enterprises. <span class="chip">Phase 3</span></p>
+                    <p>Send an RFQ for sourcing, quantities, target pricing and delivery requirements for your organization.</p>
+                    <p style="margin-top:12px"><a class="btn btn-ghost" href="{{ $storefrontPath }}/rfq">Create RFQ</a></p>
                 </article>
             </div>
         </div>
@@ -283,25 +279,28 @@
         <div class="wrap">
             <div class="band">
                 <h2 id="seller-band-title">Sell on NeoGiga
-                    <small>Onboard once, sell across neogiga.com, neogiga.in and giganepal.com with regional
-                    approval, stock visibility, RFQ support and transparent settlement.</small>
+                    <small>Apply to sell with regional approval, stock visibility, RFQ support and transparent settlement.</small>
                 </h2>
-                <a class="btn btn-gold" href="/en/seller-early-access">Apply for Seller Early Access</a>
-                <a class="btn btn-ghost" href="/en/distributors">Join Distributor Network</a>
+                <a class="btn btn-gold" href="{{ $storefrontPath }}/sell-on-neogiga">Become a Seller</a>
+                <a class="btn btn-ghost" href="{{ $storefrontPath }}/distributors">Join Distributor Network</a>
             </div>
         </div>
     </section>
 
     {{-- NEWSLETTER --}}
-    <section class="newsletter" aria-labelledby="nl-title" style="padding-top:0">
+    <section id="newsletter" class="newsletter" aria-labelledby="nl-title" style="padding-top:0">
         <div class="wrap">
             <h2 class="sec-title" id="nl-title">Stay in the Loop</h2>
             <p class="sec-sub">Product launches, new courses and platform milestones. No spam.</p>
-            {{-- Placeholder: posts nowhere yet; wire to notification-svc in Phase 1 --}}
-            <form action="#" method="post" onsubmit="return false" aria-label="Newsletter signup (coming soon)">
+            @if (session('status'))
+                <p class="notice" role="status">{{ session('status') }}</p>
+            @endif
+            <form action="{{ route('newsletter.subscribe') }}" method="post" aria-label="Newsletter signup">
+                @csrf
+                <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
                 <input type="email" name="email" placeholder="you@company.com" autocomplete="email"
                        inputmode="email" aria-label="Email address" required>
-                <button class="btn btn-ghost" type="submit" title="Signup opens with the full launch">Notify Me</button>
+                <button class="btn btn-ghost" type="submit">Subscribe</button>
             </form>
             <p style="margin-top:14px;font-size:.85rem;color:var(--ng-gray-2)">
                 Follow {{ config('seo.social.handle') }} —
@@ -320,35 +319,36 @@
             <div>
                 <h4>NeoGiga</h4>
                 <ul>
-                    <li><a href="#categories">Catalog</a></li>
-                    <li><a href="#learn">Learning</a></li>
-                    <li><a href="#ai">AI Commerce</a></li>
-                    <li><a href="#b2b">B2B &amp; RFQ</a></li>
+                    <li><a href="{{ $storefrontPath }}/products">Catalog</a></li>
+                    <li><a href="{{ $storefrontPath }}/lms">Learning</a></li>
+                    <li><a href="{{ $storefrontPath }}/ai-commerce">AI Commerce</a></li>
+                    <li><a href="{{ $storefrontPath }}/rfq">B2B &amp; RFQ</a></li>
                 </ul>
             </div>
             <div>
                 <h4>Global Editions</h4>
                 <ul>
-                    <li><a href="https://neogiga.com" rel="alternate">Global — neogiga.com</a></li>
-                    <li><a href="https://neogiga.in" rel="alternate">India — neogiga.in</a></li>
-                    <li><a href="https://giganepal.com" rel="alternate">Nepal — giganepal.com</a></li>
+                    @foreach (($marketplaceContext['editions'] ?? []) as $edition)
+                        @if ($edition['url'])
+                            <li><a href="{{ $edition['url'] }}/en" rel="alternate">{{ $edition['name'] }} · {{ $edition['currency_code'] }}</a></li>
+                        @endif
+                    @endforeach
                 </ul>
             </div>
             <div>
                 <h4>Sellers</h4>
                 <ul>
-                    <li><a href="#sellers">Become a Seller</a></li>
-                    <li><a href="#sellers">Seller Types</a></li>
-                    <li><a href="#sellers">Marketplace Policy</a></li>
+                    <li><a href="{{ $storefrontPath }}/sell-on-neogiga">Become a Seller</a></li>
+                    <li><a href="{{ $storefrontPath }}/distributors">Distributor Network</a></li>
+                    <li><a href="{{ $storefrontPath }}/rfq">Sourcing &amp; RFQ</a></li>
                 </ul>
             </div>
             <div>
                 <h4>Company</h4>
                 <ul>
-                    <li><a href="#">About Giga Ventures</a></li>
                     <li><a href="mailto:{{ config('seo.organization.email') }}">Contact</a></li>
-                    <li><a href="#">Careers</a></li>
-                    <li><a href="#">Privacy &amp; Terms</a></li>
+                    <li><a href="{{ $storefrontPath }}/products">Product Catalog</a></li>
+                    <li><a href="{{ $storefrontPath }}/lms">Learning Hub</a></li>
                 </ul>
             </div>
         </div>

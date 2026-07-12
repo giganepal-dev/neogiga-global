@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-12 - Active Regional Storefronts
+
+- Corrected marketplace resolution so a dedicated regional domain wins over the shared `/en` locale path; `np`, `in`, `bd`, `bt`, `pk`, `lk`, and `au` storefront hosts now retain their own marketplace context, currency, canonical URL, structured data, and hreflang links.
+- Replaced the hard-coded India preview landing content with marketplace-aware branding and usable catalog, learning, seller, AI, and RFQ paths while preserving the established public routes.
+- Replaced the disabled country selector with a CSRF-protected, preference-persisting marketplace switcher and made category cards link to live catalog filtering.
+- Added a protected, rate-limited server-rendered newsletter subscription endpoint backed by the existing `newsletter_subscribers` table; the landing form now returns a normal success message.
+
 ## 2026-07-12 - Usable PCB Customer and Admin Workflow
 
 - Replaced the generic storefront response on `pcb.neogiga.com` with a dedicated responsive PCB engineering portal and product-specific hero asset.

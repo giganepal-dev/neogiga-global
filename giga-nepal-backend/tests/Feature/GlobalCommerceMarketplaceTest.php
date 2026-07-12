@@ -117,15 +117,16 @@ class GlobalCommerceMarketplaceTest extends TestCase
         }
     }
 
-    public function test_preview_marketplace_landing_shows_coming_soon_not_a_storefront(): void
+    public function test_preview_marketplace_landing_is_informational_without_checkout_claims(): void
     {
         $this->seedBaselineAndGlobalCommerce();
 
         $response = $this->get('/bd');
 
         $response->assertOk();
-        $response->assertSee('Coming soon');
-        $response->assertDontSee('Add to Cart', escape: false);
+        $response->assertSee('Browse Products');
+        $response->assertSee('Request Bulk Quote');
+        $response->assertDontSee('Checkout', escape: false);
     }
 
     public function test_active_marketplace_landing_resolves(): void
@@ -135,6 +136,45 @@ class GlobalCommerceMarketplaceTest extends TestCase
         $response = $this->get('/np');
 
         $response->assertOk();
+    }
+
+    public function test_regional_domain_wins_over_the_shared_en_locale_path(): void
+    {
+        $this->seedBaselineAndGlobalCommerce();
+
+        $request = Request::create('https://giganepal.com/en');
+        $context = app(GlobalMarketplaceContextService::class)->context($request);
+
+        $this->assertSame('NEPAL', $context['current']?->code);
+
+        $response = $this->withServerVariables([
+            'HTTP_HOST' => 'giganepal.com',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => 443,
+        ])->get('/en');
+
+        $response->assertOk();
+        $response->assertSee('GigaNepal');
+        $response->assertSee('NPR');
+        $response->assertDontSee('India Edition · Preview');
+        $response->assertSee('/en/products?category=semiconductors', escape: false);
+    }
+
+    public function test_landing_newsletter_signup_persists_a_subscriber(): void
+    {
+        $this->seedBaselineAndGlobalCommerce();
+
+        $response = $this->post('/newsletter/subscribe', [
+            'email' => 'engineering@example.test',
+            'return_path' => '/en',
+        ]);
+
+        $response->assertRedirect('/en#newsletter');
+        $this->assertDatabaseHas('newsletter_subscribers', [
+            'email' => 'engineering@example.test',
+            'source' => 'public_landing',
+            'status' => 'subscribed',
+        ]);
     }
 
     public function test_unknown_prefix_returns_404_not_a_redirect(): void

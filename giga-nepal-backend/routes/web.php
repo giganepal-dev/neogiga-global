@@ -259,6 +259,9 @@ Route::prefix('admin')->group(function () {
 Route::post('/marketplace/preference', [MarketplacePreferenceController::class, 'store'])
     ->middleware('throttle:20,1')
     ->name('marketplace.preference');
+Route::post('/newsletter/subscribe', [\App\Http\Controllers\Web\NewsletterSubscriptionController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('newsletter.subscribe');
 Route::get('/sso/start', [SsoController::class, 'start'])
     ->middleware(['auth', 'throttle:10,1'])
     ->name('sso.start');
