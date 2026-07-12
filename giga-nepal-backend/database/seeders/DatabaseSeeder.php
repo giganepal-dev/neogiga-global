@@ -42,6 +42,11 @@ class DatabaseSeeder extends Seeder
             AiProjectTemplateSeeder::class,
         ]);
 
+        // NeoGiga Priority Suppliers - Tier 1, 2, 3 suppliers
+        $this->call([
+            Suppliers\SupplierSeeder::class,
+        ]);
+
         // Demo/sample catalog — opt-in via SEED_DEMO=true. These seeders still
         // carry model↔migration drift (DB-04) and must not populate production.
         // Enable only in dev after the Phase-1 schema reconciliation.
@@ -49,6 +54,7 @@ class DatabaseSeeder extends Seeder
             $this->call([
                 ProductSeeders\ProductSeeder::class,
                 VendorSeeders\VendorSeeder::class,
+                Suppliers\SampleProductSeeder::class,
             ]);
         }
     }
