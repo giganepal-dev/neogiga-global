@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-12 - Supplier Ingestion Admin Console
+
+- Added a protected server-rendered Catalogue Ingestion admin screen for supplier policy audits, policy decisions, import-run monitoring, quality-aware review tasks, and task resolution.
+- Kept supplier import, media download, price/inventory, product approval, and public publication as separate guarded operations; this UI cannot publish an imported product.
+
 ## 2026-07-12 - Supplier Import Quality Scoring
 
 - Adapted the reusable remote quality-scoring concept into the existing supplier provenance flow without importing its duplicate schema.

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
 use App\Http\Controllers\Admin\CommerceOpsController as AdminCommerce;
+use App\Http\Controllers\Admin\CatalogIngestionAdminController as AdminCatalogIngestion;
 use App\Http\Controllers\Admin\DashboardController as AdminDash;
 use App\Http\Controllers\Admin\MarketplaceConfigController as AdminMarketplaceConfig;
 use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
@@ -81,6 +82,10 @@ Route::prefix('admin')->group(function () {
         Route::get('products', [AdminDash::class, 'products']);
         Route::get('products/{id}', [AdminDash::class, 'product'])->whereNumber('id');
         Route::get('imports/jlcpcb', [AdminDash::class, 'jlcpcbImports']);
+        Route::get('catalog-ingestion', [AdminCatalogIngestion::class, 'index']);
+        Route::post('catalog-ingestion/sources/{supplier}/audit', [AdminCatalogIngestion::class, 'audit'])->middleware('throttle:5,1');
+        Route::post('catalog-ingestion/sources/{supplier}', [AdminCatalogIngestion::class, 'updateSource'])->middleware('throttle:10,1');
+        Route::post('catalog-ingestion/review-tasks/{task}', [AdminCatalogIngestion::class, 'resolveTask'])->whereNumber('task')->middleware('throttle:20,1');
         Route::post('imports/jlcpcb/bulk-approve', [AdminCommerce::class, 'bulkApproveJlcpcbImports'])->middleware('throttle:10,1');
         Route::post('imports/jlcpcb/bulk-publish', [AdminCommerce::class, 'bulkPublishJlcpcbImports'])->middleware('throttle:10,1');
         Route::post('imports/jlcpcb/search-rebuild', [AdminCommerce::class, 'queueJlcpcbSearchRebuild'])->middleware('throttle:5,1');
