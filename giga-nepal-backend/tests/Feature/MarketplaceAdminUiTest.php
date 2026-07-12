@@ -9,6 +9,7 @@ use App\Models\Marketplace\MarketplaceAuditLog;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -103,6 +104,88 @@ class MarketplaceAdminUiTest extends TestCase
             ->post("/admin/marketplaces/{$m->id}/enable", [])
             ->assertSessionHasErrors('enable');
         $this->assertFalse((bool) $m->fresh()->is_active);
+    }
+
+    public function test_status_tab_cannot_enable_checkout_before_marketplace_is_launch_ready(): void
+    {
+        $m = $this->marketplace();
+
+        $this->actingAs($this->admin())
+            ->post("/admin/marketplaces/{$m->id}/config", ['tab' => 'status', 'checkout_enabled' => '1'])
+            ->assertSessionHasErrors('checkout_enabled');
+
+        $this->assertFalse((bool) $m->fresh()->checkout_enabled);
+    }
+
+    public function test_marketplace_price_must_match_the_marketplace_currency(): void
+    {
+        $m = $this->marketplace(['is_active' => true]);
+        Currency::firstOrCreate(['code' => 'EUR'], ['name' => 'Euro', 'symbol' => 'EUR', 'decimal_places' => 2, 'is_active' => true, 'exchange_rate' => 1.0]);
+        $suffix = uniqid();
+        $productId = DB::table('products')->insertGetId([
+            'name' => 'Currency Guard Product',
+            'slug' => 'currency-guard-'.$suffix,
+            'sku' => 'NG-CURRENCY-'.strtoupper($suffix),
+            'type' => 'simple',
+            'status' => 'approved',
+            'base_price' => 10,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post("/admin/products/{$productId}/marketplace-prices", [
+                'marketplace_id' => $m->id,
+                'currency_code' => 'EUR',
+                'base_price' => 10,
+                'is_active' => '1',
+            ])
+            ->assertSessionHasErrors('currency_code');
+
+        $this->assertDatabaseMissing('marketplace_product_prices', ['product_id' => $productId, 'marketplace_id' => $m->id]);
+    }
+
+    public function test_regional_stock_inherits_the_selected_warehouse_marketplace(): void
+    {
+        $m = $this->marketplace(['is_active' => true]);
+        $suffix = uniqid();
+        $productId = DB::table('products')->insertGetId([
+            'name' => 'Regional Stock Product',
+            'slug' => 'regional-stock-'.$suffix,
+            'sku' => 'NG-STOCK-'.strtoupper($suffix),
+            'type' => 'simple',
+            'status' => 'approved',
+            'base_price' => 10,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $warehouseId = DB::table('warehouses')->insertGetId([
+            'name' => 'Bangladesh Warehouse',
+            'code' => 'BD-'.strtoupper(substr($suffix, -6)),
+            'marketplace_id' => $m->id,
+            'country_id' => $m->country_id,
+            'address_line1' => 'Dhaka',
+            'is_active' => true,
+            'is_default' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post("/admin/products/{$productId}/regional-stock", [
+                'warehouse_id' => $warehouseId,
+                'country_id' => $m->country_id,
+                'quantity_available' => 12,
+                'status' => 'active',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('inventory_stocks', [
+            'product_id' => $productId,
+            'warehouse_id' => $warehouseId,
+            'marketplace_id' => $m->id,
+            'quantity_available' => 12,
+        ]);
     }
 
     public function test_list_search_filters_results(): void

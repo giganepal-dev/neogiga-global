@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-12 - Regional Commerce Operations Controls
+
+- Added marketplace assignment to warehouse creation and automatically records the assigned marketplace on new regional stock rows.
+- Prevented regional warehouse/country mismatches, made regional stock writes compatible with both the base and extended inventory schemas, and retained country resolution from stock rows or warehouses as available.
+- Required an active marketplace and its configured currency for marketplace prices, rejected sale prices above base price, and prevented duplicate base-price rows for a product/marketplace pair.
+- Prevented the admin status form from enabling checkout until the marketplace is active, visible, and passes the existing launch checklist; the audit record now includes checkout state.
+- Added admin tests for checkout gating, currency-locked prices, and marketplace-bound regional stock.
+
 ## 2026-07-12 - Regional Commerce Boundary Enforcement
 
 - Routed public product detail prices, seller offers, and warehouse stock through the existing marketplace visibility policy so regional storefronts cannot show a foreign marketplace's commercial overlays as local availability.

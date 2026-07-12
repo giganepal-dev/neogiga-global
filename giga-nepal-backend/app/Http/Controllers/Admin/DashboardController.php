@@ -743,6 +743,7 @@ class DashboardController extends Controller
             'reservations' => $this->safeInventoryReservations(),
             'lowStockAlerts' => $this->safeLowStockAlerts(20),
             'warehouses' => DB::table('warehouses')->orderBy('name')->get(),
+            'marketplaces' => DB::table('marketplaces')->where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get(['id', 'name', 'code', 'country_id']),
             'products' => DB::table('products')->orderBy('name')->limit(300)->get(['id', 'name', 'sku']),
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
         ]);
@@ -1617,11 +1618,16 @@ class DashboardController extends Controller
                 return collect();
             }
 
+            $countryExpression = Schema::hasColumn('inventory_stocks', 'country_id')
+                ? 'COALESCE(s.country_id, w.country_id)'
+                : 'w.country_id';
+
             return DB::table('inventory_stocks as s')
                 ->leftJoin('warehouses as w', 'w.id', '=', 's.warehouse_id')
-                ->leftJoin('countries as c', 'c.id', '=', 's.country_id')
+                ->leftJoin('countries as c', fn ($join) => $join->on('c.id', '=', DB::raw($countryExpression)))
                 ->where('s.product_id', $productId)
                 ->select('s.*', 'w.name as warehouse_name', 'w.code as warehouse_code', 'c.name as country_name')
+                ->selectRaw("{$countryExpression} as country_id")
                 ->orderByDesc('s.id')
                 ->limit($limit)
                 ->get();

@@ -105,9 +105,13 @@ class RegionalVisibilityService
             return collect();
         }
 
+        $countryExpression = Schema::hasColumn('inventory_stocks', 'country_id')
+            ? 'COALESCE(s.country_id, w.country_id)'
+            : 'w.country_id';
+
         $query = DB::table('inventory_stocks as s')
             ->leftJoin('warehouses as w', 'w.id', '=', 's.warehouse_id')
-            ->leftJoin('countries as c', 'c.id', '=', 'w.country_id')
+            ->leftJoin('countries as c', fn ($join) => $join->on('c.id', '=', DB::raw($countryExpression)))
             ->where('s.product_id', $productId)
             ->where('s.is_active', true);
 
@@ -126,13 +130,14 @@ class RegionalVisibilityService
         }
 
         if ($marketplace?->country_id && ! $this->policy->allowsGlobalFallback($marketplace->code)) {
-            $query->where('w.country_id', $marketplace->country_id);
+            $query->whereRaw("{$countryExpression} = ?", [$marketplace->country_id]);
         }
 
         $quoteOnly = Schema::hasColumn('inventory_stocks', 'quote_only') ? 's.quote_only' : 'false as quote_only';
 
         return $query
-            ->select('s.*', 'w.country_id as country_id', 'w.name as warehouse_name', 'c.name as country_name')
+            ->select('s.*', 'w.name as warehouse_name', 'c.name as country_name')
+            ->selectRaw("{$countryExpression} as country_id")
             ->selectRaw($quoteOnly)
             ->orderByDesc('s.quantity_available')
             ->limit(12)

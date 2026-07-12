@@ -152,14 +152,19 @@ class RegionalCommerceService
 
     private function bestWarehouseRoute(int $productId, int $quantity, ?int $marketplaceId, ?int $countryId): array
     {
+        $countryExpression = Schema::hasColumn('inventory_stocks', 'country_id')
+            ? 'COALESCE(s.country_id, w.country_id)'
+            : 'w.country_id';
+
         $stock = DB::table('inventory_stocks as s')
             ->leftJoin('warehouses as w', 'w.id', '=', 's.warehouse_id')
-            ->leftJoin('countries as c', 'c.id', '=', 'w.country_id')
+            ->leftJoin('countries as c', fn ($join) => $join->on('c.id', '=', DB::raw($countryExpression)))
             ->where('s.product_id', $productId)
             ->where('s.is_active', true)
             ->when($marketplaceId, fn ($query) => $query->where(fn ($q) => $q->where('s.marketplace_id', $marketplaceId)->orWhere('w.marketplace_id', $marketplaceId)))
-            ->when($countryId, fn ($query) => $query->where('w.country_id', $countryId))
-            ->select('s.id', 's.quantity_available', 'w.country_id', 'w.id as warehouse_id', 'w.name as warehouse_name', 'w.code as warehouse_code', 'c.name as country_name')
+            ->when($countryId, fn ($query) => $query->whereRaw("{$countryExpression} = ?", [$countryId]))
+            ->select('s.id', 's.quantity_available', 'w.id as warehouse_id', 'w.name as warehouse_name', 'w.code as warehouse_code', 'c.name as country_name')
+            ->selectRaw("{$countryExpression} as country_id")
             ->selectRaw(Schema::hasColumn('inventory_stocks', 'quote_only') ? 's.quote_only' : 'false as quote_only')
             ->orderByDesc('s.quantity_available')
             ->first();

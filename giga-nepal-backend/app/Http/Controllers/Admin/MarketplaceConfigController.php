@@ -166,7 +166,7 @@ class MarketplaceConfigController extends Controller
         $m = Marketplace::findOrFail($id);
         $tab = (string) $request->input('tab', 'general');
         $userId = Auth::id();
-        $before = $m->only(['name', 'domain', 'seo_title', 'is_active']);
+        $before = $m->only(['name', 'domain', 'seo_title', 'is_active', 'checkout_enabled']);
 
         match ($tab) {
             'general' => $this->saveGeneral($request, $m),
@@ -333,7 +333,16 @@ class MarketplaceConfigController extends Controller
         // the softer access toggles.
         $m->allow_customer_registration = $request->boolean('allow_customer_registration');
         $m->allow_vendor_registration = $request->boolean('allow_vendor_registration');
-        $m->checkout_enabled = $request->boolean('checkout_enabled');
+        $checkoutEnabled = $request->boolean('checkout_enabled');
+        if ($checkoutEnabled && ! $m->checkout_enabled) {
+            $validation = $this->validator->validate($m);
+            if (! $m->is_active || ! $m->is_visible || ! $validation['can_activate']) {
+                throw ValidationException::withMessages([
+                    'checkout_enabled' => 'Checkout can be enabled only for an active, visible marketplace that passes the launch checklist.',
+                ]);
+            }
+        }
+        $m->checkout_enabled = $checkoutEnabled;
         $m->maintenance_mode = $request->boolean('maintenance_mode');
         $m->maintenance_message = $request->input('maintenance_message');
         $m->launch_at = $request->input('launch_at') ?: null;

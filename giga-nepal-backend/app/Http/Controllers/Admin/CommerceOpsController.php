@@ -595,6 +595,14 @@ class CommerceOpsController extends Controller
         if (! $productRow) {
             return back()->with('error', 'Product not found.');
         }
+        $warehouse = DB::table('warehouses')->where('id', $data['warehouse_id'])->first();
+        if (! $warehouse) {
+            return back()->with('error', 'Warehouse not found.');
+        }
+        if (! empty($data['country_id']) && ! empty($warehouse->country_id) && (int) $data['country_id'] !== (int) $warehouse->country_id) {
+            return back()->withErrors(['country_id' => 'The selected country must match the warehouse country.']);
+        }
+        $stockHasCountry = Schema::hasColumn('inventory_stocks', 'country_id');
 
         $stock = null;
         if (! empty($data['inventory_stock_id'])) {
@@ -605,17 +613,15 @@ class CommerceOpsController extends Controller
         }
 
         if (! $stock) {
-            $stock = DB::table('inventory_stocks')
+            $query = DB::table('inventory_stocks')
                 ->where('product_id', $product)
-                ->where('warehouse_id', $data['warehouse_id'])
-                ->where(function ($query) use ($data) {
-                    if (! empty($data['country_id'])) {
-                        $query->where('country_id', $data['country_id']);
-                    } else {
-                        $query->whereNull('country_id');
-                    }
-                })
-                ->first();
+                ->where('warehouse_id', $data['warehouse_id']);
+            if ($stockHasCountry) {
+                ! empty($data['country_id'])
+                    ? $query->where('country_id', $data['country_id'])
+                    : $query->whereNull('country_id');
+            }
+            $stock = $query->first();
         }
 
         $before = (int) ($stock->quantity_available ?? 0);
@@ -626,24 +632,33 @@ class CommerceOpsController extends Controller
         $payload = [
             'product_id' => $product,
             'warehouse_id' => $data['warehouse_id'],
-            'country_id' => $data['country_id'] ?? null,
+            'marketplace_id' => $warehouse->marketplace_id ?? null,
             'vendor_id' => $productRow->vendor_id ?? null,
             'sku' => $productRow->sku ?? null,
             'quantity_available' => $available,
             'quantity_reserved' => $reserved,
             'quantity_incoming' => (int) ($data['quantity_incoming'] ?? ($stock->quantity_incoming ?? 0)),
-            'quantity_on_hand' => $onHand,
             'reorder_point' => (int) ($data['reorder_point'] ?? ($stock->reorder_point ?? $productRow->low_stock_threshold ?? 5)),
+            'is_active' => $data['status'] !== 'inactive',
+            'metadata' => json_encode(['saved_via' => 'admin.product_detail', 'note' => $data['notes'] ?? null]),
+            'updated_at' => now(),
+        ];
+        if ($stockHasCountry) {
+            $payload['country_id'] = $data['country_id'] ?? null;
+        }
+        foreach ([
+            'quantity_on_hand' => $onHand,
             'reorder_quantity' => (int) ($data['reorder_quantity'] ?? ($stock->reorder_quantity ?? 0)),
             'unit_cost' => $data['unit_cost'] ?? ($stock->unit_cost ?? null),
             'backorder_allowed' => (bool) ($data['backorder_allowed'] ?? false),
             'quote_only' => (bool) ($data['quote_only'] ?? false),
             'status' => $data['status'],
-            'is_active' => $data['status'] !== 'inactive',
             'last_movement_at' => now(),
-            'metadata' => json_encode(['saved_via' => 'admin.product_detail', 'note' => $data['notes'] ?? null]),
-            'updated_at' => now(),
-        ];
+        ] as $column => $value) {
+            if (Schema::hasColumn('inventory_stocks', $column)) {
+                $payload[$column] = $value;
+            }
+        }
 
         if ($stock) {
             DB::table('inventory_stocks')->where('id', $stock->id)->update($payload);
@@ -811,13 +826,26 @@ class CommerceOpsController extends Controller
             'id' => ['nullable', 'integer', 'exists:marketplace_product_prices,id'],
             'marketplace_id' => ['required', 'integer', 'exists:marketplaces,id'],
             'base_price' => ['required', 'numeric', 'min:0'],
-            'sale_price' => ['nullable', 'numeric', 'min:0'],
+            'sale_price' => ['nullable', 'numeric', 'min:0', 'lte:base_price'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
             'currency_code' => ['required', 'string', 'max:3', 'exists:currencies,code'],
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_tax_inclusive' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
         ]);
+
+        $marketplace = DB::table('marketplaces as m')
+            ->leftJoin('currencies as c', 'c.id', '=', 'm.currency_id')
+            ->where('m.id', $data['marketplace_id'])
+            ->where('m.is_active', true)
+            ->select('m.id', 'm.name', 'c.code as currency_code')
+            ->first();
+        if (! $marketplace) {
+            return back()->withErrors(['marketplace_id' => 'Choose an active marketplace.']);
+        }
+        if (strtoupper($data['currency_code']) !== strtoupper((string) $marketplace->currency_code)) {
+            return back()->withErrors(['currency_code' => "{$marketplace->name} uses {$marketplace->currency_code}; regional prices must use that currency."]);
+        }
 
         $payload = [
             'product_id' => $product,
@@ -832,9 +860,22 @@ class CommerceOpsController extends Controller
             'updated_at' => now(),
         ];
 
-        if (! empty($data['id'])) {
-            DB::table('marketplace_product_prices')->where('id', $data['id'])->where('product_id', $product)->update($payload);
-            $id = (int) $data['id'];
+        $existing = ! empty($data['id'])
+            ? DB::table('marketplace_product_prices')->where('id', $data['id'])->where('product_id', $product)->first()
+            : DB::table('marketplace_product_prices')->where('product_id', $product)->where('marketplace_id', $data['marketplace_id'])->whereNull('product_variant_id')->first();
+
+        if ($existing && DB::table('marketplace_product_prices')
+            ->where('product_id', $product)
+            ->where('marketplace_id', $data['marketplace_id'])
+            ->whereNull('product_variant_id')
+            ->where('id', '<>', $existing->id)
+            ->exists()) {
+            return back()->withErrors(['marketplace_id' => 'A base price already exists for this product and marketplace.']);
+        }
+
+        if ($existing) {
+            DB::table('marketplace_product_prices')->where('id', $existing->id)->update($payload);
+            $id = (int) $existing->id;
             $action = 'marketplace_product_price_updated';
         } else {
             $payload['created_at'] = now();
@@ -2011,6 +2052,7 @@ class CommerceOpsController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:180'],
             'code' => ['nullable', 'string', 'max:80'],
+            'marketplace_id' => ['nullable', 'integer', 'exists:marketplaces,id'],
             'country_id' => ['nullable', 'integer', 'exists:countries,id'],
             'address_line1' => ['nullable', 'string', 'max:255'],
             'contact_name' => ['nullable', 'string', 'max:180'],
@@ -2018,10 +2060,22 @@ class CommerceOpsController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $marketplace = ! empty($data['marketplace_id'])
+            ? DB::table('marketplaces')->where('id', $data['marketplace_id'])->where('is_active', true)->first()
+            : null;
+        if (! empty($data['marketplace_id']) && ! $marketplace) {
+            return back()->withErrors(['marketplace_id' => 'Choose an active marketplace.']);
+        }
+        $countryId = $data['country_id'] ?? ($marketplace->country_id ?? null);
+        if ($marketplace && strtolower((string) $marketplace->code) !== 'global' && (int) $countryId !== (int) $marketplace->country_id) {
+            return back()->withErrors(['country_id' => 'A regional warehouse must use its marketplace country.']);
+        }
+
         $id = DB::table('warehouses')->insertGetId([
             'name' => $data['name'],
             'code' => $data['code'] ?: 'WH-'.Str::upper(Str::random(6)),
-            'country_id' => $data['country_id'] ?? null,
+            'marketplace_id' => $marketplace?->id,
+            'country_id' => $countryId,
             'address_line1' => $data['address_line1'] ?? null,
             'contact_name' => $data['contact_name'] ?? null,
             'contact_phone' => $data['contact_phone'] ?? null,
@@ -2032,7 +2086,7 @@ class CommerceOpsController extends Controller
             'updated_at' => now(),
         ]);
 
-        $this->auditAdminAction($request, 'warehouse_created', 'warehouses', $id, ['name' => $data['name']]);
+        $this->auditAdminAction($request, 'warehouse_created', 'warehouses', $id, ['name' => $data['name'], 'marketplace_id' => $marketplace?->id, 'country_id' => $countryId]);
         return back()->with('status', 'Warehouse created.');
     }
 
