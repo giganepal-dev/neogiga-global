@@ -17,6 +17,7 @@ abstract class BaseImporter
 {
     protected ImportJob $job;
     protected array $stats = ['created' => 0, 'updated' => 0, 'failed' => 0];
+    protected ?\Illuminate\Console\Command $command = null;
 
     abstract public function getSupplierSlug(): string;
     abstract public function fetchCategories(): array;
@@ -27,6 +28,12 @@ abstract class BaseImporter
     abstract protected function getSupplierDescription(): ?string;
     abstract protected function getSupplierWebsite(): ?string;
     abstract protected function getSupplierCountry(): ?string;
+
+    public function setCommand(\Illuminate\Console\Command $command): self
+    {
+        $this->command = $command;
+        return $this;
+    }
 
     public function run(ImportJob $job): void
     {
@@ -72,15 +79,54 @@ abstract class BaseImporter
         ]);
     }
 
-    protected function importCategories(array $categories): void
+    protected function importCategories(array $categories): int
     {
+        $imported = 0;
         foreach ($categories as $category) {
             ProductCategory::firstOrCreate(['slug' => Str::slug($category['name'])], [
                 'name' => $category['name'],
                 'parent_id' => $category['parent_id'] ?? null,
                 'description' => $category['description'] ?? null,
             ]);
+            $imported++;
         }
+        return $imported;
+    }
+
+    protected function importBrands(array $brands): int
+    {
+        $imported = 0;
+        foreach ($brands as $brand) {
+            ProductBrand::firstOrCreate(['slug' => Str::slug($brand['name'])], [
+                'name' => $brand['name'],
+                'logo_path' => $brand['logo_url'] ?? null,
+                'description' => $brand['description'] ?? null,
+            ]);
+            $imported++;
+        }
+        return $imported;
+    }
+
+    protected function importProducts(array $products): array
+    {
+        $result = ['imported' => 0, 'skipped' => 0];
+        $supplier = Supplier::where('slug', $this->getSupplierSlug())->first();
+        
+        if (!$supplier) {
+            $supplier = $this->importSupplier();
+        }
+
+        foreach ($products as $rawProduct) {
+            try {
+                $this->processProduct($rawProduct, $supplier);
+                $result['imported']++;
+            } catch (\Exception $e) {
+                $result['skipped']++;
+                \Log::error("Product import failed", ['supplier' => $this->getSupplierSlug(), 'error' => $e->getMessage()]);
+            }
+        }
+        
+        return $result;
     }
 
     protected function processProduct(array $rawProduct, Supplier $supplier): void

@@ -1,17 +1,20 @@
 ```
 # Laravel-specific ignores
 vendor/
-storage/
 bootstrap/cache/
-
-# Environment
+storage/logs/
+storage/framework/
+public/storage/
 .env
 .env.local
 .env.*
+!.env.example
 
-# Logs
+# PHP-related
+*.php~
+*.php.bak
 *.log
-storage/logs/*
+composer.lock
 
 # IDE
 .vscode/
@@ -23,18 +26,6 @@ storage/logs/*
 .DS_Store
 Thumbs.db
 
-# Build artifacts
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Testing
-coverage/
-.htmlcov/
-
-# PHP specific
-*.php~
-**/vendor/**/*
-!.env.example
+# Tests
+.phpunit.result.cache
 ```
