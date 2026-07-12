@@ -172,6 +172,12 @@ class SeedGlobalCatalogCommerce extends Command
     private function seedStock(array $warehouse, object $marketplace, int $countryId, int $quantity, ?int $limit): array
     {
         $stats = ['created' => 0, 'updated' => 0, 'skipped' => 0];
+        $optionalColumns = [];
+        foreach (['country_id' => $countryId, 'quote_only' => false, 'status' => 'active', 'quantity_on_hand' => $quantity] as $column => $value) {
+            if (Schema::hasColumn('inventory_stocks', $column)) {
+                $optionalColumns[$column] = $value;
+            }
+        }
         $query = DB::table('products')->select('id', 'sku')->orderBy('id');
         if ($limit !== null) {
             // chunkById rewrites a query limit while it advances its cursor. Bound the
@@ -179,7 +185,7 @@ class SeedGlobalCatalogCommerce extends Command
             $sampleIds = DB::table('products')->orderBy('id')->limit($limit)->pluck('id');
             $query->whereIn('id', $sampleIds);
         }
-        $query->chunkById(1000, function ($products) use ($warehouse, $marketplace, $countryId, $quantity, &$stats): void {
+        $query->chunkById(1000, function ($products) use ($warehouse, $marketplace, $quantity, $optionalColumns, &$stats): void {
             $existing = DB::table('inventory_stocks')->where('warehouse_id', $warehouse['id'])
                 ->whereIn('product_id', $products->pluck('id'))->orderBy('id')->get()->keyBy('product_id');
             $inserts = [];
@@ -201,10 +207,8 @@ class SeedGlobalCatalogCommerce extends Command
                     'metadata' => json_encode(['source_name' => 'operator_catalog_stock_seed', 'source_url' => null, 'source_file' => null, 'source_page_url' => null, 'downloaded_at' => null, 'imported_at' => now()->toIso8601String(), 'data_year' => now()->year, 'license_note' => 'Operator-directed catalog availability seed', 'confidence_level' => 'operator_directed', 'original_raw_value' => $quantity, 'normalized_value' => $quantity]),
                     'updated_at' => $now,
                 ];
-                foreach (['country_id' => $countryId, 'quote_only' => false, 'status' => 'active', 'quantity_on_hand' => $quantity] as $column => $value) {
-                    if (Schema::hasColumn('inventory_stocks', $column)) {
-                        $payload[$column] = $value;
-                    }
+                foreach ($optionalColumns as $column => $value) {
+                    $payload[$column] = $value;
                 }
                 if ($row = $existing->get($product->id)) {
                     $updates[] = ['id' => $row->id] + $payload;
