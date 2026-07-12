@@ -18,7 +18,7 @@ Reviewed remote branches from `giganepal-dev/neogiga-global` against the current
 
 ## Reusable Concepts, Not Direct Code
 
-- Catalog quality scoring can be adapted later to the current `supplier_products` provenance model.
+- Catalog quality scoring has been adapted to the current `supplier_products` provenance model. It scores only observed fields and records missing-field evidence; it does not approve or publish products.
 - CSV/XML parser patterns can be added only after source policy approval and an explicit field map, without adding a parallel staging schema.
 - Warehouse reservation ideas require an atomic, marketplace-scoped locking design before consideration.
 

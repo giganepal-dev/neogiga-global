@@ -9,7 +9,7 @@ class SupplierProduct extends Model
 {
     protected $guarded = [];
 
-    protected $casts = ['source_category_path_json' => 'array', 'raw_payload_json' => 'array', 'first_seen_at' => 'datetime', 'last_seen_at' => 'datetime', 'last_changed_at' => 'datetime', 'imported_at' => 'datetime'];
+    protected $casts = ['source_category_path_json' => 'array', 'raw_payload_json' => 'array', 'data_quality_score' => 'decimal:2', 'first_seen_at' => 'datetime', 'last_seen_at' => 'datetime', 'last_changed_at' => 'datetime', 'imported_at' => 'datetime'];
 
     public function source(): BelongsTo
     {

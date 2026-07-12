@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-12 - Supplier Import Quality Scoring
+
+- Adapted the reusable remote quality-scoring concept into the existing supplier provenance flow without importing its duplicate schema.
+- Added a reversible `supplier_products.data_quality_score` field and records missing-field evidence on each pending-review task; scores are advisory and never publish products.
+
 ## 2026-07-12 - Remote Integration Audit
 
 - Fetched and evaluated all active GitHub branches without merging them into the live catalogue architecture.

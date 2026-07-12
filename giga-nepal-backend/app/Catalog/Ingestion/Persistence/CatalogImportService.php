@@ -8,6 +8,7 @@ use App\Catalog\Ingestion\Reports\CatalogImportReporter;
 use App\Catalog\Ingestion\Suppliers\AdafruitImporter;
 use App\Catalog\Ingestion\Suppliers\OkystarImporter;
 use App\Catalog\Ingestion\Suppliers\WaveshareImporter;
+use App\Catalog\Ingestion\Validation\CatalogQualityScorer;
 use App\Catalog\Ingestion\Validation\SupplierPolicyService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -19,6 +20,7 @@ class CatalogImportService
         private readonly SupplierPolicyService $policy,
         private readonly CatalogNormalizer $normalizer,
         private readonly CatalogImportReporter $reporter,
+        private readonly CatalogQualityScorer $quality,
         private readonly AdafruitImporter $adafruit,
         private readonly WaveshareImporter $waveshare,
         private readonly OkystarImporter $okystar,
@@ -84,6 +86,7 @@ class CatalogImportService
     {
         $sourceProductId = (string) ($candidate['source_product_id'] ?: $candidate['supplier_sku'] ?: hash('sha256', $candidate['canonical_url'] ?? $candidate['source_url']));
         $hash = hash('sha256', json_encode($candidate, JSON_UNESCAPED_SLASHES));
+        $qualityScore = $this->quality->score($candidate);
         $existing = DB::table('supplier_products')->where('catalog_source_id', $sourceId)->where('source_product_id', $sourceProductId)->first();
         if ($existing && $existing->content_hash === $hash) {
             return 'products_unchanged';
@@ -108,10 +111,10 @@ class CatalogImportService
             'canonical_url' => $candidate['canonical_url'] ?? null, 'source_brand' => $brandName, 'source_manufacturer' => $candidate['manufacturer'] ?? null,
             'source_status' => $candidate['source_status'] ?? null, 'source_currency' => $candidate['source_currency'] ?? null, 'source_price' => $candidate['source_price'] ?? null,
             'raw_payload_json' => json_encode($candidate['raw_payload'] ?? $candidate), 'content_hash' => $hash, 'first_seen_at' => $existing?->first_seen_at ?? now(),
-            'last_seen_at' => now(), 'last_changed_at' => now(), 'imported_at' => now(), 'review_status' => config('catalog_import.review_status'), 'updated_at' => now(), 'created_at' => now(),
+            'last_seen_at' => now(), 'last_changed_at' => now(), 'imported_at' => now(), 'review_status' => config('catalog_import.review_status'), 'data_quality_score' => $qualityScore, 'updated_at' => now(), 'created_at' => now(),
         ]);
         $supplierProductId = (int) DB::table('supplier_products')->where('catalog_source_id', $sourceId)->where('source_product_id', $sourceProductId)->value('id');
-        DB::table('catalog_review_tasks')->insert(['catalog_source_id' => $sourceId, 'supplier_product_id' => $supplierProductId, 'product_id' => $productId, 'task_type' => $mpn ? 'supplier_product_review' : 'missing_mpn', 'status' => 'open', 'confidence' => $mpn ? 0.9 : 0.2, 'evidence_json' => json_encode(['source_url' => $candidate['source_url'] ?? null]), 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('catalog_review_tasks')->insert(['catalog_source_id' => $sourceId, 'supplier_product_id' => $supplierProductId, 'product_id' => $productId, 'task_type' => $mpn ? 'supplier_product_review' : 'missing_mpn', 'status' => 'open', 'confidence' => $qualityScore / 100, 'evidence_json' => json_encode(['source_url' => $candidate['source_url'] ?? null, 'quality_score' => $qualityScore, 'missing_fields' => $this->quality->missingFields($candidate)]), 'created_at' => now(), 'updated_at' => now()]);
 
         return $created ? 'products_created' : 'products_updated';
     }

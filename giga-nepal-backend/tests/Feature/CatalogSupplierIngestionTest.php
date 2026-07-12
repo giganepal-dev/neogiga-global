@@ -87,6 +87,7 @@ class CatalogSupplierIngestionTest extends TestCase
             $this->assertDatabaseHas('products', ['sku' => 'NG-ADAF-FS-1', 'visibility_status' => 'hidden']);
         }
         $this->assertDatabaseHas('supplier_products', ['source_product_id' => 'FS-1', 'review_status' => 'pending_review']);
+        $this->assertDatabaseHas('supplier_products', ['source_product_id' => 'FS-1', 'data_quality_score' => 70]);
         $this->assertDatabaseCount('catalog_import_runs', 1);
         $this->assertDatabaseHas('catalog_review_tasks', ['task_type' => 'supplier_product_review', 'status' => 'open']);
     }
