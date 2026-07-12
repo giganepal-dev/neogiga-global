@@ -33,6 +33,21 @@ class CatalogIngestionAdminUiTest extends TestCase
             ->assertSee('Quality');
     }
 
+    public function test_admin_can_see_document_sources_without_crawl_controls(): void
+    {
+        DB::table('catalog_sources')->insert([
+            'code' => 'sunny_okystar_quotation_files', 'name' => 'Sunny / OKYSTAR quotation files', 'source_url' => 'https://www.okystar.com/', 'active' => true,
+            'source_type' => 'supplier_document', 'catalogue_policy' => json_encode(['document_only' => true]), 'import_enabled' => false, 'media_download_enabled' => false,
+            'description_reuse_status' => 'unknown', 'status' => 'pending_manual_review', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin())
+            ->get('/admin/catalog-ingestion')
+            ->assertOk()
+            ->assertSee('Sunny / OKYSTAR quotation files')
+            ->assertSee('document staging');
+    }
+
     public function test_policy_cannot_enable_import_without_approval(): void
     {
         $this->source();
@@ -91,6 +106,54 @@ class CatalogIngestionAdminUiTest extends TestCase
         $this->assertDatabaseCount('catalog_sources', 0);
         $this->assertDatabaseCount('products', 0);
         $this->assertNotEmpty(Storage::disk('local')->allFiles('catalog/reports'));
+    }
+
+    public function test_admin_can_verify_identity_without_merging_or_publishing_the_product(): void
+    {
+        $this->source();
+        $taskId = $this->task();
+        $productId = DB::table('catalog_review_tasks')->where('id', $taskId)->value('product_id');
+
+        $this->actingAs($this->admin())
+            ->post("/admin/catalog-ingestion/review-tasks/{$taskId}/identity", [
+                'manufacturer' => 'Acme Components',
+                'mpn' => ' ACME-100 ',
+                'note' => 'Verified against the supplier quotation and manufacturer label.',
+            ])
+            ->assertRedirect();
+
+        $brandId = DB::table('product_brands')->where('slug', 'acme-components')->value('id');
+        $this->assertDatabaseHas('products', ['id' => $productId, 'brand_id' => $brandId, 'mpn' => 'ACME-100', 'status' => 'pending']);
+        $this->assertDatabaseHas('supplier_products', ['manufacturer_part_number' => 'ACME-100', 'source_manufacturer' => 'Acme Components']);
+        $this->assertDatabaseHas('catalog_review_tasks', ['id' => $taskId, 'status' => 'resolved']);
+        $this->assertDatabaseHas('catalog_review_tasks', ['product_id' => $productId, 'task_type' => 'supplier_product_review', 'status' => 'open']);
+    }
+
+    public function test_identity_verification_suggests_a_duplicate_without_merging_products(): void
+    {
+        $this->source();
+        $taskId = $this->task();
+        $stagedProductId = DB::table('catalog_review_tasks')->where('id', $taskId)->value('product_id');
+        $brandId = DB::table('product_brands')->insertGetId([
+            'name' => 'Acme Components', 'slug' => 'acme-components', 'is_active' => true, 'is_featured' => false, 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $canonicalProductId = DB::table('products')->insertGetId([
+            'name' => 'Existing Acme Part', 'slug' => 'existing-acme-part', 'sku' => 'NG-EXISTING-ACME-100', 'brand_id' => $brandId, 'mpn' => 'ACME-100',
+            'type' => 'simple', 'status' => 'approved', 'base_price' => 0, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post("/admin/catalog-ingestion/review-tasks/{$taskId}/identity", [
+                'manufacturer' => 'Acme Components',
+                'mpn' => 'ACME-100',
+                'note' => 'Verified identity; canonical match needs a separate merge decision.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('supplier_products', ['product_id' => $stagedProductId, 'manufacturer_part_number' => 'ACME-100']);
+        $this->assertDatabaseHas('catalog_review_tasks', ['product_id' => $stagedProductId, 'task_type' => 'possible_canonical_duplicate', 'status' => 'open']);
+        $this->assertDatabaseHas('products', ['id' => $canonicalProductId, 'mpn' => 'ACME-100']);
+        $this->assertDatabaseCount('products', 2);
     }
 
     private function admin(): User

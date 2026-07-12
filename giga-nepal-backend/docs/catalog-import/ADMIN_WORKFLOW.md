@@ -21,4 +21,14 @@ The server-rendered admin console is at `/admin/catalog-ingestion` and uses the 
 - Unknown manufacturer/brand and MPN values are never guessed. They create review tasks instead of automatic canonical matches.
 - The form offers a dry run, which validates the CSV and writes an operational report without database rows.
 
+## Identity verification
+
+For a review task with a staged product, the `Identity` drawer accepts a reviewer-verified manufacturer and MPN with an evidence note.
+
+- It updates only the hidden staged product and supplier provenance record.
+- A verified manufacturer becomes an inactive brand record only when it does not already exist.
+- A matching manufacturer plus normalized MPN on another product creates a `possible_canonical_duplicate` task. It does not merge records or redirect URLs.
+- Otherwise it creates a `supplier_product_review` task for the remaining editorial and approval decision.
+- Neither path changes publication, search indexing, regional price overlays, inventory, media, checkout, or supplier crawling settings.
+
 Publication is intentionally outside this surface and remains governed by the existing product approval controls.
