@@ -1,31 +1,24 @@
 ```
-# Laravel-specific ignores
+# Dependencies
 vendor/
-bootstrap/cache/
-storage/logs/
-storage/framework/
-public/storage/
+
+# Logs
+*.log
+
+# Environment
 .env
 .env.local
 .env.*
-!.env.example
-
-# PHP-related
-*.php~
-*.php.bak
-*.log
-composer.lock
 
 # IDE
-.vscode/
 .idea/
-*.swp
-*.swo
+.vscode/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Tests
-.phpunit.result.cache
+# Build
+build/
+dist/
 ```
