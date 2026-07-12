@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-07-12 - Compliant Supplier Catalogue Ingestion Foundation
+
+- Added an additive, policy-gated supplier catalogue ingestion layer for Adafruit, Waveshare, and OKYSTAR without replacing the canonical product, provenance, marketplace, admin, or search modules.
+- Added source-policy configuration, supplier source/product records, normalized specification definitions, compatibility platforms, asset rights records, category mappings, resumable import runs/items/checkpoints, snapshots, changes, review tasks, and country publication overlays.
+- Added shared JSON-LD/sitemap adapters, normalization, deterministic matching, source provenance, report generation, per-supplier queue locks, and protected admin API views.
+- Added `catalog:*` operational commands with disabled-by-default imports and media downloads; supplier audits create pending-manual-review or blocked records only.
+- Added fixture coverage for policy gating, robots auditing, JSON-LD parsing, unit/range normalization, and a non-live staged import that creates hidden pending-review records with provenance.
+- Recorded source audit outcomes locally: Adafruit and Waveshare remain pending manual review; OKYSTAR is blocked because TLS verification failed. No supplier catalogue, price, stock, description, document, or media content was published.
+
 ## 2026-07-12 - Source-Backed Global Commerce Seed
 
 - Added a guarded, dry-run-first `catalog:seed-global-commerce` operation for the lowest valid LCSC/JLCPCB source price break, Global 5% markup overlays, Shenzhen catalog availability, regional warehouse samples, and configured delivery zones.

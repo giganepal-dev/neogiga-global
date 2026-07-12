@@ -9,6 +9,8 @@ Artisan::command('inspire', function () {
 
 
 // Marketing Phase 2 scheduler. Jobs aggregate first-party data and keep external providers disabled until explicitly configured.
+use App\Catalog\Ingestion\Persistence\CatalogImportService;
+use App\Catalog\Ingestion\Validation\SupplierPolicyService;
 use App\Jobs\Marketing\CalculateTopSearchTermsJob;
 use App\Jobs\Marketing\CalculateTrendingCategoriesJob;
 use App\Jobs\Marketing\CalculateTrendingProductsJob;
@@ -20,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 Artisan::command('neogiga:smoke', function () {
@@ -50,6 +53,95 @@ Artisan::command('neogiga:smoke', function () {
 
     return $failed ? self::FAILURE : self::SUCCESS;
 })->purpose('Run production-safe NeoGiga smoke checks without migrations or data changes.');
+
+// Supplier catalogue operational commands. These intentionally do not bypass the
+// policy gate in CatalogImportService; disabled suppliers remain non-crawlable.
+Artisan::command('catalog:discover {supplier} {--resume} {--limit=} {--category=} {--fresh}', function (string $supplier) {
+    app(SupplierPolicyService::class)->assertImportAllowed($supplier);
+    $this->error('Discovery is only performed as part of catalog:import after policy approval.');
+
+    return self::FAILURE;
+})->purpose('Verify that a supplier is approved before discovery.');
+
+Artisan::command('catalog:validate {supplier?}', function (?string $supplier = null) {
+    $codes = $supplier ? [$supplier] : array_keys(config('catalog_import.suppliers'));
+    $sources = DB::table('catalog_sources')->whereIn('code', $codes)->get()->keyBy('code');
+    foreach ($codes as $code) {
+        $source = $sources->get($code);
+        $this->line($code . ': ' . ($source?->status ?? 'not audited') . '; import=' . ($source?->import_enabled ? 'enabled' : 'disabled'));
+    }
+
+    return self::SUCCESS;
+})->purpose('Validate supplier policy readiness without crawling.');
+
+Artisan::command('catalog:report {run?}', function (?string $run = null) {
+    $query = DB::table('catalog_import_runs')->orderByDesc('created_at');
+    if ($run) {
+        $query->where('id', $run);
+    }
+    $rows = $query->limit($run ? 1 : 20)->get(['id', 'status', 'mode', 'products_discovered', 'products_created', 'products_updated', 'products_queued_for_review', 'created_at']);
+    $this->table(['Run', 'Status', 'Mode', 'Found', 'Created', 'Updated', 'Review', 'Created at'], $rows->map(fn ($row) => [(string) $row->id, $row->status, $row->mode, $row->products_discovered, $row->products_created, $row->products_updated, $row->products_queued_for_review, $row->created_at])->all());
+
+    return self::SUCCESS;
+})->purpose('Display catalogue import run reports.');
+
+Artisan::command('catalog:find-duplicates {supplier?}', function (?string $supplier = null) {
+    $query = DB::table('supplier_products')->selectRaw('manufacturer_part_number, count(*) as count')->whereNotNull('manufacturer_part_number')->groupBy('manufacturer_part_number')->havingRaw('count(*) > 1');
+    if ($supplier) {
+        $query->join('catalog_sources', 'catalog_sources.id', '=', 'supplier_products.catalog_source_id')->where('catalog_sources.code', $supplier);
+    }
+    $rows = $query->limit(100)->get();
+    $this->table(['MPN', 'Candidates'], $rows->map(fn ($row) => [$row->manufacturer_part_number, $row->count])->all());
+
+    return self::SUCCESS;
+})->purpose('List deterministic duplicate candidates by manufacturer part number.');
+
+Artisan::command('catalog:map-categories {supplier}', function (string $supplier) {
+    $rows = DB::table('supplier_category_mappings as scm')->join('catalog_sources as cs', 'cs.id', '=', 'scm.catalog_source_id')->where('cs.code', $supplier)->select('scm.source_category_name', 'scm.mapping_status', 'scm.confidence')->orderBy('scm.source_category_name')->limit(100)->get();
+    $this->table(['Source category', 'Status', 'Confidence'], $rows->map(fn ($row) => [$row->source_category_name, $row->mapping_status, $row->confidence])->all());
+
+    return self::SUCCESS;
+})->purpose('Show category mappings awaiting admin review.');
+
+Artisan::command('catalog:reconcile {supplier}', function (string $supplier) {
+    $sourceId = DB::table('catalog_sources')->where('code', $supplier)->value('id');
+    $count = $sourceId ? DB::table('supplier_products')->where('catalog_source_id', $sourceId)->count() : 0;
+    $this->line("{$supplier}: {$count} supplier records retained; no product publication or deletion occurs during reconciliation.");
+
+    return self::SUCCESS;
+})->purpose('Report supplier-record reconciliation state without destructive changes.');
+
+Artisan::command('catalog:retry-failures {run?}', function (?string $run = null) {
+    $query = DB::table('catalog_import_runs')->where('status', 'failed');
+    if ($run) {
+        $query->where('id', $run);
+    }
+    $this->line('Failed runs requiring administrator review: ' . $query->count());
+
+    return self::SUCCESS;
+})->purpose('List failed catalogue runs; retry remains policy-gated.');
+
+Artisan::command('catalog:sync-changes {supplier} {--since=}', function (string $supplier) {
+    $report = app(CatalogImportService::class)->run($supplier, ['since' => $this->option('since'), 'resume' => true]);
+    $this->line(json_encode($report, JSON_UNESCAPED_SLASHES));
+
+    return $report['status'] === 'completed' ? self::SUCCESS : self::FAILURE;
+})->purpose('Run a policy-gated incremental supplier sync.');
+
+Artisan::command('catalog:prune-cache {--older-than=30}', function () {
+    $days = max(1, (int) $this->option('older-than'));
+    $cutoff = now()->subDays($days)->getTimestamp();
+    $deleted = 0;
+    foreach (Storage::disk('local')->allFiles('catalog/reports') as $file) {
+        if (Storage::disk('local')->lastModified($file) < $cutoff) {
+            Storage::disk('local')->delete($file);
+            $deleted++;
+        }
+    }
+    $this->line("Deleted {$deleted} expired catalogue report files.");
+
+    return self::SUCCESS;
+})->purpose('Prune expired local catalogue report files only.');
 
 Artisan::command('jlcpcb:repair-skus {--apply : Persist SKU changes. Without this flag the command is a dry-run.} {--limit=0 : Maximum rows to process, 0 means all.}', function () {
     if (! Schema::hasTable('catalog_product_sources') || ! Schema::hasTable('catalog_sources') || ! Schema::hasTable('products')) {

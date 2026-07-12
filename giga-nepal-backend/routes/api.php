@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\Admin\OnboardingAdminController;
 use App\Http\Controllers\Api\Admin\InventoryAdminController;
 use App\Http\Controllers\Api\Admin\LmsAdminController;
 use App\Http\Controllers\Api\Admin\ImportExportController;
+use App\Http\Controllers\Api\Admin\CatalogIngestionController;
 use App\Http\Controllers\Api\Seller\SellerDashboardController;
 use App\Http\Controllers\Api\Seller\SellerInventoryController;
 use App\Http\Controllers\Api\Seller\SellerOrderController;
@@ -327,6 +328,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/execute', [ImportExportController::class, 'execute']);
             Route::get('/{import}', [ImportExportController::class, 'show'])->whereNumber('import');
             Route::get('/{import}/errors', [ImportExportController::class, 'errors'])->whereNumber('import');
+        });
+
+        Route::prefix('admin/catalog-ingestion')->group(function () {
+            Route::get('/sources', [CatalogIngestionController::class, 'sources']);
+            Route::patch('/sources/{supplier}', [CatalogIngestionController::class, 'updateSource'])->middleware('throttle:writes');
+            Route::post('/sources/{supplier}/audit', [CatalogIngestionController::class, 'audit'])->middleware('throttle:5,1');
+            Route::get('/runs', [CatalogIngestionController::class, 'runs']);
+            Route::get('/review-tasks', [CatalogIngestionController::class, 'reviewTasks']);
         });
 
         Route::prefix('admin/exports')->group(function () {
