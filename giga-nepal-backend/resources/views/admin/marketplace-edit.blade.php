@@ -111,6 +111,13 @@
             <form method="post" action="/admin/marketplaces/{{ $m->id }}/disable" style="display:flex;gap:6px">@csrf<input type="text" name="reason" placeholder="Reason to disable" required><button class="btn" type="submit">Disable</button></form>
         </div>
         <hr style="margin:16px 0;border:none;border-top:1px solid var(--line)">
+        <h3>Regional Commerce Readiness</h3>
+        <p class="sub">Checkout stays unavailable until actual regional prices, warehouse stock, tax, and delivery records are configured.</p>
+        <ul class="checklist">
+            @foreach($commerceReadiness['checks'] as $check)
+                <li class="{{ $check['passed'] ? 'pass' : 'fail' }}">{{ $check['passed'] ? '✓' : '✕' }} {{ $check['label'] }} <span class="badge {{ $check['passed'] ? 'b-ok' : 'b-warn' }}">{{ number_format($check['count']) }}</span></li>
+            @endforeach
+        </ul>
         <form class="frm" method="post" action="/admin/marketplaces/{{ $m->id }}/config"><input type="hidden" name="tab" value="status">@csrf
             <label class="chk"><input type="checkbox" name="allow_customer_registration" value="1" @checked($m->allow_customer_registration)> Allow customer registration</label>
             <label class="chk"><input type="checkbox" name="allow_vendor_registration" value="1" @checked($m->allow_vendor_registration)> Allow vendor registration</label>

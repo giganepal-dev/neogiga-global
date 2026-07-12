@@ -117,6 +117,24 @@ class MarketplaceAdminUiTest extends TestCase
         $this->assertFalse((bool) $m->fresh()->checkout_enabled);
     }
 
+    public function test_status_tab_blocks_checkout_until_regional_commerce_data_exists(): void
+    {
+        $m = $this->marketplace([
+            'is_active' => true,
+            'is_visible' => true,
+            'domain' => 'bd.neogiga.com',
+            'ssl_status' => 'active',
+            'seo_title' => 'NeoGiga Bangladesh',
+            'seo_description' => 'Regional electronics marketplace.',
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post("/admin/marketplaces/{$m->id}/config", ['tab' => 'status', 'checkout_enabled' => '1'])
+            ->assertSessionHasErrors('checkout_enabled');
+
+        $this->assertFalse((bool) $m->fresh()->checkout_enabled);
+    }
+
     public function test_marketplace_price_must_match_the_marketplace_currency(): void
     {
         $m = $this->marketplace(['is_active' => true]);

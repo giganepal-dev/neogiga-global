@@ -8,6 +8,7 @@ use App\Models\Marketplace\Currency;
 use App\Models\Marketplace\Marketplace;
 use App\Models\Marketplace\MarketplaceAuditLog;
 use App\Services\Marketplace\MarketplaceDomainService;
+use App\Services\Marketplace\MarketplaceCommerceReadinessService;
 use App\Services\Marketplace\MarketplaceLaunchValidator;
 use App\Services\Marketplace\MarketplaceSeoService;
 use App\Services\Marketplace\MarketplaceStatusService;
@@ -29,6 +30,7 @@ class MarketplaceConfigController extends Controller
 {
     public function __construct(
         private readonly MarketplaceDomainService $domains,
+        private readonly MarketplaceCommerceReadinessService $commerceReadiness,
         private readonly MarketplaceSeoService $seo,
         private readonly MarketplaceLaunchValidator $validator,
         private readonly MarketplaceStatusService $status,
@@ -153,6 +155,7 @@ class MarketplaceConfigController extends Controller
         return view('admin.marketplace-edit', [
             'm' => $marketplace,
             'validation' => $this->validator->validate($marketplace),
+            'commerceReadiness' => $this->commerceReadiness->assess($marketplace),
             'suggestedDomain' => $this->domains->suggestGeneratedDomain($marketplace),
             'countries' => Country::orderBy('name')->get(['id', 'name', 'iso_code_2']),
             'currencies' => Currency::orderBy('code')->get(['id', 'code', 'symbol']),
@@ -336,9 +339,10 @@ class MarketplaceConfigController extends Controller
         $checkoutEnabled = $request->boolean('checkout_enabled');
         if ($checkoutEnabled && ! $m->checkout_enabled) {
             $validation = $this->validator->validate($m);
-            if (! $m->is_active || ! $m->is_visible || ! $validation['can_activate']) {
+            $commerce = $this->commerceReadiness->assess($m);
+            if (! $m->is_active || ! $m->is_visible || ! $validation['can_activate'] || ! $commerce['can_enable_checkout']) {
                 throw ValidationException::withMessages([
-                    'checkout_enabled' => 'Checkout can be enabled only for an active, visible marketplace that passes the launch checklist.',
+                    'checkout_enabled' => 'Checkout can be enabled only when launch validation and regional commerce readiness pass.',
                 ]);
             }
         }

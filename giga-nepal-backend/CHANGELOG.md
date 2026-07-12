@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-12 - Marketplace Commerce Readiness Gate
+
+- Added a read-only marketplace commerce readiness service that counts active regional prices, assigned warehouses, routed stock, tax zones, and delivery zones.
+- Added the readiness checklist to the marketplace Status & Access admin tab so operators can see exactly which real records are missing before launch.
+- Strengthened checkout enablement: launch validation alone is no longer sufficient; actual regional commercial configuration is required and no prices, taxes, delivery terms, or stock are fabricated automatically.
+- Added an implementation guide documenting the required record set and the intentionally non-automated behavior.
+
 ## 2026-07-12 - Regional Commerce Operations Controls
 
 - Added marketplace assignment to warehouse creation and automatically records the assigned marketplace on new regional stock rows.
