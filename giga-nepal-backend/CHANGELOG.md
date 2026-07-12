@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-12 - Remote Integration Audit
+
+- Fetched and evaluated all active GitHub branches without merging them into the live catalogue architecture.
+- Rejected direct integration of duplicate supplier/catalogue, country/currency, warehouse, payment, and PCB foundations; documented the conflicts and reusable concepts in `docs/catalog-import/GITHUB_REMOTE_INTEGRATION_AUDIT.md`.
+
 ## 2026-07-12 - Compliant Supplier Catalogue Ingestion Foundation
 
 - Added an additive, policy-gated supplier catalogue ingestion layer for Adafruit, Waveshare, and OKYSTAR without replacing the canonical product, provenance, marketplace, admin, or search modules.
