@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-12 - Supplier Quotation Staging and Admin Intake
+
+- Added a protected normalized supplier quotation CSV intake in the existing Catalogue Ingestion admin screen and the `catalog:stage-supplier-csv` command.
+- Staged document values through the existing hidden pending-review product and provenance tables, retaining supplier quote prices separately from marketplace price overlays and retaining labelled source specifications and category mapping candidates for review.
+- Corrected supplier catalogue matching so an unknown manufacturer is never replaced with a supplier name and automatic canonical matching requires both an MPN and a verified manufacturer/brand identity.
+- Added source-specification persistence, source-category review mappings, dry-run reporting, idempotent re-runs, and tests proving the intake does not create inventory, storefront prices, media, brands, or publication state.
+
 ## 2026-07-12 - Supplier Ingestion Admin Console
 
 - Added a protected server-rendered Catalogue Ingestion admin screen for supplier policy audits, policy decisions, import-run monitoring, quality-aware review tasks, and task resolution.

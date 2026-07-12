@@ -82,7 +82,7 @@ class CatalogImportService
     }
 
     /** @param array<string, mixed> $candidate */
-    private function persistCandidate(int $sourceId, string $supplier, array $candidate, string $runId): string
+    public function persistCandidate(int $sourceId, string $supplier, array $candidate, string $runId): string
     {
         $sourceProductId = (string) ($candidate['source_product_id'] ?: $candidate['supplier_sku'] ?: hash('sha256', $candidate['canonical_url'] ?? $candidate['source_url']));
         $hash = hash('sha256', json_encode($candidate, JSON_UNESCAPED_SLASHES));
@@ -91,13 +91,17 @@ class CatalogImportService
         if ($existing && $existing->content_hash === $hash) {
             return 'products_unchanged';
         }
-        $brandName = $this->normalizer->text($candidate['brand'] ?? $candidate['manufacturer'] ?? $supplier) ?? $supplier;
-        $brandId = $this->brand($brandName);
+        $brandName = $this->normalizer->text($candidate['brand'] ?? $candidate['manufacturer'] ?? null);
+        $brandId = $brandName ? $this->brand($brandName) : null;
         $mpn = $this->normalizer->mpn($candidate['mpn'] ?? null);
         $normalizedMpnExpression = DB::connection()->getDriverName() === 'pgsql'
             ? "upper(regexp_replace(coalesce(mpn, ''), '\\s+', '', 'g'))"
             : "upper(replace(coalesce(mpn, ''), ' ', ''))";
-        $product = $mpn ? DB::table('products')->where('brand_id', $brandId)->whereRaw("{$normalizedMpnExpression} = ?", [$mpn])->first() : null;
+        // A supplier name is not a product brand. Only merge when both the MPN and
+        // manufacturer/brand identity are known, otherwise leave the record pending review.
+        $product = $mpn && $brandId
+            ? DB::table('products')->where('brand_id', $brandId)->whereRaw("{$normalizedMpnExpression} = ?", [$mpn])->first()
+            : null;
         $created = false;
         if (! $product) {
             $productId = DB::table('products')->insertGetId($this->pendingProduct($supplier, $sourceProductId, $candidate, $brandId, $mpn));
@@ -109,18 +113,21 @@ class CatalogImportService
             'product_id' => $productId, 'supplier_sku' => $candidate['supplier_sku'] ?? null, 'manufacturer_part_number' => $mpn,
             'source_name' => $this->normalizer->text($candidate['title'] ?? null), 'source_url' => $candidate['source_url'] ?? null,
             'canonical_url' => $candidate['canonical_url'] ?? null, 'source_brand' => $brandName, 'source_manufacturer' => $candidate['manufacturer'] ?? null,
+            'source_category_path_json' => ! empty($candidate['category_path']) ? json_encode(array_values((array) $candidate['category_path'])) : null,
             'source_status' => $candidate['source_status'] ?? null, 'source_currency' => $candidate['source_currency'] ?? null, 'source_price' => $candidate['source_price'] ?? null,
             'raw_payload_json' => json_encode($candidate['raw_payload'] ?? $candidate), 'content_hash' => $hash, 'first_seen_at' => $existing?->first_seen_at ?? now(),
             'last_seen_at' => now(), 'last_changed_at' => now(), 'imported_at' => now(), 'review_status' => config('catalog_import.review_status'), 'data_quality_score' => $qualityScore, 'updated_at' => now(), 'created_at' => now(),
         ]);
         $supplierProductId = (int) DB::table('supplier_products')->where('catalog_source_id', $sourceId)->where('source_product_id', $sourceProductId)->value('id');
+        $this->persistSpecifications($productId, $sourceId, $candidate);
+        $this->persistCategoryMapping($sourceId, $candidate);
         DB::table('catalog_review_tasks')->insert(['catalog_source_id' => $sourceId, 'supplier_product_id' => $supplierProductId, 'product_id' => $productId, 'task_type' => $mpn ? 'supplier_product_review' : 'missing_mpn', 'status' => 'open', 'confidence' => $qualityScore / 100, 'evidence_json' => json_encode(['source_url' => $candidate['source_url'] ?? null, 'quality_score' => $qualityScore, 'missing_fields' => $this->quality->missingFields($candidate)]), 'created_at' => now(), 'updated_at' => now()]);
 
         return $created ? 'products_created' : 'products_updated';
     }
 
     /** @return array<string, mixed> */
-    private function pendingProduct(string $supplier, string $sourceProductId, array $candidate, int $brandId, ?string $mpn): array
+    private function pendingProduct(string $supplier, string $sourceProductId, array $candidate, ?int $brandId, ?string $mpn): array
     {
         $name = $this->normalizer->text($candidate['title'] ?? null) ?? "{$supplier} {$sourceProductId}";
         $skuBase = 'NG-'.strtoupper(substr($supplier, 0, 4)).'-'.strtoupper(preg_replace('/[^A-Za-z0-9]+/', '-', $sourceProductId));
@@ -154,6 +161,78 @@ class CatalogImportService
         }
 
         return DB::table('product_brands')->insertGetId(['name' => $name, 'slug' => $slug, 'is_active' => false, 'is_featured' => false, 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    /** @param array<string, mixed> $candidate */
+    private function persistSpecifications(int $productId, int $sourceId, array $candidate): void
+    {
+        foreach ((array) ($candidate['specifications'] ?? []) as $specification) {
+            $label = $this->normalizer->text((string) (is_array($specification) ? ($specification['label'] ?? $specification['name'] ?? '') : ''));
+            $value = $this->normalizer->text((string) (is_array($specification) ? ($specification['value'] ?? '') : ''));
+            if (! $label || ! $value) {
+                continue;
+            }
+
+            $definitionCode = Str::limit(Str::slug($label), 180, '') ?: 'source-specification';
+            $definitionId = DB::table('specification_definitions')->where('code', $definitionCode)->value('id');
+            if (! $definitionId) {
+                $definitionId = DB::table('specification_definitions')->insertGetId([
+                    'code' => $definitionCode,
+                    'name' => $label,
+                    'group_name' => 'Supplier data',
+                    'value_type' => 'text',
+                    'is_filterable' => false,
+                    'is_comparable' => false,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            DB::table('specification_aliases')->updateOrInsert([
+                'specification_definition_id' => $definitionId,
+                'catalog_source_id' => $sourceId,
+                'alias' => $label,
+            ], ['created_at' => now(), 'updated_at' => now()]);
+            $normalized = $this->normalizer->specification($value, is_array($specification) ? ($specification['unit'] ?? null) : null);
+            DB::table('product_specification_values')->updateOrInsert([
+                'product_id' => $productId,
+                'specification_definition_id' => $definitionId,
+                'catalog_source_id' => $sourceId,
+            ], [
+                'original_label' => $label,
+                'original_value' => $value,
+                'normalized_value' => $normalized['value'],
+                'numeric_value' => $normalized['numeric_value'],
+                'numeric_max_value' => $normalized['numeric_max_value'],
+                'normalized_unit' => $normalized['unit'],
+                'parsing_confidence' => $normalized['confidence'],
+                'source_url' => $candidate['source_url'] ?? null,
+                'retrieved_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    /** @param array<string, mixed> $candidate */
+    private function persistCategoryMapping(int $sourceId, array $candidate): void
+    {
+        $path = array_values(array_filter((array) ($candidate['category_path'] ?? [])));
+        if ($path === []) {
+            return;
+        }
+        $pathText = implode(' > ', $path);
+        $key = Str::limit(Str::slug($pathText), 190, '') ?: hash('sha256', $pathText);
+        DB::table('supplier_category_mappings')->updateOrInsert([
+            'catalog_source_id' => $sourceId,
+            'source_category_key' => $key,
+        ], [
+            'source_category_name' => (string) end($path),
+            'source_category_path' => $pathText,
+            'confidence' => 0,
+            'mapping_status' => 'pending_review',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function adapter(string $supplier): SupplierImporterInterface

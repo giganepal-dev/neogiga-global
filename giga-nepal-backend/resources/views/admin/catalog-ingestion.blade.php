@@ -16,6 +16,15 @@
 </div>
 
 <section class="card" style="margin-bottom:16px">
+    <div class="card-h"><div><h2>Supplier Quotation Staging</h2><div class="sub">Load the normalized CSV from a supplier quotation into the private review queue.</div></div><span class="badge b-warn">pending review only</span></div>
+    <form class="form-stack" method="post" action="/admin/catalog-ingestion/stage-document" enctype="multipart/form-data" style="padding:16px">@csrf
+        <div class="dropzone"><div><strong>Normalized supplier quotation CSV</strong></div><div class="sub" style="margin:4px 0 12px">Product names, source quote prices, and labelled specifications are retained as provenance. No inventory, marketplace price, media, search index, or public product status changes here.</div><input class="control" type="file" name="quotation_csv" accept=".csv,text/csv" required></div>
+        <label><input type="checkbox" name="dry_run" value="1"> Validate only and create a report without database records</label>
+        <div class="actions"><button class="btn btn-primary" type="submit">Stage for Review</button><span class="sub">CSV only, maximum 50 MB</span></div>
+    </form>
+</section>
+
+<section class="card" style="margin-bottom:16px">
     <div class="card-h"><div><h2>Catalogue Sources</h2><div class="sub">Audit robots and terms before enabling an approved, reviewed source.</div></div></div>
     <div class="scroll-x"><table class="tbl"><thead><tr><th>Supplier</th><th>Policy</th><th>Import</th><th>Media</th><th>Rate Limit</th><th>Last Sync</th><th>Actions</th></tr></thead><tbody>
         @forelse($sources as $source)

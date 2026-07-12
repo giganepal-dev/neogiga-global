@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Catalog\Ingestion\Persistence\CatalogDocumentStagingService;
 use App\Catalog\Ingestion\Validation\SupplierPolicyService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class CatalogIngestionAdminController extends Controller
@@ -104,6 +106,34 @@ class CatalogIngestionAdminController extends Controller
         $this->auditLog($request, 'catalog_review_task_updated', ['task_id' => $task, 'status' => $data['status'], 'note' => $data['note']]);
 
         return back()->with('status', "Review task #{$task} updated.");
+    }
+
+    public function stageDocument(Request $request, CatalogDocumentStagingService $staging): RedirectResponse
+    {
+        $data = $request->validate([
+            'quotation_csv' => ['required', 'file', 'mimes:csv,txt', 'max:51200'],
+            'dry_run' => ['nullable', 'boolean'],
+        ]);
+        $path = $data['quotation_csv']->store('catalog/staging/uploads', 'local');
+        try {
+            $report = $staging->stage(Storage::disk('local')->path($path), [
+                'source' => 'sunny_okystar_quotation_files',
+                'source_file' => $path,
+                'actor_id' => $request->user()?->id,
+                'dry_run' => (bool) ($data['dry_run'] ?? false),
+            ]);
+        } catch (\Throwable $exception) {
+            return back()->withErrors(['quotation_csv' => $exception->getMessage()]);
+        }
+        $this->auditLog($request, 'supplier_quotation_csv_staged', [
+            'source' => 'sunny_okystar_quotation_files',
+            'run_id' => $report['run_id'],
+            'mode' => $report['mode'],
+            'status' => $report['status'],
+            'counters' => $report['counters'],
+        ]);
+
+        return back()->with('status', "Quotation CSV {$report['status']}: ".number_format($report['counters']['products_discovered']).' rows reviewed.');
     }
 
     private function auditLog(Request $request, string $action, array $values): void

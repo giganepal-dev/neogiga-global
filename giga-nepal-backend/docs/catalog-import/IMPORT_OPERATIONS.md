@@ -12,6 +12,8 @@ php artisan catalog:import adafruit --dry-run --limit=20
 php artisan catalog:import waveshare --dry-run --limit=20
 php artisan catalog:import okystar --dry-run --limit=20
 php artisan catalog:status
+php artisan catalog:stage-supplier-csv /absolute/path/normalized-supplier-quotation.csv --dry-run
+php artisan catalog:stage-supplier-csv /absolute/path/normalized-supplier-quotation.csv
 ```
 
 Dry runs generate reports under `storage/app/catalog/reports/{run-id}` and do not create product, supplier-product, or import-run records. A non-dry-run import remains blocked unless both configuration and database policy approval are enabled.
@@ -25,3 +27,11 @@ Dry runs generate reports under `storage/app/catalog/reports/{run-id}` and do no
 5. Validate pending-review records, then approve individual products through existing admin workflow.
 
 Do not deploy this code or enable an importer until the approved deployment workflow and source permissions exist.
+
+## User-provided quotation documents
+
+Use `catalog:stage-supplier-csv` only for a normalized supplier quotation CSV supplied to NeoGiga by an authorized operator. It is a document-staging operation, not supplier web crawling.
+
+The command validates the required provenance columns, stores source values and raw input, creates hidden pending-review products when no verified manufacturer plus MPN identity is available, and writes a report in `storage/app/catalog/reports/{run-id}`. It does not set inventory, marketplace price overlays, product media, search documents, or public publication status. Re-running an unchanged CSV is idempotent.
+
+Before a production run: take a production backup, apply only additive migrations, run `--dry-run`, review report counters and raw source records, and obtain an authorized approval decision for any pricing, content reuse, image, or publication action.

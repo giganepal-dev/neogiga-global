@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CatalogIngestionAdminUiTest extends TestCase
@@ -67,6 +69,28 @@ class CatalogIngestionAdminUiTest extends TestCase
             ->post("/admin/catalog-ingestion/review-tasks/{$taskId}", ['status' => 'resolved', 'note' => 'MPN and source evidence reviewed.'])
             ->assertRedirect();
         $this->assertDatabaseHas('catalog_review_tasks', ['id' => $taskId, 'status' => 'resolved', 'assigned_to' => $admin->id]);
+    }
+
+    public function test_admin_can_dry_run_a_supplier_quotation_csv_without_creating_catalogue_records(): void
+    {
+        Storage::fake('local');
+        $csv = implode("\n", [
+            'supplier_sku,product_name,source_name,source_file',
+            'KS0001,UNO R3 compatible board,Sunny quote,supplier-quote.csv',
+        ]);
+
+        $this->actingAs($this->admin())
+            ->from('/admin/catalog-ingestion')
+            ->post('/admin/catalog-ingestion/stage-document', [
+                'quotation_csv' => UploadedFile::fake()->createWithContent('supplier-quote.csv', $csv),
+                'dry_run' => '1',
+            ])
+            ->assertRedirect('/admin/catalog-ingestion')
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseCount('catalog_sources', 0);
+        $this->assertDatabaseCount('products', 0);
+        $this->assertNotEmpty(Storage::disk('local')->allFiles('catalog/reports'));
     }
 
     private function admin(): User
