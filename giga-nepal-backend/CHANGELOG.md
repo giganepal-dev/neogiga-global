@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-12 - Source-Backed Global Commerce Seed
+
+- Added a guarded, dry-run-first `catalog:seed-global-commerce` operation for LCSC/JLCPCB source price breaks, Global 5% markup overlays, Shenzhen catalog availability, regional warehouse samples, and configured delivery zones.
+- Added additive source provenance to marketplace price overlays: source name, URL, offer, fetch time, source unit price, pricing rule, and source review status.
+- Added delivery-zone configuration for Global economy/express, India express, Nepal nationwide, and UAE Gulf/international; unspecified rates remain inactive drafts and unspecified delivery times are marked unconfirmed.
+- Added an end-to-end command test and runbook; the operation preserves source review status and never creates tax data or enables checkout.
+
 ## 2026-07-12 - Marketplace Commerce Readiness Gate
 
 - Added a read-only marketplace commerce readiness service that counts active regional prices, assigned warehouses, routed stock, tax zones, and delivery zones.

@@ -20,6 +20,13 @@ class MarketplaceProductPrice extends Model
         'sale_start_date',
         'sale_end_date',
         'is_active',
+        'source_name',
+        'source_url',
+        'source_offer_id',
+        'source_fetched_at',
+        'source_unit_price',
+        'pricing_rule',
+        'source_review_status',
     ];
 
     protected $casts = [
@@ -31,6 +38,8 @@ class MarketplaceProductPrice extends Model
         'sale_start_date' => 'date',
         'sale_end_date' => 'date',
         'is_active' => 'boolean',
+        'source_fetched_at' => 'datetime',
+        'source_unit_price' => 'decimal:6',
     ];
 
     public function marketplace(): BelongsTo
