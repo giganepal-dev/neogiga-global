@@ -90,7 +90,7 @@
 <section class="section" style="padding-top:18px">
     <div class="wrap">
         <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/products">Products</a>@if($product->category)<span>/</span><a href="/categories/{{ $product->category->slug }}">{{ $product->category->name }}</a>@endif<span>/</span><strong>{{ $product->name }}</strong></nav>
-        <div class="grid" style="grid-template-columns:minmax(300px,.9fr) minmax(0,1.4fr) 340px;align-items:start">
+        <div class="grid product-primary-grid" style="grid-template-columns:minmax(300px,.9fr) minmax(0,1.4fr) 340px;align-items:start">
             <section class="panel" style="padding:18px">
                 <div class="product-gallery">
                     <a class="product-gallery-main" href="{{ $primaryImageUrl }}" target="_blank" rel="noopener" aria-label="Open product image">
@@ -212,7 +212,7 @@
 </section>
 
 <section class="section product-detail-section">
-    <div class="wrap grid" style="grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);align-items:start">
+    <div class="wrap grid product-review-grid" style="grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);align-items:start">
         <div class="panel" style="padding:22px">
             <div class="section-head" style="margin-bottom:12px"><div><p class="eyebrow">Reviews & Q&A</p><h2>Engineering feedback</h2></div><span class="badge b-info">{{ $reviewBadge }}</span></div>
             @forelse($reviews as $review)
