@@ -36,6 +36,22 @@
             </form>
         </div>
     </details>
+    <details class="modal">
+        <summary class="btn btn-ghost">Add Permission</summary>
+        <div class="modal-panel">
+            <div class="modal-h"><h3>Add Permission</h3></div>
+            <form class="modal-b form-stack" method="post" action="/admin/users/permissions">
+                @csrf
+                <div class="form-grid">
+                    <div class="field"><label>Key</label><input class="control mono" name="key" placeholder="catalog.products.edit" required></div>
+                    <div class="field"><label>Name</label><input class="control" name="name" required></div>
+                    <div class="field"><label>Group</label><input class="control" name="group" value="admin" required></div>
+                </div>
+                <div class="field"><label>Description</label><textarea class="control" name="description"></textarea></div>
+                <button class="btn btn-primary" type="submit">Save Permission</button>
+            </form>
+        </div>
+    </details>
 @endsection
 
 @section('content')

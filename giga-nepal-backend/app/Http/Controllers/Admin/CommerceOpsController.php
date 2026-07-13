@@ -236,7 +236,7 @@ class CommerceOpsController extends Controller
             'lms_topic' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $slug = $data['slug'] ?: Str::slug($data['name']);
+        $slug = ($data['slug'] ?? null) ?: Str::slug($data['name']);
         $mediaAsset = ! empty($data['media_asset_id'])
             ? DB::table('admin_media_assets')->where('id', $data['media_asset_id'])->first()
             : null;
@@ -481,6 +481,16 @@ class CommerceOpsController extends Controller
             'model_number' => ['nullable', 'string', 'max:120'],
             'regional_visibility' => ['nullable', 'string', 'max:500'],
             'attributes_json' => ['nullable', 'string'],
+            // Listing enrichment is retained in metadata without a schema change.
+            'keywords' => ['nullable', 'string', 'max:500'],
+            'tags' => ['nullable', 'string', 'max:500'],
+            'shipping_from_country' => ['nullable', 'string', 'max:100'],
+            'shipping_from_city' => ['nullable', 'string', 'max:120'],
+            'shipping_method' => ['nullable', 'string', 'in:auto,standard,express,freight,pickup'],
+            'datasheet_url' => ['nullable', 'url', 'max:1000'],
+            'design_file_url' => ['nullable', 'url', 'max:1000'],
+            'training_video_url' => ['nullable', 'url', 'max:1000'],
+            'featured_image_url' => ['nullable', 'url', 'max:1000'],
         ]);
 
         $slug = ($data['slug'] ?? null) ?: Str::slug($data['name']);
@@ -507,7 +517,19 @@ class CommerceOpsController extends Controller
             'model_number' => $data['model_number'] ?? null,
             'marketplace_visibility' => json_encode(['regional_visibility' => $data['regional_visibility'] ?? null]),
             'attributes' => $this->jsonOrEmpty($data['attributes_json'] ?? null),
-            'metadata' => json_encode(['saved_via' => 'admin.web']),
+            'metadata' => json_encode(array_filter([
+                'saved_via' => 'admin.web',
+                'keywords' => $data['keywords'] ?? null,
+                'tags' => isset($data['tags'])
+                    ? array_values(array_filter(array_map('trim', explode(',', $data['tags']))))
+                    : null,
+                'shipping_from' => ($data['shipping_from_country'] ?? null) || ($data['shipping_from_city'] ?? null)
+                    ? ['country' => $data['shipping_from_country'] ?? null, 'city' => $data['shipping_from_city'] ?? null]
+                    : null,
+                'shipping_method' => $data['shipping_method'] ?? 'auto',
+                'featured_image_url' => $data['featured_image_url'] ?? null,
+                'training_video_url' => $data['training_video_url'] ?? null,
+            ], fn ($value) => $value !== null && $value !== [])),
             'updated_at' => now(),
         ];
         $payload = $this->productPayloadForSchema($payload);
@@ -521,6 +543,23 @@ class CommerceOpsController extends Controller
             $payload['created_at'] = now();
             $id = DB::table('products')->insertGetId($payload);
             $verb = 'created';
+        }
+
+        foreach (['datasheet' => $data['datasheet_url'] ?? null, 'design_file' => $data['design_file_url'] ?? null] as $documentType => $documentUrl) {
+            if ($documentUrl && ! DB::table('product_documents')->where('product_id', $id)->where('file_url', $documentUrl)->exists()) {
+                DB::table('product_documents')->insert([
+                    'product_id' => $id,
+                    'title' => ucfirst(str_replace('_', ' ', $documentType)),
+                    'document_type' => $documentType,
+                    'file_url' => $documentUrl,
+                    'uploaded_by' => $request->user()?->id,
+                    'status' => 'approved',
+                    'is_public' => true,
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         $this->auditAdminAction($request, 'product_'.$verb, 'products', $id, ['sku' => $data['sku'], 'name' => $data['name']]);
