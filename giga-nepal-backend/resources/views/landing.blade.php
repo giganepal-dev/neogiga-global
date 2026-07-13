@@ -68,9 +68,7 @@
         .nav nav a{color:var(--ng-gray);font-size:.92rem}
         .nav nav a:hover{color:var(--ng-cyan);text-decoration:none}
         .nav .spacer{flex:1}
-        .switcher{display:flex;gap:8px}
-        .switcher select{
-            background:var(--ng-navy-2);color:var(--ng-gray);border:1px solid rgba(25,211,245,.25);
+        .region{display:inline-flex;align-items:center;gap:6px;background:var(--ng-navy-2);color:var(--ng-gray);border:1px solid rgba(25,211,245,.25);
             border-radius:8px;padding:6px 10px;font-size:.85rem}
         .marketplace-recommend{background:#fff7df;color:#3b2b06;border-bottom:1px solid #f4d47b}
         .marketplace-recommend .wrap{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 20px;flex-wrap:wrap}
@@ -130,7 +128,11 @@
         footer a:hover{color:var(--ng-cyan)}
         .foot-bottom{margin-top:36px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06);
             display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;color:var(--ng-gray-2);font-size:.82rem}
+        .edition-switcher{display:flex;flex-wrap:wrap;gap:8px}.edition-switcher form{margin:0}
+        .edition-switcher button{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(25,211,245,.22);border-radius:8px;padding:7px 9px;background:transparent;color:var(--ng-gray);font:inherit;font-size:.82rem;cursor:pointer;text-align:left}
+        .edition-switcher button:hover,.edition-switcher button[aria-current="page"]{border-color:var(--ng-cyan);color:var(--ng-white);background:rgba(25,211,245,.08)}
         @media(min-width:900px){.nav nav{display:flex}}
+        @media(max-width:640px){.hero .watermark{right:-20px;width:280px;height:280px}.nav{gap:10px}.logo{font-size:1.08rem}.region{padding:5px 8px}}
         @media(prefers-reduced-motion:reduce){.card:hover{transform:none}}
     </style>
 </head>
@@ -159,6 +161,18 @@
     </aside>
 @endif
 
+@php
+    $marketplaceFlag = static function (?string $marketplaceCode, ?string $countryCode): string {
+        if (strtolower((string) $marketplaceCode) === 'global') {
+            return '🌐';
+        }
+
+        return match (strtoupper((string) $countryCode)) {
+            'AU'=>'🇦🇺','BD'=>'🇧🇩','BR'=>'🇧🇷','BT'=>'🇧🇹','CA'=>'🇨🇦','DE'=>'🇩🇪','ES'=>'🇪🇸','FR'=>'🇫🇷','GB'=>'🇬🇧','IN'=>'🇮🇳','IT'=>'🇮🇹','KE'=>'🇰🇪','LK'=>'🇱🇰','NP'=>'🇳🇵','PK'=>'🇵🇰','QA'=>'🇶🇦','SA'=>'🇸🇦','US'=>'🇺🇸','AE'=>'🇦🇪','ZA'=>'🇿🇦', default=>'🏳️',
+        };
+    };
+@endphp
+
 <header>
     <div class="wrap nav">
         <a class="logo" href="{{ $storefrontPath }}" aria-label="{{ $marketplaceName }} home">
@@ -178,22 +192,7 @@
             <a href="{{ $storefrontPath }}/rfq">B2B &amp; RFQ</a>
         </nav>
         <div class="spacer"></div>
-        <form class="switcher" method="post" action="{{ route('marketplace.preference') }}">
-            @csrf
-            <label class="sr-only" for="ng-country" style="position:absolute;left:-9999px">Country</label>
-            <select id="ng-country" name="marketplace" aria-label="Choose marketplace">
-                @foreach (($marketplaceContext['editions'] ?? []) as $edition)
-                    <option value="{{ $edition['code'] }}" @selected($edition['id'] === ($marketplaceContext['current']->id ?? null))>{{ $edition['name'] }} · {{ $edition['currency_code'] }}</option>
-                @endforeach
-            </select>
-            <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
-            <input type="hidden" name="action" value="switch">
-            <button class="btn btn-ghost" style="padding:6px 10px;font-size:.85rem" type="submit">Go</button>
-            <label for="ng-lang" style="position:absolute;left:-9999px">Language</label>
-            <select id="ng-lang" aria-label="Current language" disabled>
-                <option>{{ strtoupper(strtok($locale, '-')) }}</option>
-            </select>
-        </form>
+        <span class="region" title="{{ $marketplaceName }}" aria-label="Current marketplace: {{ $marketplaceName }}"><span aria-hidden="true">{{ $marketplaceFlag($marketplaceContext['current']->code ?? 'global', $marketplaceContext['country_code'] ?? null) }}</span>{{ $currencyCode }}</span>
     </div>
 </header>
 
@@ -327,13 +326,17 @@
             </div>
             <div>
                 <h4>Global Editions</h4>
-                <ul>
+                <div class="edition-switcher" aria-label="Marketplace switcher">
                     @foreach (($marketplaceContext['editions'] ?? []) as $edition)
-                        @if ($edition['url'])
-                            <li><a href="{{ $edition['url'] }}/en" rel="alternate">{{ $edition['name'] }} · {{ $edition['currency_code'] }}</a></li>
-                        @endif
+                        <form method="post" action="{{ route('marketplace.preference') }}">
+                            @csrf
+                            <input type="hidden" name="marketplace" value="{{ $edition['code'] }}">
+                            <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
+                            <input type="hidden" name="action" value="switch">
+                            <button type="submit" @if($edition['id'] === ($marketplaceContext['current']->id ?? null)) aria-current="page" @endif><span aria-hidden="true">{{ $marketplaceFlag($edition['code'], $edition['country_code']) }}</span><span>{{ $edition['name'] }}<br><small>{{ $edition['currency_code'] }}</small></span></button>
+                        </form>
                     @endforeach
-                </ul>
+                </div>
             </div>
             <div>
                 <h4>Sellers</h4>
