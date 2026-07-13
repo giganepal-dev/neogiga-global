@@ -31,4 +31,13 @@ For a review task with a staged product, the `Identity` drawer accepts a reviewe
 - Otherwise it creates a `supplier_product_review` task for the remaining editorial and approval decision.
 - Neither path changes publication, search indexing, regional price overlays, inventory, media, checkout, or supplier crawling settings.
 
+## Category mapping review
+
+The Category Mapping Review panel lists pending source-category paths and lets an administrator approve a mapping to an existing active NeoGiga category or defer it.
+
+- Approval records the selected canonical category on the source mapping record and assigns it only to supplier-linked products that currently have no category.
+- Existing manual product category assignments are preserved and never overwritten by a source mapping.
+- New supplier rows retain an approved source mapping for subsequent review; the importer does not reset it to pending.
+- Mapping a category does not approve or publish products, rebuild search, assign media, change stock, or create marketplace prices.
+
 Publication is intentionally outside this surface and remains governed by the existing product approval controls.

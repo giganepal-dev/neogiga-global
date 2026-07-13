@@ -7,6 +7,7 @@
 - Corrected supplier catalogue matching so an unknown manufacturer is never replaced with a supplier name and automatic canonical matching requires both an MPN and a verified manufacturer/brand identity.
 - Added source-specification persistence, source-category review mappings, dry-run reporting, idempotent re-runs, and tests proving the intake does not create inventory, storefront prices, media, brands, or publication state.
 - Added protected reviewer identity verification with evidence notes and duplicate-candidate tasks. It updates only hidden pending-review records and never merges or publishes products automatically.
+- Added protected source-category mapping review with approval/defer decisions. Approved mappings assign only uncategorized pending products and preserve all manual category assignments.
 
 ## 2026-07-12 - Supplier Ingestion Admin Console
 

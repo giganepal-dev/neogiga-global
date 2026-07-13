@@ -36,6 +36,17 @@ class CatalogIngestionAdminController extends Controller
         return view('admin.catalog-ingestion', [
             'sources' => $sources,
             'tasks' => $tasks,
+            'categoryMappings' => DB::table('supplier_category_mappings as mapping')
+                ->join('catalog_sources as source', 'source.id', '=', 'mapping.catalog_source_id')
+                ->leftJoin('product_categories as category', 'category.id', '=', 'mapping.category_id')
+                ->select('mapping.*', 'source.name as source_name', 'source.code as source_code', 'category.name as category_name')
+                ->when($supplier !== '', fn ($query) => $query->where('source.code', $supplier))
+                ->where('mapping.mapping_status', 'pending_review')
+                ->orderBy('source.name')
+                ->orderBy('mapping.source_category_name')
+                ->limit(100)
+                ->get(),
+            'categories' => DB::table('product_categories')->where('is_active', true)->orderBy('name')->get(['id', 'name', 'parent_id']),
             'runs' => DB::table('catalog_import_runs as run')->join('catalog_sources as source', 'source.id', '=', 'run.catalog_source_id')->select('run.*', 'source.code as source_code')->when($supplier !== '', fn ($query) => $query->where('source.code', $supplier))->orderByDesc('run.created_at')->limit(12)->get(),
             'stats' => [
                 'sources' => $sources->count(),
@@ -184,6 +195,67 @@ class CatalogIngestionAdminController extends Controller
         $this->auditLog($request, 'catalog_identity_verified', ['task_id' => $task, 'manufacturer' => $manufacturer, 'mpn' => $mpn, 'note' => $data['note']]);
 
         return back()->with('status', "Identity recorded for review task #{$task}. Product remains hidden pending approval.");
+    }
+
+    public function reviewCategoryMapping(Request $request, int $mapping): RedirectResponse
+    {
+        $record = DB::table('supplier_category_mappings')->where('id', $mapping)->first();
+        abort_unless($record, 404);
+        $data = $request->validate([
+            'decision' => ['required', 'in:approved,deferred'],
+            'category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
+            'note' => ['required', 'string', 'min:8', 'max:1000'],
+        ]);
+        if ($data['decision'] === 'approved' && empty($data['category_id'])) {
+            return back()->withErrors(['category_id' => 'Choose a NeoGiga category before approving a mapping.'])->withInput();
+        }
+
+        $assigned = DB::transaction(function () use ($record, $data, $request): int {
+            $categoryId = $data['decision'] === 'approved' ? (int) $data['category_id'] : null;
+            DB::table('supplier_category_mappings')->where('id', $record->id)->update([
+                'category_id' => $categoryId,
+                'mapping_status' => $data['decision'],
+                'reviewed_by' => $request->user()?->id,
+                'reviewed_at' => now(),
+                'updated_at' => now(),
+            ]);
+            if ($data['decision'] !== 'approved') {
+                return 0;
+            }
+
+            $assigned = 0;
+            DB::table('supplier_products')
+                ->where('catalog_source_id', $record->catalog_source_id)
+                ->whereNotNull('product_id')
+                ->orderBy('id')
+                ->chunkById(200, function ($supplierProducts) use (&$assigned, $record, $categoryId): void {
+                    foreach ($supplierProducts as $supplierProduct) {
+                        $path = is_string($supplierProduct->source_category_path_json ?? null)
+                            ? json_decode($supplierProduct->source_category_path_json, true)
+                            : (array) ($supplierProduct->source_category_path_json ?? []);
+                        if (implode(' > ', array_values((array) $path)) !== $record->source_category_path) {
+                            continue;
+                        }
+                        $assigned += DB::table('products')
+                            ->where('id', $supplierProduct->product_id)
+                            ->whereNull('category_id')
+                            ->update(['category_id' => $categoryId, 'updated_at' => now()]);
+                    }
+                });
+
+            return $assigned;
+        });
+        $this->auditLog($request, 'supplier_category_mapping_reviewed', [
+            'mapping_id' => $mapping,
+            'decision' => $data['decision'],
+            'category_id' => $data['category_id'] ?? null,
+            'assigned_products' => $assigned,
+            'note' => $data['note'],
+        ]);
+
+        return back()->with('status', $data['decision'] === 'approved'
+            ? "Category mapping approved. {$assigned} uncategorized pending products assigned."
+            : 'Category mapping deferred for later review.');
     }
 
     public function stageDocument(Request $request, CatalogDocumentStagingService $staging): RedirectResponse

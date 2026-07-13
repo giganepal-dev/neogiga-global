@@ -222,10 +222,16 @@ class CatalogImportService
         }
         $pathText = implode(' > ', $path);
         $key = Str::limit(Str::slug($pathText), 190, '') ?: hash('sha256', $pathText);
-        DB::table('supplier_category_mappings')->updateOrInsert([
+        $existing = DB::table('supplier_category_mappings')->where([
             'catalog_source_id' => $sourceId,
             'source_category_key' => $key,
-        ], [
+        ])->exists();
+        if ($existing) {
+            return;
+        }
+        DB::table('supplier_category_mappings')->insert([
+            'catalog_source_id' => $sourceId,
+            'source_category_key' => $key,
             'source_category_name' => (string) end($path),
             'source_category_path' => $pathText,
             'confidence' => 0,

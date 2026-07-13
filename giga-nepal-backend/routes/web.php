@@ -88,6 +88,7 @@ Route::prefix('admin')->group(function () {
         Route::post('catalog-ingestion/stage-document', [AdminCatalogIngestion::class, 'stageDocument'])->middleware('throttle:3,1');
         Route::post('catalog-ingestion/review-tasks/{task}', [AdminCatalogIngestion::class, 'resolveTask'])->whereNumber('task')->middleware('throttle:20,1');
         Route::post('catalog-ingestion/review-tasks/{task}/identity', [AdminCatalogIngestion::class, 'verifyIdentity'])->whereNumber('task')->middleware('throttle:20,1');
+        Route::post('catalog-ingestion/category-mappings/{mapping}', [AdminCatalogIngestion::class, 'reviewCategoryMapping'])->whereNumber('mapping')->middleware('throttle:20,1');
         Route::post('imports/jlcpcb/bulk-approve', [AdminCommerce::class, 'bulkApproveJlcpcbImports'])->middleware('throttle:10,1');
         Route::post('imports/jlcpcb/bulk-publish', [AdminCommerce::class, 'bulkPublishJlcpcbImports'])->middleware('throttle:10,1');
         Route::post('imports/jlcpcb/search-rebuild', [AdminCommerce::class, 'queueJlcpcbSearchRebuild'])->middleware('throttle:5,1');

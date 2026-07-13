@@ -25,6 +25,15 @@
 </section>
 
 <section class="card" style="margin-bottom:16px">
+    <div class="card-h"><div><h2>Category Mapping Review</h2><div class="sub">Map supplier category paths to existing NeoGiga categories. Only uncategorized pending products are updated.</div></div><span class="badge b-info">{{ number_format($categoryMappings->count()) }} pending</span></div>
+    <div class="scroll-x"><table class="tbl"><thead><tr><th>Source</th><th>Supplier Category</th><th>Current Mapping</th><th>Action</th></tr></thead><tbody>
+        @forelse($categoryMappings as $mapping)
+            <tr><td><strong>{{ $mapping->source_name }}</strong><div class="sub mono">{{ $mapping->source_code }}</div></td><td><strong>{{ $mapping->source_category_name }}</strong><div class="sub">{{ $mapping->source_category_path }}</div></td><td>{{ $mapping->category_name ?: 'Not mapped' }}</td><td><details class="modal"><summary class="btn btn-ghost">Review Mapping</summary><div class="modal-panel"><div class="modal-h"><h3>Review Category Mapping</h3><span class="badge b-warn">pending only</span></div><form class="modal-b form-stack" method="post" action="/admin/catalog-ingestion/category-mappings/{{ $mapping->id }}">@csrf<div class="field"><label>Decision</label><select class="control" name="decision"><option value="approved">Approve and assign</option><option value="deferred">Defer</option></select></div><div class="field"><label>NeoGiga category</label><select class="control" name="category_id"><option value="">Choose category</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected($mapping->category_id === $category->id)>{{ $category->name }}</option>@endforeach</select></div><div class="field"><label>Review note</label><textarea class="control" name="note" required placeholder="Why this source category maps to the selected NeoGiga category"></textarea></div><div class="note">Approval updates only products with no category. It cannot publish a product or change pricing, stock, media, or search state.</div><button class="btn btn-primary" type="submit">Save Mapping</button></form></div></details></td></tr>
+        @empty <tr><td colspan="4"><div class="empty"><h3>No pending category mappings</h3><p>New supplier category paths will appear here for a manual category decision.</p></div></td></tr> @endforelse
+    </tbody></table></div>
+</section>
+
+<section class="card" style="margin-bottom:16px">
     <div class="card-h"><div><h2>Catalogue Sources</h2><div class="sub">Audit robots and terms before enabling an approved, reviewed source.</div></div></div>
     <div class="scroll-x"><table class="tbl"><thead><tr><th>Supplier</th><th>Policy</th><th>Import</th><th>Media</th><th>Rate Limit</th><th>Last Sync</th><th>Actions</th></tr></thead><tbody>
         @forelse($sources as $source)

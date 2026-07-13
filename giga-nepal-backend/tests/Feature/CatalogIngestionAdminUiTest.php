@@ -156,6 +156,60 @@ class CatalogIngestionAdminUiTest extends TestCase
         $this->assertDatabaseCount('products', 2);
     }
 
+    public function test_admin_can_approve_a_category_mapping_for_uncategorized_pending_products(): void
+    {
+        $this->source();
+        $taskId = $this->task();
+        $productId = DB::table('catalog_review_tasks')->where('id', $taskId)->value('product_id');
+        $sourceId = DB::table('catalog_sources')->where('code', 'adafruit')->value('id');
+        DB::table('supplier_products')->where('catalog_source_id', $sourceId)->update(['source_category_path_json' => json_encode(['Maker', 'Development boards'])]);
+        $categoryId = $this->category('Development Boards', 'development-boards');
+        $mappingId = DB::table('supplier_category_mappings')->insertGetId([
+            'catalog_source_id' => $sourceId, 'source_category_key' => 'maker-development-boards', 'source_category_name' => 'Development boards',
+            'source_category_path' => 'Maker > Development boards', 'confidence' => 0, 'mapping_status' => 'pending_review', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post("/admin/catalog-ingestion/category-mappings/{$mappingId}", [
+                'decision' => 'approved',
+                'category_id' => $categoryId,
+                'note' => 'Supplier development boards map to the canonical development board category.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('supplier_category_mappings', ['id' => $mappingId, 'category_id' => $categoryId, 'mapping_status' => 'approved']);
+        $this->assertDatabaseHas('products', ['id' => $productId, 'category_id' => $categoryId, 'status' => 'pending']);
+        $this->assertDatabaseCount('marketplace_product_prices', 0);
+        $this->assertDatabaseCount('inventory_stocks', 0);
+    }
+
+    public function test_category_mapping_does_not_overwrite_a_manually_assigned_category(): void
+    {
+        $this->source();
+        $taskId = $this->task();
+        $productId = DB::table('catalog_review_tasks')->where('id', $taskId)->value('product_id');
+        $sourceId = DB::table('catalog_sources')->where('code', 'adafruit')->value('id');
+        $manualCategoryId = $this->category('Manual Category', 'manual-category');
+        $targetCategoryId = $this->category('Development Boards', 'development-boards');
+        DB::table('products')->where('id', $productId)->update(['category_id' => $manualCategoryId]);
+        DB::table('supplier_products')->where('catalog_source_id', $sourceId)->update(['source_category_path_json' => json_encode(['Maker', 'Development boards'])]);
+        $mappingId = DB::table('supplier_category_mappings')->insertGetId([
+            'catalog_source_id' => $sourceId, 'source_category_key' => 'maker-development-boards', 'source_category_name' => 'Development boards',
+            'source_category_path' => 'Maker > Development boards', 'confidence' => 0, 'mapping_status' => 'pending_review', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post("/admin/catalog-ingestion/category-mappings/{$mappingId}", [
+                'decision' => 'approved',
+                'category_id' => $targetCategoryId,
+                'note' => 'Supplier development boards map to the canonical development board category.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('products', ['id' => $productId, 'category_id' => $manualCategoryId]);
+        $this->assertDatabaseHas('supplier_category_mappings', ['id' => $mappingId, 'category_id' => $targetCategoryId, 'mapping_status' => 'approved']);
+    }
+
     private function admin(): User
     {
         $role = Role::firstOrCreate(['name' => 'super_admin'], ['display_name' => 'super_admin', 'is_active' => true]);
@@ -170,6 +224,13 @@ class CatalogIngestionAdminUiTest extends TestCase
             'source_type' => 'supplier', 'base_url' => 'https://www.adafruit.com', 'robots_url' => 'https://www.adafruit.com/robots.txt',
             'catalogue_policy' => json_encode([]), 'import_enabled' => false, 'media_download_enabled' => false,
             'description_reuse_status' => 'unknown', 'status' => 'pending_manual_review', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+    }
+
+    private function category(string $name, string $slug): int
+    {
+        return DB::table('product_categories')->insertGetId([
+            'name' => $name, 'slug' => $slug, 'is_active' => true, 'is_featured' => false, 'sort_order' => 0, 'created_at' => now(), 'updated_at' => now(),
         ]);
     }
 
