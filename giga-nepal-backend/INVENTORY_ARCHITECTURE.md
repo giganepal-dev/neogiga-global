@@ -20,6 +20,12 @@ warehouse and marketplace assignment. It reports a fulfilment route instead of
 claiming that global stock is immediately local. `StockMovementService` uses
 database transactions and row locks for inventory mutation.
 
+`ProductAvailabilityService` is the public sellability read model. It resolves
+marketplace-eligible stock, local and regional quantities, global stock,
+fulfilment warehouse, quote-only status and the active price source in one
+payload. Variant requests read only that variant's inventory rows and never
+fall back to parent-product stock.
+
 ## Operating rules
 
 - Available stock must never be decremented outside the movement/reservation
@@ -33,6 +39,5 @@ database transactions and row locks for inventory mutation.
 
 ## Remaining work
 
-The existing schema needs a single audited availability facade for all public
-product, cart and search reads. That consolidation must be introduced with
-compatibility tests before removing any legacy stock reads.
+Search-result batch resolution and a dedicated administrative inventory-audit
+command remain to be consolidated before legacy read paths can be removed.

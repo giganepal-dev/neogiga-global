@@ -358,3 +358,9 @@
 - Added safe product-brand visibility, display, publication, media and SEO
   fields through an additive migration.
 - Preserved canonical products and prevented deletion of brands in use.
+
+# 2026-07-13 - Product Availability Resolution
+
+- Added a shared resolved availability payload for marketplace price and stock
+  reads across public product, cart and checkout workflows.
+- Added a public product availability API and variant-safe stock handling.

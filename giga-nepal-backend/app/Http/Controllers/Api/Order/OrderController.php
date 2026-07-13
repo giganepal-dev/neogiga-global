@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api\Order;
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Cart;
-use App\Models\Marketplace\InventoryStock;
+use App\Models\Marketplace\Marketplace;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Marketplace\Cart as CartModel;
 use App\Services\Affiliate\AffiliateService;
 use App\Services\Promotion\CouponService;
 use App\Services\Promotion\GiftCardService;
+use App\Services\Marketplace\ProductAvailabilityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class OrderController extends Controller
         private readonly AffiliateService $affiliates,
         private readonly CouponService $coupons,
         private readonly GiftCardService $giftCards,
+        private readonly ProductAvailabilityService $availability,
     ) {
     }
 
@@ -50,8 +52,12 @@ class OrderController extends Controller
         }
 
         foreach ($cart->items as $item) {
-            if (!$this->hasStock($item->product_id, $cart->marketplace_id, $item->quantity, $item->variant_id)) {
+            $availability = $this->availability->forProduct($item->product_id, Marketplace::find($cart->marketplace_id), $item->variant_id);
+            if ((int) $availability['available_stock'] < (int) $item->quantity || ($availability['quote_only'] ?? false)) {
                 return $this->error("Insufficient stock for {$item->product?->name}.", 422);
+            }
+            if (($availability['price']['selling_price'] ?? 0) <= 0 || round((float) $availability['price']['selling_price'], 4) !== round((float) $item->unit_price, 4)) {
+                return $this->error("Price changed for {$item->product?->name}; refresh the cart before checkout.", 422);
             }
         }
 
@@ -231,14 +237,4 @@ class OrderController extends Controller
         ];
     }
 
-    private function hasStock(int $productId, ?int $marketplaceId, int $quantity, ?int $variantId = null): bool
-    {
-        $available = InventoryStock::query()
-            ->where('product_id', $productId)
-            ->when($variantId, fn ($q) => $q->where('variant_id', $variantId))
-            ->when($marketplaceId, fn ($q) => $q->where('marketplace_id', $marketplaceId))
-            ->sum('quantity_available');
-
-        return (int) $available >= $quantity;
-    }
 }

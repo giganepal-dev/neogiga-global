@@ -134,6 +134,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/{product}/compatible', [ProductCommerceController::class, 'compatible']);
         Route::get('/{product}/related', [ProductCommerceController::class, 'related']);
         Route::get('/{product}/accessories', [ProductCommerceController::class, 'accessories']);
+        Route::get('/{product}/availability', [ProductCommerceController::class, 'availability']);
         Route::get('/{product}/stock', [ProductCommerceController::class, 'stock']);
         Route::get('/{product}/stock/marketplace/{marketplace}', [ProductCommerceController::class, 'stockMarketplace'])->whereNumber('marketplace');
         Route::get('/{product}/stock/region/{region}', [ProductCommerceController::class, 'stockRegion'])->whereNumber('region');

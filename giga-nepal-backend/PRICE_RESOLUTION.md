@@ -19,3 +19,8 @@ The next implementation phase should expose this policy through one
 `PriceResolver` facade and route every product, search, cart and checkout price
 read through it. That work must include effective dates, B2B quantity tiers and
 seller-specific approval checks.
+
+`ProductAvailabilityService` now consumes active marketplace overlays for
+product detail, cart and checkout. Its final fallback is the canonical product
+price, preserving the API-cart contract; the regional web cart still presents
+RFQ when no local overlay exists.

@@ -13,7 +13,7 @@ class RegionalVisibilityService
     {
     }
 
-    public function marketplacePrice(int $productId, ?Marketplace $marketplace): ?object
+    public function marketplacePrice(int $productId, ?Marketplace $marketplace, ?int $variantId = null): ?object
     {
         if (! Schema::hasTable('marketplace_product_prices')) {
             return null;
@@ -23,6 +23,7 @@ class RegionalVisibilityService
             ->leftJoin('marketplaces as m', 'm.id', '=', 'p.marketplace_id')
             ->leftJoin('currencies as c', 'c.code', '=', 'p.currency_code')
             ->where('p.product_id', $productId)
+            ->when($variantId !== null, fn ($query) => $query->where('p.product_variant_id', $variantId), fn ($query) => $query->whereNull('p.product_variant_id'))
             ->where('p.is_active', true)
             ->where(function ($q) {
                 $q->whereNull('p.sale_start_date')->orWhere('p.sale_start_date', '<=', now());
@@ -41,7 +42,7 @@ class RegionalVisibilityService
             ->first() ?: null;
     }
 
-    public function sellerOffers(int $productId, ?Marketplace $marketplace): Collection
+    public function sellerOffers(int $productId, ?Marketplace $marketplace, ?int $variantId = null): Collection
     {
         if (! Schema::hasTable('vendor_product_prices')) {
             return collect();
@@ -62,6 +63,7 @@ class RegionalVisibilityService
             ->leftJoin('marketplaces as m', 'm.id', '=', 'vp.marketplace_id')
             ->leftJoin('currencies as c', 'c.code', '=', 'price.currency_code')
             ->where('price.product_id', $productId)
+            ->when($variantId !== null, fn ($query) => $query->where('price.product_variant_id', $variantId), fn ($query) => $query->whereNull('price.product_variant_id'))
             ->where('price.is_active', true)
             ->whereIn('v.status', ['active', 'approved']);
 
@@ -99,7 +101,7 @@ class RegionalVisibilityService
             ->get();
     }
 
-    public function stockRows(int $productId, ?Marketplace $marketplace): Collection
+    public function stockRows(int $productId, ?Marketplace $marketplace, ?int $variantId = null): Collection
     {
         if (! Schema::hasTable('inventory_stocks')) {
             return collect();
@@ -113,7 +115,12 @@ class RegionalVisibilityService
             ->leftJoin('warehouses as w', 'w.id', '=', 's.warehouse_id')
             ->leftJoin('countries as c', fn ($join) => $join->on('c.id', '=', DB::raw($countryExpression)))
             ->where('s.product_id', $productId)
+            ->when($variantId !== null, fn ($query) => $query->where('s.variant_id', $variantId), fn ($query) => $query->whereNull('s.variant_id'))
             ->where('s.is_active', true);
+
+        if (Schema::hasColumn('warehouses', 'is_active')) {
+            $query->where('w.is_active', true);
+        }
 
         if ($marketplace?->id && ! $this->policy->allowsGlobalFallback($marketplace->code)) {
             $query->where(function ($q) use ($marketplace) {
@@ -130,7 +137,14 @@ class RegionalVisibilityService
         }
 
         if ($marketplace?->country_id && ! $this->policy->allowsGlobalFallback($marketplace->code)) {
-            $query->whereRaw("{$countryExpression} = ?", [$marketplace->country_id]);
+            // Older inventory rows may have a marketplace assignment before a
+            // warehouse/country backfill. The explicit marketplace assignment
+            // is safe to honour; unassigned foreign rows remain excluded.
+            $query->where(function ($inner) use ($countryExpression, $marketplace) {
+                $inner->whereRaw("{$countryExpression} = ?", [$marketplace->country_id])
+                    ->orWhere('s.marketplace_id', $marketplace->id)
+                    ->orWhere('w.marketplace_id', $marketplace->id);
+            });
         }
 
         $quoteOnly = Schema::hasColumn('inventory_stocks', 'quote_only') ? 's.quote_only' : 'false as quote_only';

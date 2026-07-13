@@ -39,6 +39,18 @@ Generated: 2026-07-13
 - Corrected the pre-existing `ProductBrand::products()` foreign-key mapping to
   use `products.brand_id`.
 
+## 2026-07-13 Product Availability Read Model
+
+- Added `ProductAvailabilityService` as the common marketplace stock and price
+  read model for product detail, availability API, API cart, checkout
+  revalidation and web-cart pricing.
+- Added `GET /api/v1/products/{product}/availability` with marketplace, price
+  source, stock scope, fulfilment and purchase-eligibility fields.
+- Added variant-specific stock and price resolution; variant requests do not
+  consume parent-product inventory.
+- Preserved canonical product-price fallback for the existing API cart and
+  retained regional RFQ presentation in the server-rendered cart.
+
 ## Complete / Deployed
 
 - Locale-first global storefront routes and canonical `/en` entry points.

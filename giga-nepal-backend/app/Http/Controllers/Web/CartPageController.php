@@ -10,7 +10,7 @@ use App\Models\Payment;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\MarketplaceCommerceReadinessService;
 use App\Services\Marketplace\RegionalCommerceService;
-use App\Services\Marketplace\RegionalVisibilityService;
+use App\Services\Marketplace\ProductAvailabilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -212,6 +212,16 @@ class CartPageController extends Controller
 
         $request->session()->forget('cart_id');
 
+        // Splitting is idempotent and must never make a successful checkout fail.
+        try {
+            app(\App\Services\Seller\VendorOrderSplitService::class)->splitForOrder($order);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Vendor order split failed', [
+                'order_number' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         return redirect('/checkout/thank-you/'.$order->order_number)->with('status', 'Order placed for manual confirmation.');
     }
 
@@ -270,24 +280,16 @@ class CartPageController extends Controller
     {
         $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
         $marketplace = $marketplaceContext['current'] ?? null;
-        $price = null;
-        $currency = $marketplaceContext['currency_code'] ?? 'USD';
-        $source = 'global_catalog';
+        $availability = app(ProductAvailabilityService::class)->forProduct($product, $marketplace);
+        $resolved = $availability['price'];
+        $currency = $resolved['currency'] ?: ($marketplaceContext['currency_code'] ?? 'USD');
+        $source = $resolved['source'];
+        $price = (float) ($resolved['selling_price'] ?? 0);
 
-        if ($marketplace) {
-            $overlay = app(RegionalVisibilityService::class)->marketplacePrice($product->id, $marketplace);
-
-            if ($overlay) {
-                $price = (float) ($overlay->sale_price ?: $overlay->base_price ?: 0);
-                $currency = $overlay->currency_code ?: $currency;
-                $source = 'marketplace_overlay';
-            }
-        }
-
-        if ($price === null) {
-            $price = $marketplace && strtolower((string) $marketplace->code) !== 'global'
-                ? 0.0
-                : (float) ($product->sale_price ?: $product->base_price ?: 0);
+        // Keep the existing regional RFQ UI policy: a canonical base price is
+        // not presented as a locally confirmed price without an overlay.
+        if ($marketplace && strtolower((string) $marketplace->code) !== 'global' && $source === 'products.base_price') {
+            $price = 0.0;
         }
 
         return [

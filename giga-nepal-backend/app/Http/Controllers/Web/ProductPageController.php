@@ -8,7 +8,7 @@ use App\Models\Marketplace\ProductCategory;
 use App\Services\Catalog\CatalogSearchService;
 use App\Services\Catalog\BrandVisibilityService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
-use App\Services\Marketplace\RegionalVisibilityService;
+use App\Services\Marketplace\ProductAvailabilityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -105,17 +105,17 @@ class ProductPageController extends Controller
             ->limit(6)
             ->get();
 
-        $regionalVisibility = app(RegionalVisibilityService::class);
-        $stockRows = $regionalVisibility->stockRows($product->id, $marketplace);
+        $availability = app(ProductAvailabilityService::class)->forProduct($product, $marketplace);
 
         return view('frontend.products.show', [
             'product' => $product,
             'related' => $related,
             'marketplaceContext' => $marketplaceContext,
-            'stockRows' => $stockRows,
-            'regionalStockTotal' => (int) $stockRows->sum('quantity_available'),
-            'marketplacePrice' => $regionalVisibility->marketplacePrice($product->id, $marketplace),
-            'sellerOffers' => $regionalVisibility->sellerOffers($product->id, $marketplace),
+            'stockRows' => $availability['stock_rows'],
+            'regionalStockTotal' => $availability['available_stock'],
+            'marketplacePrice' => $availability['marketplace_price'],
+            'sellerOffers' => $availability['seller_offers'],
+            'availability' => app(ProductAvailabilityService::class)->publicPayload($availability),
             'documents' => $this->productDocuments($product->id),
             'lmsLinks' => $this->productLmsLinks($product->id),
             'alternatives' => $this->alternatives($product->id),

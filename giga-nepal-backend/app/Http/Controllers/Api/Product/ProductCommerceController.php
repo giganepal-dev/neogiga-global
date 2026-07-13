@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\Product;
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Services\Inventory\RegionStockService;
+use App\Services\Marketplace\GlobalMarketplaceContextService;
+use App\Services\Marketplace\ProductAvailabilityService;
 use App\Services\Product\GenericProductSuggestionService;
 use App\Services\Product\ProductVisibilityService;
 use Illuminate\Http\JsonResponse;
@@ -94,6 +96,17 @@ class ProductCommerceController extends Controller
     {
         $record = $this->productOrFail($product, $visibility);
         return $this->success($stock->publicStock($record->id));
+    }
+
+    public function availability(string|int $product, \Illuminate\Http\Request $request, ProductVisibilityService $visibility, ProductAvailabilityService $availability): JsonResponse
+    {
+        $record = $this->productOrFail($product, $visibility);
+        $variantId = $request->integer('variant_id') ?: null;
+        $context = app(GlobalMarketplaceContextService::class)->context($request);
+
+        return $this->success($availability->publicPayload(
+            $availability->forProduct((int) $record->id, $context['current'] ?? null, $variantId)
+        ));
     }
 
     public function stockMarketplace(string|int $product, int $marketplace, ProductVisibilityService $visibility, RegionStockService $stock): JsonResponse
