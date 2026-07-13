@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 /**
  * Session-authed (admin.web) config actions for the adaptation modules.
@@ -446,6 +447,14 @@ class CommerceOpsController extends Controller
         return $lines->isEmpty() ? null : json_encode($lines->all());
     }
 
+    /** @param array<string, mixed> $payload @return array<string, mixed> */
+    private function productPayloadForSchema(array $payload): array
+    {
+        $columns = array_flip(Schema::getColumnListing('products'));
+
+        return array_filter($payload, static fn ($value, $column) => isset($columns[$column]), ARRAY_FILTER_USE_BOTH);
+    }
+
     public function storeProduct(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -458,8 +467,8 @@ class CommerceOpsController extends Controller
             'category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
             'vendor_id' => ['nullable', 'integer', 'exists:vendors,id'],
             'manufacturer_name' => ['nullable', 'string', 'max:255'],
-            'type' => ['nullable', 'string', 'max:60'],
-            'status' => ['required', 'string', 'max:60'],
+            'type' => ['nullable', Rule::in(['simple', 'variable', 'bundle', 'kit', 'service', 'digital'])],
+            'status' => ['required', Rule::in(['draft', 'pending', 'approved', 'rejected', 'archived'])],
             'base_price' => ['nullable', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
@@ -474,7 +483,7 @@ class CommerceOpsController extends Controller
             'attributes_json' => ['nullable', 'string'],
         ]);
 
-        $slug = $data['slug'] ?: Str::slug($data['name']);
+        $slug = ($data['slug'] ?? null) ?: Str::slug($data['name']);
         $payload = [
             'name' => $data['name'],
             'slug' => $slug,
@@ -484,9 +493,9 @@ class CommerceOpsController extends Controller
             'category_id' => $data['category_id'] ?? null,
             'vendor_id' => $data['vendor_id'] ?? null,
             'manufacturer_name' => $data['manufacturer_name'] ?? null,
-            'type' => $data['type'] ?? 'physical',
+            'type' => $data['type'] ?? 'simple',
             'status' => $data['status'],
-            'base_price' => $data['base_price'] ?? null,
+            'base_price' => (float) ($data['base_price'] ?? 0),
             'sale_price' => $data['sale_price'] ?? null,
             'stock_quantity' => $data['stock_quantity'] ?? 0,
             'low_stock_threshold' => $data['low_stock_threshold'] ?? 5,
@@ -501,6 +510,7 @@ class CommerceOpsController extends Controller
             'metadata' => json_encode(['saved_via' => 'admin.web']),
             'updated_at' => now(),
         ];
+        $payload = $this->productPayloadForSchema($payload);
 
         if (! empty($data['id'])) {
             DB::table('products')->where('id', $data['id'])->update($payload);
@@ -514,6 +524,10 @@ class CommerceOpsController extends Controller
         }
 
         $this->auditAdminAction($request, 'product_'.$verb, 'products', $id, ['sku' => $data['sku'], 'name' => $data['name']]);
+
+        if ($verb === 'created') {
+            return redirect("/admin/products/{$id}")->with('status', 'Product draft created. Complete its catalog, pricing, inventory, media, and publishing details.');
+        }
 
         return back()->with('status', "Product {$verb}.");
     }
@@ -547,7 +561,7 @@ class CommerceOpsController extends Controller
             return back()->with('error', 'Product not found.');
         }
 
-        $next = in_array($row->status, ['inactive', 'archived'], true) ? 'draft' : 'inactive';
+        $next = $row->status === 'archived' ? 'draft' : 'archived';
         DB::table('products')->where('id', $product)->update(['status' => $next, 'updated_at' => now()]);
         $this->auditAdminAction($request, 'product_status_updated', 'products', $product, ['status' => $next]);
 

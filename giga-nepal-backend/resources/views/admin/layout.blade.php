@@ -92,9 +92,14 @@
         details.modal > summary::-webkit-details-marker{display:none}
         details.modal[open]::before{content:"";position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:80}
         .modal-panel{position:fixed;right:24px;top:24px;bottom:24px;width:min(560px,calc(100vw - 48px));overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 24px 80px rgba(2,6,23,.28);z-index:90}
+        .modal-panel.modal-wide{left:50%;right:auto;transform:translateX(-50%);width:min(960px,calc(100vw - 48px))}
         .modal-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid var(--line)}
         .modal-h h3{margin:0;font-size:1rem}
         .modal-b{padding:16px}
+        .form-section{padding:14px 0;border-top:1px solid var(--line)}
+        .form-section:first-child{padding-top:0;border-top:0}
+        .form-section h4{margin:0 0 10px;font-size:.88rem}
+        .modal-actions{position:sticky;bottom:-16px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;background:#fff;border-top:1px solid var(--line)}
         .dropzone{border:1.5px dashed #cbd5e1;border-radius:10px;background:#f8fafc;padding:24px;text-align:center;color:var(--muted)}
 
         /* Cards / KPIs */
@@ -147,6 +152,18 @@
         .tree .cnt{margin-left:auto;color:var(--muted);font-size:.75rem}
 
         .note{background:#eff6ff;border:1px solid #dbeafe;color:#1e3a8a;border-radius:var(--r-sm);padding:11px 14px;font-size:.84rem;margin-bottom:16px}
+        .pagination-wrap{padding:12px 16px;border-top:1px solid var(--line)}
+        .content nav[aria-label="Pagination Navigation"]{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:38px}
+        .content nav[aria-label="Pagination Navigation"]>div:first-child{display:none}
+        .content nav[aria-label="Pagination Navigation"]>div:last-child{display:flex;flex:1;align-items:center;justify-content:space-between;gap:16px}
+        .content nav[aria-label="Pagination Navigation"] p{margin:0;color:var(--muted);font-size:.84rem}
+        .content nav[aria-label="Pagination Navigation"] .z-0{display:inline-flex;align-items:center;isolation:isolate}
+        .content nav[aria-label="Pagination Navigation"] a,
+        .content nav[aria-label="Pagination Navigation"] span[aria-current="page"]>span,
+        .content nav[aria-label="Pagination Navigation"] span[aria-disabled="true"]>span{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 10px;margin-left:-1px;border:1px solid var(--line);background:#fff;color:var(--slate);font-size:.84rem;font-weight:600}
+        .content nav[aria-label="Pagination Navigation"] a:hover{background:#f8fafc;color:var(--primary)}
+        .content nav[aria-label="Pagination Navigation"] span[aria-current="page"]>span{background:#e0f2fe;color:#075985;border-color:#bae6fd}
+        .content nav[aria-label="Pagination Navigation"] svg{display:block;width:18px;height:18px;max-width:18px;max-height:18px}
 
         @media (max-width:900px){
             .app{display:block}
@@ -168,6 +185,9 @@
             .form-grid{grid-template-columns:1fr}
             .kpis{grid-template-columns:1fr}
             .tbl th,.tbl td{padding:9px 11px}
+            .modal-panel.modal-wide{left:16px;right:16px;transform:none;width:auto}
+            .content nav[aria-label="Pagination Navigation"]>div:first-child{display:flex;justify-content:space-between;flex:1;gap:10px}
+            .content nav[aria-label="Pagination Navigation"]>div:last-child{display:none}
         }
         .burger{display:none;background:none;border:1px solid var(--line);border-radius:7px;width:38px;height:38px;align-items:center;justify-content:center;cursor:pointer}
         @media (prefers-reduced-motion:reduce){*{transition:none !important}}

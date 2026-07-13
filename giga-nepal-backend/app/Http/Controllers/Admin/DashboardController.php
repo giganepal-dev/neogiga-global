@@ -255,7 +255,7 @@ class DashboardController extends Controller
             ],
             'stats' => [
                 'total' => Product::count(),
-                'active' => Product::whereIn('status', ['active', 'approved', 'published'])->count(),
+                'active' => Product::where('status', 'approved')->count(),
                 'draft' => Product::where('status', 'draft')->count(),
                 'lowStock' => Product::whereColumn('stock_quantity', '<=', 'low_stock_threshold')->count(),
                 'importPending' => Schema::hasTable('catalog_product_sources')

@@ -1,6 +1,28 @@
 # IMPLEMENTATION_STATUS.md
 
-Generated: 2026-07-11
+Generated: 2026-07-13
+
+## 2026-07-13 Admin Repair
+
+- Inspected the marketplace context, marketplace configuration, pricing,
+  inventory, reservation, transfer, product and admin route implementations.
+- Identified an unmatched Blade conditional as the production `/admin/users`
+  500 cause. Replaced the fragile template with a compilable, connected users
+  and roles interface.
+- Replaced the product creation modal's oversized pseudo wizard with a bounded,
+  responsive draft-first form. Creation now uses only schema-valid product type
+  and status values, then redirects to the existing full product editor.
+- Removed invalid `active`/`inactive` product-status assumptions from the
+  product list and archive action; valid lifecycle states are now used.
+- Made product saves schema-aware, retaining compatibility with existing
+  product-table variants without migrations or data rewrites.
+- Added shared pagination SVG and modal/form responsive styling.
+- Added feature coverage for users rendering, product creation, status
+  validation and archive/restore transitions. No migrations were added.
+- Remaining architecture work: configurable brand administration, one public
+  availability facade, and one public price-resolution facade. These need a
+  dedicated compatibility phase because existing operational modules already
+  serve inventory and pricing reads.
 
 ## Complete / Deployed
 
@@ -46,4 +68,3 @@ Generated: 2026-07-11
 - Real-time live visitors and sales telemetry.
 - Complete multi-country public SEO rollout for every product/category/manufacturer page.
 - Automated licensed product image acquisition from approved feeds.
-

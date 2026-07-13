@@ -340,3 +340,13 @@
 - Protected incomplete `/api/v1/ai/*` POST endpoints with the existing API token middleware.
 - Added optional hashed admin token support via `ADMIN_API_TOKEN_HASH` while preserving current `ADMIN_API_TOKEN` behavior.
 - Updated `.env.example` for `neogiga_prod` and documented a safe production DB cutover plan without modifying live `.env` or data.
+# 2026-07-13 - Admin Reliability and Product Entry Repair
+
+- Replaced the broken admin users Blade template responsible for the production
+  500 response with a structured user, access, invitation and audit interface.
+- Reworked the product creation modal into a responsive draft-first form and
+  aligned product status/type validation with the existing schema.
+- Fixed archive/restore state handling, constrained unstyled pagination SVGs,
+  and added reusable modal/form layout rules.
+- Added architecture, price, marketplace, responsive audit and data-repair
+  documentation. No migration or production data mutation was introduced.
