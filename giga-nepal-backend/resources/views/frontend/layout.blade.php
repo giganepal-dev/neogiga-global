@@ -8,6 +8,19 @@
     $publicBase = '/'.$activePrefix;
     $brandMenu = app(\App\Services\Catalog\BrandVisibilityService::class)
         ->visibleFor($marketplaceContext['current'] ?? null, true, false, 'primary');
+    $marketplaceFlag = static function (?string $marketplaceCode, ?string $countryCode): string {
+        if (strtolower((string) $marketplaceCode) === 'global') {
+            return '🌐';
+        }
+
+        return match (strtoupper((string) $countryCode)) {
+            'AU' => '🇦🇺', 'BD' => '🇧🇩', 'BR' => '🇧🇷', 'BT' => '🇧🇹', 'CA' => '🇨🇦',
+            'DE' => '🇩🇪', 'ES' => '🇪🇸', 'FR' => '🇫🇷', 'GB' => '🇬🇧', 'IN' => '🇮🇳',
+            'IT' => '🇮🇹', 'KE' => '🇰🇪', 'LK' => '🇱🇰', 'NP' => '🇳🇵', 'PK' => '🇵🇰',
+            'QA' => '🇶🇦', 'SA' => '🇸🇦', 'US' => '🇺🇸', 'AE' => '🇦🇪', 'ZA' => '🇿🇦',
+            default => '🏳️',
+        };
+    };
 @endphp
 <head>
     <meta charset="utf-8">
@@ -40,9 +53,9 @@
         a{color:inherit;text-decoration:none}img,svg{max-width:100%;display:block}button,input,select,textarea{font:inherit}button{cursor:pointer}
         .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;letter-spacing:.02em}
         .wrap{width:min(var(--max),calc(100% - 40px));margin-inline:auto}.skip{position:absolute;left:-999px;top:8px;background:#fff;color:#000;padding:8px 10px;border-radius:6px;z-index:100}.skip:focus{left:8px}
-        .top-strip{background:var(--bg2);color:var(--muted);font-size:.78rem;border-bottom:1px solid var(--line)}.top-strip .wrap{min-height:34px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.edition-links{display:flex;gap:12px;flex-wrap:wrap}.edition-links a,.edition-links button{color:var(--muted);background:none;border:0;padding:0;font:inherit;cursor:pointer;transition:color .18s}.edition-links a:hover,.edition-links button:hover{color:var(--cyan)}
-        .site-head{position:sticky;top:0;z-index:60;background:rgba(16,20,23,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.head-main{min-height:76px;display:grid;grid-template-columns:auto minmax(280px,1fr) auto;gap:18px;align-items:center}.brand{display:flex;align-items:center;gap:11px;color:#fff;font-weight:800;letter-spacing:-.01em}.mark{width:40px;height:40px;border:1px solid rgba(40,216,251,.4);border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(40,216,251,.16),rgba(249,189,44,.06))}.brand small{display:block;color:var(--gold);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;margin-top:-2px}
-        .search{display:grid;grid-template-columns:150px 1fr auto;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--s1)}.search select,.search input{border:0;min-height:46px;padding:0 14px;color:var(--on);background:transparent}.search input::placeholder{color:rgba(197,198,205,.5)}.search select{background:rgba(255,255,255,.04);border-right:1px solid var(--line);color:var(--muted)}.search button{border:0;background:var(--cyan);color:#003640;font-weight:700;padding:0 20px;transition:filter .15s}.search button:hover{filter:brightness(1.1)}.head-actions{display:flex;align-items:center;gap:8px}.switcher-form{display:flex;gap:6px;align-items:center}.select-lite,.icon-btn,.switch-btn{min-height:40px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.05);color:#fff;padding:0 12px;transition:.15s}.select-lite:hover,.icon-btn:hover,.switch-btn:hover{border-color:rgba(40,216,251,.5)}.switch-btn{font-weight:700;background:var(--cyan);color:#003640;border-color:transparent}.icon-btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.86rem}.icon-btn.gold{border-color:rgba(249,189,44,.45);color:var(--gold)}
+        .top-strip{background:var(--bg2);color:var(--muted);font-size:.78rem;border-bottom:1px solid var(--line)}.top-strip .wrap{min-height:34px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.edition-links{display:flex;gap:5px;flex-wrap:wrap;align-items:center}.edition-flag{width:27px;height:27px;display:grid;place-items:center;border:1px solid transparent;border-radius:7px;font-size:1rem;line-height:1;transition:.18s}.edition-flag:hover,.edition-flag[aria-current="page"]{background:rgba(40,216,251,.12);border-color:rgba(40,216,251,.35);transform:translateY(-1px)}.market-flag{margin-right:5px;font-size:.95rem}
+        .site-head{position:sticky;top:0;z-index:60;background:rgba(16,20,23,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.head-main{min-height:76px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center}.brand{display:flex;align-items:center;gap:11px;color:#fff;font-weight:800;letter-spacing:-.01em}.mark{width:40px;height:40px;border:1px solid rgba(40,216,251,.4);border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(40,216,251,.16),rgba(249,189,44,.06))}.brand small{display:block;color:var(--gold);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;margin-top:-2px}
+        .search-tools{min-width:0;display:flex;align-items:stretch;gap:8px}.search{min-width:0;flex:1;display:grid;grid-template-columns:150px minmax(140px,1fr) auto;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--s1)}.search select,.search input{border:0;min-width:0;min-height:46px;padding:0 14px;color:var(--on);background:transparent}.search input::placeholder{color:rgba(197,198,205,.5)}.search select{background:rgba(255,255,255,.04);border-right:1px solid var(--line);color:var(--muted)}.search button{border:0;background:var(--cyan);color:#003640;font-weight:700;padding:0 16px;transition:filter .15s}.search button:hover{filter:brightness(1.1)}.header-tool{min-height:46px;display:inline-flex;align-items:center;gap:7px;padding:0 10px;border:1px solid var(--line);border-radius:10px;color:var(--muted);font-size:.78rem;font-weight:700;line-height:1.05;white-space:nowrap;transition:.15s}.header-tool svg,.icon-btn svg{width:19px;height:19px;flex:none;stroke:currentColor}.header-tool:hover{color:var(--cyan);border-color:rgba(40,216,251,.5);background:rgba(40,216,251,.06)}.head-actions{display:flex;align-items:center;gap:8px}.select-lite,.icon-btn{min-height:40px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.05);color:#fff;padding:0 10px;transition:.15s}.select-lite:hover,.icon-btn:hover{border-color:rgba(40,216,251,.5)}.icon-btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.8rem}.icon-btn.gold{border-color:rgba(249,189,44,.45);color:var(--gold)}
         .nav-row{border-top:1px solid var(--line)}.nav-row .wrap{display:flex;align-items:center;gap:18px;min-height:46px}.mega{position:relative}.mega summary{list-style:none;display:flex;align-items:center;gap:8px;color:#fff;font-weight:700;font-size:.9rem}.mega summary::-webkit-details-marker{display:none}.mega-panel{position:absolute;top:40px;left:0;width:min(920px,calc(100vw - 32px));background:var(--s1);color:var(--on);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 80px rgba(0,0,0,.5);padding:20px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:18px;backdrop-filter:blur(14px)}.mega-col{display:grid;gap:6px}.mega-col h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:0 0 4px}.mega-col a{padding:8px 10px;border-radius:8px;color:var(--muted);transition:.15s}.mega-col a:hover{background:rgba(40,216,251,.1);color:var(--cyan)}.primary-nav{display:flex;gap:18px;color:var(--muted);font-size:.9rem;font-weight:600;flex-wrap:wrap}.primary-nav a{transition:color .15s}.primary-nav a:hover{color:var(--cyan)}
         main{min-height:60vh}.hero{background:radial-gradient(circle at 18% 20%,rgba(40,216,251,.16),transparent 34rem),radial-gradient(circle at 80% 6%,rgba(249,189,44,.1),transparent 28rem),linear-gradient(135deg,#0b1220,#101417 60%,#0b0f11);color:#fff;border-bottom:1px solid var(--line)}.hero-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:34px;align-items:center;padding:64px 0 52px}.eyebrow{color:var(--cyan);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem}.hero h1,.page-title{font-size:clamp(2.35rem,6vw,4.6rem);font-weight:800;line-height:1.02;letter-spacing:-.02em;margin:12px 0 18px;text-shadow:0 0 44px rgba(40,216,251,.18)}.hero p,.lead{color:var(--muted);font-size:1.08rem;max-width:72ch}.hero-search{margin:26px 0 12px;max-width:760px}.ai-bar{display:flex;gap:10px;align-items:center;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px}.ai-bar input{flex:1;border:0;background:transparent;color:var(--on);border-radius:6px;min-height:44px;padding:0 12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
         .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:10px;padding:0 18px;font-weight:600;font-size:.9rem;border:1px solid transparent;transition:.15s}.btn:hover{transform:translateY(-1px)}.btn-primary{background:var(--cyan);color:#003640}.btn-primary:hover{filter:brightness(1.1)}.btn-gold{background:var(--gold);color:#261900}.btn-ghost{border-color:var(--line);background:transparent;color:var(--on)}.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}.btn-dark{border-color:var(--line);color:#fff;background:rgba(255,255,255,.05)}
@@ -57,10 +70,11 @@
         .spec-table{width:100%;border-collapse:collapse;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:.86rem}.spec-table th,.spec-table td{padding:11px 14px;border-bottom:1px solid var(--line);text-align:left;color:var(--on)}.spec-table th{background:var(--s1);color:var(--muted);width:38%;font-weight:600}
         .product-gallery{display:grid;gap:10px}.product-gallery-main{aspect-ratio:1/1;min-height:330px;background:var(--s1);border:1px solid var(--line);border-radius:10px;display:grid;place-items:center;overflow:hidden}.product-gallery-main img{width:100%;height:100%;object-fit:contain;padding:18px}.product-gallery-main .product-gallery-placeholder{width:100%;height:100%;object-fit:cover;padding:0}.product-gallery-thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.product-gallery-thumb{aspect-ratio:1;border:1px solid var(--line);border-radius:8px;background:var(--s1);overflow:hidden;display:grid;place-items:center;color:var(--faint);font-size:.76rem}.product-gallery-thumb:hover{border-color:var(--cyan)}.product-gallery-thumb img{width:100%;height:100%;object-fit:cover}.product-summary{max-width:72ch;line-height:1.75;color:var(--muted);margin:0 0 16px}.product-overview{margin:0 0 20px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.025)}.product-overview h2{font-size:1.05rem;margin:0 0 8px}.product-overview p{margin:0;line-height:1.7;color:var(--soft)}.spec-group th{background:rgba(40,216,251,.11);color:var(--cyan)}.product-price-card{padding:14px;border:1px solid rgba(40,216,251,.28);border-radius:10px;background:rgba(40,216,251,.07);margin-bottom:12px}.product-price-card strong{display:block;color:#fff;font-size:1.7rem;margin:2px 0}.product-detail-section{background:var(--bg2)}.product-review{padding:14px 0;border-top:1px solid var(--line)}
         .crumbs{display:flex;flex-wrap:wrap;gap:7px;align-items:center;color:var(--faint);font-size:.85rem;margin:18px 0}.crumbs a{color:var(--cyan)}
-        .footer{background:var(--bg2);color:var(--muted);padding:56px 0 100px;border-top:1px solid var(--line)}.foot-grid{display:grid;grid-template-columns:1.5fr repeat(4,1fr);gap:24px}.footer h3{color:#fff;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em}.footer a{display:block;color:var(--muted);margin:8px 0;transition:color .15s}.footer a:hover{color:var(--cyan)}.newsletter{display:flex;gap:8px;flex-wrap:wrap}.newsletter input{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--s1);color:var(--on);padding:0 14px}
+        .footer{background:var(--bg2);color:var(--muted);padding:56px 0 100px;border-top:1px solid var(--line)}.foot-grid{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:24px}.footer h3{color:#fff;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em}.footer a{display:block;color:var(--muted);margin:8px 0;transition:color .15s}.footer a:hover{color:var(--cyan)}.newsletter{display:flex;gap:8px;flex-wrap:wrap}.newsletter input{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--s1);color:var(--on);padding:0 14px}.footer-editions{display:grid;grid-template-columns:210px 1fr;gap:24px;margin-top:42px;padding-top:26px;border-top:1px solid var(--line)}.footer-editions h3{margin:0;color:#fff;font-size:1rem;letter-spacing:0;text-transform:none}.footer-editions p{margin:4px 0 0;font-size:.82rem}.footer-edition-links{display:flex;flex-wrap:wrap;gap:8px;align-items:start}.footer-edition-links form{margin:0}.footer-edition-links button{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.03);color:var(--muted);padding:8px 10px;font:inherit;font-size:.78rem;text-align:left;transition:.15s}.footer-edition-links button:hover{border-color:rgba(40,216,251,.5);color:#fff}.footer-edition-links button[aria-current="page"]{border-color:rgba(40,216,251,.5);background:rgba(40,216,251,.1);color:#fff}.footer-edition-links small{color:var(--faint)}
         .float-ai{position:fixed;right:18px;bottom:20px;z-index:50;background:var(--cyan);color:#003640;border-radius:999px;padding:12px 18px;font-weight:700;box-shadow:0 14px 40px rgba(40,216,251,.3);transition:transform .15s}.float-ai:hover{transform:translateY(-2px)}.mobile-bottom{display:none}
-        @media(max-width:980px){.head-main{grid-template-columns:1fr;gap:10px;padding:12px 0}.head-actions{overflow-x:auto}.search{grid-template-columns:1fr auto}.search select{display:none}.nav-row{display:none}.hero-grid,.layout-2{grid-template-columns:1fr}.foot-grid{grid-template-columns:1fr 1fr}.filter{position:static}.mobile-bottom{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:55;background:rgba(11,15,17,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);justify-content:space-around;padding:8px 6px}.mobile-bottom a{color:var(--muted);font-size:.75rem;font-weight:600;text-align:center}.float-ai{bottom:64px}.hero h1{font-size:3rem}}
-        @media(max-width:620px){.wrap{width:min(var(--max),calc(100% - 24px))}.hero-grid{padding:44px 0}.hero h1{font-size:2.5rem}.section{padding:44px 0}.foot-grid{grid-template-columns:1fr 1fr}.ai-bar{display:grid}.category-grid{grid-template-columns:1fr 1fr}.section-head{display:block}.btn{width:100%}}
+        @media(max-width:1180px){.header-tool span,.icon-btn .action-label{display:none}.header-tool{padding:0 12px}.head-main{gap:12px}}
+        @media(max-width:980px){.head-main{grid-template-columns:1fr;gap:10px;padding:12px 0}.search-tools,.head-actions{overflow-x:auto}.search-tools{padding-bottom:2px}.search{min-width:320px}.header-tool span,.icon-btn .action-label{display:inline}.nav-row{display:none}.hero-grid,.layout-2{grid-template-columns:1fr}.foot-grid{grid-template-columns:1fr 1fr}.footer-editions{grid-template-columns:1fr}.filter{position:static}.mobile-bottom{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:55;background:rgba(11,15,17,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);justify-content:space-around;padding:8px 6px}.mobile-bottom a{color:var(--muted);font-size:.75rem;font-weight:600;text-align:center}.float-ai{bottom:64px}.hero h1{font-size:3rem}}
+        @media(max-width:620px){.wrap{width:min(var(--max),calc(100% - 24px))}.hero-grid{padding:44px 0}.hero h1{font-size:2.5rem}.section{padding:44px 0}.foot-grid{grid-template-columns:1fr 1fr}.ai-bar{display:grid}.category-grid{grid-template-columns:1fr 1fr}.section-head{display:block}.btn{width:100%}.top-strip .wrap{justify-content:center}.footer-edition-links button{max-width:100%}}
         @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.category-card:hover,.product-card:hover,.btn:hover,.float-ai:hover{transform:none}}
     </style>
 </head>
@@ -91,15 +105,12 @@
 @endif
 <div class="top-strip">
     <div class="wrap">
-        <span>{{ $marketplaceContext['current']->name ?? 'NeoGiga Global' }} · {{ $marketplaceContext['currency_code'] ?? 'USD' }} pricing · single global MPN catalog.</span>
+        <span><span class="market-flag" aria-hidden="true">{{ $marketplaceFlag($marketplaceContext['current']->code ?? 'global', $marketplaceContext['country_code'] ?? null) }}</span>{{ $marketplaceContext['currency_code'] ?? 'USD' }} pricing · single global MPN catalog.</span>
         <div class="edition-links" aria-label="Regional editions">
             @foreach(($marketplaceContext['editions'] ?? []) as $edition)
-                <form method="post" action="{{ route('marketplace.preference') }}">
-                    @csrf
-                    <input type="hidden" name="marketplace" value="{{ $edition['code'] }}">
-                    <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
-                    <button type="submit">{{ $edition['name'] }}</button>
-                </form>
+                @if($edition['url'])
+                    <a class="edition-flag" href="{{ $edition['url'] }}" title="{{ $edition['name'] }}" aria-label="Open {{ $edition['name'] }}" @if(($marketplaceContext['current']->id ?? null) === $edition['id']) aria-current="page" @endif><span aria-hidden="true">{{ $marketplaceFlag($edition['code'], $edition['country_code']) }}</span></a>
+                @endif
             @endforeach
         </div>
     </div>
@@ -110,26 +121,24 @@
             <span class="mark"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M9 22V10l14 12V10" stroke="#19D3F5" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             <span>NeoGiga<small>Engineering Marketplace</small></span>
         </a>
-        <form class="search" method="get" action="{{ $publicBase }}/products" role="search">
-            <select name="category" aria-label="Category"><option value="">All categories</option><option value="semiconductors">Semiconductors</option><option value="robotics">Robotics</option><option value="battery-technology">Battery</option><option value="industrial-automation">Automation</option></select>
-            <input name="q" type="search" value="{{ request('q') }}" placeholder="Search products, MPN, SKU, category..." aria-label="Search NeoGiga">
-            <button type="submit">Search</button>
-        </form>
-        <div class="head-actions">
-            <form class="switcher-form" method="post" action="{{ route('marketplace.preference') }}">
-                @csrf
-                <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
-                <select class="select-lite" name="marketplace" aria-label="Marketplace">
-                    @foreach(($marketplaceContext['editions'] ?? []) as $edition)
-                        <option value="{{ $edition['code'] }}" @selected(($marketplaceContext['current']->id ?? null) === $edition['id'])>{{ $edition['name'] }}</option>
-                    @endforeach
-                </select>
-                <button class="switch-btn" type="submit">Apply</button>
+        <div class="search-tools">
+            <form class="search" method="get" action="{{ $publicBase }}/products" role="search">
+                <select name="category" aria-label="Category"><option value="">All categories</option><option value="semiconductors">Semiconductors</option><option value="robotics">Robotics</option><option value="battery-technology">Battery</option><option value="industrial-automation">Automation</option></select>
+                <input name="q" type="search" value="{{ request('q') }}" placeholder="Search products, MPN, SKU, category..." aria-label="Search NeoGiga">
+                <button type="submit">Search</button>
             </form>
+            <a class="header-tool" href="{{ $publicBase }}/ai-commerce?mode=bom" title="Open BOM builder" aria-label="Upload BOM">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M9 5h10M9 10h10M9 15h6" stroke-linecap="round"/><path d="m3 5 1.2 1.2L6.5 3.8M3 10l1.2 1.2L6.5 8.8M3 15l1.2 1.2 2.3-2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Upload BOM</span>
+            </a>
+            <a class="header-tool" href="https://{{ config('pcb.domain', 'pcb.neogiga.com') }}/en" title="Open NeoGiga PCB portal" aria-label="PCB Check">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4M10 10h4v4h-4z" stroke-linecap="round"/></svg><span>PCB Check</span>
+            </a>
+        </div>
+        <div class="head-actions">
             <select class="select-lite" aria-label="Language"><option>EN</option><option>HI</option><option>NE</option></select>
-            <a class="icon-btn" href="/cart">Cart</a>
-            <a class="icon-btn" href="/admin/login">B2B Login</a>
-            <a class="icon-btn gold" href="{{ $publicBase }}/sell-on-neogiga">Seller</a>
+            <a class="icon-btn" href="/admin/login" title="B2B login"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4" stroke-linecap="round"/><path d="m10 8 4 4-4 4M14 12H3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="action-label">B2B</span></a>
+            <a class="icon-btn gold" href="{{ $publicBase }}/sell-on-neogiga" title="Become a seller"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="8" r="3"/><path d="M5 21v-1a7 7 0 0 1 14 0v1M19 8h3m-1.5-1.5v3" stroke-linecap="round"/></svg><span class="action-label">Seller</span></a>
+            <a class="icon-btn" href="/cart" title="Cart"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 4h2l2.4 11.2h10.8L21 7H6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg><span class="action-label">Cart</span></a>
         </div>
     </div>
     <div class="nav-row">
@@ -155,8 +164,21 @@
         <div><h3>Products</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=sensors">Sensors</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/products?category=power-storage">Power storage</a></div>
         <div><h3>Company</h3><a href="{{ $publicBase }}/ai-commerce">AI commerce</a><a href="{{ $publicBase }}/lms">Learning hub</a><a href="{{ $publicBase }}/rfq">RFQ sourcing</a><a href="{{ $publicBase }}/distributors">Distributors</a></div>
         <div><h3>Seller</h3><a href="{{ $publicBase }}/sell-on-neogiga">Become a seller</a><a href="{{ $publicBase }}/seller-early-access">Early access</a><a href="/admin/login">Seller portal</a><a href="/admin/login">B2B login</a></div>
-        <div><h3>Countries</h3>@foreach(($marketplaceContext['editions'] ?? []) as $edition)<a href="{{ $edition['url'] }}">{{ $edition['name'] }}</a>@endforeach<a href="#">Bangladesh</a><a href="#">Sri Lanka</a></div>
     </div>
+    <section class="wrap footer-editions" aria-label="Marketplace switcher">
+        <div><h3>Choose your storefront</h3><p>Country pricing, stock, tax and delivery rules apply after you switch.</p></div>
+        <div class="footer-edition-links">
+            @foreach(($marketplaceContext['editions'] ?? []) as $edition)
+                <form method="post" action="{{ route('marketplace.preference') }}">
+                    @csrf
+                    <input type="hidden" name="marketplace" value="{{ $edition['code'] }}">
+                    <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
+                    <input type="hidden" name="action" value="switch">
+                    <button type="submit" @if(($marketplaceContext['current']->id ?? null) === $edition['id']) aria-current="page" @endif><span aria-hidden="true">{{ $marketplaceFlag($edition['code'], $edition['country_code']) }}</span><span>{{ $edition['name'] }}<br><small>{{ $edition['currency_code'] }}</small></span></button>
+                </form>
+            @endforeach
+        </div>
+    </section>
 </footer>
 <a class="float-ai" href="{{ $publicBase }}/ai-commerce" aria-label="Open NeoGiga AI assistant">Ask AI</a>
 <nav class="mobile-bottom" aria-label="Mobile shortcuts"><a href="{{ $publicBase }}">Home</a><a href="{{ $publicBase }}/products">Search</a><a href="{{ $publicBase }}/categories">Categories</a><a href="{{ $publicBase }}/brands">Brands</a><a href="/cart">Cart</a></nav>
