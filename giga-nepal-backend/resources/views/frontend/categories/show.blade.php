@@ -30,8 +30,12 @@
     @endforeach
 </nav>
 
-<h1>{{ $category->name }}</h1>
-<p class="lead">{{ $metaDesc }}</p>
+<div class="category-hero" style="display:flex;align-items:center;gap:18px;margin-bottom:12px">
+    @if ($category->image_path)
+        <img src="{{ $category->image_path }}" alt="" width="112" height="112" loading="lazy" style="width:112px;height:112px;object-fit:contain;border:1px solid var(--line);border-radius:12px;background:#fff;flex:none">
+    @endif
+    <div><h1 style="margin:0 0 8px">{{ $category->name }}</h1><p class="lead" style="margin:0">{{ $metaDesc }}</p></div>
+</div>
 
 @if ($children->isNotEmpty())
     <h2 style="font-size:1.05rem;margin:8px 0 12px;color:var(--soft)">Subcategories</h2>

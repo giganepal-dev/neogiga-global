@@ -19,6 +19,7 @@ use App\Jobs\Marketing\GenerateRegionalSalesReportJob;
 use App\Jobs\Marketing\RefreshCustomerSegmentJob;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Schema;
@@ -604,6 +605,297 @@ Artisan::command('product-images:import-licensed-manifest
 
     return self::SUCCESS;
 })->purpose('Import licensed local product images from a manifest, with dry-run and rights gates.');
+
+Artisan::command('product-images:import-category-library
+    {library : Directory of user-supplied images grouped by component category.}
+    {--apply : Persist copied media and database rows. Without this flag the command is a dry-run.}
+    {--limit=0 : Maximum product image assignments, 0 means all eligible matches.}
+    {--replace-placeholder : Deactivate only the NeoGiga placeholder when a category-matched image is assigned.}', function () {
+    if (! Schema::hasTable('products') || ! Schema::hasTable('product_images') || ! Schema::hasTable('product_categories')) {
+        $this->error('Required products, product_images, or product_categories tables are missing.');
+
+        return self::FAILURE;
+    }
+
+    foreach (['source_name', 'source_license', 'source_url', 'original_url', 'checksum', 'width', 'height', 'downloaded_at', 'metadata'] as $column) {
+        if (! Schema::hasColumn('product_images', $column)) {
+            $this->error("product_images.{$column} is missing. Run migrations before importing local catalog media.");
+
+            return self::FAILURE;
+        }
+    }
+
+    $library = realpath((string) $this->argument('library'));
+    if ($library === false || ! is_dir($library) || ! is_readable($library)) {
+        $this->error('Image library directory is not readable: '.$this->argument('library'));
+
+        return self::FAILURE;
+    }
+
+    $apply = (bool) $this->option('apply');
+    $replacePlaceholder = (bool) $this->option('replace-placeholder');
+    $limit = max(0, (int) $this->option('limit'));
+    $placeholderPath = '/images/products/neogiga-component-placeholder.svg';
+    $sourceName = 'NeoGiga user-supplied local image library';
+    $sourceLicense = 'User-supplied asset authorization; rights review pending';
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif'];
+
+    // Each library folder is only used for the catalog categories it clearly describes.
+    $folderPatterns = [
+        'transistor' => ['transistor'],
+        'PNP-transistor' => ['transistor'],
+        'junction-transistor' => ['transistor'],
+        'LED' => ['led'],
+        'Integrated-micro-circuit' => ['analog ics', 'logic ics', 'operational amplifiers', 'comparators', 'timers', 'buffers', 'gates'],
+        'microprocessor' => ['microcontroller', 'microprocessor'],
+        'microchip' => ['microchip'],
+        'memory-chip' => ['memory', 'eeprom'],
+        'relay' => ['relay'],
+        'electric-relay' => ['relay'],
+        'Electrolytic-capacitor' => ['capacitor'],
+        'Bypass-capacitor' => ['capacitor'],
+        'potentiometer' => ['potentiometer'],
+        'rheostat' => ['potentiometer'],
+        'potential-divider' => ['potentiometer'],
+        'semiconductor-diode' => ['diode'],
+        'cartridge-fuse' => ['fuse'],
+        'step-down-transformer' => ['transformer'],
+        'step-up-transformer' => ['transformer'],
+        'induction-coil' => ['inductor'],
+        'heat-sink' => ['heat sink'],
+        'omni-directional-antenna' => ['antenna'],
+        'local-oscillator' => ['oscillator'],
+        'multiplexer' => ['multiplexer'],
+        'jumper-cable' => ['cable', 'wire'],
+        'clip-lead' => ['cable', 'wire'],
+    ];
+
+    $categories = DB::table('product_categories')->select('id', 'name', 'slug', 'image_path', 'seo_meta')->get();
+    $catalogImages = [];
+    foreach ($folderPatterns as $folder => $patterns) {
+        $folderPath = $library.'/'.$folder;
+        if (! is_dir($folderPath)) {
+            continue;
+        }
+
+        $files = collect(File::files($folderPath))
+            ->filter(function (SplFileInfo $file) use ($allowedExtensions): bool {
+                return in_array(strtolower($file->getExtension()), $allowedExtensions, true);
+            })
+            ->sortBy(fn (SplFileInfo $file) => $file->getFilename(), SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+        if ($files->isEmpty()) {
+            continue;
+        }
+
+        $matchedCategories = $categories->filter(function (object $category) use ($patterns): bool {
+            $name = Str::lower((string) $category->name);
+
+            return collect($patterns)->contains(fn (string $pattern): bool => str_contains($name, $pattern));
+        })->values();
+        if ($matchedCategories->isEmpty()) {
+            continue;
+        }
+
+        $catalogImages[] = [
+            'folder' => $folder,
+            'files' => $files,
+            'categories' => $matchedCategories,
+        ];
+    }
+
+    $plannedProducts = [];
+    $plannedCategories = [];
+    $assignedProducts = [];
+    foreach ($catalogImages as $source) {
+        $categoryIds = $source['categories']->pluck('id')->all();
+        $remaining = $limit > 0 ? max(0, $limit - count($plannedProducts)) : 0;
+        if ($limit > 0 && $remaining === 0) {
+            break;
+        }
+
+        $productQuery = DB::table('products as p')
+            ->whereIn('p.category_id', $categoryIds)
+            ->whereNotIn('p.id', $assignedProducts)
+            ->whereExists(function ($query) use ($placeholderPath) {
+                $query->selectRaw('1')
+                    ->from('product_images as pi')
+                    ->whereColumn('pi.product_id', 'p.id')
+                    ->where('pi.file_path', $placeholderPath)
+                    ->where('pi.is_active', true);
+            })
+            ->whereNotExists(function ($query) use ($placeholderPath) {
+                $query->selectRaw('1')
+                    ->from('product_images as pi')
+                    ->whereColumn('pi.product_id', 'p.id')
+                    ->where('pi.is_active', true)
+                    ->where('pi.file_path', '<>', $placeholderPath);
+            })
+            ->orderBy('p.id')
+            ->select('p.id', 'p.name', 'p.sku');
+        if ($limit > 0) {
+            $productQuery->limit(min($remaining, $source['files']->count()));
+        } else {
+            $productQuery->limit($source['files']->count());
+        }
+
+        $products = $productQuery->get();
+        foreach ($products as $index => $product) {
+            $file = $source['files']->get($index);
+            if (! $file) {
+                break;
+            }
+
+            $plannedProducts[] = compact('product', 'file') + ['folder' => $source['folder']];
+            $assignedProducts[] = $product->id;
+        }
+
+        foreach ($source['categories'] as $category) {
+            if ($category->image_path || isset($plannedCategories[$category->id])) {
+                continue;
+            }
+
+            $plannedCategories[$category->id] = [
+                'category' => $category,
+                'file' => $source['files']->first(),
+                'folder' => $source['folder'],
+            ];
+        }
+    }
+
+    $this->line('Recognized image folders: '.count($catalogImages));
+    $this->line('Product placeholder replacements planned: '.count($plannedProducts));
+    $this->line('Category representative images planned: '.count($plannedCategories));
+    $this->line('Safety: only explicit component-category folder matches are used; existing non-placeholder product images are preserved.');
+
+    if (! $apply) {
+        $this->comment('Dry-run only. Re-run with --apply --replace-placeholder after a database backup to persist media.');
+
+        return self::SUCCESS;
+    }
+
+    $productRoot = public_path('storage/catalog/product-images');
+    $categoryRoot = public_path('storage/catalog/category-images');
+    foreach ([$productRoot, $categoryRoot] as $directory) {
+        if (! is_dir($directory) && ! mkdir($directory, 0775, true) && ! is_dir($directory)) {
+            $this->error('Could not create media directory: '.$directory);
+
+            return self::FAILURE;
+        }
+    }
+
+    $now = now();
+    DB::transaction(function () use ($plannedProducts, $plannedCategories, $library, $productRoot, $categoryRoot, $placeholderPath, $replacePlaceholder, $sourceName, $sourceLicense, $now): void {
+        foreach ($plannedProducts as $plan) {
+            /** @var SplFileInfo $file */
+            $file = $plan['file'];
+            $product = $plan['product'];
+            $extension = strtolower($file->getExtension());
+            $checksum = hash_file('sha256', $file->getPathname());
+            $relativeFile = ltrim(Str::after($file->getPathname(), $library), DIRECTORY_SEPARATOR);
+            $destinationDirectory = $productRoot.'/'.$product->id;
+            if (! is_dir($destinationDirectory) && ! mkdir($destinationDirectory, 0775, true) && ! is_dir($destinationDirectory)) {
+                throw new RuntimeException('Could not create product image directory: '.$destinationDirectory);
+            }
+
+            $fileName = $checksum.'.'.$extension;
+            $destination = $destinationDirectory.'/'.$fileName;
+            if (! is_file($destination) && ! copy($file->getPathname(), $destination)) {
+                throw new RuntimeException('Could not copy product image: '.$file->getPathname());
+            }
+
+            if ($replacePlaceholder) {
+                DB::table('product_images')
+                    ->where('product_id', $product->id)
+                    ->where('file_path', $placeholderPath)
+                    ->where('is_active', true)
+                    ->update(['is_active' => false, 'is_primary' => false, 'updated_at' => $now]);
+            }
+
+            $dimensions = @getimagesize($destination) ?: [null, null];
+            DB::table('product_images')->insert([
+                'product_id' => $product->id,
+                'file_path' => '/storage/catalog/product-images/'.$product->id.'/'.$fileName,
+                'original_url' => null,
+                'source_url' => 'local://downloads/images/'.$relativeFile,
+                'source_name' => $sourceName,
+                'source_license' => $sourceLicense,
+                'copyright' => 'User-supplied asset; rights verification pending.',
+                'checksum' => $checksum,
+                'width' => $dimensions[0],
+                'height' => $dimensions[1],
+                'downloaded_at' => $now,
+                'metadata' => json_encode([
+                    'source_name' => $sourceName,
+                    'source_url' => 'local://downloads/images/'.$relativeFile,
+                    'source_file' => $relativeFile,
+                    'source_page_url' => null,
+                    'downloaded_at' => $now->toIso8601String(),
+                    'imported_at' => $now->toIso8601String(),
+                    'data_year' => $now->year,
+                    'license_note' => $sourceLicense,
+                    'confidence_level' => 'medium',
+                    'original_raw_value' => $plan['folder'],
+                    'normalized_value' => 'category_matched_component_image',
+                ]),
+                'file_name' => $fileName,
+                'mime_type' => mime_content_type($destination) ?: 'image/'.$extension,
+                'file_size' => filesize($destination) ?: null,
+                'sort_order' => 0,
+                'is_primary' => true,
+                'alt_text' => mb_substr($product->name.' product image', 0, 255),
+                'caption' => mb_substr('NeoGiga category-matched '.$plan['folder'].' image', 0, 255),
+                'is_active' => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        foreach ($plannedCategories as $plan) {
+            /** @var SplFileInfo $file */
+            $file = $plan['file'];
+            $category = $plan['category'];
+            $extension = strtolower($file->getExtension());
+            $checksum = hash_file('sha256', $file->getPathname());
+            $relativeFile = ltrim(Str::after($file->getPathname(), $library), DIRECTORY_SEPARATOR);
+            $directory = $categoryRoot.'/'.$category->slug;
+            if (! is_dir($directory) && ! mkdir($directory, 0775, true) && ! is_dir($directory)) {
+                throw new RuntimeException('Could not create category image directory: '.$directory);
+            }
+
+            $fileName = $checksum.'.'.$extension;
+            $destination = $directory.'/'.$fileName;
+            if (! is_file($destination) && ! copy($file->getPathname(), $destination)) {
+                throw new RuntimeException('Could not copy category image: '.$file->getPathname());
+            }
+
+            $seoMeta = json_decode((string) $category->seo_meta, true) ?: [];
+            $seoMeta['image_provenance'] = [
+                'source_name' => $sourceName,
+                'source_url' => 'local://downloads/images/'.$relativeFile,
+                'source_file' => $relativeFile,
+                'source_page_url' => null,
+                'downloaded_at' => $now->toIso8601String(),
+                'imported_at' => $now->toIso8601String(),
+                'data_year' => $now->year,
+                'license_note' => $sourceLicense,
+                'confidence_level' => 'medium',
+                'original_raw_value' => $plan['folder'],
+                'normalized_value' => 'category_representative_image',
+            ];
+
+            DB::table('product_categories')->where('id', $category->id)->update([
+                'image_path' => '/storage/catalog/category-images/'.$category->slug.'/'.$fileName,
+                'seo_meta' => json_encode($seoMeta),
+                'updated_at' => $now,
+            ]);
+        }
+    });
+
+    $this->info('Imported '.count($plannedProducts).' category-matched product image(s) and '.count($plannedCategories).' category representative image(s).');
+
+    return self::SUCCESS;
+})->purpose('Import user-supplied local images only for deterministic category matches, with source provenance and placeholder-only replacement.');
 
 Artisan::command('product-images:discover-candidates
     {--apply : Persist candidates. Without this flag the command is a dry-run.}

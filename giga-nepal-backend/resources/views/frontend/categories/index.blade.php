@@ -32,7 +32,12 @@
     @foreach ($roots as $root)
         <section style="background:rgba(13,34,64,.55);border:1px solid var(--line);border-radius:var(--r);padding:18px">
             <a href="{{ $publicBase }}/categories/{{ $root->slug }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-                <strong style="font-size:1.05rem">{{ $root->name }}</strong>
+                <span style="display:flex;align-items:center;gap:10px;min-width:0">
+                    @if ($root->image_path)
+                        <img src="{{ $root->image_path }}" alt="" width="42" height="42" loading="lazy" style="width:42px;height:42px;object-fit:contain;border-radius:8px;background:#fff;flex:none">
+                    @endif
+                    <strong style="font-size:1.05rem">{{ $root->name }}</strong>
+                </span>
                 <span aria-hidden="true" style="color:var(--cyan)">→</span>
             </a>
             @if ($root->children->isNotEmpty())
