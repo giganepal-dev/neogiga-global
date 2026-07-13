@@ -231,6 +231,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h12" stroke-linecap="round"/></svg>
                 Categories
             </a>
+            <a href="/admin/brands" class="{{ str_starts_with($r,'admin/brands') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9 9 9-9 9-9-9z" stroke-linejoin="round"/><path d="M12 8h.01" stroke-linecap="round"/></svg>
+                Brands
+            </a>
             <a href="/admin/products" class="{{ str_starts_with($r,'admin/products') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8" stroke-linejoin="round"/></svg>
                 Products

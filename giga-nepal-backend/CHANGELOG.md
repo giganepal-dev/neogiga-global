@@ -350,3 +350,11 @@
   and added reusable modal/form layout rules.
 - Added architecture, price, marketplace, responsive audit and data-repair
   documentation. No migration or production data mutation was introduced.
+
+# 2026-07-13 - Configurable Brand Menu
+
+- Added the admin brand manager, regional brand landing pages and database-backed
+  frontend brand menu.
+- Added safe product-brand visibility, display, publication, media and SEO
+  fields through an additive migration.
+- Preserved canonical products and prevented deletion of brands in use.

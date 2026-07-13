@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
+use App\Http\Controllers\Admin\BrandAdminController as AdminBrand;
 use App\Http\Controllers\Admin\CommerceOpsController as AdminCommerce;
 use App\Http\Controllers\Admin\CatalogIngestionAdminController as AdminCatalogIngestion;
 use App\Http\Controllers\Admin\DashboardController as AdminDash;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
 use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\CategoryController;
+use App\Http\Controllers\Web\BrandPageController;
 use App\Http\Controllers\Web\CartPageController;
 use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\AiCommercePageController;
@@ -79,6 +81,10 @@ Route::prefix('admin')->group(function () {
         Route::get('pcb/projects/{project}/files/{file}/download', [AdminPcb::class, 'download'])->name('admin.pcb.files.download');
         Route::get('categories', [AdminDash::class, 'categories']);
         Route::get('categories/{id}', [AdminDash::class, 'category'])->whereNumber('id');
+        Route::get('brands', [AdminBrand::class, 'index']);
+        Route::post('brands', [AdminBrand::class, 'store'])->middleware('throttle:20,1');
+        Route::post('brands/{brand}/toggle', [AdminBrand::class, 'toggle'])->middleware('throttle:20,1');
+        Route::delete('brands/{brand}', [AdminBrand::class, 'destroy'])->middleware('throttle:20,1');
         Route::get('products', [AdminDash::class, 'products']);
         Route::get('products/{id}', [AdminDash::class, 'product'])->whereNumber('id');
         Route::get('imports/jlcpcb', [AdminDash::class, 'jlcpcbImports']);
@@ -330,7 +336,8 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
             Route::get('/categories', fn (string $localePrefix) => app(CategoryController::class)->index())->name('localized.categories.index');
             Route::get('/categories/{slug}', fn (string $localePrefix, string $slug) => app(CategoryController::class)->show($slug))->where('slug', '[a-z0-9\-]+')->name('localized.categories.show');
             Route::get('/manufacturer/{slug}', fn (string $localePrefix, string $slug) => app(SeoLandingController::class)->manufacturer($slug))->where('slug', '[a-z0-9\-]+')->name('localized.manufacturer.show');
-            Route::get('/brands', fn (string $localePrefix) => redirect('/categories'))->name('localized.brands.index');
+            Route::get('/brands', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(BrandPageController::class)->index($request))->name('localized.brands.index');
+            Route::get('/brands/{slug}', fn (string $localePrefix, string $slug, \Illuminate\Http\Request $request) => app(BrandPageController::class)->show($request, $slug))->where('slug', '[a-z0-9\-]+')->name('localized.brands.show');
             Route::get('/lms', fn (string $localePrefix) => app(LmsPageController::class)->index(app(\App\Services\Lms\CourseCatalogService::class)))->name('localized.lms.index');
             Route::get('/projects', fn (string $localePrefix) => redirect('/learn'))->name('localized.projects.index');
             Route::get('/rfq', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(\App\Http\Controllers\Web\RfqPageController::class)->create($request))->name('localized.rfq.create');

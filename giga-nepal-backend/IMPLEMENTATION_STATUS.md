@@ -24,6 +24,21 @@ Generated: 2026-07-13
   dedicated compatibility phase because existing operational modules already
   serve inventory and pricing reads.
 
+## 2026-07-13 Configurable Brand Menu
+
+- Added a reversible product-brand extension migration for menu, responsive
+  display, publication, marketplace/country/category visibility, media and SEO
+  fields.
+- Added `BrandVisibilityService`, a cached central policy for active,
+  publication-window, marketplace, country, menu-placement and optional
+  public-product availability checks.
+- Added admin brand list/create/edit/deactivate/delete workflows with audit-log
+  entries. Brands assigned to products cannot be deleted.
+- Replaced the locale brand redirect with database-backed regional brand index
+  and landing pages, and populated the frontend mega-menu from the service.
+- Corrected the pre-existing `ProductBrand::products()` foreign-key mapping to
+  use `products.brand_id`.
+
 ## Complete / Deployed
 
 - Locale-first global storefront routes and canonical `/en` entry points.

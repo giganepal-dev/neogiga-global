@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\Product;
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\ProductBrand;
+use App\Services\Catalog\BrandVisibilityService;
+use App\Services\Marketplace\GlobalMarketplaceContextService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,23 +21,23 @@ class BrandController extends Controller
             'featured' => ['sometimes', 'boolean'],
         ]);
 
-        $brands = ProductBrand::query()
-            ->where('is_active', true)
-            ->when(isset($validated['featured']), fn ($q) => $q->where('is_featured', (bool) $validated['featured']))
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->paginate($validated['per_page'] ?? 25);
+        $context = app(GlobalMarketplaceContextService::class)->context($request);
+        $brands = app(BrandVisibilityService::class)
+            ->visibleFor($context['current'] ?? null)
+            ->when(isset($validated['featured']), fn ($items) => $items->where('is_featured', (bool) $validated['featured']))
+            ->values();
+
+        $perPage = $validated['per_page'] ?? 25;
+        $page = max(1, (int) $request->query('page', 1));
+        $brands = new \Illuminate\Pagination\LengthAwarePaginator($brands->forPage($page, $perPage)->values(), $brands->count(), $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
 
         return $this->success($brands);
     }
 
     public function show(string $slug): JsonResponse
     {
-        $brand = ProductBrand::query()
-            ->where('slug', $slug)
-            ->where('is_active', true)
-            ->with('country')
-            ->first();
+        $context = app(GlobalMarketplaceContextService::class)->context($request);
+        $brand = app(BrandVisibilityService::class)->visibleFor($context['current'] ?? null, false)->firstWhere('slug', $slug);
 
         if (!$brand) {
             return $this->error('Brand not found', 404);

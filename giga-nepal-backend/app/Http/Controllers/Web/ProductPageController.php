@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
 use App\Services\Catalog\CatalogSearchService;
+use App\Services\Catalog\BrandVisibilityService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\RegionalVisibilityService;
 use Illuminate\Http\Request;
@@ -81,7 +82,7 @@ class ProductPageController extends Controller
             'indexedSummary' => $catalogSearch->indexedSummary(),
             'rootCategories' => ProductCategory::whereNull('parent_id')
                 ->orderBy('sort_order')->orderBy('name')->limit(80)->get(),
-            'brands' => DB::table('product_brands')->orderBy('name')->limit(120)->get(['id', 'name']),
+            'brands' => app(BrandVisibilityService::class)->visibleFor($marketplaceContext['current'] ?? null, false),
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->limit(80)->get(['id', 'name']),
         ]);
     }

@@ -6,6 +6,8 @@
         ? $activePrefix
         : config('neogiga_global.default_prefix', 'en');
     $publicBase = '/'.$activePrefix;
+    $brandMenu = app(\App\Services\Catalog\BrandVisibilityService::class)
+        ->visibleFor($marketplaceContext['current'] ?? null, true, false, 'primary');
 @endphp
 <head>
     <meta charset="utf-8">
@@ -135,12 +137,12 @@
                 <summary>☰ Categories</summary>
                 <div class="mega-panel">
                     <div class="mega-col"><h3>Featured Categories</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=electronic-components">Electronic Components</a><a href="{{ $publicBase }}/products?category=iot-wireless">IoT & Wireless</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/products?category=battery-technology">Battery Technology</a></div>
-                    <div class="mega-col"><h3>Build</h3><a href="{{ $publicBase }}/ai-commerce">AI Project Builder</a><a href="{{ $publicBase }}/lms">Learning Hub</a><a href="{{ $publicBase }}/rfq">Bulk RFQ</a><a href="{{ $publicBase }}/sell-on-neogiga">Become a Seller</a></div>
+                    <div class="mega-col"><h3>Brands</h3>@forelse($brandMenu->take(6) as $brand)<a href="{{ $publicBase }}/brands/{{ $brand->slug }}">{{ $brand->name }}</a>@empty<a href="{{ $publicBase }}/brands">Browse brands</a>@endforelse<a href="{{ $publicBase }}/brands">All brands</a></div>
                     <div class="mega-col"><h3>Popular searches</h3><a href="{{ $publicBase }}/products?q=ESP32">ESP32</a><a href="{{ $publicBase }}/products?q=LiFePO4">LiFePO4</a><a href="{{ $publicBase }}/products?q=PLC">PLC</a><a href="{{ $publicBase }}/products?q=robot">Robot kits</a></div>
                 </div>
             </details>
             <nav class="primary-nav" aria-label="Primary navigation">
-                <a href="{{ $publicBase }}/products">Products</a><a href="{{ $publicBase }}/categories">Categories</a><a href="{{ $publicBase }}/ai-commerce">AI Builder</a><a href="{{ $publicBase }}/rfq">RFQ</a><a href="{{ $publicBase }}/lms">LMS</a><a href="{{ $publicBase }}/distributors">Warehouses</a>
+                <a href="{{ $publicBase }}/products">Products</a><a href="{{ $publicBase }}/categories">Categories</a><a href="{{ $publicBase }}/brands">Brands</a><a href="{{ $publicBase }}/ai-commerce">AI Builder</a><a href="{{ $publicBase }}/rfq">RFQ</a><a href="{{ $publicBase }}/lms">LMS</a><a href="{{ $publicBase }}/distributors">Warehouses</a>
             </nav>
         </div>
     </div>
@@ -156,7 +158,7 @@
     </div>
 </footer>
 <a class="float-ai" href="{{ $publicBase }}/ai-commerce" aria-label="Open NeoGiga AI assistant">Ask AI</a>
-<nav class="mobile-bottom" aria-label="Mobile shortcuts"><a href="{{ $publicBase }}">Home</a><a href="{{ $publicBase }}/products">Search</a><a href="{{ $publicBase }}/categories">Categories</a><a href="/cart">Cart</a><a href="{{ $publicBase }}/ai-commerce">AI</a></nav>
+<nav class="mobile-bottom" aria-label="Mobile shortcuts"><a href="{{ $publicBase }}">Home</a><a href="{{ $publicBase }}/products">Search</a><a href="{{ $publicBase }}/categories">Categories</a><a href="{{ $publicBase }}/brands">Brands</a><a href="/cart">Cart</a></nav>
 @stack('foot')
 </body>
 </html>
