@@ -128,7 +128,7 @@
                 <input name="q" type="search" value="{{ request('q') }}" placeholder="Search products, MPN, SKU, category..." aria-label="Search NeoGiga">
                 <button type="submit">Search</button>
             </form>
-            <a class="header-tool" href="{{ $publicBase }}/ai-commerce?mode=bom" title="Open BOM builder" aria-label="Upload BOM">
+            <a class="header-tool" href="{{ $publicBase }}/bom-imports" title="Open BOM uploader" aria-label="Upload BOM">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M9 5h10M9 10h10M9 15h6" stroke-linecap="round"/><path d="m3 5 1.2 1.2L6.5 3.8M3 10l1.2 1.2L6.5 8.8M3 15l1.2 1.2 2.3-2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Upload BOM</span>
             </a>
             <a class="header-tool" href="https://{{ config('pcb.domain', 'pcb.neogiga.com') }}/en" title="Open NeoGiga PCB portal" aria-label="PCB Check">

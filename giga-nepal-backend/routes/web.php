@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\BrandPageController;
+use App\Http\Controllers\Web\BomImportPageController;
 use App\Http\Controllers\Web\CartPageController;
 use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\AiCommercePageController;
@@ -320,6 +321,7 @@ Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middl
 Route::redirect('/sell-on-neogiga', '/en/sell-on-neogiga', 301);
 Route::redirect('/distributors', '/en/distributors', 301);
 Route::redirect('/ai-commerce', '/en/ai-commerce', 301);
+Route::redirect('/bom-imports', '/en/bom-imports', 301);
 Route::post('/ai-commerce/build', [AiCommercePageController::class, 'build'])->middleware('throttle:12,1');
 Route::post('/ai-commerce/save', [AiCommercePageController::class, 'save'])->middleware('throttle:8,1');
 Route::redirect('/seller-early-access', '/en/seller-early-access', 301);
@@ -345,6 +347,8 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
             Route::get('/seller-early-access', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->earlyAccess())->name('localized.seller.early-access');
             Route::get('/distributors', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->distributors())->name('localized.distributors');
             Route::get('/ai-commerce', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(AiCommercePageController::class)->index($request, app(\App\Services\CommerceAi\CommerceAiService::class)))->name('localized.ai');
+            Route::get('/bom-imports', [BomImportPageController::class, 'index'])->name('localized.bom-imports');
+            Route::post('/bom-imports', [BomImportPageController::class, 'store'])->middleware(['auth', 'throttle:6,1'])->name('localized.bom-imports.store');
         });
 }
 
