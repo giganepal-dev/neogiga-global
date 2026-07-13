@@ -87,9 +87,9 @@ class ProductPageController extends Controller
         ]);
     }
 
-    public function show(string $slug): View
+    public function show(Request $request, string $slug): View
     {
-        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context(request());
+        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
         $marketplace = $marketplaceContext['current'] ?? null;
         $product = Product::with(['brand', 'category', 'specs', 'images'])
             ->where('slug', $slug)

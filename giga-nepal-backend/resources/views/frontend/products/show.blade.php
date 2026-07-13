@@ -53,9 +53,9 @@
         $productMeta[] = 'Rating: '.number_format((float) $reviewAverage, 1).'/5 from '.$reviewCount.' reviews';
     }
     $priceCurrency = $marketplacePrice?->currency_native_symbol ?: ($marketplacePrice?->currency_symbol ?: ($marketplacePrice?->currency_code ?: ($marketplaceContext['currency_code'] ?? 'USD')));
-    $displayPrice = $marketplacePrice
-        ? ($marketplacePrice->sale_price ?: $marketplacePrice->base_price)
-        : (strtolower((string) ($marketplaceContext['current']?->code ?? 'global')) === 'global' ? ($product->sale_price ?: $product->base_price) : null);
+    // Canonical product cost is never presented as a storefront sell price.
+    // A public price requires an active marketplace overlay for this edition.
+    $displayPrice = $marketplacePrice?->sale_price ?: $marketplacePrice?->base_price;
     $displayCurrency = $marketplacePrice ? $priceCurrency : ($marketplaceContext['currency_code'] ?? 'USD');
     $shortSummary = trim(strip_tags($product->short_description ?: ''));
     $productDetailText = trim(strip_tags($product->description ?: ''));
@@ -67,28 +67,58 @@
         ->filter(fn ($line) => $line !== '')
         ->values()
         ->all();
+    $imageUrl = function ($image) {
+        $path = $image->file_path ?? $image->url ?? $image->original_url ?? null;
+        if (! $path) {
+            return null;
+        }
+
+        return \Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/'])
+            ? $path
+            : asset('storage/'.$path);
+    };
+    $productImages = $product->images
+        ->filter(fn ($image) => ($image->is_active ?? true) && $imageUrl($image))
+        ->sortBy([
+            ['is_primary', 'desc'],
+            ['sort_order', 'asc'],
+        ])
+        ->values();
+    $primaryImage = $productImages->first();
+    $primaryImageUrl = $primaryImage ? $imageUrl($primaryImage) : asset('images/products/neogiga-component-placeholder.svg');
 @endphp
 <section class="section" style="padding-top:18px">
     <div class="wrap">
         <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/products">Products</a>@if($product->category)<span>/</span><a href="/categories/{{ $product->category->slug }}">{{ $product->category->name }}</a>@endif<span>/</span><strong>{{ $product->name }}</strong></nav>
         <div class="grid" style="grid-template-columns:minmax(300px,.9fr) minmax(0,1.4fr) 340px;align-items:start">
             <section class="panel" style="padding:18px">
-                <div class="product-img" style="min-height:330px">{{ $product->brand->name ?? 'NeoGiga' }}</div>
-                <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">
-                    @for($i=1;$i<=4;$i++)<div class="product-img" style="aspect-ratio:1">{{ $i }}</div>@endfor
+                <div class="product-gallery">
+                    <a class="product-gallery-main" href="{{ $primaryImageUrl }}" target="_blank" rel="noopener" aria-label="Open product image">
+                        <img class="{{ $primaryImage ? '' : 'product-gallery-placeholder' }}" src="{{ $primaryImageUrl }}" alt="{{ $primaryImage?->alt_text ?: $product->name }}" width="1200" height="900">
+                    </a>
+                    <div class="product-gallery-thumbs" aria-label="Product media">
+                        @forelse($productImages->take(4) as $image)
+                            @php
+                                $url = $imageUrl($image);
+                            @endphp
+                            <a class="product-gallery-thumb" href="{{ $url }}" target="_blank" rel="noopener" aria-label="Open product image {{ $loop->iteration }}"><img src="{{ $url }}" alt="{{ $image->alt_text ?: $product->name }}" loading="lazy"></a>
+                        @empty
+                            <span class="product-gallery-thumb" aria-label="Product image pending review">Media pending</span>
+                        @endforelse
+                    </div>
                 </div>
             </section>
             <section class="panel" style="padding:22px">
                 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><span class="badge b-info">{{ $product->category->name ?? 'Engineering part' }}</span><span class="badge {{ $regionalStockTotal > 0 ? 'b-ok' : 'b-warn' }}">{{ $regionalStockTotal > 0 ? 'Regional stock' : 'RFQ availability' }}</span></div>
                 <h1 style="font-size:clamp(1.8rem,4vw,3.1rem);line-height:1.05;margin:0 0 10px">{{ $product->name }}</h1>
                 <p class="sub">{{ implode(' · ', $productMeta) }}</p>
-                @if($productSummary)<p style="max-width:72ch;line-height:1.75;color:#475569;margin:0 0 16px">{{ $productSummary }}</p>@endif
+                @if($productSummary)<p class="product-summary">{{ $productSummary }}</p>@endif
                 @if($showProductOverview && !empty($productOverviewParagraphs))
-                    <section aria-labelledby="product-overview" style="margin:0 0 20px;padding:14px 16px;border:1px solid #e5eef7;border-radius:12px;background:#f9fcff">
-                        <h2 id="product-overview" style="font-size:1.05rem;margin:0 0 8px">Product overview</h2>
+                    <section class="product-overview" aria-labelledby="product-overview">
+                        <h2 id="product-overview">Product overview</h2>
                         <div style="display:grid;gap:8px">
                             @foreach($productOverviewParagraphs as $paragraph)
-                                <p style="margin:0;line-height:1.7;color:#334155">{{ $paragraph }}</p>
+                                <p>{{ $paragraph }}</p>
                             @endforeach
                         </div>
                     </section>
@@ -96,7 +126,7 @@
                 <h2 style="font-size:1.2rem;margin-top:24px">Technical Specifications</h2>
                 <table class="spec-table">
                     @foreach($advancedSpecs->groupBy(fn($s) => $s->group_name ?: ($s->template_name ?: 'Advanced Specifications')) as $groupName => $rows)
-                        <tr><th colspan="2" style="background:#eef9ff;color:#075985">{{ $groupName }}</th></tr>
+                        <tr class="spec-group"><th colspan="2">{{ $groupName }}</th></tr>
                         @foreach($rows as $s)
                             <tr><th>{{ $s->field_label }}</th><td>{{ $s->value }}{{ $s->unit_override ? ' '.$s->unit_override : ($s->unit ? ' '.$s->unit : '') }}</td></tr>
                         @endforeach
@@ -113,7 +143,7 @@
             </section>
             <aside class="panel" style="padding:18px">
                 <h2 style="margin-top:0">Get this part</h2>
-                <div style="padding:12px;border:1px solid #dbeafe;background:#f8fbff;margin-bottom:12px">
+                <div class="product-price-card">
                     <div class="sub">Regional price</div>
                     @if($displayPrice)
                         <strong style="font-size:1.7rem">{{ $displayCurrency }} {{ number_format((float) $displayPrice, 2) }}</strong>
@@ -143,7 +173,7 @@
     </div>
 </section>
 
-<section class="section" style="background:#fff">
+<section class="section product-detail-section">
     <div class="wrap">
         <div class="section-head"><div><p class="eyebrow">Seller offers</p><h2>Regional sourcing options</h2></div><a class="btn btn-ghost" href="/rfq?product={{ $product->slug }}">Request better quote</a></div>
         <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
@@ -173,7 +203,7 @@
     </div>
 </section>
 
-<section class="section" style="background:#fff">
+<section class="section product-detail-section">
     <div class="wrap grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
         <div class="info-card"><h2>Datasheets & Downloads</h2>@forelse($documents as $doc)<p><strong>{{ $doc->title ?? ucfirst($doc->document_type ?? 'Document') }}</strong><br><a href="{{ $doc->file_url ?: $doc->source_url }}" rel="nofollow">Download {{ $doc->document_type ?? 'file' }}</a></p>@empty<p class="sub">Datasheet, CAD, firmware and compliance assets are being loaded.</p>@endforelse</div>
         <div class="info-card"><h2>Alternatives & Accessories</h2>@forelse($alternatives as $alt)<p><a href="{{ $alt->slug ? '/products/'.$alt->slug : '#' }}"><strong>{{ $alt->name ?? 'Related product' }}</strong></a><br><span class="sub">{{ $alt->relation_type }} · {{ $alt->mpn ?: $alt->sku }}</span></p>@empty<p class="sub">Alternative parts and accessories are being mapped.</p>@endforelse</div>
@@ -181,12 +211,12 @@
     </div>
 </section>
 
-<section class="section" style="background:#fff">
+<section class="section product-detail-section">
     <div class="wrap grid" style="grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);align-items:start">
         <div class="panel" style="padding:22px">
             <div class="section-head" style="margin-bottom:12px"><div><p class="eyebrow">Reviews & Q&A</p><h2>Engineering feedback</h2></div><span class="badge b-info">{{ $reviewBadge }}</span></div>
             @forelse($reviews as $review)
-                <article style="padding:14px 0;border-top:1px solid #e5eef7">
+                <article class="product-review">
                     <div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><strong>{{ $review->title ?: 'Product review' }}</strong><span class="badge b-ok">{{ $review->rating }}/5</span></div>
                     <p>{{ $review->body }}</p>
                     <p class="sub">{{ $review->reviewer_name ?: 'NeoGiga customer' }}{{ $review->use_case ? ' · Use case: '.$review->use_case : '' }}</p>
