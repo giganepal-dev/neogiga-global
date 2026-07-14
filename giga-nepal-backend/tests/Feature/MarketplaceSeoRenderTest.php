@@ -90,6 +90,22 @@ class MarketplaceSeoRenderTest extends TestCase
         $this->assertSame('https://giganepal.com/en/categories/sensors', $tags['canonical']);
     }
 
+    public function test_dedicated_regional_canonical_normalizes_marketplace_prefix_aliases(): void
+    {
+        $m = $this->make([
+            'code' => 'NEPAL',
+            'url_prefix' => 'np',
+            'is_active' => true,
+            'is_visible' => true,
+            'indexable' => true,
+            'canonical_domain' => 'giganepal.com',
+        ]);
+
+        $tags = $this->renderer()->tags($m, 'https://neogiga.com/in/products/example-part?ref=ignored');
+
+        $this->assertSame('https://giganepal.com/en/products/example-part', $tags['canonical']);
+    }
+
     public function test_non_indexable_marketplace_is_noindex(): void
     {
         $m = $this->make(['is_active' => true, 'is_visible' => false, 'indexable' => false]);

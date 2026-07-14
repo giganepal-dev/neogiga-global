@@ -79,7 +79,7 @@
     </section>
 
     <section class="card">
-        <div class="card-h"><div><h2>Roles & Permissions</h2><div class="sub">Role matrix foundation</div></div><span class="badge b-warn">editor placeholder</span></div>
+        <div class="card-h"><div><h2>Roles & Permissions</h2><div class="sub">Permission-aware access management</div></div><a class="btn btn-ghost" href="/admin/users#role-permissions">Open matrix</a></div>
         <div class="scroll-x"><table class="tbl">
             <thead><tr><th>Role</th><th>Status</th><th>Permissions</th><th>Actions</th></tr></thead>
             <tbody>
@@ -88,7 +88,7 @@
                     <td><strong>{{ $role->display_name ?? $role->name }}</strong><div class="sub">{{ $role->description }}</div></td>
                     <td><span class="badge {{ $role->is_active ? 'b-ok':'b-muted' }}">{{ $role->is_active ? 'active':'inactive' }}</span></td>
                     <td class="mono">{{ \Illuminate\Support\Str::limit((string) $role->permissions, 42) }}</td>
-                    <td><button class="btn btn-ghost" disabled>Edit permissions</button></td>
+                    <td><a class="btn btn-ghost" href="/admin/users#role-{{ $role->id }}">Edit permissions</a></td>
                 </tr>
             @endforeach
             </tbody>
@@ -104,7 +104,7 @@
         <input class="control" name="q" value="{{ $filters['q'] }}" placeholder="Search key">
         <button class="btn btn-ghost" type="submit">Filter</button>
     </form>
-    <div class="tabs">@foreach(['Commerce','Currency','Checkout','Tax','SEO','Email','Payment','Inventory'] as $tab)<span class="tab">{{ $tab }}</span>@endforeach</div>
+    <nav class="tabs" aria-label="Marketplace setting groups">@foreach(['Commerce','Currency','Checkout','Tax','SEO','Email','Payment','Inventory'] as $tab)<a class="tab {{ strtolower($filters['setting_group']) === strtolower($tab) ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['setting_group' => strtolower($tab)]) }}">{{ $tab }}</a>@endforeach</nav>
     <div class="scroll-x"><table class="tbl">
         <thead><tr><th>Marketplace</th><th>Group</th><th>Key</th><th>Value</th><th>Type</th><th>Public</th></tr></thead>
         <tbody>

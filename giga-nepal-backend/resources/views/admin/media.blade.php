@@ -22,23 +22,24 @@
 @endsection
 
 @section('content')
+@php $viewMode = request('view', 'grid') === 'list' ? 'list' : 'grid'; @endphp
 <div class="grid kpis">
     <div class="kpi"><div class="t">Assets</div><div class="v tnum">{{ number_format($assets->total()) }}</div><div class="s">managed files</div></div>
     <div class="kpi"><div class="t">Folders</div><div class="v tnum">{{ number_format($folders->count()) }}</div><div class="s">logical groups</div></div>
     <div class="kpi"><div class="t">Datasheets</div><div class="v tnum">{{ number_format($assets->where('folder','datasheets')->count()) }}</div><div class="s">current page</div></div>
-    <div class="kpi"><div class="t">Mode</div><div class="v">Grid</div><div class="s">list toggle ready</div></div>
+    <div class="kpi"><div class="t">Mode</div><div class="v">{{ ucfirst($viewMode) }}</div><div class="s">active library view</div></div>
 </div>
 
 <section class="card">
-    <div class="card-h"><div><h2>Media Library</h2><div class="sub">Upload, preview, copy URL and delete assets</div></div><div class="actions"><span class="tab active">Grid</span><span class="tab">List</span></div></div>
+    <div class="card-h"><div><h2>Media Library</h2><div class="sub">Upload, preview, copy URL and delete assets</div></div><nav class="actions" aria-label="Media view"><a class="tab {{ $viewMode === 'grid' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['view' => 'grid']) }}">Grid</a><a class="tab {{ $viewMode === 'list' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['view' => 'list']) }}">List</a></nav></div>
     <form class="filters" method="get">
         <select class="control" name="folder"><option value="">All folders</option>@foreach($folders as $folder)<option value="{{ $folder->folder }}" @selected($filters['folder']===$folder->folder)>{{ $folder->folder }}</option>@endforeach</select>
         <select class="control" name="type"><option value="">All types</option><option value="image" @selected($filters['type']==='image')>Images</option><option value="pdf" @selected($filters['type']==='pdf')>PDF/Datasheets</option><option value="zip" @selected($filters['type']==='zip')>CAD/Firmware</option></select>
         <input class="control" name="q" value="{{ $filters['q'] }}" placeholder="Search title, filename, alt text">
         <button class="btn btn-ghost" type="submit">Filter</button>
     </form>
-    <div class="tabs"><span class="tab active">All</span><span class="tab">Datasheet</span><span class="tab">CAD</span><span class="tab">Firmware</span><span class="tab">Product attach placeholder</span></div>
-    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));padding:16px">
+    <nav class="tabs" aria-label="Media filters"><a class="tab {{ !$filters['folder'] && !$filters['type'] ? 'active' : '' }}" href="/admin/media?view={{ $viewMode }}">All</a><a class="tab {{ $filters['folder'] === 'datasheets' ? 'active' : '' }}" href="/admin/media?folder=datasheets&amp;view={{ $viewMode }}">Datasheets</a><a class="tab {{ $filters['folder'] === 'cad' ? 'active' : '' }}" href="/admin/media?folder=cad&amp;view={{ $viewMode }}">CAD</a><a class="tab {{ $filters['folder'] === 'firmware' ? 'active' : '' }}" href="/admin/media?folder=firmware&amp;view={{ $viewMode }}">Firmware</a><a class="tab" href="/admin/products">Attach to products</a></nav>
+    <div class="grid" style="grid-template-columns:{{ $viewMode === 'list' ? '1fr' : 'repeat(auto-fill,minmax(220px,1fr))' }};padding:16px">
         @forelse($assets as $asset)
             @php $url = \Illuminate\Support\Facades\Storage::disk($asset->disk ?: 'public')->url($asset->path); @endphp
             <article class="card" style="box-shadow:none">

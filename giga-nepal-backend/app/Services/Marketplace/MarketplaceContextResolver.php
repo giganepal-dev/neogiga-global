@@ -17,26 +17,25 @@ class MarketplaceContextResolver
 
     /**
      * Global Commerce Stage 1 resolution order:
-     * 1. URL path prefix (/in, /np, ...)
-     * 2. branded-domain special case (neogiga.in / giganepal.com always win
-     *    on their own host, matching the pre-existing behavior exactly)
-     * 3. cookie preference
-     * 4. authenticated user preference (inert until users.marketplace_id
+     * 1. A resolved regional domain wins so /en remains a locale path on
+     *    regional hosts instead of incorrectly selecting the global edition.
+     * 2. URL marketplace prefix (/in, /np, ...) on the global host.
+     * 3. Cookie preference.
+     * 4. Authenticated user preference (inert until users.marketplace_id
      *    exists — reading an undefined attribute is a safe null in Eloquent)
-     * 5. domain rules
-     * 6. global fallback
+     * 5. Global domain rule.
+     * 6. Global fallback.
      */
     public function resolve(Request $request): ?Marketplace
     {
-        if ($prefixMarketplace = $this->paths->resolve($request)) {
-            return $prefixMarketplace;
+        $domainMarketplace = $this->domains->resolve($request);
+
+        if ($domainMarketplace && strtoupper((string) $domainMarketplace->code) !== 'GLOBAL') {
+            return $domainMarketplace;
         }
 
-        $domainMarketplace = $this->domains->resolve($request);
-        $host = strtolower(parse_url('//' . $request->getHost(), PHP_URL_HOST) ?: $request->getHost());
-
-        if (in_array($host, ['neogiga.in', 'www.neogiga.in', 'giganepal.com', 'www.giganepal.com'], true)) {
-            return $domainMarketplace ?: $this->fallback();
+        if ($prefixMarketplace = $this->paths->resolve($request)) {
+            return $prefixMarketplace;
         }
 
         return $this->preferences->preferredMarketplace($request)
