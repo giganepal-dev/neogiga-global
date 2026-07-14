@@ -10,7 +10,7 @@ Change policy: upgrade-only. No existing product, category, route, module, migra
 - Regional marketplace context and SEO are now rendered separately by domain: title, description, canonical, robots, hreflang, currency context and structured data are edition-aware.
 - The shared NeoGiga frontend now uses live categories, nested-taxonomy links, products, exact product-linked images, brands and functional workflows instead of a hard-coded India preview.
 - The existing admin panel now exposes linked KPI/API/email-provider status and functional destinations for the remaining static catalog, SEO, media, access-control, inventory and POS controls.
-- A dry-run-first governed release was added for 3,177 ElecForest drafts. One exact template/sentinel row (`NG-EF-`) is quarantined. The remaining rows must pass source-price, schema, image-file, provenance, existing-price and existing-stock checks before release.
+- A dry-run-first governed release processed the 3,177 ElecForest drafts. One exact template/sentinel row (`NG-EF-`) remains quarantined; the other 3,176 passed the source-price, schema, image-file, provenance, existing-price and existing-stock gates and were released under the exact approved plan hash.
 - The release records imported USD price as cost, calculates an exact 5% USD sale price at four-decimal precision, and assigns 10,000 units per eligible product: 8,000 Shenzhen, 667 Kathmandu, 667 New Delhi and 666 Dubai.
 - Supplier image checksum and image signatures are verified before activation. This establishes file integrity, not license ownership. Original rights facts and open legal/catalog review tasks are retained and disclosed.
 - Branded `giganepal.com` and `neogiga.in` are still independent WordPress systems. They were not switched because a blind cutover would lose URLs, data and/or mail. Their migrations require the gated sequence in this report.
@@ -232,4 +232,57 @@ Until these are complete, the safe production state is the shared Laravel platfo
 
 ## Production result
 
-This section is completed only after the backup, new release deployment, migrations, production dry run, governed apply, reconciliation and live canaries succeed. It must not be inferred from local tests.
+The governed production apply completed. The exact deployment, backup and command results below are recorded from production; final independent database reconciliation and live browser evidence are deliberately marked pending rather than inferred from local tests.
+
+### Deployment and immutable backups
+
+- Live release: `/home/neogiga/laravel/releases/20260714-214657-catalog-release-width-fix`
+- Git commit: `70d2127`
+- Full immutable backup: `/home/neogiga/backups/regional-catalog-release-20260714-212602-retry1`
+  - PostgreSQL custom-format dump SHA-256: `221be4c39dade47ec85e729467eef5c58c6771d0e66bee7b07d5206e6e72a009`
+  - storage archive SHA-256: `6d919f1174c23a365164d3dc0367ed19b91a960c02e6157cccb37679a86842b4`
+- Frozen pre-migration PostgreSQL backup SHA-256: `f46e3ccc176cc17acba1e97770e7c53ed2b971b28971c2f46bc9f53ff6c9e229`
+- Pre-width-fix PostgreSQL backup SHA-256: `e32bd6f54aa1a27a377c8b6af7c8c0ca5f51d6813ab2e923b046e18301d78dab`
+
+No existing product, price, inventory, movement, media, customer, order or legacy-site data was deleted. The exact template/sentinel product `NG-EF-` was hidden and quarantined as planned.
+
+### Fail-closed first attempt and compatibility fix
+
+The first production apply stopped safely before the first sellable-product transaction committed because the legacy `marketplace_product_prices.source_review_status` column was `VARCHAR(40)`, shorter than the governed review label. Only the already-planned `NG-EF-` sentinel quarantine committed. No sellable-product price, inventory, movement or media activation from that attempt committed.
+
+Incremental migration `2026_07_14_182000_widen_marketplace_price_review_status` widened the field to 80 characters while preserving every existing value. Its rollback intentionally does not narrow the field. A fresh dry run reproduced the same eligible count and plan hash before the governed retry.
+
+### Completed governed apply
+
+- Plan SHA-256: `483f0c2a1b3f292115ab7db7cd37773a7af3b852fb7f97f3897a511f75e12129`
+- Eligible and released products: 3,176
+- Exact source-cost-plus-5% GLOBAL USD price rows created: 3,176
+- Warehouse stock rows created: 12,704
+- Matching idempotent inventory movements created: 12,704
+- Checksum-, signature- and local-file-verified real images activated: 9,777
+- Allocation per released product: 8,000 Shenzhen, 667 Kathmandu, 667 New Delhi and 666 Dubai, totaling 10,000 units
+- Private completion report: `catalog-releases/20260714-161552-101019-483f0c2a1b3f2921-completed.json`
+
+The apply used the required backup reference and exact count/hash gates. The operator explicitly acknowledged the media-publication risk. Image-file integrity was verified, but independent media licensing was not established or claimed. The original review work remains open:
+
+| Review class | Open tasks |
+|---|---:|
+| Media rights | 3,176 |
+| Missing applications | 3,064 |
+| Brand | 3,176 |
+| Manufacturer | 3,176 |
+| Taxonomy | 223 |
+
+### Regional SEO and legacy-site state
+
+Nepal and India canonical, hreflang, prefix-redirect and geo-recommendation output remains on the live Laravel hosts `np.neogiga.com` and `in.neogiga.com`. Canonicals do not point at the unmigrated branded WordPress apex paths. The independent `giganepal.com` and `neogiga.in` WordPress systems and their stored data remain untouched; their cutovers are still blocked by the backup, import-reconciliation, legacy-URL, mail and DNS gates above.
+
+### Evidence still pending
+
+The following evidence must be added after independent post-apply checks; this document does not claim those checks have completed yet:
+
+- exact final database reconciliation totals and per-warehouse sums;
+- confirmation that the post-apply dry run has zero remaining eligible products and only the quarantined sentinel draft;
+- completion-report checksum/readback and final failed-job baseline comparison;
+- live global, Nepal and India product-page canaries, real-image response checks, canonical/robots checks and browser screenshots;
+- final public-media file-count comparison and admin/health route canaries.
