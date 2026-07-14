@@ -154,6 +154,8 @@ Dry run is the default and performs no writes. Apply requires all of the followi
 
 The release refuses to overwrite any existing GLOBAL price, inventory stock or populated canonical price/stock. Each product is locked and committed in an independent bounded transaction, and publication is the final operation inside that transaction.
 
+The first governed production apply failed closed before the first sellable product transaction because the existing `marketplace_product_prices.source_review_status` column was 40 characters. Only the already-planned hidden template quarantine committed. A new incremental migration safely widens that legacy label to 80 characters without changing existing values; the release requires a fresh plan/hash before retry.
+
 ### Price policy
 
 - Source currency must be USD.
@@ -204,7 +206,7 @@ New price, inventory metadata, media metadata and audit reports retain:
 
 ## Verification completed before deployment
 
-- Complete Laravel suite: 184 passed, 1,003 assertions, 11 intentional skips.
+- Complete Laravel suite: 185 passed, 1,006 assertions, 11 intentional skips.
 - Catalog release suite: 3 passed, 88 assertions.
 - Regional/admin focused suites passed.
 - Focused safety coverage verifies permission enforcement and synchronized grants, reconciliation beyond 500 low-stock rows, fixed-point/idempotent refund limits, regional prefix normalization and CSP-compatible category-tree wiring.

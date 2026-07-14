@@ -21,6 +21,7 @@
 - Added a dry-run-first catalog release configuration for ElecForest products with exact 5% USD pricing, the fixed 10,000-unit China/regional warehouse allocation, explicit template-SKU quarantine, bounded chunks, and private release reports.
 - Added a non-destructive price-column expansion from `DECIMAL(12,2)` to `DECIMAL(15,4)` so cost and 5% sale prices retain exact precision; rollback refuses values that cannot be represented safely by the legacy schema.
 - Added nullable source and pricing-rule provenance fields to marketplace price rows; existing prices remain unchanged and rollback intentionally retains audit data.
+- Added a follow-up non-destructive compatibility migration that widens a pre-existing 40-character marketplace price review-status label to 80 characters after the first production apply correctly failed closed; rollback never narrows the provenance field.
 - Added an idempotent, bounded and transactional `catalog:release-drafts` command that is read-only by default and requires exact count/hash, verified backup and explicit unverified-license publication-risk acknowledgement before any apply; original rights facts and open review tasks are retained.
 - Added focused release tests for dry-run purity, exact 5% price precision, the 8,000/667/667/666 split, verification-warehouse exclusion, provenance, quarantine, rights-gated real media, checksum rejection and idempotent replay.
 
