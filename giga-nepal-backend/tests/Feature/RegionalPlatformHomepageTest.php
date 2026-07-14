@@ -7,6 +7,7 @@ use App\Models\Marketplace\Currency;
 use App\Models\Marketplace\Marketplace;
 use App\Models\Marketplace\MarketplaceDomain;
 use App\Models\Marketplace\Product;
+use App\Models\Marketplace\ProductImage;
 use App\Models\Marketplace\ProductSeoMeta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -153,18 +154,28 @@ class RegionalPlatformHomepageTest extends TestCase
             'confidence_level' => 'medium_source_derived',
             'metadata' => ['source' => 'elecforest_deterministic_seo_generator'],
         ]);
+        ProductImage::create([
+            'product_id' => $product->id,
+            'file_path' => 'products/elecforest/test/regional-product.jpg',
+            'storage_disk' => 'public',
+            'is_primary' => true,
+            'is_active' => true,
+            'alt_text' => 'Regional Canonical Test product image',
+        ]);
         Cache::flush();
 
         $this->get('https://np.neogiga.com/en/products/'.$product->slug)
             ->assertOk()
             ->assertSee('<title>Buy Regional Canonical Test on NeoGiga Nepal | NeoGiga Engineering Marketplace</title>', false)
             ->assertSee('<link rel="canonical" href="https://np.neogiga.com/en/products/'.$product->slug.'">', false)
+            ->assertSee('https://np.neogiga.com/storage/products/elecforest/test/regional-product.jpg', false)
             ->assertDontSee('<link rel="canonical" href="https://neogiga.com/en/products/'.$product->slug.'">', false);
 
         $this->get('https://in.neogiga.com/en/products/'.$product->slug)
             ->assertOk()
             ->assertSee('<title>Buy Regional Canonical Test on NeoGiga India | NeoGiga Engineering Marketplace</title>', false)
             ->assertSee('<link rel="canonical" href="https://in.neogiga.com/en/products/'.$product->slug.'">', false)
+            ->assertSee('https://in.neogiga.com/storage/products/elecforest/test/regional-product.jpg', false)
             ->assertDontSee('<link rel="canonical" href="https://neogiga.com/en/products/'.$product->slug.'">', false);
     }
 

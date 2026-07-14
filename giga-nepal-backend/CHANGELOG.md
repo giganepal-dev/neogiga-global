@@ -31,6 +31,7 @@
 - Kept Nepal and India canonical output on `np.neogiga.com` and `in.neogiga.com`; the independent `giganepal.com` and `neogiga.in` WordPress apex systems remain untouched pending their no-data-loss, URL, mail and DNS cutover gates.
 - Stored the completed private release report at `catalog-releases/20260714-161552-101019-483f0c2a1b3f2921-completed.json`. Final database reconciliation totals and live browser canary evidence are tracked as pending in the release audit until independently captured.
 - Corrected post-release regional product SEO by classifying the existing `elecforest_deterministic_seo_generator` marker as generated metadata, so Nepal and India render their own product title and canonical while locked/manual admin overrides remain unchanged.
+- Kept public-disk product media on the current regional request host so strict same-origin CSP continues to protect every edition without blocking the shared real product images; external source/CDN URLs and non-web serialization behavior remain unchanged.
 - Added a dedicated long-running `database_imports` queue connection and routed catalog search rebuilds to `catalog-imports`, with aligned retry/worker timeouts and terminal failure bookkeeping so an interrupted rebuild cannot remain falsely marked as running; the worker continues to consume the existing customer `imports` queue from the same non-destructive jobs table.
 
 ## 2026-07-14 - Catalog Media, Canonical Brands and Governed SEO
