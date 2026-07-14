@@ -32,10 +32,11 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Coverage reports
+# Testing
+.phpunit.result.cache
 coverage/
 htmlcov/
-.coverage
+*.coverage
 
 # Build directories
 dist/
