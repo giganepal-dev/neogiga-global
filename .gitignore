@@ -1,29 +1,74 @@
 ```
-# Laravel-specific ignores
-vendor/
-composer.lock
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
 .env
+.env.local
 .env.*
-!.env.example
 
-# Build and cache directories
-bootstrap/cache/
-storage/logs/
-storage/framework/
-
-# IDE files
+# Editors
 .vscode/
 .idea/
+
+# Dependencies
+.venv/
+venv/
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py~
+*.pyc.*
+*.pyo.*
+*.pyd.*
+*.py~
+*.py~.*
+*.pyc~
+*.pyo~
+*.pyd~
+*.py~~
+*.pyc~~
+*.pyo~~
+*.pyd~~
+*.py~~~
+*.pyc~~~
+*.pyo~~~
+*.pyd~~~
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+.coverage
+htmlcov/
+.mypy_cache/
+.pytest_cache/
+.tox/
+.hypothesis/
+.coverage.*
+*.cover.*
+coverage.xml
+nosetests.xml
+*.log
+*.pot
+*.po
+*.mo
+*.db
+*.sqlite
+*.sqlite3
+*.tmp
+*.temp
+*.bak
+*.backup
 *.swp
 *.swo
-
-# OS files
+*~
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
-
-# Temporary files
-*.tmp
 ```
