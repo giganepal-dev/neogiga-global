@@ -130,6 +130,15 @@
         .foot-bottom{margin-top:36px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06);
             display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;color:var(--ng-gray-2);font-size:.82rem}
         @media(min-width:900px){.nav nav{display:flex}}
+        @media(max-width:620px){
+            .nav{gap:8px}
+            .nav .spacer{display:none}
+            .logo{font-size:1.05rem;white-space:nowrap}
+            .switcher{min-width:0;margin-left:auto;gap:5px}
+            .switcher select{min-width:0;max-width:112px;padding:6px;font-size:.78rem}
+            .switcher #ng-lang{max-width:56px}
+            .hero .watermark{right:-32px;width:320px;height:320px}
+        }
         @media(prefers-reduced-motion:reduce){.card:hover{transform:none}}
     </style>
 </head>
@@ -161,12 +170,7 @@
 <header>
     <div class="wrap nav">
         <a class="logo" href="/en" aria-label="NeoGiga home">
-            {{-- NeoGiga mark: hex/circuit motif in cyan + gold --}}
-            <svg width="34" height="34" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-                <path d="M24 3 42 13.5v21L24 45 6 34.5v-21L24 3Z" stroke="#19D3F5" stroke-width="2.6"/>
-                <path d="M24 13v10l8.5 5" stroke="#F5B928" stroke-width="2.6" stroke-linecap="round"/>
-                <circle cx="24" cy="23" r="2.6" fill="#19D3F5"/>
-            </svg>
+            <img src="{{ url('/images/brand/neogiga-icon-192.png') }}" alt="" width="34" height="34" aria-hidden="true">
             Neo<em>Giga</em>
         </a>
         <nav aria-label="Primary">

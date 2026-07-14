@@ -1,5 +1,114 @@
 # Changelog
 
+## 2026-07-14 - Catalog Media, Canonical Brands and Governed SEO
+
+- Added permission-gated, product-scoped image upload, ordering, primary selection, replacement, metadata, safe deactivation and API operations while preserving existing rows/files and exposing active images only on the storefront.
+- Added `/en/brands` and canonical `/en/brand/{slug}` pages, locale-preserving 301 legacy redirects, brand visibility/publication controls, cache invalidation and stable no-product/RFQ states.
+- Added one marketplace-aware SEO template/governance layer for products, every category level, brands and manufacturers with generated/manual separation, locks, reasoned robots, append-only versions, admin history/rollback and resumable dry-run-first regeneration.
+- Integrated the supplied NeoGiga logo into favicon/app/touch assets, header/footer marks, social media and compatible product/category placeholders without changing the existing page design or stored media paths.
+- Deployed `/home/neogiga/laravel/releases/20260714-140500-catalog-seo-media` after validated backups. Production now has complete SEO rows for 73,058 products and 441 categories, 70,058 new history versions, and a zero-change final dry run; 3,179 product and 262 category manual/locked records were preserved.
+- Preserved production counts for products, categories, brands, images, customers, orders, inventory and prices. Full verification passed: 172 tests, 771 assertions, 11 intentional skips, asset build/caches, live route/API canaries and desktop/mobile browser regression checks.
+
+## 2026-07-14 - Production-Safe ElecForest Catalog Import
+
+- Added a non-destructive production compatibility migration that widens only product provenance URL fields from 255-character strings to text so complete source URLs are retained without truncation.
+- Added a checksum-safe media fast path that reuses the complete validated WebP/AVIF derivative set when every expected file already exists, avoiding unnecessary production image decoding and resampling.
+- Added an additive, resumable ElecForest catalog integration with provenance, identity collision protection, category mapping, professional content normalization, specifications/applications, editable SEO, source-offer isolation, review gates and protected admin operations.
+- Imported all 3,177 sellable products from the 3,178-line source as hidden drafts; the one collection-page row was correctly rejected, and a clean full rerun left all 3,177 products unchanged.
+- Downloaded all 9,801 product-image candidates in production, stored 9,777 checksum-deduplicated inactive image rows with 63,054 derivative references, and finished with zero ElecForest queued/failed jobs.
+- Preserved all existing regional prices and inventory: the import wrote zero marketplace, vendor, country-price or warehouse-stock rows and kept supplier observations separate.
+- Added the required eight audit/implementation/results reports, incremental migration rollback verification, source/database checksums, and full provenance for imported and generated data.
+- Verified 169 passing backend tests, 11 intentional skips and 709 assertions; migration status, database integrity, local catalog/admin routes, regional canonicals, cache compilation, Composer checks and the frontend build also pass.
+- Deployed release `/home/neogiga/laravel/releases/20260714-103845-elecforest` after two validated custom-format PostgreSQL backups; production has 3,177 hidden drafts, strict publication remains at zero, and identity, taxonomy and media-rights reviews are still required.
+- Added `ELECFOREST_PRODUCTION_DEPLOYMENT.md` with the live release, backup checksums, source checksum, database/media totals, route canaries, isolation results and safety state.
+
+## 2026-07-14 - Admin-Configurable Email Providers and Campaign Operations
+
+- Added persistent production workers for campaign preparation/marketing, transactional/webhook delivery, and customer spreadsheet imports; workers retain the existing disabled/test/approval sending gates and run at explicit low priorities.
+- Added a pre-migration schema-capability guard so production can boot and run the additive provider migration when an older `email_provider_configs` table exists without the new channel/security columns.
+- Added encrypted SMTP and generic provider-API configuration for independent marketing and transactional channels through the existing admin panel, with secret-preserving updates, explicit clearing, test actions, test recipients, sender selection, and rate/daily limits.
+- Added runtime provider loading for HTTP requests and queue jobs, a campaign-capable SMTP adapter, and safe environment fallback until an admin configuration is saved; secrets are never returned to the browser or audit log.
+- Added audited sender-profile editing and retained verified/enabled sender, consent, suppression, approval, production authorization, and test-mode gates.
+- Expanded the email page with HTML/plain-text composition, versioned content, template and customer-segment selection, scheduling, explicit live approval, prepare/run controls, status visibility, and a direct link to the mass customer spreadsheet importer.
+- Reused the existing additive provider schema; no destructive migration or customer/catalog data rewrite is required.
+- Verified the complete backend suite (149 passed, 11 intentional skips, 598 assertions), focused communication/import/account/checkout suite (26 passed, 175 assertions), all 900 routes, cache compilation, Composer audit, reference-workbook dry-run, and Vite production build.
+
+## 2026-07-13 - Customer Import and Communication Governance
+
+- Added reversible normalized customer identity, spreadsheet import, source provenance, consent/preferences, suppression, audience snapshot, sender/domain, provider event, and communication-log schema extensions without replacing existing customer or marketing records.
+- Added XLSX/XLS/CSV/ODS preview/import APIs, admin workflow, resumable import queue, and `neogiga:import-customers` dry-run/import CLI with configurable mappings, country normalization, deduplication, and no inferred marketing consent.
+- Added customer/country/segment CRM views and permission-gated formula-safe exports within the existing admin theme.
+- Separated marketing and transactional provider configuration and queues; added regional sender gates, immutable campaign/newsletter templates, approvals, test-recipient allowlists, frozen consent-aware audience snapshots, schedule preparation, rate/daily limits, resumable batches, and operational controls.
+- Added confirmation-based opaque unsubscribe/preferences routes, central eligibility/suppression services, signed idempotent webhooks with encrypted raw payloads, bounce/complaint processing, and first-party campaign/country analytics.
+- Wired account verification/welcome/password changes, seller/distributor approval, checkout/order, and OTP communication through the transactional queue and retained marketing delivery on independent lower-priority queues.
+- Seeded disabled/unverified Global, India, Nepal, Support, Orders, Billing, RFQ, and Seller Communication sender profiles plus marketing/transactional domain verification records.
+- Upgraded Laravel 11.54 to 12.63 after a checksum-verified backup, resolving three framework advisories. Composer now reports no known advisories.
+- Verified the complete backend suite (147 passed, 11 intentional skips, 572 assertions), focused communication suite (24 passed, 149 assertions), reference-workbook dry-run, all 896 routes, scheduler/cache compilation, and Vite build. No real email was sent and production delivery stays fail-closed.
+
+## 2026-07-13 - NeoGiga Logo, Placeholder and Complete Catalog Sitemap Upgrade
+
+- Added versioned NeoGiga favicon, app-icon, Apple touch icon, catalog-placeholder, and 1200×630 social-image assets derived from the supplied official logo.
+- Replaced inline legacy favicons and catalog placeholder artwork without changing page layout, spacing, typography, or the existing theme.
+- Preserved the legacy placeholder URL as a compatibility wrapper so existing product image records render the new branded asset without database updates.
+- Expanded sharded sitemap coverage to every active brand and manufacturer, including a data-safe fallback built from existing product manufacturer names when optional manufacturer tables are absent.
+- Confirmed that root, subcategory, and child-category records are all included in the category sitemap; added regression coverage for nested taxonomy URLs.
+- Aligned brand and manufacturer CollectionPage structured-data URLs with the exact current localized URL.
+- Kept hreflang rendering backward-compatible with marketplace edition payloads already present in the production cache during rolling deployment.
+- Deployment is code/assets only: no migrations, seeders, imports, or catalog-row writes.
+- Extended the NeoGiga image fallback to every category hub/detail template, covering all categories without stored media across every localized storefront without changing category records.
+- Added Category ItemList structured data for the main taxonomy hub and subcategory collections.
+- Verified exact live coverage of all 69,875 public product URLs and all 439 active category URLs across the complete sharded sitemap index.
+
+## 2026-07-13 - Technical SEO Canonical and Sitemap Upgrade
+
+- Fixed marketplace SEO rendering so canonical and `og:url` values retain the current localized page path while using the configured canonical marketplace host.
+- Updated marketplace URL generation and hreflang output to prefer canonical domains and omit hidden, non-indexable, or hreflang-disabled editions.
+- Added safe catalog URL policy: filtered/search pages emit `noindex,follow`; clean pagination remains indexable and uses page-specific canonicals.
+- Added default social images and protected cart, checkout, password reset, login, registration, and account pages from indexing.
+- Upgraded Product JSON-LD with canonical localized URLs, images, manufacturer/brand URLs, conditional aggregate ratings, and conditional offers; removed null rating values.
+- Added ItemList and localized BreadcrumbList JSON-LD to product listings and category pages without changing visual design.
+- Replaced the 5,000-product sitemap cap with a sitemap index and 10,000-URL shards for static pages, categories, and every publicly visible product.
+- Sitemap cache keys now include catalog counts and latest update timestamps, catalog hubs are included, and unknown/fake `lastmod` values are omitted.
+- Corrected the production robots sitemap URL from `neogiga.in` to `neogiga.com` and excluded private workflow URLs from crawling.
+- Added focused SEO regression tests and stored pre-change backups in the repository-level `.codex-backups/2026-07-13-seo-technical-upgrade/` directory.
+
+## 2026-07-13 - Catalog Identity: Brand and Manufacturer Foundation
+
+- Added backend-only catalog SEO/content generation for products, brands, categories, manufacturers, and sellers via `neogiga:generate-seo-content`, with dry-run default, scoped type options, country/tag templates, and force/apply controls.
+- Product SEO generation now produces titles in the requested `{Brand} {Product_Name} {MPN} on NeoGiga {Country} - {Website Tag}` format, meta descriptions, short descriptions, descriptions, and derived product specs from existing catalog facts only.
+- Product detail metadata now reads generated product SEO rows/fields when present without changing the visual page design.
+- Added additive manufacturer identity tables, manufacturer aliases, and nullable product/brand manufacturer links without changing existing product rows.
+- Added source lineage and identifier columns for products where missing, including normalized MPN, GTIN, HS code, ECCN, lifecycle, source URL/name, confidence, and verification date fields.
+- Added `Manufacturer` and `ManufacturerAlias` models plus product/brand manufacturer relationships.
+- Added canonical public `/manufacturer/{slug}` and `/brand/{slug}` pages with legacy plural redirects.
+- Updated product detail pages to link brand, manufacturer, and MPN identities and include manufacturer organization data in Product JSON-LD.
+- Added the read-only `neogiga:audit-catalog` Artisan command to report catalog identity, brand, manufacturer, product identifier, and inventory coverage.
+
+## 2026-07-13 - Gap Feature Fill: Checkout Payment Allowlist
+
+- Added interim `admin.permission` middleware for token-gated admin API routes and required
+  `settings.manage` for admin console settings writes, with deny-by-default behavior when
+  `ADMIN_API_TOKEN_PERMISSIONS` is not configured.
+- Added `PaymentMethodPolicyService` so checkout payment methods are validated server-side from the
+  `payment_providers` registry when configured, with legacy fallback only while the registry is empty.
+- Wired the policy into API checkout and public web checkout; tampered/disabled methods now fail
+  validation instead of relying on static controller `in:` rules.
+- Updated the checkout page to render only enabled methods for the cart currency and show a safe
+  unavailable state when no method is enabled.
+- Added feature coverage for disabled/tampered payment methods and kept existing checkout/promo
+  flows using explicitly enabled test providers.
+- Fixed the existing PCB API route middleware typo that prevented Artisan from booting.
+- Reconciled the supplier importer base contract with existing array-based supplier importers so
+  Artisan can resolve importer commands without PHP signature fatals.
+- Fixed PCB migration foreign-key type mismatches against existing bigint-backed `users`,
+  `products`, and `warehouses` tables while keeping PCB-owned IDs as UUIDs.
+- Fixed the CPL validation error relation to match the bigint-backed `pcb_cpl_lines.id` column.
+- Converted the duplicate supplier import migration into an idempotent extension of the existing
+  ERP suppliers table, preserving existing supplier records and adding only missing importer columns.
+- Updated the default feature smoke test to assert the existing `/` to `/en` canonical redirect
+  instead of expecting a direct 200 response.
+- Updated the region stock visibility smoke test to assert the same canonical locale redirect.
+
 ## 2026-07-10 - JLCPCB Canonical Import Safety Gate
 
 - Added the JLCPCB/LCSC ETL as a source-controlled Laravel tool with tests, mappings, validation reports, and production run documentation.

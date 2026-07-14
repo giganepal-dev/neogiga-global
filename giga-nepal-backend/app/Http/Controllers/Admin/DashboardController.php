@@ -3,14 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\HealthController;
+use App\Models\Erp\RfqRequest;
 use App\Models\Marketplace\Marketplace;
 use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
+use App\Models\Marketplace\ProductImage;
 use App\Models\Marketplace\Vendor;
+use App\Models\Order;
+use App\Models\OrderStatusHistory;
 use App\Models\User;
 use App\Services\Catalog\CatalogSearchService;
+use App\Services\Marketing\CampaignAnalyticsService;
+use App\Services\Marketing\EmailProviderConfigurationService;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
@@ -115,7 +126,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function categories(\Illuminate\Http\Request $request): View
+    public function categories(Request $request): View
     {
         $roots = ProductCategory::whereNull('parent_id')
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
@@ -180,6 +191,7 @@ class DashboardController extends Controller
         if (! Schema::hasTable('spec_template_fields')) {
             return $templates->map(function ($template) {
                 $template->fields = collect();
+
                 return $template;
             });
         }
@@ -193,6 +205,7 @@ class DashboardController extends Controller
 
         return $templates->map(function ($template) use ($fields) {
             $template->fields = $fields->get($template->id, collect());
+
             return $template;
         });
     }
@@ -204,7 +217,7 @@ class DashboardController extends Controller
         return view('admin.marketplaces', compact('marketplaces'));
     }
 
-    public function products(\Illuminate\Http\Request $request): View
+    public function products(Request $request): View
     {
         $indexSummary = app(CatalogSearchService::class)->indexedSummary();
         $products = Product::query()
@@ -301,6 +314,14 @@ class DashboardController extends Controller
                 ->get(),
             'productLmsLinks' => DB::table('product_lms_links')->where('product_id', $id)->orderByDesc('id')->get(),
             'productSeo' => DB::table('product_seo_meta')->where('product_id', $id)->first(),
+            'seoVersions' => Schema::hasTable('catalog_seo_versions')
+                ? DB::table('catalog_seo_versions')->where('entity_type', 'product')->where('entity_id', $id)->orderByDesc('id')->limit(12)->get()
+                : collect(),
+            'productImages' => ProductImage::where('product_id', $id)
+                ->orderByDesc('is_primary')
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get(),
             'productReviews' => $this->safeProductReviews($id),
             'reviewSummary' => $this->safeProductReviewSummary($id),
             'marketplacePrices' => $this->safeMarketplacePrices($id),
@@ -313,7 +334,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function jlcpcbImports(\Illuminate\Http\Request $request): View
+    public function jlcpcbImports(Request $request): View
     {
         abort_unless(Schema::hasTable('catalog_product_sources'), 404);
 
@@ -434,6 +455,7 @@ class DashboardController extends Controller
                     || str_contains($name, '(')
                     || str_contains($name, ')')
                     || in_array(strtolower($name), ['made in china', 'unknown', 'generic'], true);
+
                 return $row;
             });
 
@@ -449,6 +471,7 @@ class DashboardController extends Controller
             ->map(function ($row) use ($genericCategories) {
                 $name = trim((string) ($row->name ?? ''));
                 $row->review_flag = $name === '' || in_array(strtolower($name), $genericCategories, true);
+
                 return $row;
             });
 
@@ -560,7 +583,7 @@ class DashboardController extends Controller
             ->get();
     }
 
-    public function vendors(\Illuminate\Http\Request $request): View
+    public function vendors(Request $request): View
     {
         $vendors = Vendor::query()
             ->leftJoin('vendor_profiles as p', 'p.vendor_id', '=', 'vendors.id')
@@ -629,7 +652,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function users(\Illuminate\Http\Request $request): View
+    public function users(Request $request): View
     {
         $users = User::with('role')
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
@@ -798,7 +821,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function settings(\Illuminate\Http\Request $request): View
+    public function settings(Request $request): View
     {
         $adminSettings = DB::table('admin_settings')
             ->when($request->query('group'), fn ($q, $group) => $q->where('group', $group))
@@ -836,7 +859,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function media(\Illuminate\Http\Request $request): View
+    public function media(Request $request): View
     {
         $assets = DB::table('admin_media_assets')
             ->when($request->query('folder'), fn ($q, $folder) => $q->where('folder', $folder))
@@ -861,7 +884,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function seo(\Illuminate\Http\Request $request): View
+    public function seo(Request $request): View
     {
         $pages = DB::table('seo_pages')
             ->when($request->query('robots'), fn ($q, $robots) => $q->where('robots', $robots))
@@ -886,7 +909,6 @@ class DashboardController extends Controller
         ]);
     }
 
-
     public function marketing(): View
     {
         $stats = [
@@ -906,13 +928,82 @@ class DashboardController extends Controller
         return view('admin.marketing.dashboard', compact('stats', 'recentEvents', 'campaigns'));
     }
 
-    public function crm(): View
+    public function crm(Request $request): View
     {
+        $marketplaceId = $request->integer('marketplace') ?: null;
+        $countryId = $request->integer('country') ?: null;
+        $consentState = $request->string('consent_state')->toString();
+        $search = trim($request->string('q')->toString());
+
+        $countrySummary = DB::table('countries as c')
+            ->leftJoin('customer_accounts as a', 'a.country_id', '=', 'c.id')
+            ->leftJoin('customer_contacts as ct', 'ct.customer_account_id', '=', 'a.id')
+            ->leftJoin('contact_email_addresses as e', 'e.customer_contact_id', '=', 'ct.id')
+            ->leftJoin('customer_invoice_references as i', 'i.customer_account_id', '=', 'a.id')
+            ->when($marketplaceId, fn ($query) => $query->where('a.marketplace_id', $marketplaceId))
+            ->when($countryId, fn ($query) => $query->where('c.id', $countryId))
+            ->selectRaw('c.id, c.name, c.iso_code_2, c.region, count(distinct a.id) as companies, count(distinct ct.id) as contacts, count(distinct case when e.is_valid = ? then e.id end) as valid_emails, count(distinct case when ct.marketing_status = ? then ct.id end) as opted_in, count(distinct case when ct.marketing_status in (?, ?) then ct.id end) as transactional_or_unknown, count(distinct i.id) as invoices, max(i.invoice_or_sales_order_date) as last_invoice', [true, 'opted_in', 'transactional_only', 'unknown'])
+            ->groupBy('c.id', 'c.name', 'c.iso_code_2', 'c.region')->havingRaw('count(distinct a.id) > 0')->orderBy('c.name')->get();
+
+        $customers = DB::table('customer_profiles as p')
+            ->leftJoin('customer_accounts as a', 'a.id', '=', 'p.customer_account_id')
+            ->select('p.*')
+            ->when($marketplaceId, fn ($query) => $query->where('p.marketplace_id', $marketplaceId))
+            ->when($countryId, fn ($query) => $query->where('p.country_id', $countryId))
+            ->when($consentState !== '', fn ($query) => $query->where('p.marketing_status', $consentState))
+            ->when($search !== '', fn ($query) => $query->where(function ($nested) use ($search) {
+                $term = '%'.$search.'%';
+                $nested->where('p.email', 'like', $term)
+                    ->orWhere('p.first_name', 'like', $term)
+                    ->orWhere('p.last_name', 'like', $term)
+                    ->orWhere('a.legal_name', 'like', $term);
+            }))
+            ->orderByDesc('p.id')
+            ->paginate(20)
+            ->withQueryString();
+
+        $accounts = DB::table('customer_accounts as a')
+            ->leftJoin('countries as c', 'c.id', '=', 'a.country_id')
+            ->select('a.*', 'c.name as country_name')
+            ->when($marketplaceId, fn ($query) => $query->where('a.marketplace_id', $marketplaceId))
+            ->when($countryId, fn ($query) => $query->where('a.country_id', $countryId))
+            ->when($search !== '', fn ($query) => $query->where(function ($nested) use ($search) {
+                $term = '%'.$search.'%';
+                $nested->where('a.legal_name', 'like', $term)->orWhere('a.primary_domain', 'like', $term);
+            }))
+            ->orderByDesc('a.id')->limit(50)->get();
+
+        $contacts = DB::table('customer_contacts as ct')
+            ->leftJoin('customer_accounts as a', 'a.id', '=', 'ct.customer_account_id')
+            ->leftJoin('contact_email_addresses as e', function ($join) {
+                $join->on('e.customer_contact_id', '=', 'ct.id')->where('e.is_primary', true);
+            })
+            ->select('ct.*', 'a.legal_name as company_name', 'e.email')
+            ->when($marketplaceId, fn ($query) => $query->where('ct.marketplace_id', $marketplaceId))
+            ->when($countryId, fn ($query) => $query->where('ct.country_id', $countryId))
+            ->when($consentState !== '', fn ($query) => $query->where('ct.marketing_status', $consentState))
+            ->when($search !== '', fn ($query) => $query->where(function ($nested) use ($search) {
+                $term = '%'.$search.'%';
+                $nested->where('ct.full_name', 'like', $term)
+                    ->orWhere('a.legal_name', 'like', $term)
+                    ->orWhere('e.email', 'like', $term);
+            }))
+            ->orderByDesc('ct.id')->limit(50)->get();
+
         return view('admin.marketing.crm', [
-            'customers' => DB::table('customer_profiles')->orderByDesc('id')->paginate(20),
+            'customers' => $customers,
             'segments' => DB::table('customer_segments')->orderBy('name')->get(),
             'contactLists' => DB::table('contact_lists')->orderBy('name')->get(),
             'suppressed' => $this->safeCount('suppression_lists'),
+            'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(['id', 'name', 'iso_code_2']),
+            'marketplaces' => DB::table('marketplaces')->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']),
+            'countrySummary' => $countrySummary,
+            'accounts' => $accounts,
+            'contacts' => $contacts,
+            'consents' => DB::table('customer_consents')->when($marketplaceId, fn ($query) => $query->where('marketplace_id', $marketplaceId))->when($consentState !== '', fn ($query) => $query->where('status', $consentState))->orderByDesc('id')->limit(25)->get(),
+            'suppressions' => DB::table('suppression_lists as s')->leftJoin('customer_contacts as ct', 'ct.id', '=', 's.customer_contact_id')->select('s.*')->when($marketplaceId, fn ($query) => $query->where('ct.marketplace_id', $marketplaceId))->where('s.is_active', true)->orderByDesc('s.id')->limit(25)->get(),
+            'mergeReview' => DB::table('customer_import_rows')->where('status', 'review_required')->orderByDesc('id')->limit(25)->get(),
+            'communicationHistory' => DB::table('communication_logs')->when($marketplaceId, fn ($query) => $query->where('marketplace_id', $marketplaceId))->orderByDesc('id')->limit(25)->get(),
         ]);
     }
 
@@ -921,16 +1012,26 @@ class DashboardController extends Controller
         return view('admin.marketing.newsletter', [
             'subscribers' => DB::table('newsletter_subscribers')->orderByDesc('id')->paginate(20),
             'categories' => DB::table('newsletter_categories')->orderBy('name')->get(),
+            'templates' => DB::table('newsletter_templates')->where('is_active', true)->orderBy('name')->get(),
+            'marketplaces' => DB::table('marketplaces')->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code']),
+            'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(['id', 'name', 'iso_code_2']),
             'campaigns' => DB::table('newsletter_campaigns')->orderByDesc('id')->limit(12)->get(),
         ]);
     }
 
-    public function emailMarketing(): View
+    public function emailMarketing(EmailProviderConfigurationService $providers): View
     {
+        $providers->apply('marketing');
+
         return view('admin.marketing.email', [
             'templates' => DB::table('email_templates')->orderBy('type')->get(),
             'campaigns' => DB::table('email_campaigns')->orderByDesc('id')->limit(15)->get(),
             'messages' => DB::table('email_messages')->orderByDesc('id')->limit(15)->get(),
+            'segments' => DB::table('customer_segments')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'testRecipients' => config('marketing.email.test_recipients', []),
+            'productionSendingEnabled' => (bool) config('marketing.email.sending_enabled', false),
+            'marketingProvider' => (string) config('marketing.email.provider', 'sandbox'),
+            'providerSummary' => $providers->summary('marketing'),
         ]);
     }
 
@@ -970,14 +1071,17 @@ class DashboardController extends Controller
 
     public function marketingAnalytics(): View
     {
+        $campaignAnalytics = app(CampaignAnalyticsService::class);
+
         return view('admin.marketing.analytics', [
             'events' => DB::table('analytics_events')->orderByDesc('id')->paginate(20),
             'topSearches' => DB::table('top_search_terms')->orderByDesc('search_count')->limit(20)->get(),
             'trendingProducts' => DB::table('trending_products')->orderByDesc('score')->limit(20)->get(),
             'trendingCategories' => DB::table('trending_categories')->orderByDesc('score')->limit(20)->get(),
+            'campaignPerformance' => array_merge($campaignAnalytics->campaigns(20), $campaignAnalytics->newsletters(20)),
+            'countryPerformance' => $campaignAnalytics->countryDashboard(),
         ]);
     }
-
 
     public function marketingAudit(): View
     {
@@ -986,12 +1090,19 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function marketingSettings(): View
+    public function marketingSettings(EmailProviderConfigurationService $providers): View
     {
+        $providers->applyAll();
+
         return view('admin.marketing.settings', [
             'marketingSettings' => DB::table('marketing_settings')->orderBy('key')->get(),
             'analyticsSettings' => DB::table('analytics_settings')->orderBy('key')->get(),
             'notificationSettings' => DB::table('notification_settings')->orderBy('key')->get(),
+            'senderProfiles' => DB::table('email_sender_profiles')->orderBy('purpose')->orderBy('name')->get(),
+            'emailDomains' => DB::table('email_domains')->orderBy('purpose')->orderBy('domain')->get(),
+            'providerConfigs' => DB::table('email_provider_configs')->select('provider', 'channel', 'is_enabled', 'test_mode', 'sending_domain', 'rate_limit_per_minute', 'daily_limit', 'last_tested_at', 'last_test_status')->orderBy('channel')->get(),
+            'providerSummaries' => collect(EmailProviderConfigurationService::CHANNELS)->mapWithKeys(fn (string $channel) => [$channel => $providers->summary($channel)]),
+            'queueNames' => [config('marketing.transactional.queue'), config('marketing.email.queue'), config('marketing.webhooks.queue'), 'imports', config('marketing.email.preparation_queue')],
         ]);
     }
 
@@ -1105,9 +1216,9 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function orders(\Illuminate\Http\Request $request): View
+    public function orders(Request $request): View
     {
-        $query = \App\Models\Order::with(['user', 'marketplace'])
+        $query = Order::with(['user', 'marketplace'])
             ->when($request->query('status'), fn ($q, $s) => $q->where('status', $s))
             ->when($request->query('payment'), fn ($q, $p) => $q->where('payment_status', $p))
             ->when($request->query('q'), fn ($q, $t) => $q->where('order_number', 'ilike', "%{$t}%"))
@@ -1132,22 +1243,22 @@ class DashboardController extends Controller
 
     public function order(int $id): View
     {
-        $order = \App\Models\Order::with(['user', 'marketplace', 'items', 'payments'])->findOrFail($id);
+        $order = Order::with(['user', 'marketplace', 'items', 'payments'])->findOrFail($id);
 
         return view('admin.order-detail', [
             'order' => $order,
-            'history' => \App\Models\OrderStatusHistory::where('order_id', $id)->orderByDesc('id')->get(),
+            'history' => OrderStatusHistory::where('order_id', $id)->orderByDesc('id')->get(),
         ]);
     }
 
     public function invoice(int $id): View
     {
         return view('admin.invoice', [
-            'order' => \App\Models\Order::with(['user', 'marketplace', 'items', 'payments'])->findOrFail($id),
+            'order' => Order::with(['user', 'marketplace', 'items', 'payments'])->findOrFail($id),
         ]);
     }
 
-    public function support(\Illuminate\Http\Request $request): View
+    public function support(Request $request): View
     {
         $tickets = DB::table('support_tickets as t')
             ->leftJoin('users as u', 'u.id', '=', 't.user_id')
@@ -1198,7 +1309,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function reviews(\Illuminate\Http\Request $request): View
+    public function reviews(Request $request): View
     {
         $status = (string) $request->query('status', 'pending');
 
@@ -1210,7 +1321,7 @@ class DashboardController extends Controller
                 ->select('r.*', 'p.name as product_name', 'p.slug as product_slug')
                 ->paginate(20)
                 ->withQueryString()
-            : new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
+            : new LengthAwarePaginator([], 0, 20);
 
         return view('admin.reviews', [
             'reviews' => $reviews,
@@ -1223,9 +1334,9 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function rfqs(\Illuminate\Http\Request $request): View
+    public function rfqs(Request $request): View
     {
-        $query = \App\Models\Erp\RfqRequest::with('items')
+        $query = RfqRequest::with('items')
             ->when($request->query('status'), fn ($q, $s) => $q->where('status', $s))
             ->orderByDesc('id');
 
@@ -1244,12 +1355,12 @@ class DashboardController extends Controller
     public function rfq(int $id): View
     {
         return view('admin.rfq-detail', [
-            'rfq' => \App\Models\Erp\RfqRequest::with('items')->findOrFail($id),
+            'rfq' => RfqRequest::with('items')->findOrFail($id),
             'history' => DB::table('rfq_status_histories')->where('rfq_request_id', $id)->orderByDesc('id')->get(),
         ]);
     }
 
-    public function bomImports(\Illuminate\Http\Request $request): View
+    public function bomImports(Request $request): View
     {
         abort_unless(Schema::hasTable('bom_imports') && Schema::hasTable('bom_import_lines'), 404);
 
@@ -1366,7 +1477,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeRows(string $table, int $limit = 20): \Illuminate\Support\Collection
+    private function safeRows(string $table, int $limit = 20): Collection
     {
         try {
             return DB::table($table)->orderByDesc('id')->limit($limit)->get();
@@ -1375,7 +1486,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeRowsWhere(string $table, string $column, int $value, int $limit = 20): \Illuminate\Support\Collection
+    private function safeRowsWhere(string $table, string $column, int $value, int $limit = 20): Collection
     {
         try {
             return DB::table($table)->where($column, $value)->orderByDesc('id')->limit($limit)->get();
@@ -1452,7 +1563,7 @@ class DashboardController extends Controller
                 ];
             }
 
-            $response = \Illuminate\Support\Facades\Redis::connection()->ping();
+            $response = Redis::connection()->ping();
 
             return [
                 'ok' => true,
@@ -1553,7 +1664,7 @@ class DashboardController extends Controller
     private function systemApiHealth(): array
     {
         try {
-            $controller = app(\App\Http\Controllers\HealthController::class);
+            $controller = app(HealthController::class);
             $response = $controller->__invoke();
             $status = method_exists($response, 'getStatusCode') ? $response->getStatusCode() : 200;
 
@@ -1610,7 +1721,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeProductInventoryStocks(int $productId, int $limit = 50): \Illuminate\Support\Collection
+    private function safeProductInventoryStocks(int $productId, int $limit = 50): Collection
     {
         try {
             if (! Schema::hasTable('inventory_stocks')) {
@@ -1630,7 +1741,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeMediaAssets(int $limit = 200): \Illuminate\Support\Collection
+    private function safeMediaAssets(int $limit = 200): Collection
     {
         try {
             if (! Schema::hasTable('admin_media_assets')) {
@@ -1646,7 +1757,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeVendorProducts(int $limit = 30): \Illuminate\Support\Collection
+    private function safeVendorProducts(int $limit = 30): Collection
     {
         try {
             if (! Schema::hasTable('vendor_products')) {
@@ -1670,7 +1781,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeVendorDocuments(int $limit = 30): \Illuminate\Support\Collection
+    private function safeVendorDocuments(int $limit = 30): Collection
     {
         try {
             if (! Schema::hasTable('vendor_documents')) {
@@ -1688,7 +1799,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeRolePermissions(): \Illuminate\Support\Collection
+    private function safeRolePermissions(): Collection
     {
         try {
             if (! Schema::hasTable('role_permissions')) {
@@ -1705,7 +1816,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeUserCountryAccess(): \Illuminate\Support\Collection
+    private function safeUserCountryAccess(): Collection
     {
         try {
             if (! Schema::hasTable('user_country_access')) {
@@ -1722,7 +1833,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeUserSellerAccess(): \Illuminate\Support\Collection
+    private function safeUserSellerAccess(): Collection
     {
         try {
             if (! Schema::hasTable('user_seller_access')) {
@@ -1739,7 +1850,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeInventoryReservations(int $limit = 15): \Illuminate\Support\Collection
+    private function safeInventoryReservations(int $limit = 15): Collection
     {
         try {
             if (! Schema::hasTable('inventory_reservations')) {
@@ -1773,7 +1884,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeLowStockAlerts(int $limit = 20): \Illuminate\Support\Collection
+    private function safeLowStockAlerts(int $limit = 20): Collection
     {
         try {
             if (! Schema::hasTable('low_stock_alerts')) {
@@ -1793,7 +1904,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safePosRefunds(?int $saleId = null, int $limit = 15): \Illuminate\Support\Collection
+    private function safePosRefunds(?int $saleId = null, int $limit = 15): Collection
     {
         try {
             if (! Schema::hasTable('pos_refunds') || ! Schema::hasColumn('pos_refunds', 'pos_sale_id')) {
@@ -1812,7 +1923,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safePosOfflineSyncEvents(int $limit = 20): \Illuminate\Support\Collection
+    private function safePosOfflineSyncEvents(int $limit = 20): Collection
     {
         try {
             if (! Schema::hasTable('pos_offline_sync_events')) {
@@ -1832,7 +1943,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeCategoryLmsLinks(int $category, int $limit = 30): \Illuminate\Support\Collection
+    private function safeCategoryLmsLinks(int $category, int $limit = 30): Collection
     {
         try {
             if (! Schema::hasTable('category_lms_links')) {
@@ -1852,7 +1963,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeLmsProductLinks(int $course, int $limit = 40): \Illuminate\Support\Collection
+    private function safeLmsProductLinks(int $course, int $limit = 40): Collection
     {
         try {
             if (! Schema::hasTable('product_lms_links')) {
@@ -1872,7 +1983,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function safeLmsLessonFiles(int $course, int $limit = 60): \Illuminate\Support\Collection
+    private function safeLmsLessonFiles(int $course, int $limit = 60): Collection
     {
         try {
             if (! Schema::hasTable('lms_lesson_files')) {

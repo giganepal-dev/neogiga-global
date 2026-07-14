@@ -7,10 +7,13 @@ use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
 use App\Services\Catalog\CatalogSearchService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
-use Illuminate\Http\Request;
+use App\Services\Marketplace\MarketplaceSeoRenderer;
+use App\Services\Seo\CatalogSeoTemplateService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -42,8 +45,21 @@ class ProductPageController extends Controller
             ? ProductCategory::where('slug', $categorySlug)->first()
             : null;
 
-        $products = Product::with(['brand', 'category'])
-            ->withSum(['inventoryStocks as regional_available' => fn ($query) => $countryId > 0 ? $query->where('country_id', $countryId) : $query], 'quantity_available')
+        $products = Product::with([
+            'brand',
+            'category',
+            'images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1),
+        ])
+            ->withSum(['inventoryStocks as regional_available' => function ($query) use ($countryId) {
+                if ($countryId <= 0) {
+                    return;
+                }
+                if (Schema::hasColumn('inventory_stocks', 'country_id')) {
+                    $query->where('country_id', $countryId);
+                } elseif (Schema::hasTable('warehouses') && Schema::hasColumn('warehouses', 'country_id')) {
+                    $query->whereIn('warehouse_id', DB::table('warehouses')->where('country_id', $countryId)->select('id'));
+                }
+            }], 'quantity_available')
             ->whereIn('status', self::VISIBLE)
             ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->when($category, fn ($query) => $query->where('category_id', $category->id))
@@ -71,6 +87,27 @@ class ProductPageController extends Controller
             ->paginate(24)
             ->withQueryString();
 
+        // Search and faceted combinations are useful to people but create an
+        // unbounded duplicate-URL space for crawlers. Keep clean pagination
+        // indexable and self-canonical; noindex filtered/search result pages.
+        $hasFilters = collect($request->query())
+            ->except('page')
+            ->filter(fn ($value) => is_array($value) ? $value !== [] : trim((string) $value) !== '')
+            ->isNotEmpty();
+        $marketplaceTags = app(MarketplaceSeoRenderer::class)->tags(
+            $marketplaceContext['current'] ?? null,
+            url()->current(),
+        );
+        $canonical = $marketplaceTags['canonical'];
+        if (! $hasFilters && $products->currentPage() > 1) {
+            $canonical .= '?page='.$products->currentPage();
+        }
+        $pageSuffix = $products->currentPage() > 1 ? ' — Page '.$products->currentPage() : '';
+        $pageTitle = ($category?->name ?? 'Products').$pageSuffix.' — NeoGiga Engineering Marketplace';
+        $metaDescription = $category
+            ? 'Browse '.$category->name.' with technical specifications, regional availability and RFQ sourcing on NeoGiga.'
+            : 'Browse engineering components and tools: semiconductors, electronics, IoT, robotics, batteries, power and automation. Search by part number, SKU or keyword.';
+
         return view('frontend.products.index', [
             'products' => $products,
             'q' => $q,
@@ -82,25 +119,49 @@ class ProductPageController extends Controller
                 ->orderBy('sort_order')->orderBy('name')->limit(80)->get(),
             'brands' => DB::table('product_brands')->orderBy('name')->limit(120)->get(['id', 'name']),
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->limit(80)->get(['id', 'name']),
+            'canonical' => $canonical,
+            'robots' => $hasFilters ? 'noindex,follow' : $marketplaceTags['robots'],
+            'pageTitle' => $pageTitle,
+            'metaDescription' => $metaDescription,
         ]);
     }
 
     public function show(string $slug): View
     {
         $marketplaceContext = app(GlobalMarketplaceContextService::class)->context(request());
-        $product = Product::with(['brand', 'category', 'specs', 'images'])
+        $relations = [
+            'brand',
+            'category',
+            'specs',
+            'images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id'),
+        ];
+        if (Schema::hasTable('manufacturers') && Schema::hasColumn('products', 'manufacturer_id')) {
+            $relations[] = 'manufacturer';
+            $relations[] = 'brand.manufacturer';
+        }
+
+        $product = Product::with($relations)
             ->where('slug', $slug)
             ->whereIn('status', self::VISIBLE)
             ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->firstOrFail();
 
-        $related = Product::with('brand')
+        $related = Product::with([
+            'brand',
+            'images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1),
+        ])
             ->whereIn('status', self::VISIBLE)
             ->when(Schema::hasColumn('products', 'visibility_status'), fn ($q) => $q->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->where('id', '!=', $product->id)
             ->when($product->category_id, fn ($q) => $q->where('category_id', $product->category_id))
             ->limit(6)
             ->get();
+
+        $pageSeo = app(CatalogSeoTemplateService::class)->activeProduct(
+            $product,
+            $marketplaceContext['current'] ?? null,
+            $marketplaceContext['locale'] ?? 'en',
+        );
 
         return view('frontend.products.show', [
             'product' => $product,
@@ -115,6 +176,12 @@ class ProductPageController extends Controller
             'advancedSpecs' => $this->advancedSpecs($product->id),
             'reviewSummary' => $this->reviewSummary($product->id),
             'reviews' => $this->approvedReviews($product->id),
+            'pageSeo' => $pageSeo,
+            'canonical' => $pageSeo['canonical'],
+            'robots' => $pageSeo['robots'],
+            'robotsReason' => $pageSeo['robots_reason'],
+            'ogImage' => $this->productImage($product),
+            'productImages' => $product->images->values(),
         ]);
     }
 
@@ -198,15 +265,59 @@ class ProductPageController extends Controller
             return collect();
         }
 
-        return DB::table('inventory_stocks as s')
+        $stockHasCountry = Schema::hasColumn('inventory_stocks', 'country_id');
+        $warehouseHasCountry = Schema::hasTable('warehouses') && Schema::hasColumn('warehouses', 'country_id');
+        $countryJoinColumn = $stockHasCountry ? 's.country_id' : ($warehouseHasCountry ? 'w.country_id' : null);
+
+        $query = DB::table('inventory_stocks as s')
             ->leftJoin('warehouses as w', 'w.id', '=', 's.warehouse_id')
-            ->leftJoin('countries as c', 'c.id', '=', 's.country_id')
             ->where('s.product_id', $productId)
-            ->when($countryId > 0, fn ($query) => $query->orderByRaw('CASE WHEN s.country_id = ? THEN 0 ELSE 1 END', [$countryId]))
-            ->select('s.*', 'w.name as warehouse_name', 'c.name as country_name')
+            ->select('s.*', 'w.name as warehouse_name');
+
+        if ($countryJoinColumn !== null && Schema::hasTable('countries')) {
+            $query->leftJoin('countries as c', 'c.id', '=', DB::raw($countryJoinColumn))
+                ->addSelect('c.name as country_name');
+        } else {
+            $query->addSelect(DB::raw('NULL as country_name'));
+        }
+
+        if ($countryId > 0 && $countryJoinColumn !== null) {
+            $query->orderByRaw("CASE WHEN {$countryJoinColumn} = ? THEN 0 ELSE 1 END", [$countryId]);
+        }
+
+        return $query
             ->orderByDesc('s.quantity_available')
             ->limit(12)
             ->get();
+    }
+
+    private function pageSeo(Product $product): array
+    {
+        $seoMeta = is_array($product->seo_meta) ? $product->seo_meta : [];
+        $title = $product->meta_title ?? null;
+        $description = $product->meta_description ?? null;
+
+        if (Schema::hasTable('product_seo_meta')) {
+            $row = DB::table('product_seo_meta')->where('product_id', $product->id)->first();
+            $title = $row?->meta_title ?: $title;
+            $description = $row?->meta_description ?: $description;
+        }
+
+        $title = $title ?: ($seoMeta['title'] ?? null) ?: ($product->name.' - NeoGiga');
+        $description = $description ?: ($seoMeta['description'] ?? null)
+            ?: Str::limit(strip_tags($product->short_description ?: ($product->description ?: 'Datasheet, technical specifications, stock and RFQ for '.$product->name.' on NeoGiga.')), 155);
+
+        return [
+            'title' => $title,
+            'description' => $description,
+        ];
+    }
+
+    private function productImage(Product $product): string
+    {
+        $image = $product->images->firstWhere('is_primary', true) ?: $product->images->first();
+
+        return $image?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png');
     }
 
     private function productDocuments(int $productId)

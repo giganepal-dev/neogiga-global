@@ -2,19 +2,17 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class RegionStockVisibilityTest extends TestCase
 {
     /**
-     * A basic feature test example.
+     * The root route is intentionally canonicalized to the default locale.
      */
-    public function test_example(): void
+    public function test_root_redirects_to_canonical_locale(): void
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertRedirect('/en');
     }
 }

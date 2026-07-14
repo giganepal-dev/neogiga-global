@@ -8,7 +8,9 @@ use App\Http\Requests\Admin\Product\AdminGenericGroupRequest;
 use App\Http\Requests\Admin\Product\AdminGenericSuggestionRequest;
 use App\Http\Requests\Admin\Product\AdminProductDecisionRequest;
 use App\Models\Marketplace\VendorProduct;
+use App\Models\Marketplace\ProductImage;
 use App\Services\Product\ProductApprovalService;
+use App\Services\Product\ProductImageManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -51,6 +53,10 @@ class ProductAdminController extends Controller
             'specs' => Schema::hasTable('product_specs') ? DB::table('product_specs')->where('product_id', $product)->get() : [],
             'warranties' => Schema::hasTable('product_warranties') ? DB::table('product_warranties')->where('product_id', $product)->get() : [],
             'datasheets' => Schema::hasTable('product_datasheets') ? DB::table('product_datasheets')->where('product_id', $product)->get() : [],
+            'images' => Schema::hasTable('product_images')
+                ? ProductImage::where('product_id', $product)->orderByDesc('is_primary')->orderBy('sort_order')->get()
+                    ->map(fn (ProductImage $image) => app(ProductImageManager::class)->serialize($image))
+                : [],
         ]);
     }
 

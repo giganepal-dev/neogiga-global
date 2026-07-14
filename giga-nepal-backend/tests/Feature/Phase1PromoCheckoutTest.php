@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Payments\PaymentProvider;
 use App\Models\Promotion\Coupon;
 use App\Models\Promotion\GiftCard;
 use App\Models\Role;
@@ -20,6 +21,7 @@ class Phase1PromoCheckoutTest extends TestCase
         $token = bin2hex(random_bytes(32));
         $user = $this->customerUser($token);
         $marketplaceId = $this->marketplaceId();
+        $this->enablePaymentProvider('bank_transfer');
         $productId = $this->stockedProductId($marketplaceId);
 
         // 2 x 19.99 = 39.98 subtotal
@@ -73,6 +75,21 @@ class Phase1PromoCheckoutTest extends TestCase
         $user->forceFill(['api_token_hash' => hash('sha256', $token)])->save();
 
         return $user;
+    }
+
+    private function enablePaymentProvider(string $code): void
+    {
+        PaymentProvider::updateOrCreate(
+            ['code' => $code],
+            [
+                'name' => ucwords(str_replace('_', ' ', $code)),
+                'is_enabled' => true,
+                'is_live' => false,
+                'supported_currencies' => null,
+                'config' => [],
+                'sort_order' => 20,
+            ],
+        );
     }
 
     private function marketplaceId(): int

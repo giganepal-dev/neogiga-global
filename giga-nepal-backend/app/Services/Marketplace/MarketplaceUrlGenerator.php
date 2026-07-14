@@ -16,12 +16,25 @@ class MarketplaceUrlGenerator
         $path = '/' . ltrim($path, '/');
         $path = $path === '/' ? '' : $path;
 
-        $domain = $marketplace->relationLoaded('domains')
-            ? $marketplace->domains->firstWhere('is_active', true)?->domain
-            : $marketplace->domains()->where('is_active', true)->orderByDesc('is_primary')->value('domain');
+        // SEO URLs must use the configured canonical host. Active domain rows
+        // may include aliases such as np.neogiga.com while canonical_domain is
+        // the branded production host (for example giganepal.com).
+        $domain = $marketplace->canonical_domain ?: $marketplace->domain;
+
+        if (! $domain) {
+            if ($marketplace->relationLoaded('domains')) {
+                $activeDomains = $marketplace->domains->where('is_active', true);
+                $domain = $activeDomains->firstWhere('is_primary', true)?->domain
+                    ?: $activeDomains->first()?->domain;
+            } else {
+                $domain = $marketplace->domains()->where('is_active', true)->orderByDesc('is_primary')->value('domain');
+            }
+        }
 
         if ($domain) {
-            return 'https://' . $domain . $path;
+            $domain = preg_replace('#^https?://#i', '', trim((string) $domain));
+
+            return 'https://' . rtrim((string) $domain, '/') . $path;
         }
 
         if ($marketplace->url_prefix) {

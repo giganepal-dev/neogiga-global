@@ -16,8 +16,8 @@ return new class extends Migration
                 $table->uuid('id')->primary();
                 
                 // Relationships
-                $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
-                $table->foreignUuid('organization_id')->nullable()->constrained()->onDelete('cascade');
+                $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+                $table->unsignedBigInteger('organization_id')->nullable()->index();
                 $table->string('marketplace')->default('global'); // en, np, in, etc.
                 
                 // Identity
@@ -40,11 +40,11 @@ return new class extends Migration
                 $table->string('destination_country')->nullable();
                 $table->string('shipping_postal_code')->nullable();
                 $table->string('preferred_region')->nullable(); // Asia, Europe, NA
-                $table->foreignUuid('preferred_manufacturer_id')->nullable()->constrained('manufacturers')->nullOnDelete();
-                $table->foreignUuid('preferred_warehouse_id')->nullable()->constrained('warehouses')->nullOnDelete();
+                $table->unsignedBigInteger('preferred_manufacturer_id')->nullable()->index();
+                $table->foreignId('preferred_warehouse_id')->nullable()->constrained('warehouses')->nullOnDelete();
                 
                 // Assignment
-                $table->foreignUuid('assigned_engineer_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('assigned_engineer_id')->nullable()->constrained('users')->nullOnDelete();
                 
                 // Status
                 $table->enum('status', [
@@ -73,7 +73,7 @@ return new class extends Migration
             Schema::create('pcb_project_members', function (Blueprint $table) {
                 $table->id();
                 $table->foreignUuid('project_id')->constrained('pcb_projects')->onDelete('cascade');
-                $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
+                $table->foreignId('user_id')->constrained()->cascadeOnDelete();
                 $table->enum('role', ['owner', 'admin', 'editor', 'viewer', 'supplier', 'engineer']);
                 $table->timestamp('access_expires_at')->nullable();
                 $table->boolean('nda_accepted')->default(false);
@@ -90,7 +90,7 @@ return new class extends Migration
                 $table->foreignUuid('project_id')->constrained('pcb_projects')->onDelete('cascade');
                 $table->unsignedInteger('version_number');
                 $table->text('change_summary')->nullable();
-                $table->foreignUuid('created_by_id')->constrained('users');
+                $table->foreignId('created_by_id')->constrained('users');
                 $table->json('snapshot_data')->nullable(); // Snapshot of config at this version
                 $table->timestamps();
                 
@@ -102,7 +102,7 @@ return new class extends Migration
             Schema::create('pcb_project_activity_logs', function (Blueprint $table) {
                 $table->id();
                 $table->foreignUuid('project_id')->constrained('pcb_projects')->onDelete('cascade');
-                $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
+                $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
                 $table->string('action'); // file_uploaded, quote_requested, status_changed
                 $table->text('description')->nullable();
                 $table->json('metadata')->nullable();

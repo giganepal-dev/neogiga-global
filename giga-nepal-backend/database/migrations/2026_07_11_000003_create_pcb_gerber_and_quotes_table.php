@@ -18,7 +18,7 @@ return new class extends Migration
                 // Relationships
                 $table->foreignUuid('project_id')->constrained('pcb_projects')->onDelete('cascade');
                 $table->foreignUuid('file_id')->nullable()->constrained('pcb_files')->nullOnDelete();
-                $table->foreignUuid('triggered_by_id')->constrained('users');
+                $table->foreignId('triggered_by_id')->constrained('users');
                 
                 // Analysis metadata
                 $table->string('parser_version')->default('1.0.0');
@@ -45,7 +45,7 @@ return new class extends Migration
                 // Confidence levels
                 $table->enum('confidence_level', ['low', 'medium', 'high'])->default('medium');
                 $table->boolean('engineering_reviewed')->default(false);
-                $table->foreignUuid('reviewed_by_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('reviewed_by_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamp('reviewed_at')->nullable();
                 
                 // Timestamps
@@ -93,7 +93,7 @@ return new class extends Migration
                 $table->text('message');
                 $table->json('details')->nullable();
                 $table->boolean('resolved')->default(false);
-                $table->foreignUuid('resolved_by_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('resolved_by_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamp('resolved_at')->nullable();
                 $table->text('resolution_notes')->nullable();
                 $table->timestamps();
@@ -108,8 +108,8 @@ return new class extends Migration
                 
                 // Relationships
                 $table->foreignUuid('project_id')->constrained('pcb_projects')->onDelete('cascade');
-                $table->foreignUuid('created_by_id')->constrained('users');
-                $table->foreignUuid('organization_id')->nullable()->constrained()->nullOnDelete();
+                $table->foreignId('created_by_id')->constrained('users');
+                $table->unsignedBigInteger('organization_id')->nullable()->index();
                 
                 // Board specifications
                 $table->enum('board_type', ['single_sided', 'double_sided', 'multilayer', 'rigid_flex', 'flex', 'aluminum', 'ceramic'])->default('double_sided');

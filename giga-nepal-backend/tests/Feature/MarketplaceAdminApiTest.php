@@ -24,7 +24,11 @@ class MarketplaceAdminApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['services.admin_api_token' => self::TOKEN, 'services.admin_api_token_hash' => null]);
+        config([
+            'services.admin_api_token' => self::TOKEN,
+            'services.admin_api_token_hash' => null,
+            'services.admin_api_token_permissions' => [],
+        ]);
     }
 
     private function auth(): array
@@ -130,5 +134,30 @@ class MarketplaceAdminApiTest extends TestCase
         $codes = collect($res)->pluck('code');
         $this->assertContains('SHOWN', $codes);
         $this->assertNotContains('HIDDEN', $codes);
+    }
+
+    public function test_admin_console_settings_write_requires_settings_permission(): void
+    {
+        $payload = [
+            'group' => 'general',
+            'key' => 'checkout.notice',
+            'value' => 'Manual verification enabled',
+            'type' => 'string',
+        ];
+
+        $this->postJson('/api/v1/admin/console/settings', $payload, $this->auth())
+            ->assertForbidden()
+            ->assertJsonPath('required_permission', 'settings.manage');
+
+        config(['services.admin_api_token_permissions' => ['settings.manage']]);
+
+        $this->postJson('/api/v1/admin/console/settings', $payload, $this->auth())
+            ->assertCreated()
+            ->assertJsonPath('data.key', 'checkout.notice');
+
+        $this->assertDatabaseHas('admin_settings', [
+            'key' => 'checkout.notice',
+            'value' => 'Manual verification enabled',
+        ]);
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Affiliate\AffiliateService;
+use App\Services\Marketing\AccountCommunicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +17,7 @@ class AuthController extends Controller
 {
     use ApiResponses;
 
-    public function register(Request $request): JsonResponse
+    public function register(Request $request, AccountCommunicationService $communications): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:120'],
@@ -42,6 +43,7 @@ class AuthController extends Controller
         ]);
 
         $this->bindReferral($user, $request);
+        $communications->registration($user);
 
         return $this->success([
             'user' => $this->userPayload($user),
@@ -58,7 +60,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $validated['email'])->first();
 
-        if (!$user || !Hash::check($validated['password'], $user->password)) {
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return $this->error('Invalid credentials.', 422);
         }
 

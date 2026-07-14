@@ -22,8 +22,10 @@ class MarketplaceSeoRenderer
 
     private const DEFAULT_DESCRIPTION = 'Semiconductors, electronics, IoT, robotics, batteries and engineering tools — sourced globally, delivered regionally.';
 
-    public function __construct(private readonly MarketplaceSeoService $seo)
-    {
+    public function __construct(
+        private readonly MarketplaceSeoService $seo,
+        private readonly MarketplaceUrlGenerator $urls,
+    ) {
     }
 
     /**
@@ -33,7 +35,7 @@ class MarketplaceSeoRenderer
     {
         $title = $marketplace?->seo_title ?: self::DEFAULT_TITLE;
         $description = $marketplace?->seo_description ?: self::DEFAULT_DESCRIPTION;
-        $canonical = $marketplace?->seo_canonical_url ?: $currentUrl;
+        $canonical = $this->canonicalUrl($marketplace, $currentUrl);
 
         // No marketplace resolved => preserve legacy "index, follow".
         $robots = $marketplace ? $this->seo->robotsFor($marketplace) : 'index, follow';
@@ -59,5 +61,33 @@ class MarketplaceSeoRenderer
             'schema_json' => $schema,
             'favicon' => $marketplace?->favicon,
         ];
+    }
+
+    /**
+     * Treat marketplace SEO canonical values as a canonical host, not a
+     * page-level URL. Appending the current clean path prevents every catalog
+     * page from collapsing to the marketplace homepage.
+     */
+    private function canonicalUrl(?Marketplace $marketplace, string $currentUrl): string
+    {
+        $path = parse_url($currentUrl, PHP_URL_PATH) ?: '/';
+        $path = '/' . ltrim($path, '/');
+
+        if (! $marketplace) {
+            $scheme = parse_url($currentUrl, PHP_URL_SCHEME) ?: 'https';
+            $host = parse_url($currentUrl, PHP_URL_HOST);
+
+            return $host ? $scheme . '://' . $host . ($path === '/' ? '/' : $path) : $currentUrl;
+        }
+
+        $configured = trim((string) ($marketplace->seo_canonical_url ?: ''));
+        if ($configured !== '' && parse_url($configured, PHP_URL_HOST)) {
+            $scheme = parse_url($configured, PHP_URL_SCHEME) ?: 'https';
+            $origin = $scheme . '://' . parse_url($configured, PHP_URL_HOST);
+        } else {
+            $origin = rtrim($this->urls->forMarketplace($marketplace), '/');
+        }
+
+        return rtrim($origin, '/') . ($path === '/' ? '/' : $path);
     }
 }

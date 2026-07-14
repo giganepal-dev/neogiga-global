@@ -26,7 +26,7 @@ class SellerApplicationPolicy
         if ($user->hasRole(['admin', 'marketplace_manager', 'seller_reviewer'])) {
             return true;
         }
-        
+
         return $user->id === $sellerApplication->user_id;
     }
 
@@ -34,7 +34,7 @@ class SellerApplicationPolicy
      * Determine whether the user can create models.
      * Any authenticated user or guest (public form) can create.
      */
-    public function create(User $user = null): bool
+    public function create(?User $user = null): bool
     {
         // Public form submission is allowed (user may be null)
         return true;

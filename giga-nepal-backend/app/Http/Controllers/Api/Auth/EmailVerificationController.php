@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Concerns\ApiResponses;
-use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\Marketing\AccountCommunicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,26 +13,29 @@ class EmailVerificationController extends Controller
 {
     use ApiResponses;
 
-    public function sendVerification(Request $request): JsonResponse
+    public function sendVerification(Request $request, AccountCommunicationService $communications): JsonResponse
     {
-        if ($request->user()->hasVerifiedEmail()) {
+        if ($request->user()->email_verified_at) {
             return $this->success(['message' => 'Email already verified.']);
         }
 
-        $request->user()->sendEmailVerificationNotification();
+        $communications->verification($request->user());
 
-        return $this->success(['message' => 'Verification link sent.']);
+        return $this->success(['message' => 'Verification link queued through the transactional channel.']);
     }
 
-    public function verify(EmailVerificationRequest $request): JsonResponse
+    public function verify(Request $request, int $id, string $hash, AccountCommunicationService $communications): JsonResponse
     {
-        if ($request->user()->hasVerifiedEmail()) {
+        $user = User::find($id);
+        if (! $user || ! hash_equals(sha1(mb_strtolower($user->email)), $hash)) {
+            return $this->error('Invalid verification link.', 403);
+        }
+        if ($user->email_verified_at) {
             return $this->success(['message' => 'Email already verified.']);
         }
 
-        if ($request->user()->markEmailAsVerified()) {
-            event(new Verified($request->user()));
-        }
+        $user->forceFill(['email_verified_at' => now()])->save();
+        $communications->verified($user->fresh());
 
         return $this->success(['message' => 'Email verified successfully.']);
     }

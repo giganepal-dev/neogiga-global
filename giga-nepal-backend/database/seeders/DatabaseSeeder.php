@@ -41,6 +41,7 @@ class DatabaseSeeder extends Seeder
             ProductSeeders\CategoryTaxonomySeeder::class,
             AiProjectTemplateSeeder::class,
         ]);
+        $this->call(EmailCommunicationSeeder::class);
 
         // NeoGiga Priority Suppliers - Tier 1, 2, 3 suppliers
         $this->call([
