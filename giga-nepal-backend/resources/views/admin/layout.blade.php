@@ -178,12 +178,12 @@
 <div class="app" id="app">
     <div class="scrim" data-close></div>
     <aside class="sidebar">
-        <div class="brand">
+        <a class="brand" href="/admin" aria-label="NeoGiga admin dashboard">
             <span class="mark">
-                <svg width="20" height="20" viewBox="0 0 32 32" fill="none"><path d="M9 22V10l14 12V10" stroke="#19D3F5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <img src="{{ url('/images/brand/neogiga-icon-192.png') }}" alt="" width="28" height="28" aria-hidden="true">
             </span>
             <span><b>NeoGiga</b><small>Admin Console</small></span>
-        </div>
+        </a>
         <nav class="nav" aria-label="Primary">
             <span class="lbl">Overview</span>
             @php $r = request()->path(); @endphp
@@ -298,6 +298,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19V9m7 10V5m7 14v-7" stroke-linecap="round"/></svg>
                 Analytics
             </a>
+            <a href="/admin/marketing/abandoned-carts" class="{{ str_starts_with($r,'admin/marketing/abandoned-carts') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h2l2 11h11l2-7H6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="19" r="1"/><circle cx="18" cy="19" r="1"/></svg>
+                Abandoned Carts
+            </a>
 
             <a href="/admin/marketing/audit" class="{{ str_starts_with($r,'admin/marketing/audit') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3l7 3v5c0 4.5-2.8 8.5-7 10-4.2-1.5-7-5.5-7-10V6l7-3z" stroke-linejoin="round"/></svg>
@@ -378,17 +382,22 @@
             <div class="top-actions">
                 <form class="searchbox" method="get" action="/admin/products">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg>
-                    <input class="control" name="q" placeholder="Search products, orders, sellers" value="{{ request('q') }}">
+                    <input class="control" name="q" placeholder="Search products, MPN or SKU" value="{{ request('q') }}">
                 </form>
-                <span class="chip">EN</span>
-                <span class="chip">Global</span>
+                <a class="chip" href="/admin/settings?setting_group=localization" title="Open localization settings">EN</a>
+                <a class="chip" href="/admin/marketplaces" title="Open marketplace configuration">Global</a>
                 <details class="modal">
                     <summary class="btn btn-ghost icon-btn" title="Notifications">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" stroke-linecap="round"/><path d="M10 21h4" stroke-linecap="round"/></svg>
                     </summary>
                     <div class="modal-panel" style="max-width:420px">
-                        <div class="modal-h"><h3>Notifications</h3><span class="badge b-info">placeholder</span></div>
-                        <div class="modal-b"><div class="empty"><h3>No new notifications</h3><p>Queue alerts, seller approvals, low stock and RFQ updates will appear here.</p></div></div>
+                        <div class="modal-h"><h3>Operations Inbox</h3><span class="badge b-info">live destinations</span></div>
+                        <div class="modal-b grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+                            <a class="btn btn-ghost" href="/admin/inventory">Stock alerts</a>
+                            <a class="btn btn-ghost" href="/admin/applications">Seller approvals</a>
+                            <a class="btn btn-ghost" href="/admin/rfqs">RFQ inbox</a>
+                            <a class="btn btn-ghost" href="/admin/system-health">Queue &amp; health</a>
+                        </div>
                     </div>
                 </details>
                 <details class="modal">
@@ -431,6 +440,9 @@
             </div>
             @if (session('status'))
                 <div class="note"><strong>Saved.</strong> {{ session('status') }}</div>
+            @endif
+            @if (session('error'))
+                <div class="note" style="background:#fef2f2;border-color:#fecaca;color:#991b1b"><strong>Action failed.</strong> {{ session('error') }}</div>
             @endif
             @if (isset($errors) && $errors->any())
                 <div class="note" style="background:#fef2f2;border-color:#fecaca;color:#991b1b"><strong>Check input.</strong> {{ $errors->first() }}</div>

@@ -1701,6 +1701,8 @@ class CommerceOpsController extends Controller
 
     public function storePermission(Request $request): RedirectResponse
     {
+        abort_unless($request->user()?->hasRole('super_admin'), 403);
+
         $data = $request->validate([
             'key' => ['required', 'string', 'max:160', 'regex:/^[a-z0-9_.-]+$/i'],
             'name' => ['required', 'string', 'max:180'],
@@ -1728,17 +1730,54 @@ class CommerceOpsController extends Controller
 
     public function toggleRolePermission(Request $request, int $role, int $permission): RedirectResponse
     {
-        if (! DB::table('roles')->where('id', $role)->exists() || ! DB::table('permissions')->where('id', $permission)->exists()) {
-            return back()->with('error', 'Role or permission not found.');
-        }
+        abort_unless($request->user()?->hasRole('super_admin'), 403);
 
-        $existing = DB::table('role_permissions')->where('role_id', $role)->where('permission_id', $permission)->first();
-        if ($existing) {
-            DB::table('role_permissions')->where('id', $existing->id)->delete();
-            $enabled = false;
-        } else {
-            DB::table('role_permissions')->insert(['role_id' => $role, 'permission_id' => $permission, 'created_at' => now(), 'updated_at' => now()]);
-            $enabled = true;
+        try {
+            $enabled = DB::transaction(function () use ($role, $permission): bool {
+                $roleRow = DB::table('roles')->where('id', $role)->lockForUpdate()->first();
+                $permissionRow = DB::table('permissions')->where('id', $permission)->where('is_active', true)->lockForUpdate()->first();
+                if (! $roleRow || ! $permissionRow) {
+                    throw new \RuntimeException('Role or active permission not found.');
+                }
+
+                $permissionKeys = $this->permissionKeys($roleRow->permissions ?? null);
+                if (in_array('*', $permissionKeys, true)) {
+                    throw new \RuntimeException('Wildcard roles are immutable in the permission matrix.');
+                }
+
+                $pivot = DB::table('role_permissions')
+                    ->where('role_id', $role)
+                    ->where('permission_id', $permission)
+                    ->lockForUpdate()
+                    ->first();
+                $wasEnabled = $pivot !== null || in_array((string) $permissionRow->key, $permissionKeys, true);
+
+                if ($wasEnabled) {
+                    DB::table('role_permissions')->where('role_id', $role)->where('permission_id', $permission)->delete();
+                    $permissionKeys = array_values(array_filter(
+                        $permissionKeys,
+                        static fn (string $key): bool => $key !== (string) $permissionRow->key
+                    ));
+                } else {
+                    DB::table('role_permissions')->insert([
+                        'role_id' => $role,
+                        'permission_id' => $permission,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    $permissionKeys[] = (string) $permissionRow->key;
+                    $permissionKeys = array_values(array_unique($permissionKeys));
+                }
+
+                DB::table('roles')->where('id', $role)->update([
+                    'permissions' => json_encode($permissionKeys),
+                    'updated_at' => now(),
+                ]);
+
+                return ! $wasEnabled;
+            }, 3);
+        } catch (\RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
         }
 
         $this->auditAdminAction($request, 'role_permission_toggled', 'role_permissions', null, ['role_id' => $role, 'permission_id' => $permission, 'enabled' => $enabled]);
@@ -2335,57 +2374,60 @@ class CommerceOpsController extends Controller
 
         try {
             DB::transaction(function () use (&$created, &$updated, &$resolved) {
-                $rows = DB::table('inventory_stocks')
+                DB::table('inventory_stocks')
                     ->where('reorder_point', '>', 0)
                     ->whereColumn('quantity_available', '<=', 'reorder_point')
-                    ->limit(500)
-                    ->get();
+                    ->lockForUpdate()
+                    ->chunkById(500, function ($rows) use (&$created, &$updated): void {
+                        foreach ($rows as $stock) {
+                            $severity = (int) $stock->quantity_available <= 0 ? 'critical' : 'warning';
+                            $existing = DB::table('low_stock_alerts')
+                                ->where('inventory_stock_id', $stock->id)
+                                ->whereIn('status', ['open', 'active', 'acknowledged', 'reorder_queued'])
+                                ->lockForUpdate()
+                                ->first();
 
-                foreach ($rows as $stock) {
-                    $severity = (int) $stock->quantity_available <= 0 ? 'critical' : 'warning';
-                    $existing = DB::table('low_stock_alerts')
-                        ->where('inventory_stock_id', $stock->id)
-                        ->whereIn('status', ['open', 'active', 'acknowledged', 'reorder_queued'])
-                        ->first();
+                            $payload = [
+                                'inventory_stock_id' => $stock->id,
+                                'product_id' => $stock->product_id,
+                                'warehouse_id' => $stock->warehouse_id,
+                                'vendor_id' => $stock->vendor_id,
+                                'marketplace_id' => $stock->marketplace_id,
+                                'available_quantity' => $stock->quantity_available,
+                                'threshold' => $stock->reorder_point,
+                                'status' => $existing?->status ?: 'open',
+                                'severity' => $severity,
+                                'metadata' => json_encode(['generated_via' => 'admin.web', 'source_table' => 'inventory_stocks']),
+                                'updated_at' => now(),
+                            ];
 
-                    $payload = [
-                        'inventory_stock_id' => $stock->id,
-                        'product_id' => $stock->product_id,
-                        'warehouse_id' => $stock->warehouse_id,
-                        'vendor_id' => $stock->vendor_id,
-                        'marketplace_id' => $stock->marketplace_id,
-                        'available_quantity' => $stock->quantity_available,
-                        'threshold' => $stock->reorder_point,
-                        'status' => $existing?->status ?: 'open',
-                        'severity' => $severity,
-                        'metadata' => json_encode(['generated_via' => 'admin.web', 'source_table' => 'inventory_stocks']),
+                            if ($existing) {
+                                DB::table('low_stock_alerts')->where('id', $existing->id)->update($payload);
+                                $updated++;
+                            } else {
+                                $payload['created_at'] = now();
+                                DB::table('low_stock_alerts')->insert($payload);
+                                $created++;
+                            }
+                        }
+                    });
+
+                $resolved = DB::table('low_stock_alerts')
+                    ->whereIn('status', ['open', 'active', 'acknowledged', 'reorder_queued'])
+                    ->whereNotNull('inventory_stock_id')
+                    ->whereNotExists(function ($query): void {
+                        $query->selectRaw('1')
+                            ->from('inventory_stocks as current_stock')
+                            ->whereColumn('current_stock.id', 'low_stock_alerts.inventory_stock_id')
+                            ->where('current_stock.reorder_point', '>', 0)
+                            ->whereColumn('current_stock.quantity_available', '<=', 'current_stock.reorder_point');
+                    })
+                    ->update([
+                        'status' => 'resolved',
+                        'resolved_at' => now(),
+                        'action_note' => 'Automatically resolved after authoritative low-stock scan.',
                         'updated_at' => now(),
-                    ];
-
-                    if ($existing) {
-                        DB::table('low_stock_alerts')->where('id', $existing->id)->update($payload);
-                        $updated++;
-                    } else {
-                        $payload['created_at'] = now();
-                        DB::table('low_stock_alerts')->insert($payload);
-                        $created++;
-                    }
-                }
-
-                $staleAlerts = DB::table('low_stock_alerts')
-                    ->whereIn('status', ['open', 'active', 'acknowledged', 'reorder_queued']);
-
-                $lowStockIds = $rows->pluck('id')->all();
-                if ($lowStockIds) {
-                    $staleAlerts->whereNotIn('inventory_stock_id', $lowStockIds);
-                }
-
-                $resolved = $staleAlerts->update([
-                    'status' => 'resolved',
-                    'resolved_at' => now(),
-                    'action_note' => 'Automatically resolved after low-stock scan.',
-                    'updated_at' => now(),
-                ]);
+                    ]);
             });
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
@@ -2572,49 +2614,95 @@ class CommerceOpsController extends Controller
 
     public function storePosRefund(Request $request, int $sale): RedirectResponse
     {
+        if (! $request->filled('idempotency_key') && trim((string) $request->header('Idempotency-Key')) !== '') {
+            $request->merge(['idempotency_key' => trim((string) $request->header('Idempotency-Key'))]);
+        }
+
         $data = $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01'],
+            'amount' => ['required', 'numeric', 'decimal:0,4', 'min:0.01'],
             'refund_method' => ['required', 'string', 'max:80'],
             'reason' => ['required', 'string', 'max:1000'],
+            'idempotency_key' => ['required', 'string', 'max:120', 'regex:/^[A-Za-z0-9._:-]+$/'],
         ]);
 
-        $row = DB::table('pos_sales')->where('id', $sale)->first();
-        if (! $row) {
-            return back()->with('error', 'POS sale not found.');
-        }
-
-        $alreadyRefunded = (float) DB::table('pos_refunds')
-            ->where('pos_sale_id', $sale)
-            ->whereIn('status', ['recorded', 'processed'])
-            ->sum('amount');
-        $remaining = max(0, (float) $row->total_amount - $alreadyRefunded);
-
-        if ((float) $data['amount'] > $remaining) {
-            return back()->with('error', 'Refund exceeds remaining sale total.');
-        }
-
-        $refundId = DB::table('pos_refunds')->insertGetId([
+        $amount = $this->formatPosAmount($this->posAmountUnits($data['amount']));
+        $idempotencyKey = trim((string) ($data['idempotency_key'] ?? ''));
+        $requestFingerprint = hash('sha256', json_encode([
             'pos_sale_id' => $sale,
-            'amount' => $data['amount'],
-            'currency_code' => $row->currency_code ?? 'USD',
-            'refund_method' => $data['refund_method'],
-            'reason' => $data['reason'],
-            'status' => 'recorded',
             'processed_by' => $request->user()?->id,
-            'processed_at' => now(),
-            'metadata' => json_encode(['saved_via' => 'admin.web', 'gateway_action' => 'not_sent']),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+            'amount' => $amount,
+            'refund_method' => $data['refund_method'],
+            'reason' => trim($data['reason']),
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-        $newRefunded = $alreadyRefunded + (float) $data['amount'];
-        DB::table('pos_sales')->where('id', $sale)->update([
-            'payment_status' => $newRefunded >= (float) $row->total_amount ? 'refunded' : 'partial_refund',
-            'status' => $newRefunded >= (float) $row->total_amount ? 'refunded' : $row->status,
-            'updated_at' => now(),
-        ]);
+        try {
+            $result = DB::transaction(function () use ($request, $sale, $data, $amount, $idempotencyKey, $requestFingerprint): array {
+                $row = DB::table('pos_sales')->where('id', $sale)->lockForUpdate()->first();
+                if (! $row) {
+                    throw new \RuntimeException('POS sale not found.');
+                }
 
-        $this->auditAdminAction($request, 'pos_refund_recorded', 'pos_refunds', $refundId, ['pos_sale_id' => $sale, 'amount' => $data['amount'], 'refund_method' => $data['refund_method']]);
+                $duplicateQuery = DB::table('pos_refunds')
+                    ->where('pos_sale_id', $sale)
+                    ->where('metadata->idempotency_key', $idempotencyKey);
+                $existing = $duplicateQuery->lockForUpdate()->first();
+                if ($existing) {
+                    $metadata = json_decode((string) $existing->metadata, true) ?: [];
+                    if (($metadata['request_fingerprint'] ?? null) !== $requestFingerprint) {
+                        throw new \RuntimeException('Idempotency key was already used for a different refund request.');
+                    }
+
+                    return ['refund_id' => (int) $existing->id, 'replayed' => true];
+                }
+
+                $saleTotal = $this->posAmountUnits($row->total_amount);
+                $alreadyRefunded = $this->posAmountUnits(DB::table('pos_refunds')
+                    ->where('pos_sale_id', $sale)
+                    ->whereIn('status', ['recorded', 'processed'])
+                    ->sum('amount'));
+                $requested = $this->posAmountUnits($amount);
+                $remaining = max(0, $saleTotal - $alreadyRefunded);
+                if ($requested > $remaining) {
+                    throw new \RuntimeException('Refund exceeds remaining sale total.');
+                }
+
+                $refundId = DB::table('pos_refunds')->insertGetId([
+                    'pos_sale_id' => $sale,
+                    'amount' => $amount,
+                    'currency_code' => $row->currency_code ?? 'USD',
+                    'refund_method' => $data['refund_method'],
+                    'reason' => $data['reason'],
+                    'status' => 'recorded',
+                    'processed_by' => $request->user()?->id,
+                    'processed_at' => now(),
+                    'metadata' => json_encode([
+                        'saved_via' => 'admin.web',
+                        'gateway_action' => 'not_sent',
+                        'idempotency_key' => $idempotencyKey,
+                        'request_fingerprint' => $requestFingerprint,
+                    ]),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $newRefunded = $alreadyRefunded + $requested;
+                DB::table('pos_sales')->where('id', $sale)->update([
+                    'payment_status' => $newRefunded >= $saleTotal ? 'refunded' : 'partial_refund',
+                    'status' => $newRefunded >= $saleTotal ? 'refunded' : $row->status,
+                    'updated_at' => now(),
+                ]);
+
+                return ['refund_id' => $refundId, 'replayed' => false];
+            }, 3);
+        } catch (\RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        if ($result['replayed']) {
+            return back()->with('status', 'POS refund was already recorded; duplicate request ignored.');
+        }
+
+        $this->auditAdminAction($request, 'pos_refund_recorded', 'pos_refunds', $result['refund_id'], ['pos_sale_id' => $sale, 'amount' => $amount, 'refund_method' => $data['refund_method'], 'idempotency_key' => $idempotencyKey ?: null]);
 
         return back()->with('status', 'POS refund recorded.');
     }
@@ -3396,6 +3484,60 @@ class CommerceOpsController extends Controller
         ]);
 
         return back()->with('status', 'Expense recorded.');
+    }
+
+    /**
+     * Normalize the legacy JSON permission list before synchronizing it with the
+     * role_permissions pivot table.
+     *
+     * @return list<string>
+     */
+    private function permissionKeys(mixed $value): array
+    {
+        if (is_string($value)) {
+            $value = json_decode($value, true);
+        }
+
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $keys = array_map(
+            static fn (mixed $key): string => trim((string) $key),
+            $value
+        );
+
+        return array_values(array_unique(array_filter(
+            $keys,
+            static fn (string $key): bool => $key !== ''
+        )));
+    }
+
+    /**
+     * Convert a POS decimal amount into four-decimal fixed-point units so the
+     * refund limit is never checked with floating-point arithmetic.
+     */
+    private function posAmountUnits(mixed $value): int
+    {
+        $decimal = trim((string) $value);
+        if (! preg_match('/^(\d+)(?:\.(\d+))?$/', $decimal, $matches)) {
+            throw new \RuntimeException('POS amount must be a non-negative decimal value.');
+        }
+
+        $fraction = $matches[2] ?? '';
+        if (strlen($fraction) > 4 && trim(substr($fraction, 4), '0') !== '') {
+            throw new \RuntimeException('POS amount supports at most four decimal places.');
+        }
+
+        $whole = (int) $matches[1];
+        $fractionUnits = (int) str_pad(substr($fraction, 0, 4), 4, '0');
+
+        return ($whole * 10000) + $fractionUnits;
+    }
+
+    private function formatPosAmount(int $units): string
+    {
+        return intdiv($units, 10000).'.'.str_pad((string) ($units % 10000), 4, '0', STR_PAD_LEFT);
     }
 
     private function auditAdminAction(Request $request, string $action, string $table, ?int $id, array $values): void

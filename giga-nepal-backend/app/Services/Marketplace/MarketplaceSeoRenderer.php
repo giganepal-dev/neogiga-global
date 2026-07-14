@@ -80,14 +80,52 @@ class MarketplaceSeoRenderer
             return $host ? $scheme . '://' . $host . ($path === '/' ? '/' : $path) : $currentUrl;
         }
 
+        if ($this->hasDedicatedRegionalOrigin($marketplace)) {
+            $path = $this->canonicalRegionalPath($path);
+        }
+
         $configured = trim((string) ($marketplace->seo_canonical_url ?: ''));
         if ($configured !== '' && parse_url($configured, PHP_URL_HOST)) {
             $scheme = parse_url($configured, PHP_URL_SCHEME) ?: 'https';
             $origin = $scheme . '://' . parse_url($configured, PHP_URL_HOST);
         } else {
-            $origin = rtrim($this->urls->forMarketplace($marketplace), '/');
+            $generated = $this->urls->forMarketplace($marketplace);
+            $scheme = parse_url($generated, PHP_URL_SCHEME) ?: 'https';
+            $origin = $scheme . '://' . parse_url($generated, PHP_URL_HOST);
         }
 
         return rtrim($origin, '/') . ($path === '/' ? '/' : $path);
+    }
+
+    private function hasDedicatedRegionalOrigin(Marketplace $marketplace): bool
+    {
+        if (strtoupper((string) $marketplace->code) === 'GLOBAL') {
+            return false;
+        }
+
+        if ($marketplace->canonical_domain || $marketplace->domain || $marketplace->generated_domain) {
+            return true;
+        }
+
+        $configuredHost = strtolower((string) parse_url((string) $marketplace->seo_canonical_url, PHP_URL_HOST));
+
+        return $configuredHost !== '' && ! in_array($configuredHost, ['neogiga.com', 'www.neogiga.com'], true);
+    }
+
+    private function canonicalRegionalPath(string $path): string
+    {
+        $segments = array_values(array_filter(explode('/', trim($path, '/')), static fn (string $segment): bool => $segment !== ''));
+        if ($segments === []) {
+            return '/';
+        }
+
+        $requestedPrefix = strtolower($segments[0]);
+        $defaultPrefix = strtolower(trim((string) config('neogiga_global.default_prefix', 'en'), '/')) ?: 'en';
+        $knownPrefixes = array_map('strtolower', array_keys(config('neogiga_global.prefixes', [])));
+        if ($requestedPrefix !== $defaultPrefix && in_array($requestedPrefix, $knownPrefixes, true)) {
+            $segments[0] = $defaultPrefix;
+        }
+
+        return '/'.implode('/', $segments);
     }
 }

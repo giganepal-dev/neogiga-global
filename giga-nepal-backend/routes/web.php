@@ -341,6 +341,7 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
 
     Route::prefix('{localePrefix}')
         ->whereIn('localePrefix', $localePrefixes)
+        ->middleware(\App\Http\Middleware\CanonicalizeRegionalMarketplacePath::class)
         ->group(function () {
             Route::get('/', fn (string $localePrefix) => app(LandingController::class)())->name('localized.home');
             Route::get('/products', fn (string $localePrefix, Request $request) => app(ProductPageController::class)->index($request))->name('localized.products.index');
@@ -366,4 +367,5 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
 // any existing top-level route above (none of them are 2-8 letter codes).
 Route::get('/{prefix}', [MarketplaceLandingController::class, 'show'])
     ->whereIn('prefix', ['in', 'np', 'bd', 'lk', 'pk', 'bt', 'mv', 'ae', 'sa', 'qa', 'om', 'kw', 'us', 'ca', 'uk', 'de', 'fr', 'it', 'es', 'nl', 'au', 'nz', 'br', 'za', 'ke'])
+    ->middleware(\App\Http\Middleware\CanonicalizeRegionalMarketplacePath::class)
     ->name('marketplace.landing');

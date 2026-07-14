@@ -38,6 +38,7 @@ class AdminConsoleController extends Controller
         return $this->success([
             ['group' => 'Overview', 'items' => [
                 ['label' => 'Dashboard', 'url' => '/admin'],
+                ['label' => 'System Health & APIs', 'url' => '/admin/system-health'],
                 ['label' => 'Settings', 'url' => '/admin/settings'],
                 ['label' => 'Media', 'url' => '/admin/media'],
                 ['label' => 'SEO', 'url' => '/admin/seo'],
@@ -46,15 +47,23 @@ class AdminConsoleController extends Controller
                 ['label' => 'Categories', 'url' => '/admin/categories'],
                 ['label' => 'Products', 'url' => '/admin/products'],
                 ['label' => 'Marketplaces', 'url' => '/admin/marketplaces'],
+                ['label' => 'Import Review', 'url' => '/admin/imports/jlcpcb'],
+                ['label' => 'ElecForest Imports', 'url' => '/admin/imports/elecforest'],
             ]],
             ['group' => 'Operations', 'items' => [
                 ['label' => 'Vendors', 'url' => '/admin/vendors'],
                 ['label' => 'Inventory', 'url' => '/admin/inventory'],
+                ['label' => 'Orders', 'url' => '/admin/orders'],
+                ['label' => 'RFQs', 'url' => '/admin/rfqs'],
                 ['label' => 'POS', 'url' => '/admin/pos'],
                 ['label' => 'LMS', 'url' => '/admin/lms'],
             ]],
             ['group' => 'Growth', 'items' => [
                 ['label' => 'Marketing', 'url' => '/admin/marketing'],
+                ['label' => 'CRM & Segments', 'url' => '/admin/marketing/crm'],
+                ['label' => 'Customer Imports', 'url' => '/admin/marketing/customer-imports'],
+                ['label' => 'Email Campaigns', 'url' => '/admin/marketing/email'],
+                ['label' => 'Email Credentials', 'url' => '/admin/marketing/settings'],
                 ['label' => 'Analytics', 'url' => '/admin/marketing/analytics'],
                 ['label' => 'Audit Log', 'url' => '/admin/marketing/audit'],
             ]],
