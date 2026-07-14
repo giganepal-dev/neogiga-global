@@ -161,7 +161,7 @@
         <div><h3>Products</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=sensors">Sensors</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/brands">Brands</a></div>
         <div><h3>Company</h3><a href="{{ $publicBase }}/ai-commerce">AI commerce</a><a href="{{ $publicBase }}/lms">Learning hub</a><a href="{{ $publicBase }}/rfq">RFQ sourcing</a><a href="{{ $publicBase }}/distributors">Distributors</a></div>
         <div><h3>Seller</h3><a href="{{ $publicBase }}/sell-on-neogiga">Become a seller</a><a href="{{ $publicBase }}/seller-early-access">Early access</a><a href="/admin/login">Seller portal</a><a href="/admin/login">B2B login</a></div>
-        <div><h3>Countries</h3>@foreach(($marketplaceContext['editions'] ?? []) as $edition)<a href="{{ $edition['url'] }}">{{ $edition['name'] }}</a>@endforeach<a href="#">Bangladesh</a><a href="#">Sri Lanka</a></div>
+        <div><h3>Regional editions</h3>@forelse(($marketplaceContext['editions'] ?? []) as $edition)<a href="{{ $edition['url'] }}">{{ $edition['name'] }}</a>@empty<a href="{{ $publicBase }}#regional-editions">Marketplace directory</a>@endforelse<a href="{{ $publicBase }}#regional-editions">Regional platform status</a></div>
     </div>
 </footer>
 <a class="float-ai" href="{{ $publicBase }}/ai-commerce" aria-label="Open NeoGiga AI assistant">Ask AI</a>

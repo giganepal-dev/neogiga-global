@@ -27,8 +27,7 @@
         </form>
     </div>
 </details>
-<button class="btn btn-ghost" type="button">Import CSV</button>
-<button class="btn btn-ghost" type="button">Export CSV</button>
+<a class="btn btn-ghost" href="/admin/imports/elecforest">Catalog Imports</a>
 @endsection
 @section('content')
 
@@ -36,16 +35,16 @@
     <div class="kpi"><div class="t">Total categories</div><div class="v tnum">{{ number_format($total) }}</div><div class="s">taxonomy nodes</div></div>
     <div class="kpi"><div class="t">Root branches</div><div class="v tnum">{{ number_format($roots->count()) }}</div><div class="s">top level</div></div>
     <div class="kpi"><div class="t">Active manager</div><div class="v">CRUD</div><div class="s">create/edit/toggle</div></div>
-    <div class="kpi"><div class="t">Ordering</div><div class="v">Ready</div><div class="s">drag/drop placeholder</div></div>
+    <div class="kpi"><div class="t">Ordering</div><div class="v">Manual</div><div class="s">sort-order field</div></div>
 </div>
 
 <section class="card">
-    <div class="card-h"><div><h2>Category Manager</h2><div class="sub">Tree, filters, SEO fields, visibility and LMS link placeholders</div></div><span class="badge b-info">NeoGiga taxonomy</span></div>
+    <div class="card-h"><div><h2>Category Manager</h2><div class="sub">Tree, filters, SEO fields, visibility and LMS links</div></div><span class="badge b-info">NeoGiga taxonomy</span></div>
     <form class="filters" method="get">
         <input class="control" name="q" value="{{ $filters['q'] }}" placeholder="Search name or slug">
         <select class="control" name="status"><option value="">All status</option><option value="active" @selected($filters['status']==='active')>Active</option><option value="inactive" @selected($filters['status']==='inactive')>Inactive</option></select>
         <button class="btn btn-ghost" type="submit">Filter</button>
-        <button class="btn btn-ghost" type="button">Expand/Collapse</button>
+        <button class="btn btn-ghost" type="button" data-category-tree-toggle aria-expanded="true">Collapse children</button>
     </form>
     @if ($roots->isEmpty())
         <div class="empty"><h3>No categories found</h3><p>Create a root category from the Add Category action.</p></div>
@@ -77,7 +76,7 @@
                         </div>
                     </div>
                     @if ($root->children->isNotEmpty())
-                        <ul class="kids">
+                        <ul class="kids" data-category-children>
                             @foreach ($root->children as $child)
                                 <li>
                                     <div class="row">
@@ -98,6 +97,8 @@
     @endif
 </section>
 
-<div class="note stack-gap">Drag/drop order, icon picker, country visibility rules, LMS topic linkage, and CSV import/export controls are staged as UI placeholders; create/edit/toggle workflows are active.</div>
+<div class="note stack-gap">Create, edit, activate, filter, reorder by sort value, and manage category-linked specifications and learning content from the live admin workflows.</div>
+
+<script src="{{ url('/js/admin-categories.js') }}" defer></script>
 
 @endsection

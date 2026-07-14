@@ -10,6 +10,7 @@
         <div class="modal-h"><h3>Record Refund</h3><span class="badge b-warn">local log</span></div>
         <form class="modal-b form-stack" method="post" action="/admin/pos/sales/{{ $sale->id }}/refunds">
             @csrf
+            <input type="hidden" name="idempotency_key" value="pos-refund-{{ \Illuminate\Support\Str::uuid() }}">
             <div class="form-grid">
                 <div class="field"><label>Amount</label><input class="control" type="number" step="0.01" min="0.01" max="{{ $sale->total_amount }}" name="amount" required></div>
                 <div class="field"><label>Method</label><select class="control" name="refund_method">@forelse($paymentMethods as $m)<option value="{{ $m->code }}">{{ $m->name }}</option>@empty<option value="cash">Cash</option>@endforelse</select></div>

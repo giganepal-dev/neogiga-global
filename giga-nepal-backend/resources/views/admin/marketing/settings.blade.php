@@ -12,7 +12,7 @@
 <div class="grid split" style="margin-bottom:16px">
 @foreach (['marketing' => 'Marketing campaigns', 'transactional' => 'Transactional email'] as $channel => $label)
 @php($provider = $providerSummaries[$channel])
-<div class="card">
+<div class="card" id="{{ $channel }}-provider" style="scroll-margin-top:20px">
     <div class="card-h"><div><h2>{{ $label }} provider</h2><div class="sub">Source: {{ $provider['source'] }} · Last test: {{ $provider['last_test_status'] ?? 'not tested' }}</div></div><span class="badge {{ $provider['is_enabled'] && !$provider['test_mode'] ? 'b-ok' : 'b-warn' }}">{{ $provider['is_enabled'] ? ($provider['test_mode'] ? 'Test mode' : 'Enabled') : 'Disabled' }}</span></div>
     <form method="post" action="/admin/marketing/settings/email-provider" class="form-stack" style="padding:16px">
         @csrf

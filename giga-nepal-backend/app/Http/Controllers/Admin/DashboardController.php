@@ -12,6 +12,7 @@ use App\Models\Marketplace\ProductImage;
 use App\Models\Marketplace\Vendor;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\Catalog\CatalogSearchService;
 use App\Services\Marketing\CampaignAnalyticsService;
@@ -22,12 +23,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(EmailProviderConfigurationService $providers): View
     {
         $stats = [
             'marketplaces' => Marketplace::count(),
@@ -76,6 +78,19 @@ class DashboardController extends Controller
             'newsletterSubscribers' => $this->safeCount('newsletter_subscribers'),
             'segments' => $this->safeCount('customer_segments'),
         ];
+        $apiRoutes = collect(Route::getRoutes()->getRoutes())
+            ->filter(fn ($route) => str_starts_with($route->uri(), 'api/'));
+        $apiHealth = $this->systemApiHealth();
+        $isAdminApi = fn ($route): bool => str_starts_with($route->uri(), 'api/admin/')
+            || str_starts_with($route->uri(), 'api/v1/admin/');
+        $apiStats = [
+            'total' => $apiRoutes->count(),
+            'admin' => $apiRoutes->filter($isAdminApi)->count(),
+            'public' => $apiRoutes->reject($isAdminApi)->count(),
+            'health' => $apiHealth,
+        ];
+        $providerSummaries = collect(EmailProviderConfigurationService::CHANNELS)
+            ->mapWithKeys(fn (string $channel) => [$channel => $providers->summary($channel)]);
 
         return view('admin.dashboard', compact(
             'stats',
@@ -87,7 +102,9 @@ class DashboardController extends Controller
             'recentSupport',
             'countryPerformance',
             'inventoryBands',
-            'marketingStats'
+            'marketingStats',
+            'apiStats',
+            'providerSummaries'
         ));
     }
 
@@ -665,7 +682,9 @@ class DashboardController extends Controller
 
         return view('admin.users', [
             'users' => $users,
-            'roles' => DB::table('roles')->where('is_active', true)->orderBy('name')->get(),
+            // Use the model cast so PostgreSQL JSON strings are normalized to
+            // arrays before the permission matrix evaluates legacy grants.
+            'roles' => Role::query()->where('is_active', true)->orderBy('name')->get(),
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
             'vendors' => Vendor::orderBy('name')->limit(300)->get(['id', 'name', 'slug']),
             'permissions' => $this->safeRows('permissions', 200)->groupBy('group'),
@@ -1443,6 +1462,10 @@ class DashboardController extends Controller
 
     private function safeCount(string $table): int
     {
+        if (! Schema::hasTable($table)) {
+            return 0;
+        }
+
         try {
             return DB::table($table)->count();
         } catch (\Throwable) {
@@ -1452,6 +1475,10 @@ class DashboardController extends Controller
 
     private function safeWhereCount(string $table, string $column, string $value): int
     {
+        if (! Schema::hasTable($table) || ! Schema::hasColumn($table, $column)) {
+            return 0;
+        }
+
         try {
             return DB::table($table)->where($column, $value)->count();
         } catch (\Throwable) {
@@ -1461,6 +1488,10 @@ class DashboardController extends Controller
 
     private function safeSum(string $table, string $column): float
     {
+        if (! Schema::hasTable($table) || ! Schema::hasColumn($table, $column)) {
+            return 0.0;
+        }
+
         try {
             return (float) DB::table($table)->sum($column);
         } catch (\Throwable) {
@@ -1470,6 +1501,12 @@ class DashboardController extends Controller
 
     private function safeLowStockCount(): int
     {
+        if (! Schema::hasTable('products')
+            || ! Schema::hasColumn('products', 'stock_quantity')
+            || ! Schema::hasColumn('products', 'low_stock_threshold')) {
+            return 0;
+        }
+
         try {
             return Product::whereColumn('stock_quantity', '<=', 'low_stock_threshold')->count();
         } catch (\Throwable) {
@@ -1479,6 +1516,10 @@ class DashboardController extends Controller
 
     private function safeRows(string $table, int $limit = 20): Collection
     {
+        if (! Schema::hasTable($table)) {
+            return collect();
+        }
+
         try {
             return DB::table($table)->orderByDesc('id')->limit($limit)->get();
         } catch (\Throwable) {
@@ -1488,6 +1529,10 @@ class DashboardController extends Controller
 
     private function safeRowsWhere(string $table, string $column, int $value, int $limit = 20): Collection
     {
+        if (! Schema::hasTable($table) || ! Schema::hasColumn($table, $column)) {
+            return collect();
+        }
+
         try {
             return DB::table($table)->where($column, $value)->orderByDesc('id')->limit($limit)->get();
         } catch (\Throwable) {

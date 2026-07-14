@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-07-14 - Shared Regional Frontend and Operational Admin Upgrade
+
+- Replaced the hard-coded regional landing preview with the existing shared NeoGiga frontend layout, live catalog/category/brand records, official logo assets, functional search/RFQ/seller links and marketplace-specific status without replacing the established theme or stored data.
+- Corrected marketplace resolution so regional domains retain their edition on `/en`, global-host marketplace prefixes continue to work, and `www` branded aliases resolve through the existing apex-domain records.
+- Added distinct regional title, description, canonical, robots, hreflang and structured data rendering; inactive preview editions remain `noindex` and active editions retain their configured SEO state.
+- Prevented GLOBAL USD fallback prices from being mislabeled as NPR/INR on regional homepages by rendering only the selected marketplace price or its explicit GLOBAL price currency.
+- Expanded the existing admin dashboard with linked catalog/commerce KPIs, truthful API route and health metrics, encrypted email-provider readiness, and direct links to SMTP/API credentials, campaign composition and customer spreadsheet imports.
+- Converted remaining static admin controls for categories, SEO, media, products, access control, inventory and POS into registered routes/forms while retaining their existing authorization and audit workflows.
+- Added schema preflight guards for optional dashboard tables so PostgreSQL requests and test transactions do not fail when an optional module has not been migrated.
+- Audited the global and regional estate: eight active Laravel hosts share this platform; legacy Nepal/India WordPress apex cutovers remain intentionally blocked until full catalog/customer/order/media/SEO backups, URL maps and India mail/DNS access are available.
+- Added permanent regional-host canonical normalization: non-`/en` marketplace-prefix aliases redirect to the branded `/en` URL while preserving deep paths and query strings, global-host prefix routes remain available, and canonical tags point directly at the normalized destination.
+- Moved category-tree expansion into a same-origin external script so the control works under the existing `script-src 'self'` Content Security Policy without changing the admin design.
+- Enforced super-admin-only permission management, synchronized legacy role JSON and active permission-pivot grants transactionally, made runtime authorization read both stores, and protected wildcard roles from matrix mutation.
+- Reworked low-stock refresh to reconcile every qualifying stock row in locked chunks and resolve alerts only when an authoritative stock query confirms recovery; POS refunds now use a locked transaction, four-decimal fixed-point arithmetic and required per-form/request intent keys so retries are idempotent without suppressing legitimate identical refunds.
+
+## 2026-07-14 - Governed Draft Catalog Release Foundation
+
+- Added a dry-run-first catalog release configuration for ElecForest products with exact 5% USD pricing, the fixed 10,000-unit China/regional warehouse allocation, explicit template-SKU quarantine, bounded chunks, and private release reports.
+- Added a non-destructive price-column expansion from `DECIMAL(12,2)` to `DECIMAL(15,4)` so cost and 5% sale prices retain exact precision; rollback refuses values that cannot be represented safely by the legacy schema.
+- Added nullable source and pricing-rule provenance fields to marketplace price rows; existing prices remain unchanged and rollback intentionally retains audit data.
+- Added an idempotent, bounded and transactional `catalog:release-drafts` command that is read-only by default and requires exact count/hash, verified backup and explicit unverified-license publication-risk acknowledgement before any apply; original rights facts and open review tasks are retained.
+- Added focused release tests for dry-run purity, exact 5% price precision, the 8,000/667/667/666 split, verification-warehouse exclusion, provenance, quarantine, rights-gated real media, checksum rejection and idempotent replay.
+
 ## 2026-07-14 - Catalog Media, Canonical Brands and Governed SEO
 
 - Added permission-gated, product-scoped image upload, ordering, primary selection, replacement, metadata, safe deactivation and API operations while preserving existing rows/files and exposing active images only on the storefront.

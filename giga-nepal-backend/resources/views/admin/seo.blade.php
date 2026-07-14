@@ -41,13 +41,13 @@
     <div class="kpi"><div class="t">SEO pages</div><div class="v tnum">{{ number_format($pages->total()) }}</div><div class="s">managed metadata</div></div>
     <div class="kpi"><div class="t">Redirects</div><div class="v tnum">{{ number_format($redirects->count()) }}</div><div class="s">recent rules</div></div>
     <div class="kpi"><div class="t">Product meta</div><div class="v tnum">{{ number_format($productMetaCount) }}</div><div class="s">product SEO rows</div></div>
-    <div class="kpi"><div class="t">SEO score</div><div class="v">78</div><div class="s">placeholder score</div></div>
+    <a class="kpi" href="{{ $sitemapUrl }}" target="_blank" rel="noopener"><div class="t">Sitemap</div><div class="v">Live</div><div class="s">open generated index</div></a>
 </div>
 
-<section class="card">
-    <div class="card-h"><div><h2>SEO Pages</h2><div class="sub">Meta, canonical, robots, schema and source confidence</div></div><button class="btn btn-ghost" type="button">Regenerate Sitemap</button></div>
+<section class="card" id="seo-pages">
+    <div class="card-h"><div><h2>SEO Pages</h2><div class="sub">Meta, canonical, robots, schema and source confidence</div></div><a class="btn btn-ghost" href="{{ $sitemapUrl }}" target="_blank" rel="noopener">Open Sitemap</a></div>
     <form class="filters" method="get"><select class="control" name="robots"><option value="">All robots</option><option value="index,follow" @selected($filters['robots']==='index,follow')>index,follow</option><option value="noindex,nofollow" @selected($filters['robots']==='noindex,nofollow')>noindex,nofollow</option></select><input class="control" name="q" value="{{ $filters['q'] }}" placeholder="Search path or title"><button class="btn btn-ghost" type="submit">Filter</button></form>
-    <div class="tabs"><span class="tab active">Pages</span><span class="tab">Product SEO</span><span class="tab">Category SEO</span><span class="tab">llms.txt preview</span></div>
+    <nav class="tabs" aria-label="SEO destinations"><a class="tab active" href="#seo-pages">Pages</a><a class="tab" href="/admin/products">Product SEO</a><a class="tab" href="/admin/categories">Category SEO</a><a class="tab" href="#redirect-manager">Redirects</a></nav>
     <div class="scroll-x"><table class="tbl">
         <thead><tr><th>Path</th><th>Title</th><th>Description</th><th>Robots</th><th>Source</th><th>Confidence</th><th>Actions</th></tr></thead>
         <tbody>
@@ -68,7 +68,7 @@
     </table></div>
 </section>
 
-<section class="card stack-gap">
+<section class="card stack-gap" id="redirect-manager">
     <div class="card-h"><div><h2>Redirect Manager</h2><div class="sub">Create, edit and delete redirect rules</div></div><span class="mono">{{ $sitemapUrl }}</span></div>
     <div class="scroll-x"><table class="tbl">
         <thead><tr><th>From</th><th>To</th><th>Status</th><th>Active</th><th>Actions</th></tr></thead>
