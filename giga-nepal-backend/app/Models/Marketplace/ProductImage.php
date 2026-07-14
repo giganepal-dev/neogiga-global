@@ -95,6 +95,10 @@ class ProductImage extends Model
         }
 
         $disk = $this->storage_disk ?: data_get($this->metadata, 'disk', 'public');
+        if ($disk === 'public' && app()->bound('request') && request()->server('HTTP_HOST')) {
+            return request()->getSchemeAndHttpHost().'/storage/'.ltrim($path, '/');
+        }
+
         try {
             return Storage::disk($disk)->url($path);
         } catch (\Throwable) {
