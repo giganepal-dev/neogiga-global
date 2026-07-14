@@ -2,23 +2,38 @@
 
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
 use App\Http\Controllers\Admin\CommerceOpsController as AdminCommerce;
+use App\Http\Controllers\Admin\CustomerDataController as AdminCustomerData;
+use App\Http\Controllers\Admin\CustomerImportController as AdminCustomerImport;
 use App\Http\Controllers\Admin\DashboardController as AdminDash;
-use App\Http\Controllers\Admin\MarketplaceConfigController as AdminMarketplaceConfig;
+use App\Http\Controllers\Admin\ElecforestImportController as AdminElecforestImport;
 use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
+use App\Http\Controllers\Admin\MarketplaceConfigController as AdminMarketplaceConfig;
+use App\Http\Controllers\Admin\ProductImageController as AdminProductImage;
 use App\Http\Controllers\HealthController;
-use App\Http\Controllers\Web\CategoryController;
-use App\Http\Controllers\Web\CartPageController;
-use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\AiCommercePageController;
+use App\Http\Controllers\Web\CartPageController;
+use App\Http\Controllers\Web\BrandPageController;
+use App\Http\Controllers\Web\CategoryController;
+use App\Http\Controllers\Web\EmailPreferenceController;
+use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\LmsPageController;
+use App\Http\Controllers\Web\MarketplaceLandingController;
 use App\Http\Controllers\Web\MarketplacePreferenceController;
 use App\Http\Controllers\Web\PasswordResetController;
+use App\Http\Controllers\Web\ProductPageController;
 use App\Http\Controllers\Web\RedesignController;
+use App\Http\Controllers\Web\RfqPageController;
 use App\Http\Controllers\Web\SellOnNeoGigaController;
-use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\SeoLandingController;
+use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\SsoController;
+use App\Services\CommerceAi\CommerceAiService;
+use App\Services\Lms\CourseCatalogService;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /*
 | Admin console (server-rendered). Reachable at /admin on any host; on
@@ -28,10 +43,19 @@ use Illuminate\Support\Facades\Route;
 Route::domain('admin.neogiga.com')->get('/', fn () => redirect('/admin'));
 
 Route::get('/health', HealthController::class)->withoutMiddleware([
-    \Illuminate\Session\Middleware\StartSession::class,
-    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-    \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+    StartSession::class,
+    ShareErrorsFromSession::class,
+    ValidateCsrfToken::class,
 ]);
+
+Route::get('/email/unsubscribe/{token}', [EmailPreferenceController::class, 'unsubscribe'])
+    ->middleware('throttle:60,1')->name('email.unsubscribe');
+Route::post('/email/unsubscribe/{token}', [EmailPreferenceController::class, 'confirmUnsubscribe'])
+    ->middleware('throttle:10,1')->name('email.unsubscribe.confirm');
+Route::get('/email/preferences/{token}', [EmailPreferenceController::class, 'preferences'])
+    ->middleware('throttle:60,1')->name('email.preferences');
+Route::patch('/email/preferences/{token}', [EmailPreferenceController::class, 'updatePreferences'])
+    ->middleware('throttle:10,1')->name('email.preferences.update');
 
 Route::prefix('admin')->group(function () {
     Route::get('login', [AdminAuth::class, 'showLogin'])->name('admin.login');
@@ -46,6 +70,15 @@ Route::prefix('admin')->group(function () {
         Route::get('products', [AdminDash::class, 'products']);
         Route::get('products/{id}', [AdminDash::class, 'product'])->whereNumber('id');
         Route::get('imports/jlcpcb', [AdminDash::class, 'jlcpcbImports']);
+        Route::get('imports/elecforest', [AdminElecforestImport::class, 'index']);
+        Route::post('imports/elecforest/start', [AdminElecforestImport::class, 'start'])->middleware('throttle:4,1');
+        Route::post('imports/elecforest/runs/{run}/retry', [AdminElecforestImport::class, 'retry'])->whereUuid('run')->middleware('throttle:4,1');
+        Route::post('imports/elecforest/runs/{run}/pause', [AdminElecforestImport::class, 'pause'])->whereUuid('run')->middleware('throttle:4,1');
+        Route::post('imports/elecforest/runs/{run}/resume', [AdminElecforestImport::class, 'resume'])->whereUuid('run')->middleware('throttle:4,1');
+        Route::post('imports/elecforest/generate-seo', [AdminElecforestImport::class, 'generateSeo'])->middleware('throttle:4,1');
+        Route::post('imports/elecforest/download-images', [AdminElecforestImport::class, 'downloadImages'])->middleware('throttle:4,1');
+        Route::post('imports/elecforest/publish-qualified', [AdminElecforestImport::class, 'publish'])->middleware('throttle:4,1');
+        Route::post('imports/elecforest/map-category', [AdminElecforestImport::class, 'mapCategory'])->middleware('throttle:10,1');
         Route::post('imports/jlcpcb/bulk-approve', [AdminCommerce::class, 'bulkApproveJlcpcbImports'])->middleware('throttle:10,1');
         Route::post('imports/jlcpcb/bulk-publish', [AdminCommerce::class, 'bulkPublishJlcpcbImports'])->middleware('throttle:10,1');
         Route::post('imports/jlcpcb/search-rebuild', [AdminCommerce::class, 'queueJlcpcbSearchRebuild'])->middleware('throttle:5,1');
@@ -109,7 +142,13 @@ Route::prefix('admin')->group(function () {
         Route::post('products/{product}/related', [AdminCommerce::class, 'storeProductRelated'])->whereNumber('product')->middleware('throttle:20,1');
         Route::delete('products/{product}/related/{related}', [AdminCommerce::class, 'deleteProductRelated'])->whereNumber(['product', 'related'])->middleware('throttle:20,1');
         Route::post('products/{product}/lms-links', [AdminCommerce::class, 'storeProductLmsLink'])->whereNumber('product')->middleware('throttle:20,1');
-        Route::post('products/{product}/seo', [AdminCommerce::class, 'updateProductSeo'])->whereNumber('product')->middleware('throttle:20,1');
+        Route::post('products/{product}/seo', [AdminCommerce::class, 'updateProductSeo'])->whereNumber('product')->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
+        Route::post('products/{product}/seo/versions/{version}/rollback', [AdminCommerce::class, 'rollbackProductSeo'])->whereNumber(['product', 'version'])->middleware(['admin.web.permission:catalog.manage', 'throttle:10,1']);
+        Route::post('products/{product}/images', [AdminProductImage::class, 'store'])->whereNumber('product')->middleware(['admin.web.permission:catalog.manage', 'throttle:10,1']);
+        Route::patch('products/{product}/images/reorder', [AdminProductImage::class, 'reorder'])->whereNumber('product')->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
+        Route::patch('products/{product}/images/{image}', [AdminProductImage::class, 'update'])->whereNumber(['product', 'image'])->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
+        Route::post('products/{product}/images/{image}/primary', [AdminProductImage::class, 'primary'])->whereNumber(['product', 'image'])->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
+        Route::delete('products/{product}/images/{image}', [AdminProductImage::class, 'destroy'])->whereNumber(['product', 'image'])->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
         Route::post('vendors', [AdminCommerce::class, 'storeVendor'])->middleware('throttle:20,1');
         Route::post('vendors/{vendor}/status', [AdminCommerce::class, 'updateVendorStatus'])->whereNumber('vendor')->middleware('throttle:20,1');
         Route::post('vendor-documents/{document}/status', [AdminCommerce::class, 'updateVendorDocumentStatus'])->whereNumber('document')->middleware('throttle:20,1');
@@ -146,32 +185,50 @@ Route::prefix('admin')->group(function () {
         Route::post('pos/offline-sync-events', [AdminCommerce::class, 'storePosOfflineSyncEvent'])->middleware('throttle:20,1');
         Route::post('pos/offline-sync-events/{event}/status', [AdminCommerce::class, 'updatePosOfflineSyncEvent'])->whereNumber('event')->middleware('throttle:20,1');
 
-        Route::get('marketing', [AdminDash::class, 'marketing']);
-        Route::get('marketing/crm', [AdminDash::class, 'crm']);
-        Route::get('marketing/newsletter', [AdminDash::class, 'newsletter']);
-        Route::get('marketing/email', [AdminDash::class, 'emailMarketing']);
-        Route::get('marketing/automation', [AdminDash::class, 'automation']);
-        Route::get('marketing/abandoned-carts', [AdminDash::class, 'abandonedCarts']);
-        Route::get('marketing/whatsapp', [AdminDash::class, 'whatsapp']);
-        Route::get('marketing/analytics', [AdminDash::class, 'marketingAnalytics']);
-        Route::get('marketing/settings', [AdminDash::class, 'marketingSettings']);
-        Route::get('marketing/audit', [AdminDash::class, 'marketingAudit']);
+        Route::get('marketing', [AdminDash::class, 'marketing'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('marketing/crm', [AdminDash::class, 'crm'])->middleware('admin.web.permission:customers.view');
+        Route::get('marketing/customer-imports', [AdminCustomerImport::class, 'index'])->middleware('admin.web.permission:customers.import');
+        Route::post('marketing/customer-imports/preview', [AdminCustomerImport::class, 'preview'])->middleware(['admin.web.permission:customers.import', 'throttle:10,1']);
+        Route::post('marketing/customer-imports', [AdminCustomerImport::class, 'execute'])->middleware(['admin.web.permission:customers.import', 'throttle:5,1']);
+        Route::get('marketing/customer-imports/{import}', [AdminCustomerImport::class, 'show'])->whereNumber('import')->middleware('admin.web.permission:customers.view');
+        Route::get('marketing/customer-imports/{import}/errors.csv', [AdminCustomerImport::class, 'errors'])->whereNumber('import')->middleware('admin.web.permission:customers.export');
+        Route::get('marketing/customers/export', [AdminCustomerData::class, 'export'])->middleware('admin.web.permission:customers.export');
+        Route::get('marketing/newsletter', [AdminDash::class, 'newsletter'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('marketing/email', [AdminDash::class, 'emailMarketing'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('marketing/automation', [AdminDash::class, 'automation'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('marketing/abandoned-carts', [AdminDash::class, 'abandonedCarts'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('marketing/whatsapp', [AdminDash::class, 'whatsapp'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('marketing/analytics', [AdminDash::class, 'marketingAnalytics'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('marketing/settings', [AdminDash::class, 'marketingSettings'])->middleware('admin.web.permission:email.providers.manage');
+        Route::get('marketing/audit', [AdminDash::class, 'marketingAudit'])->middleware('admin.web.permission:campaigns.view');
 
-        Route::post('marketing/segments', [AdminMarketing::class, 'storeSegment'])->middleware('throttle:10,1');
-        Route::post('marketing/segments/{segment}/refresh', [AdminMarketing::class, 'refreshSegment'])->whereNumber('segment')->middleware('throttle:10,1');
-        Route::post('marketing/newsletter/templates', [AdminMarketing::class, 'storeNewsletterTemplate'])->middleware('throttle:10,1');
-        Route::post('marketing/newsletter/campaigns', [AdminMarketing::class, 'storeNewsletterCampaign'])->middleware('throttle:10,1');
-        Route::post('marketing/newsletter/campaigns/{campaign}/queue', [AdminMarketing::class, 'queueNewsletterCampaign'])->whereNumber('campaign')->middleware('throttle:10,1');
-        Route::post('marketing/newsletter/campaigns/{campaign}/send-test', [AdminMarketing::class, 'sendNewsletterCampaignTest'])->whereNumber('campaign')->middleware('throttle:10,1');
-        Route::post('marketing/email/templates', [AdminMarketing::class, 'storeEmailTemplate'])->middleware('throttle:10,1');
-        Route::post('marketing/email/campaigns', [AdminMarketing::class, 'storeEmailCampaign'])->middleware('throttle:10,1');
-        Route::post('marketing/email/campaigns/{campaign}/queue', [AdminMarketing::class, 'queueEmailCampaign'])->whereNumber('campaign')->middleware('throttle:10,1');
-        Route::post('marketing/email/campaigns/{campaign}/send-test', [AdminMarketing::class, 'sendEmailCampaignTest'])->whereNumber('campaign')->middleware('throttle:10,1');
-        Route::post('marketing/whatsapp/templates', [AdminMarketing::class, 'storeWhatsappTemplate'])->middleware('throttle:10,1');
-        Route::post('marketing/whatsapp/campaigns', [AdminMarketing::class, 'storeWhatsappCampaign'])->middleware('throttle:10,1');
-        Route::post('marketing/whatsapp/campaigns/{campaign}/queue', [AdminMarketing::class, 'queueWhatsappCampaign'])->whereNumber('campaign')->middleware('throttle:10,1');
-        Route::post('marketing/whatsapp/campaigns/{campaign}/send-test', [AdminMarketing::class, 'sendWhatsappCampaignTest'])->whereNumber('campaign')->middleware('throttle:10,1');
-        Route::post('marketing/settings', [AdminMarketing::class, 'updateMarketingSettings'])->middleware('throttle:10,1');
+        Route::post('marketing/segments', [AdminMarketing::class, 'storeSegment'])->middleware(['admin.web.permission:campaigns.create', 'throttle:10,1']);
+        Route::post('marketing/segments/{segment}/refresh', [AdminMarketing::class, 'refreshSegment'])->whereNumber('segment')->middleware(['admin.web.permission:campaigns.create', 'throttle:10,1']);
+        Route::post('marketing/newsletter/templates', [AdminMarketing::class, 'storeNewsletterTemplate'])->middleware(['admin.web.permission:email.templates.manage', 'throttle:10,1']);
+        Route::post('marketing/newsletter/campaigns', [AdminMarketing::class, 'storeNewsletterCampaign'])->middleware(['admin.web.permission:campaigns.create', 'throttle:10,1']);
+        Route::post('marketing/newsletter/campaigns/{campaign}/queue', [AdminMarketing::class, 'queueNewsletterCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.send', 'throttle:10,1']);
+        Route::post('marketing/newsletter/campaigns/{campaign}/send-test', [AdminMarketing::class, 'sendNewsletterCampaignTest'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.test', 'throttle:10,1']);
+        Route::post('marketing/newsletter/campaigns/{campaign}/approve', [AdminMarketing::class, 'approveNewsletterCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.approve', 'throttle:10,1']);
+        Route::post('marketing/newsletter/campaigns/{campaign}/pause', [AdminMarketing::class, 'pauseNewsletterCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.send', 'throttle:10,1']);
+        Route::post('marketing/newsletter/campaigns/{campaign}/resume', [AdminMarketing::class, 'resumeNewsletterCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.send', 'throttle:10,1']);
+        Route::post('marketing/newsletter/campaigns/{campaign}/cancel', [AdminMarketing::class, 'cancelNewsletterCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.send', 'throttle:10,1']);
+        Route::post('marketing/email/templates', [AdminMarketing::class, 'storeEmailTemplate'])->middleware(['admin.web.permission:email.templates.manage', 'throttle:10,1']);
+        Route::post('marketing/email/campaigns', [AdminMarketing::class, 'storeEmailCampaign'])->middleware(['admin.web.permission:campaigns.create', 'throttle:10,1']);
+        Route::post('marketing/email/campaigns/{campaign}/queue', [AdminMarketing::class, 'queueEmailCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.send', 'throttle:10,1']);
+        Route::post('marketing/email/campaigns/{campaign}/send-test', [AdminMarketing::class, 'sendEmailCampaignTest'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.test', 'throttle:10,1']);
+        Route::post('marketing/email/campaigns/{campaign}/approve', [AdminMarketing::class, 'approveEmailCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.approve', 'throttle:10,1']);
+        Route::post('marketing/email/campaigns/{campaign}/pause', [AdminMarketing::class, 'pauseEmailCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.send', 'throttle:10,1']);
+        Route::post('marketing/email/campaigns/{campaign}/resume', [AdminMarketing::class, 'resumeEmailCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.send', 'throttle:10,1']);
+        Route::post('marketing/email/campaigns/{campaign}/cancel', [AdminMarketing::class, 'cancelEmailCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.send', 'throttle:10,1']);
+        Route::post('marketing/whatsapp/templates', [AdminMarketing::class, 'storeWhatsappTemplate'])->middleware(['admin.web.permission:email.templates.manage', 'throttle:10,1']);
+        Route::post('marketing/whatsapp/campaigns', [AdminMarketing::class, 'storeWhatsappCampaign'])->middleware(['admin.web.permission:campaigns.create', 'throttle:10,1']);
+        Route::post('marketing/whatsapp/campaigns/{campaign}/queue', [AdminMarketing::class, 'queueWhatsappCampaign'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.send', 'throttle:10,1']);
+        Route::post('marketing/whatsapp/campaigns/{campaign}/send-test', [AdminMarketing::class, 'sendWhatsappCampaignTest'])->whereNumber('campaign')->middleware(['admin.web.permission:campaigns.test', 'throttle:10,1']);
+        Route::post('marketing/settings', [AdminMarketing::class, 'updateMarketingSettings'])->middleware(['admin.web.permission:email.providers.manage', 'throttle:10,1']);
+        Route::post('marketing/settings/email-provider', [AdminMarketing::class, 'updateEmailProvider'])->middleware(['admin.web.permission:email.providers.manage', 'throttle:10,1']);
+        Route::post('marketing/settings/email-provider/test-marketing', [AdminMarketing::class, 'testMarketingProvider'])->middleware(['admin.web.permission:email.providers.manage', 'throttle:5,1']);
+        Route::post('marketing/settings/email-provider/test-transactional', [AdminMarketing::class, 'testTransactionalProvider'])->middleware(['admin.web.permission:email.providers.manage', 'throttle:5,1']);
+        Route::post('marketing/settings/senders/{sender}', [AdminMarketing::class, 'updateEmailSenderProfile'])->whereNumber('sender')->middleware(['admin.web.permission:email.providers.manage', 'throttle:10,1']);
 
         // Commerce ops (adaptation modules) — read pages
         Route::get('affiliate', [AdminDash::class, 'affiliate']);
@@ -237,16 +294,20 @@ Route::redirect('/', '/en', 301);
 // Stitch "Precision Engineering" redesign preview (noindex; does not touch the
 // live homepage/layout). Promote to the live home only after review.
 Route::get('/preview/home', [RedesignController::class, 'home']);
-Route::get('/categories', fn (\Illuminate\Http\Request $request) => redirect()->to('/en/categories' . ($request->getQueryString() ? '?' . $request->getQueryString() : ''), 301));
-Route::get('/categories/{slug}', fn (\Illuminate\Http\Request $request, string $slug) => redirect()->to('/en/categories/' . $slug . ($request->getQueryString() ? '?' . $request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+');
-Route::get('/manufacturers/{slug}', [SeoLandingController::class, 'manufacturer'])->where('slug', '[a-z0-9\-]+');
+Route::get('/categories', fn (Request $request) => redirect()->to('/en/categories'.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301));
+Route::get('/categories/{slug}', fn (Request $request, string $slug) => redirect()->to('/en/categories/'.$slug.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+');
+Route::get('/manufacturer/{slug}', [SeoLandingController::class, 'manufacturer'])->where('slug', '[a-z0-9\-]+')->name('manufacturer.show');
+Route::get('/manufacturers/{slug}', fn (Request $request, string $slug) => redirect()->to('/manufacturer/'.$slug.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+');
+Route::get('/brands', [BrandPageController::class, 'index'])->name('brands.index');
+Route::get('/brand/{slug}', [BrandPageController::class, 'show'])->where('slug', '[a-z0-9\-]+')->name('brand.show');
+Route::get('/brands/{slug}', fn (Request $request, string $slug) => redirect()->to('/brand/'.$slug.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+');
 Route::get('/mpn/{mpn}', [SeoLandingController::class, 'mpn'])->where('mpn', '[A-Za-z0-9\\.\\-_]+');
 Route::get('/technologies/{slug}', [SeoLandingController::class, 'technology'])->where('slug', '[a-z0-9\-]+');
 Route::get('/applications/{slug}', [SeoLandingController::class, 'application'])->where('slug', '[a-z0-9\-]+');
 Route::get('/countries/{code}', [SeoLandingController::class, 'country'])->where('code', '[A-Za-z]{2,3}');
-Route::get('/products', fn (\Illuminate\Http\Request $request) => redirect()->to('/en/products' . ($request->getQueryString() ? '?' . $request->getQueryString() : ''), 301))->name('products.index');
-Route::post('/products/{slug}/reviews', [\App\Http\Controllers\Web\ProductPageController::class, 'storeReview'])->where('slug', '[a-z0-9\-]+')->middleware('throttle:4,1')->name('products.reviews.store');
-Route::get('/products/{slug}', fn (\Illuminate\Http\Request $request, string $slug) => redirect()->to('/en/products/' . $slug . ($request->getQueryString() ? '?' . $request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+')->name('products.show');
+Route::get('/products', fn (Request $request) => redirect()->to('/en/products'.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->name('products.index');
+Route::post('/products/{slug}/reviews', [ProductPageController::class, 'storeReview'])->where('slug', '[a-z0-9\-]+')->middleware('throttle:4,1')->name('products.reviews.store');
+Route::get('/products/{slug}', fn (Request $request, string $slug) => redirect()->to('/en/products/'.$slug.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+')->name('products.show');
 Route::get('/cart', [CartPageController::class, 'show'])->name('cart.show');
 Route::post('/cart/items', [CartPageController::class, 'add'])->middleware('throttle:30,1')->name('cart.items.add');
 Route::patch('/cart/items/{item}', [CartPageController::class, 'update'])->whereNumber('item')->middleware('throttle:30,1')->name('cart.items.update');
@@ -254,9 +315,12 @@ Route::delete('/cart/items/{item}', [CartPageController::class, 'remove'])->wher
 Route::get('/checkout', [CartPageController::class, 'checkout'])->name('checkout.show');
 Route::post('/checkout', [CartPageController::class, 'placeOrder'])->middleware('throttle:10,1')->name('checkout.place');
 Route::get('/checkout/thank-you/{orderNumber}', [CartPageController::class, 'thankYou'])->where('orderNumber', '[A-Z0-9\\-]+')->name('checkout.thank-you');
-Route::get('/rfq', fn (\Illuminate\Http\Request $request) => redirect()->to('/en/rfq' . ($request->getQueryString() ? '?' . $request->getQueryString() : ''), 301))->name('rfq.create');
-Route::post('/rfq', [\App\Http\Controllers\Web\RfqPageController::class, 'store'])->middleware('throttle:6,1')->name('rfq.store');
+Route::get('/rfq', fn (Request $request) => redirect()->to('/en/rfq'.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->name('rfq.create');
+Route::post('/rfq', [RfqPageController::class, 'store'])->middleware('throttle:6,1')->name('rfq.store');
 Route::get('/sitemap.xml', SitemapController::class);
+Route::get('/sitemaps/{section}-{page}.xml', [SitemapController::class, 'section'])
+    ->whereIn('section', ['pages', 'categories', 'brands', 'manufacturers', 'products'])
+    ->whereNumber('page');
 
 // Password reset pages (the reset email links to the named password.reset route)
 Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequest'])->name('password.request');
@@ -279,25 +343,27 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
         ->whereIn('localePrefix', $localePrefixes)
         ->group(function () {
             Route::get('/', fn (string $localePrefix) => app(LandingController::class)())->name('localized.home');
-            Route::get('/products', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(\App\Http\Controllers\Web\ProductPageController::class)->index($request))->name('localized.products.index');
-            Route::get('/products/{slug}', fn (string $localePrefix, string $slug) => app(\App\Http\Controllers\Web\ProductPageController::class)->show($slug))->where('slug', '[a-z0-9\-]+')->name('localized.products.show');
+            Route::get('/products', fn (string $localePrefix, Request $request) => app(ProductPageController::class)->index($request))->name('localized.products.index');
+            Route::get('/products/{slug}', fn (string $localePrefix, string $slug) => app(ProductPageController::class)->show($slug))->where('slug', '[a-z0-9\-]+')->name('localized.products.show');
             Route::get('/categories', fn (string $localePrefix) => app(CategoryController::class)->index())->name('localized.categories.index');
             Route::get('/categories/{slug}', fn (string $localePrefix, string $slug) => app(CategoryController::class)->show($slug))->where('slug', '[a-z0-9\-]+')->name('localized.categories.show');
             Route::get('/manufacturer/{slug}', fn (string $localePrefix, string $slug) => app(SeoLandingController::class)->manufacturer($slug))->where('slug', '[a-z0-9\-]+')->name('localized.manufacturer.show');
-            Route::get('/brands', fn (string $localePrefix) => redirect('/categories'))->name('localized.brands.index');
-            Route::get('/lms', fn (string $localePrefix) => app(LmsPageController::class)->index(app(\App\Services\Lms\CourseCatalogService::class)))->name('localized.lms.index');
+            Route::get('/brand/{slug}', fn (string $localePrefix, string $slug, Request $request) => app(BrandPageController::class)->show($request, $slug))->where('slug', '[a-z0-9\-]+')->name('localized.brand.show');
+            Route::get('/brands', fn (string $localePrefix, Request $request) => app(BrandPageController::class)->index($request))->name('localized.brands.index');
+            Route::get('/brands/{slug}', fn (Request $request, string $localePrefix, string $slug) => redirect()->to('/'.$localePrefix.'/brand/'.$slug.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+')->name('localized.brands.legacy');
+            Route::get('/lms', fn (string $localePrefix) => app(LmsPageController::class)->index(app(CourseCatalogService::class)))->name('localized.lms.index');
             Route::get('/projects', fn (string $localePrefix) => redirect('/learn'))->name('localized.projects.index');
-            Route::get('/rfq', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(\App\Http\Controllers\Web\RfqPageController::class)->create($request))->name('localized.rfq.create');
+            Route::get('/rfq', fn (string $localePrefix, Request $request) => app(RfqPageController::class)->create($request))->name('localized.rfq.create');
             Route::get('/sell-on-neogiga', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->sell())->name('localized.seller');
             Route::get('/seller-early-access', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->earlyAccess())->name('localized.seller.early-access');
             Route::get('/distributors', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->distributors())->name('localized.distributors');
-            Route::get('/ai-commerce', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(AiCommercePageController::class)->index($request, app(\App\Services\CommerceAi\CommerceAiService::class)))->name('localized.ai');
+            Route::get('/ai-commerce', fn (string $localePrefix, Request $request) => app(AiCommercePageController::class)->index($request, app(CommerceAiService::class)))->name('localized.ai');
         });
 }
 
 // Global Commerce Stage 1: marketplace country selector / landing page.
 // Constrained to the 25 seeded url_prefix codes only — cannot collide with
 // any existing top-level route above (none of them are 2-8 letter codes).
-Route::get('/{prefix}', [\App\Http\Controllers\Web\MarketplaceLandingController::class, 'show'])
+Route::get('/{prefix}', [MarketplaceLandingController::class, 'show'])
     ->whereIn('prefix', ['in', 'np', 'bd', 'lk', 'pk', 'bt', 'mv', 'ae', 'sa', 'qa', 'om', 'kw', 'us', 'ca', 'uk', 'de', 'fr', 'it', 'es', 'nl', 'au', 'nz', 'br', 'za', 'ke'])
     ->name('marketplace.landing');

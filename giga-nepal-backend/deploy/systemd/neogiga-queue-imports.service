@@ -1,0 +1,22 @@
+[Unit]
+Description=NeoGiga customer spreadsheet import queue worker
+After=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=neogiga
+Group=neogiga
+WorkingDirectory=/home/neogiga/laravel/current
+Nice=10
+CPUWeight=20
+UMask=0002
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=660
+ExecStart=/usr/bin/php /home/neogiga/laravel/current/artisan queue:work database --queue=imports --sleep=3 --tries=3 --timeout=600 --max-time=3600 --memory=512
+StandardOutput=append:/home/neogiga/laravel/current/storage/logs/imports-queue-worker.log
+StandardError=append:/home/neogiga/laravel/current/storage/logs/imports-queue-worker.log
+
+[Install]
+WantedBy=multi-user.target

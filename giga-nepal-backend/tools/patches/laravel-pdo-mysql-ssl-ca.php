@@ -22,6 +22,12 @@ if (str_contains($contents, $replacement)) {
     exit(0);
 }
 
+// Laravel 12 uses the PHP 8.4+ Pdo\Mysql enum directly, so no compatibility
+// patch is required on current runtimes.
+if (str_contains($contents, "Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA')")) {
+    exit(0);
+}
+
 $updated = str_replace(
     'PDO::MYSQL_ATTR_SSL_CA => env(\'MYSQL_ATTR_SSL_CA\'),',
     $replacement,
@@ -34,4 +40,3 @@ if ($updated === $contents) {
 }
 
 file_put_contents($target, $updated);
-

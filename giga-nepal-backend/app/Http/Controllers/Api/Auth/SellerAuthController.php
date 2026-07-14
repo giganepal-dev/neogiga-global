@@ -10,6 +10,7 @@ use App\Http\Resources\SellerResource;
 use App\Http\Resources\UserResource;
 use App\Models\Marketplace\Vendor;
 use App\Services\Auth\AuthService;
+use App\Services\Marketing\AccountCommunicationService;
 use App\Services\Vendor\SellerRegistrationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,9 +19,10 @@ class SellerAuthController extends Controller
 {
     use ApiResponses;
 
-    public function register(SellerRegisterRequest $request, SellerRegistrationService $registration, AuthService $auth): JsonResponse
+    public function register(SellerRegisterRequest $request, SellerRegistrationService $registration, AuthService $auth, AccountCommunicationService $communications): JsonResponse
     {
         [$user, $vendor] = $registration->register($request->validated());
+        $communications->application($user, 'seller', (int) $vendor->id);
 
         return $this->success([
             'user' => new UserResource($user),

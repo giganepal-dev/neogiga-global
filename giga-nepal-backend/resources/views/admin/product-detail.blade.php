@@ -109,6 +109,69 @@
     </div>
 </div>
 
+<section class="card stack-gap" aria-labelledby="product-media-heading">
+    <div class="card-h"><div><h2 id="product-media-heading">Product Images</h2><div class="sub">Primary image, gallery order, source and regional visibility</div></div><span class="badge b-info">{{ $productImages->where('is_active', true)->count() }} active / {{ $productImages->count() }} total</span></div>
+    <div style="padding:16px;display:grid;gap:18px">
+        <form id="product-image-upload" class="form-stack" method="post" action="/admin/products/{{ $p->id }}/images" enctype="multipart/form-data">
+            @csrf
+            <label id="product-image-dropzone" for="product-image-files" style="display:grid;place-items:center;min-height:140px;padding:20px;border:2px dashed var(--line);border-radius:12px;text-align:center;cursor:pointer;background:var(--bg)">
+                <strong>Drop product images here or choose files</strong>
+                <span class="sub">JPG, PNG, WebP or AVIF · 120–12000 px · up to 12 MB each · maximum 20</span>
+                <input id="product-image-files" type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/avif" multiple required style="position:absolute;opacity:0;pointer-events:none">
+            </label>
+            <div id="product-image-previews" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px" aria-live="polite"></div>
+            <div class="form-grid">
+                <div class="field"><label>Alt text</label><input class="control" name="alt_text" value="{{ $p->name }}" maxlength="500"></div>
+                <div class="field"><label>Caption</label><input class="control" name="caption" maxlength="1000"></div>
+                <div class="field"><label>Source name</label><input class="control" name="source_name" value="NeoGiga admin upload" maxlength="255"></div>
+                <div class="field"><label>Source page URL</label><input class="control" type="url" name="source_page_url" maxlength="4000"></div>
+                <div class="field"><label>License note</label><input class="control" name="license_note" maxlength="2000"></div>
+                <div class="field"><label>Confidence</label><select class="control" name="confidence_level"><option value="admin_uploaded_unverified">Uploaded — needs review</option><option value="admin_verified">Admin verified</option><option value="licensed_source_verified">Licensed source verified</option></select></div>
+            </div>
+            <progress id="product-image-progress" max="100" value="0" hidden style="width:100%"></progress>
+            <div id="product-image-upload-status" class="sub" aria-live="polite">Uploaded images are active by default; source/licensing should be verified before public use.</div>
+            <button class="btn btn-primary" type="submit">Upload images</button>
+        </form>
+
+        @if($productImages->isNotEmpty())
+            <form id="product-image-reorder" method="post" action="/admin/products/{{ $p->id }}/images/reorder" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                @csrf @method('PATCH')
+                <div id="product-image-order-inputs">@foreach($productImages as $image)<input type="hidden" name="image_ids[]" value="{{ $image->id }}">@endforeach</div>
+                <span class="sub">Drag cards to reorder, then save. Inactive historical rows remain preserved.</span>
+                <button class="btn btn-ghost" type="submit">Save gallery order</button>
+            </form>
+        @endif
+
+        <div id="product-image-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px">
+            @forelse($productImages as $image)
+                <article class="product-image-admin-card" draggable="true" data-image-id="{{ $image->id }}" style="border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg)">
+                    <div style="position:relative;aspect-ratio:4/3;border-radius:9px;overflow:hidden;background:#fff;display:grid;place-items:center">
+                        <img src="{{ $image->publicUrl() }}" alt="{{ $image->alt_text ?: $p->name }}" loading="lazy" style="width:100%;height:100%;object-fit:contain">
+                        <div style="position:absolute;top:8px;left:8px;display:flex;gap:5px"><span class="badge {{ $image->is_active ? 'b-ok' : 'b-muted' }}">{{ $image->is_active ? 'Active' : 'Inactive' }}</span>@if($image->is_primary)<span class="badge b-info">Primary</span>@endif</div>
+                    </div>
+                    <form class="form-stack" method="post" action="/admin/products/{{ $p->id }}/images/{{ $image->id }}" enctype="multipart/form-data" style="margin-top:10px">
+                        @csrf @method('PATCH')
+                        <div class="field"><label>Alt text</label><input class="control" name="alt_text" value="{{ $image->alt_text }}" maxlength="500"></div>
+                        <div class="field"><label>Caption</label><input class="control" name="caption" value="{{ $image->caption }}" maxlength="1000"></div>
+                        <div class="form-grid"><input class="control" name="source_name" value="{{ $image->source_name }}" placeholder="Source"><input class="control" type="url" name="source_page_url" value="{{ $image->source_page_url ?: data_get($image->metadata, 'source_page_url') }}" placeholder="Source page URL"></div>
+                        <div class="form-grid"><input class="control" name="source_license" value="{{ $image->source_license }}" placeholder="License"><input class="control" name="confidence_level" value="{{ $image->confidence_level ?: data_get($image->metadata, 'confidence_level') }}" placeholder="Confidence"></div>
+                        <div class="field"><label>Replace file</label><input class="control" type="file" name="image" accept="image/jpeg,image/png,image/webp,image/avif"></div>
+                        <label><input type="hidden" name="is_active" value="0"><input type="checkbox" name="is_active" value="1" @checked($image->is_active)> Active</label>
+                        <div class="sub">{{ $image->width ?: '?' }}×{{ $image->height ?: '?' }} · {{ $image->mime_type ?: 'legacy URL' }} · #{{ $image->id }}</div>
+                        <button class="btn btn-ghost" type="submit">Save image</button>
+                    </form>
+                    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
+                        @if($image->is_active && ! $image->is_primary)<form method="post" action="/admin/products/{{ $p->id }}/images/{{ $image->id }}/primary">@csrf<button class="btn btn-ghost" type="submit">Set primary</button></form>@endif
+                        @if($image->is_active)<form method="post" action="/admin/products/{{ $p->id }}/images/{{ $image->id }}" onsubmit="return confirm('Deactivate this image? Its database row and file will be preserved.')">@csrf @method('DELETE')<button class="btn btn-ghost danger" type="submit">Deactivate</button></form>@endif
+                    </div>
+                </article>
+            @empty
+                <div class="empty"><h3>No product images yet</h3><p>Upload a primary image and optional gallery images above.</p></div>
+            @endforelse
+        </div>
+    </div>
+</section>
+
 <div class="grid split stack-gap">
     <div class="card">
         <div class="card-h"><h2>Marketplace Prices</h2><span class="sub">regional catalog pricing</span></div>
@@ -314,12 +377,45 @@
             <form method="post" action="/admin/products/{{ $p->id }}/seo" class="form-stack">@csrf
                 <input class="control" name="meta_title" value="{{ $productSeo->meta_title ?? $p->meta_title ?? '' }}" placeholder="Meta title">
                 <textarea class="control" name="meta_description" placeholder="Meta description">{{ $productSeo->meta_description ?? $p->meta_description ?? '' }}</textarea>
-                <div class="form-grid"><input class="control" name="canonical_url" value="{{ $productSeo->canonical_url ?? '' }}" placeholder="Canonical URL"><select class="control" name="robots"><option @selected(($productSeo->robots ?? '')==='index,follow')>index,follow</option><option @selected(($productSeo->robots ?? '')==='noindex,nofollow')>noindex,nofollow</option></select><input class="control" name="schema_type" value="{{ $productSeo->schema_type ?? 'Product' }}"><input class="control" name="confidence_level" value="{{ $productSeo->confidence_level ?? 'manual' }}"></div>
-                <div class="sub">source_notes: manual admin metadata · confidence_level: {{ $productSeo->confidence_level ?? 'manual' }} · last_updated: {{ $productSeo->updated_at ?? 'not saved' }} · Advisory only</div>
+                <div class="form-grid"><input class="control" name="canonical_url" value="{{ $productSeo->canonical_url ?? '' }}" placeholder="Canonical URL"><select class="control" name="robots"><option @selected(($productSeo->robots ?? '')==='index,follow')>index,follow</option><option @selected(($productSeo->robots ?? '')==='noindex,follow')>noindex,follow</option><option @selected(($productSeo->robots ?? '')==='noindex,nofollow')>noindex,nofollow</option></select><input class="control" name="schema_type" value="{{ $productSeo->schema_type ?? 'Product' }}"><input class="control" name="confidence_level" value="{{ $productSeo->confidence_level ?? 'manual_admin_override' }}"></div>
+                <div class="field"><label>Robots reason</label><input class="control" name="robots_reason" value="{{ $productSeo->robots_reason ?? '' }}" placeholder="Human-readable indexability reason"></div>
+                <label><input type="hidden" name="is_locked" value="0"><input type="checkbox" name="is_locked" value="1" @checked($productSeo->is_locked ?? false)> Lock manual SEO against bulk regeneration</label>
+                @if($productSeo && ($productSeo->generated_title ?? null))<details><summary class="sub" style="cursor:pointer">Compare generated metadata</summary><div class="note" style="margin-top:8px"><strong>{{ $productSeo->generated_title }}</strong><br>{{ $productSeo->generated_description }}<br><span class="mono">{{ $productSeo->generated_canonical_url }} · {{ $productSeo->generated_robots }}</span></div></details>@endif
+                <div class="sub">active_source: {{ $productSeo->active_source ?? 'manual' }} · source_notes: manual admin metadata · confidence_level: {{ $productSeo->confidence_level ?? 'manual_admin_override' }} · last_updated: {{ $productSeo->updated_at ?? 'not saved' }} · Advisory only</div>
                 <button class="btn" type="submit">Save SEO</button>
             </form>
+            @if($seoVersions->isNotEmpty())
+                <details>
+                    <summary class="sub" style="cursor:pointer">Version history and rollback ({{ $seoVersions->count() }})</summary>
+                    <div class="scroll-x" style="margin-top:10px"><table class="tbl">
+                        <thead><tr><th>Version</th><th>Source</th><th>Title</th><th>Changed</th><th>Action</th></tr></thead>
+                        <tbody>@foreach($seoVersions as $version)
+                            <tr>
+                                <td class="mono">v{{ $version->version }}<div class="sub">{{ $version->change_type }}</div></td>
+                                <td>{{ $version->active_source }}<div class="sub">{{ $version->confidence_level }} · Advisory only</div></td>
+                                <td>{{ $version->title ?: '—' }}<div class="sub">{{ $version->robots ?: '—' }}</div></td>
+                                <td class="sub">{{ $version->last_updated ?: $version->created_at }}</td>
+                                <td><form method="post" action="/admin/products/{{ $p->id }}/seo/versions/{{ $version->id }}/rollback" onsubmit="return confirm('Restore this SEO version? The current values will be retained as a safety snapshot.')">@csrf<button class="btn btn-ghost" type="submit">Restore</button></form></td>
+                            </tr>
+                        @endforeach</tbody>
+                    </table></div>
+                </details>
+            @endif
         </div>
     </div>
 </div>
+
+<script>
+(function(){
+    var input=document.getElementById('product-image-files'), zone=document.getElementById('product-image-dropzone'), previews=document.getElementById('product-image-previews');
+    function render(files){previews.innerHTML='';Array.from(files||[]).forEach(function(file){var box=document.createElement('div');box.style.cssText='border:1px solid var(--line);border-radius:9px;padding:7px;overflow:hidden';var img=document.createElement('img');img.style.cssText='width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:6px';img.alt=file.name;img.src=URL.createObjectURL(file);var label=document.createElement('div');label.className='sub';label.textContent=file.name;box.append(img,label);previews.append(box)})}
+    if(input&&zone){input.addEventListener('change',function(){render(input.files)});['dragenter','dragover'].forEach(function(e){zone.addEventListener(e,function(ev){ev.preventDefault();zone.style.borderColor='var(--cyan)'})});['dragleave','drop'].forEach(function(e){zone.addEventListener(e,function(ev){ev.preventDefault();zone.style.borderColor='var(--line)'})});zone.addEventListener('drop',function(ev){if(ev.dataTransfer.files.length){input.files=ev.dataTransfer.files;render(input.files)}})}
+    var upload=document.getElementById('product-image-upload');
+    if(upload&&window.XMLHttpRequest){upload.addEventListener('submit',function(ev){ev.preventDefault();var xhr=new XMLHttpRequest(),progress=document.getElementById('product-image-progress'),status=document.getElementById('product-image-upload-status');xhr.open('POST',upload.action);progress.hidden=false;xhr.upload.onprogress=function(e){if(e.lengthComputable){progress.value=Math.round(e.loaded/e.total*100);status.textContent='Uploading '+progress.value+'%'}};xhr.onload=function(){if(xhr.status>=200&&xhr.status<400){status.textContent='Upload complete. Refreshing media…';window.location.reload()}else{progress.hidden=true;status.textContent='Upload failed. Check file type, size, dimensions, duplicate media, and permission.'}};xhr.onerror=function(){progress.hidden=true;status.textContent='Upload failed because the connection was interrupted.'};xhr.send(new FormData(upload))})}
+    var grid=document.getElementById('product-image-grid'),dragged=null;
+    function sync(){var holder=document.getElementById('product-image-order-inputs');if(!holder||!grid)return;holder.innerHTML='';grid.querySelectorAll('[data-image-id]').forEach(function(card){var field=document.createElement('input');field.type='hidden';field.name='image_ids[]';field.value=card.dataset.imageId;holder.append(field)})}
+    if(grid){grid.querySelectorAll('[data-image-id]').forEach(function(card){card.addEventListener('dragstart',function(){dragged=card;card.style.opacity='.55'});card.addEventListener('dragend',function(){dragged=null;card.style.opacity='1';sync()});card.addEventListener('dragover',function(ev){ev.preventDefault();if(dragged&&dragged!==card){var rect=card.getBoundingClientRect();grid.insertBefore(dragged,ev.clientX<rect.left+rect.width/2?card:card.nextSibling)}})})}
+})();
+</script>
 
 @endsection

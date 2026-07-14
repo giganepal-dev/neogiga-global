@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\Marketing\AccountCommunicationService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,11 +26,17 @@ class PasswordResetController extends Controller
         return view('frontend.auth.forgot-password');
     }
 
-    public function sendLink(Request $request): RedirectResponse
+    public function sendLink(Request $request, AccountCommunicationService $communications): RedirectResponse
     {
         $request->validate(['email' => ['required', 'email']]);
 
-        Password::sendResetLink($request->only('email'));
+        $email = mb_strtolower($request->string('email')->toString());
+        $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+        if ($user) {
+            $token = Password::broker()->createToken($user);
+            $url = route('password.reset', ['token' => $token, 'email' => $user->email]);
+            $communications->passwordReset($user, $token, $url);
+        }
 
         // Same response whether or not the account exists (no enumeration).
         return back()->with('status', 'If an account exists for that email, a reset link has been sent.');
@@ -42,7 +50,7 @@ class PasswordResetController extends Controller
         ]);
     }
 
-    public function reset(Request $request): RedirectResponse
+    public function reset(Request $request, AccountCommunicationService $communications): RedirectResponse
     {
         $request->validate([
             'token' => ['required'],
@@ -52,13 +60,14 @@ class PasswordResetController extends Controller
 
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, string $password) {
+            function ($user, string $password) use ($communications) {
                 $user->forceFill([
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
 
                 event(new PasswordReset($user));
+                $communications->passwordChanged($user);
             }
         );
 

@@ -17,7 +17,7 @@ return new class extends Migration
                 
                 // Relationships
                 $table->foreignUuid('project_id')->constrained('pcb_projects')->onDelete('cascade');
-                $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
+                $table->foreignId('user_id')->constrained()->cascadeOnDelete();
                 $table->foreignUuid('version_id')->nullable()->constrained('pcb_project_versions')->nullOnDelete();
                 
                 // File identity
@@ -83,7 +83,7 @@ return new class extends Migration
                 $table->string('storage_path');
                 $table->unsignedBigInteger('file_size');
                 $table->text('change_summary')->nullable();
-                $table->foreignUuid('uploaded_by_id')->constrained('users');
+                $table->foreignId('uploaded_by_id')->constrained('users');
                 $table->timestamps();
                 
                 $table->index(['file_id', 'version_number']);
@@ -94,7 +94,7 @@ return new class extends Migration
             Schema::create('pcb_file_access_logs', function (Blueprint $table) {
                 $table->id();
                 $table->foreignUuid('file_id')->constrained('pcb_files')->onDelete('cascade');
-                $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
+                $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
                 $table->string('action'); // view, download, share, expire
                 $table->ipAddress('ip_address')->nullable();
                 $table->string('user_agent')->nullable();
@@ -109,9 +109,9 @@ return new class extends Migration
             Schema::create('pcb_file_shares', function (Blueprint $table) {
                 $table->uuid('id')->primary();
                 $table->foreignUuid('file_id')->constrained('pcb_files')->onDelete('cascade');
-                $table->foreignUuid('shared_by_id')->constrained('users');
-                $table->foreignUuid('shared_with_user_id')->nullable()->constrained('users')->nullOnDelete();
-                $table->foreignUuid('shared_with_organization_id')->nullable()->constrained('organizations')->nullOnDelete();
+                $table->foreignId('shared_by_id')->constrained('users');
+                $table->foreignId('shared_with_user_id')->nullable()->constrained('users')->nullOnDelete();
+                $table->unsignedBigInteger('shared_with_organization_id')->nullable()->index();
                 $table->enum('share_type', ['user', 'organization', 'supplier']);
                 $table->timestamp('expires_at')->nullable();
                 $table->boolean('requires_ndas')->default(true);

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Payments\PaymentProvider;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -18,6 +19,7 @@ class Phase1CheckoutTest extends TestCase
         $token = bin2hex(random_bytes(32));
         $user = $this->customerUser($token);
         $marketplaceId = $this->marketplaceId();
+        $this->enablePaymentProvider('bank_transfer');
         $productId = $this->stockedProductId($marketplaceId);
 
         $this->withToken($token)
@@ -63,6 +65,50 @@ class Phase1CheckoutTest extends TestCase
         ]);
     }
 
+    public function test_checkout_rejects_disabled_or_tampered_payment_method(): void
+    {
+        $token = bin2hex(random_bytes(32));
+        $this->customerUser($token);
+        $marketplaceId = $this->marketplaceId();
+        $productId = $this->stockedProductId($marketplaceId);
+
+        PaymentProvider::updateOrCreate(
+            ['code' => 'bank_transfer'],
+            [
+                'name' => 'Bank Transfer',
+                'is_enabled' => false,
+                'is_live' => false,
+                'supported_currencies' => null,
+                'config' => [],
+                'sort_order' => 20,
+            ],
+        );
+
+        $this->withToken($token)
+            ->postJson('/api/v1/cart/items', [
+                'product_id' => $productId,
+                'marketplace_id' => $marketplaceId,
+                'quantity' => 1,
+            ])
+            ->assertCreated();
+
+        $this->withToken($token)
+            ->postJson('/api/v1/checkout', [
+                'confirm' => true,
+                'payment_method' => 'bank_transfer',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('payment_method');
+
+        $this->withToken($token)
+            ->postJson('/api/v1/checkout', [
+                'confirm' => true,
+                'payment_method' => 'unsupported_gateway',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('payment_method');
+    }
+
     private function customerUser(string $token): User
     {
         $role = Role::updateOrCreate(
@@ -86,6 +132,21 @@ class Phase1CheckoutTest extends TestCase
         ])->save();
 
         return $user;
+    }
+
+    private function enablePaymentProvider(string $code): void
+    {
+        PaymentProvider::updateOrCreate(
+            ['code' => $code],
+            [
+                'name' => ucwords(str_replace('_', ' ', $code)),
+                'is_enabled' => true,
+                'is_live' => false,
+                'supported_currencies' => null,
+                'config' => [],
+                'sort_order' => 20,
+            ],
+        );
     }
 
     private function marketplaceId(): int

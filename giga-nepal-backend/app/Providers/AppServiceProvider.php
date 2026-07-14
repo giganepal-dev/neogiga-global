@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
-use App\Services\MarketplaceResolverService;
+use App\Services\Ai\AiToolsContract;
+use App\Services\Ai\DatabaseAiTools;
+use App\Services\Marketing\EmailProviderConfigurationService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\MarketplaceSeoRenderer;
+use App\Services\MarketplaceResolverService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -24,8 +27,8 @@ class AppServiceProvider extends ServiceProvider
 
         // AI tool surface — DB-backed; agents can never invent price/stock.
         $this->app->bind(
-            \App\Services\Ai\AiToolsContract::class,
-            \App\Services\Ai\DatabaseAiTools::class,
+            AiToolsContract::class,
+            DatabaseAiTools::class,
         );
     }
 
@@ -41,6 +44,10 @@ class AppServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(database_path('migrations/admin_console'));
         $this->loadMigrationsFrom(database_path('migrations/inventory_pos'));
         $this->loadMigrationsFrom(database_path('migrations/lms'));
+
+        // Admin-managed email transports are encrypted in the existing provider table.
+        // The service safely falls back to environment configuration until that table exists.
+        app(EmailProviderConfigurationService::class)->applyAll();
 
         // Default API limiter (SEC-05). Keyed by user when authenticated, IP otherwise.
         RateLimiter::for('api', function (Request $request) {

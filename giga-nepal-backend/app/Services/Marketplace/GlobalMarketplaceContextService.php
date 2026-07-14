@@ -93,6 +93,9 @@ class GlobalMarketplaceContextService
             'currency_code' => $marketplace->currency?->code ?? 'USD',
             'is_default' => (bool) $marketplace->is_default,
             'is_active' => (bool) $marketplace->is_active,
+            'is_visible' => (bool) $marketplace->is_visible,
+            'indexable' => (bool) $marketplace->indexable,
+            'hreflang_enabled' => (bool) ($marketplace->hreflang_enabled ?? true),
             'launch_status' => $marketplace->launch_status ?? 'preview',
             'checkout_enabled' => (bool) $marketplace->checkout_enabled,
         ];
@@ -134,7 +137,10 @@ class GlobalMarketplaceContextService
         ]];
 
         foreach ($editions as $edition) {
-            if (! $edition['url']) {
+            if (! ($edition['url'] ?? null)
+                || ! ($edition['is_visible'] ?? true)
+                || ! ($edition['indexable'] ?? true)
+                || ! ($edition['hreflang_enabled'] ?? true)) {
                 continue;
             }
 

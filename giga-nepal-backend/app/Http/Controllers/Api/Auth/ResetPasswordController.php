@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\Concerns\ApiResponses;
+use App\Http\Controllers\Controller;
+use App\Services\Marketing\AccountCommunicationService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ class ResetPasswordController extends Controller
 {
     use ApiResponses;
 
-    public function reset(Request $request): JsonResponse
+    public function reset(Request $request, AccountCommunicationService $communications): JsonResponse
     {
         $request->validate([
             'token' => ['required', 'string'],
@@ -26,13 +27,14 @@ class ResetPasswordController extends Controller
 
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, string $password) {
+            function ($user, string $password) use ($communications) {
                 $user->forceFill([
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
 
                 event(new PasswordReset($user));
+                $communications->passwordChanged($user);
             }
         );
 

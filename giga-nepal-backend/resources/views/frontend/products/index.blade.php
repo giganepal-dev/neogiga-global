@@ -1,13 +1,44 @@
 @extends('frontend.layout')
-@section('title', ($category->name ?? 'Products').' — NeoGiga Engineering Marketplace')
-@section('description','Browse engineering components and tools: semiconductors, electronics, IoT, robotics, batteries, power and automation. Search by part number, SKU or keyword.')
+@section('title', $pageTitle ?? (($category->name ?? 'Products').' — NeoGiga Engineering Marketplace'))
+@section('description', $metaDescription ?? 'Browse engineering components and tools: semiconductors, electronics, IoT, robotics, batteries, power and automation. Search by part number, SKU or keyword.')
 @php
     $activePrefix = strtolower((string) request()->segment(1));
     $activePrefix = array_key_exists($activePrefix, config('neogiga_global.prefixes', []))
         ? $activePrefix
         : config('neogiga_global.default_prefix', 'en');
     $publicBase = '/'.$activePrefix;
+    $listingCanonical = $canonical ?? ($marketplaceSeo['canonical'] ?? url()->current());
+    $canonicalParts = parse_url($listingCanonical);
+    $canonicalOrigin = ($canonicalParts['scheme'] ?? 'https').'://'.($canonicalParts['host'] ?? request()->getHost());
 @endphp
+
+@push('head')
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'ItemList',
+    'name' => $category?->name ?? 'NeoGiga engineering products',
+    'url' => $listingCanonical,
+    'numberOfItems' => $products->total(),
+    'itemListElement' => $products->values()->map(fn ($product, $index) => [
+        '@type' => 'ListItem',
+        'position' => (($products->currentPage() - 1) * $products->perPage()) + $index + 1,
+        'url' => $canonicalOrigin.$publicBase.'/products/'.$product->slug,
+        'name' => $product->name,
+    ])->all(),
+], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
+</script>
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'BreadcrumbList',
+    'itemListElement' => [
+        ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => $canonicalOrigin.$publicBase],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => 'Products', 'item' => $canonicalOrigin.$publicBase.'/products'],
+    ],
+], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endpush
 
 @section('content')
 <style>
@@ -21,6 +52,8 @@
     .facetbar a:hover{border-color:#06b6d4;color:#075985}
     .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:16px 0 32px}
     .pcard{border:1px solid rgba(15,23,42,.12);border-radius:12px;padding:18px;background:#fff;display:flex;flex-direction:column;gap:8px}
+    .pcard-media{display:block;aspect-ratio:4/3;margin:-6px -6px 4px;border-radius:9px;overflow:hidden;background:#081527}
+    .pcard-media img{display:block;width:100%;height:100%;object-fit:contain}
     .pcard h2{font-size:1rem;margin:0;line-height:1.35}
     .pcard a{color:#0F172A;text-decoration:none}.pcard a:hover{color:#0369A1}
     .pmeta{color:#64748B;font-size:.82rem}
@@ -105,7 +138,9 @@
         <div class="pmeta">{{ number_format($products->total()) }} product(s)</div>
         <div class="pgrid">
             @foreach ($products as $p)
+                @php($cardImage = $p->images->first())
                 <div class="pcard">
+                    <a class="pcard-media" href="{{ $publicBase }}/products/{{ $p->slug }}"><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy"></a>
                     @if($p->brand)<span class="ptag">{{ $p->brand->name }}</span>@endif
                     <h2><a href="{{ $publicBase }}/products/{{ $p->slug }}">{{ $p->name }}</a></h2>
                     <div class="pmeta">

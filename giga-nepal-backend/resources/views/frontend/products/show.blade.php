@@ -1,37 +1,88 @@
 @extends('frontend.layout')
-@section('title', $product->name.' - NeoGiga')
-@section('description', \Illuminate\Support\Str::limit(strip_tags($product->short_description ?: ($product->description ?: 'Datasheet, technical specifications, stock and RFQ for '.$product->name.' on NeoGiga.')), 155))
+@section('title', $pageSeo['title'] ?? $product->name.' - NeoGiga')
+@section('description', $pageSeo['description'] ?? \Illuminate\Support\Str::limit(strip_tags($product->short_description ?: ($product->description ?: 'Datasheet, technical specifications, stock and RFQ for '.$product->name.' on NeoGiga.')), 155))
 @section('og_type','product')
 
 @push('head')
+@php
+    $activePrefix = strtolower((string) request()->segment(1));
+    $activePrefix = array_key_exists($activePrefix, config('neogiga_global.prefixes', []))
+        ? $activePrefix
+        : config('neogiga_global.default_prefix', 'en');
+    $publicBase = '/'.$activePrefix;
+    $productCanonical = $pageSeo['canonical'] ?? ($marketplaceSeo['canonical'] ?? url($publicBase.'/products/'.$product->slug));
+    $canonicalParts = parse_url($productCanonical);
+    $canonicalOrigin = ($canonicalParts['scheme'] ?? 'https').'://'.($canonicalParts['host'] ?? request()->getHost());
+    $schemaManufacturer = $product->relationLoaded('manufacturer') ? $product->manufacturer : null;
+    $schemaBrandManufacturer = $product->brand && $product->brand->relationLoaded('manufacturer') ? $product->brand->manufacturer : null;
+    $schemaManufacturer ??= $schemaBrandManufacturer;
+    $schemaPrice = $marketplacePrice?->sale_price ?: ($marketplacePrice?->base_price ?: ($product->sale_price ?: $product->base_price));
+    $schemaCurrency = $marketplacePrice?->currency_code ?: ($marketplaceContext['currency_code'] ?? 'USD');
+    $productSchema = array_filter([
+        '@context' => 'https://schema.org',
+        '@type' => 'Product',
+        'name' => $product->name,
+        'sku' => $product->sku,
+        'mpn' => $product->mpn,
+        'image' => $productImages->isNotEmpty() ? $productImages->map(fn ($image) => $image->publicUrl())->all() : [$ogImage],
+        'brand' => $product->brand?->name ? [
+            '@type' => 'Brand',
+            'name' => $product->brand->name,
+            'url' => $canonicalOrigin.$publicBase.'/brand/'.$product->brand->slug,
+        ] : null,
+        'manufacturer' => $schemaManufacturer?->name ? [
+            '@type' => 'Organization',
+            'name' => $schemaManufacturer->name,
+            'url' => $canonicalOrigin.$publicBase.'/manufacturer/'.$schemaManufacturer->slug,
+        ] : (($product->manufacturer_name ?: $product->brand?->name) ? [
+            '@type' => 'Organization',
+            'name' => $product->manufacturer_name ?: $product->brand->name,
+        ] : null),
+        'category' => $product->category?->name,
+        'url' => $productCanonical,
+        'description' => strip_tags($product->short_description ?: $product->description ?: $product->name),
+    ], fn ($value) => $value !== null && $value !== '');
+    if (($reviewSummary->count ?? 0) > 0) {
+        $productSchema['aggregateRating'] = [
+            '@type' => 'AggregateRating',
+            'ratingValue' => $reviewSummary->average,
+            'reviewCount' => $reviewSummary->count,
+        ];
+    }
+    if ((float) $schemaPrice > 0) {
+        $productSchema['offers'] = [
+            '@type' => 'Offer',
+            'url' => $productCanonical,
+            'priceCurrency' => strtoupper((string) $schemaCurrency),
+            'price' => number_format((float) $schemaPrice, 2, '.', ''),
+            'availability' => ($product->stock_quantity ?? 0) > 0
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+            'itemCondition' => 'https://schema.org/NewCondition',
+        ];
+    }
+    $schemaBreadcrumb = [
+        ['name' => 'Home', 'item' => $canonicalOrigin.$publicBase],
+        ['name' => 'Products', 'item' => $canonicalOrigin.$publicBase.'/products'],
+    ];
+    if ($product->category) {
+        $schemaBreadcrumb[] = ['name' => $product->category->name, 'item' => $canonicalOrigin.$publicBase.'/categories/'.$product->category->slug];
+    }
+    $schemaBreadcrumb[] = ['name' => $product->name, 'item' => $productCanonical];
+@endphp
 <script type="application/ld+json">
-{!! json_encode([
-    '@context' => 'https://schema.org',
-    '@type' => 'Product',
-    'name' => $product->name,
-    'sku' => $product->sku,
-    'mpn' => $product->mpn,
-    'brand' => $product->brand?->name ? ['@type' => 'Brand', 'name' => $product->brand->name] : null,
-    'category' => $product->category?->name,
-    'url' => url('/products/'.$product->slug),
-    'description' => strip_tags($product->short_description ?: $product->description ?: $product->name),
-    'aggregateRating' => ($reviewSummary->count ?? 0) > 0 ? [
-        '@type' => 'AggregateRating',
-        'ratingValue' => $reviewSummary->average,
-        'reviewCount' => $reviewSummary->count,
-    ] : null,
-], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
+{!! json_encode($productSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
 <script type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
-    'itemListElement' => array_values(array_filter([
-        ['@type'=>'ListItem','position'=>1,'name'=>'Home','item'=>url('/')],
-        ['@type'=>'ListItem','position'=>2,'name'=>'Products','item'=>url('/products')],
-        $product->category ? ['@type'=>'ListItem','position'=>3,'name'=>$product->category->name,'item'=>url('/categories/'.$product->category->slug)] : null,
-        ['@type'=>'ListItem','position'=>4,'name'=>$product->name,'item'=>url('/products/'.$product->slug)],
-    ])),
+    'itemListElement' => collect($schemaBreadcrumb)->values()->map(fn ($item, $index) => [
+        '@type' => 'ListItem',
+        'position' => $index + 1,
+        'name' => $item['name'],
+        'item' => $item['item'],
+    ])->all(),
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
 @endpush
@@ -42,8 +93,17 @@
     $reviewAverage = $reviewSummary->average ?? null;
     $reviewBadge = $reviewCount > 0 ? number_format((float) $reviewAverage, 1).'/5' : 'No approved reviews yet';
     $productMeta = [];
+    $manufacturerRecord = $product->relationLoaded('manufacturer') ? $product->manufacturer : null;
+    $brandManufacturer = $product->brand && $product->brand->relationLoaded('manufacturer') ? $product->brand->manufacturer : null;
+    $manufacturerRecord ??= $brandManufacturer;
+    $manufacturerName = $manufacturerRecord?->name ?: ($product->manufacturer_name ?: null);
+    $brandUrl = $product->brand ? $publicBase.'/brand/'.$product->brand->slug : null;
+    $manufacturerUrl = $manufacturerRecord ? $publicBase.'/manufacturer/'.$manufacturerRecord->slug : ($manufacturerName ? $publicBase.'/manufacturer/'.\Illuminate\Support\Str::slug($manufacturerName) : null);
     if ($product->brand) {
-        $productMeta[] = 'Manufacturer: '.$product->brand->name;
+        $productMeta[] = 'Brand: '.$product->brand->name;
+    }
+    if ($manufacturerName) {
+        $productMeta[] = 'Manufacturer: '.$manufacturerName;
     }
     if ($product->mpn) {
         $productMeta[] = 'MPN: '.$product->mpn;
@@ -55,26 +115,51 @@
     $priceCurrency = $marketplacePrice?->currency_native_symbol ?: ($marketplacePrice?->currency_symbol ?: ($marketplacePrice?->currency_code ?: ($marketplaceContext['currency_code'] ?? 'USD')));
     $displayPrice = $marketplacePrice ? ($marketplacePrice->sale_price ?: $marketplacePrice->base_price) : ($product->sale_price ?: $product->base_price);
     $displayCurrency = $marketplacePrice ? $priceCurrency : ($marketplaceContext['currency_code'] ?? 'USD');
+    $galleryImages = $productImages->filter(fn ($image) => $image->is_active)->values();
+    $primaryImage = $galleryImages->firstWhere('is_primary', true) ?: $galleryImages->first();
+    $primaryImageUrl = $primaryImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png');
+    $primaryImageAlt = $primaryImage?->alt_text ?: $product->name.' product image';
 @endphp
 <section class="section" style="padding-top:18px">
     <div class="wrap">
-        <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/products">Products</a>@if($product->category)<span>/</span><a href="/categories/{{ $product->category->slug }}">{{ $product->category->name }}</a>@endif<span>/</span><strong>{{ $product->name }}</strong></nav>
-        <div class="grid" style="grid-template-columns:minmax(300px,.9fr) minmax(0,1.4fr) 340px;align-items:start">
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span>/</span><a href="{{ $publicBase }}/products">Products</a>@if($product->category)<span>/</span><a href="{{ $publicBase }}/categories/{{ $product->category->slug }}">{{ $product->category->name }}</a>@endif<span>/</span><strong>{{ $product->name }}</strong></nav>
+        <div class="grid product-primary-grid" style="grid-template-columns:minmax(300px,.9fr) minmax(0,1.4fr) 340px;align-items:start">
             <section class="panel" style="padding:18px">
-                <div class="product-img" style="min-height:330px">{{ $product->brand->name ?? 'NeoGiga' }}</div>
-                <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px">
-                    @for($i=1;$i<=4;$i++)<div class="product-img" style="aspect-ratio:1">{{ $i }}</div>@endfor
+                <div class="product-gallery">
+                    <a id="product-gallery-zoom" class="product-gallery-main" href="{{ $primaryImageUrl }}" target="_blank" rel="noopener" aria-label="Open enlarged image of {{ $product->name }}">
+                        <img id="product-gallery-main-image" class="{{ $primaryImage ? '' : 'product-gallery-placeholder' }}" src="{{ $primaryImageUrl }}" alt="{{ $primaryImageAlt }}" width="1200" height="900" fetchpriority="high">
+                    </a>
+                    <div class="product-gallery-thumbs" aria-label="Product image gallery">
+                        @forelse($galleryImages as $image)
+                            <button class="product-gallery-thumb {{ $image->id === $primaryImage?->id ? 'active' : '' }}" type="button" data-gallery-src="{{ $image->publicUrl() }}" data-gallery-alt="{{ $image->alt_text ?: $product->name.' product image '.$loop->iteration }}" aria-label="Show product image {{ $loop->iteration }}">
+                                <img src="{{ $image->publicUrl() }}" alt="" loading="lazy" width="120" height="120">
+                            </button>
+                        @empty
+                            <span class="product-gallery-thumb active" aria-label="NeoGiga product image placeholder"><img src="{{ $primaryImageUrl }}" alt="" width="120" height="120"></span>
+                        @endforelse
+                    </div>
                 </div>
             </section>
             <section class="panel" style="padding:22px">
                 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><span class="badge b-info">{{ $product->category->name ?? 'Engineering part' }}</span><span class="badge {{ ($product->stock_quantity ?? 0) > 0 ? 'b-ok' : 'b-warn' }}">{{ ($product->stock_quantity ?? 0) > 0 ? 'In stock' : 'RFQ only' }}</span></div>
                 <h1 style="font-size:clamp(1.8rem,4vw,3.1rem);line-height:1.05;margin:0 0 10px">{{ $product->name }}</h1>
                 <p class="sub">{{ implode(' · ', $productMeta) }}</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 18px">
+                    @if($product->brand)
+                        <a class="badge b-info" href="{{ $brandUrl }}">Brand: {{ $product->brand->name }}</a>
+                    @endif
+                    @if($manufacturerName)
+                        <a class="badge b-muted" href="{{ $manufacturerUrl }}">Manufacturer: {{ $manufacturerName }}</a>
+                    @endif
+                    @if($product->mpn)
+                        <a class="badge b-muted" href="/mpn/{{ urlencode($product->mpn) }}">MPN: {{ $product->mpn }}</a>
+                    @endif
+                </div>
                 @if($product->short_description || $product->description)<p>{{ strip_tags($product->short_description ?: \Illuminate\Support\Str::limit(strip_tags($product->description), 540)) }}</p>@endif
                 <h2 style="font-size:1.2rem;margin-top:24px">Technical Specifications</h2>
                 <table class="spec-table">
                     @foreach($advancedSpecs->groupBy(fn($s) => $s->group_name ?: ($s->template_name ?: 'Advanced Specifications')) as $groupName => $rows)
-                        <tr><th colspan="2" style="background:#eef9ff;color:#075985">{{ $groupName }}</th></tr>
+                        <tr class="spec-group"><th colspan="2">{{ $groupName }}</th></tr>
                         @foreach($rows as $s)
                             <tr><th>{{ $s->field_label }}</th><td>{{ $s->value }}{{ $s->unit_override ? ' '.$s->unit_override : ($s->unit ? ' '.$s->unit : '') }}</td></tr>
                         @endforeach
@@ -83,7 +168,8 @@
                         <tr><th>{{ $s->name }}</th><td>{{ $s->value }}{{ $s->unit ? ' '.$s->unit : '' }}</td></tr>
                     @empty
                         @if($product->mpn)<tr><th>Manufacturer Part Number</th><td>{{ $product->mpn }}</td></tr>@endif
-                        @if($product->brand)<tr><th>Manufacturer</th><td>{{ $product->brand->name }}</td></tr>@endif
+                        @if($manufacturerName)<tr><th>Manufacturer</th><td><a href="{{ $manufacturerUrl }}">{{ $manufacturerName }}</a></td></tr>@endif
+                        @if($product->brand)<tr><th>Brand</th><td><a href="{{ $brandUrl }}">{{ $product->brand->name }}</a></td></tr>@endif
                         @if($product->category)<tr><th>Category</th><td>{{ $product->category->name }}</td></tr>@endif
                         <tr><th>Datasheet</th><td>Available on request</td></tr>
                     @endforelse
@@ -91,7 +177,7 @@
             </section>
             <aside class="panel" style="padding:18px">
                 <h2 style="margin-top:0">Get this part</h2>
-                <div style="padding:12px;border:1px solid #dbeafe;background:#f8fbff;margin-bottom:12px">
+                <div class="product-price-card">
                     <div class="sub">Regional price</div>
                     @if($displayPrice)
                         <strong style="font-size:1.7rem">{{ $displayCurrency }} {{ number_format((float) $displayPrice, 2) }}</strong>
@@ -121,7 +207,7 @@
     </div>
 </section>
 
-<section class="section" style="background:#fff">
+<section class="section product-detail-section">
     <div class="wrap">
         <div class="section-head"><div><p class="eyebrow">Seller offers</p><h2>Regional sourcing options</h2></div><a class="btn btn-ghost" href="/rfq?product={{ $product->slug }}">Request better quote</a></div>
         <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
@@ -151,7 +237,7 @@
     </div>
 </section>
 
-<section class="section" style="background:#fff">
+<section class="section product-detail-section">
     <div class="wrap grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
         <div class="info-card"><h2>Datasheets & Downloads</h2>@forelse($documents as $doc)<p><strong>{{ $doc->title ?? ucfirst($doc->document_type ?? 'Document') }}</strong><br><a href="{{ $doc->file_url ?: $doc->source_url }}" rel="nofollow">Download {{ $doc->document_type ?? 'file' }}</a></p>@empty<p class="sub">Datasheet, CAD, firmware and compliance assets are being loaded.</p>@endforelse</div>
         <div class="info-card"><h2>Alternatives & Accessories</h2>@forelse($alternatives as $alt)<p><a href="{{ $alt->slug ? '/products/'.$alt->slug : '#' }}"><strong>{{ $alt->name ?? 'Related product' }}</strong></a><br><span class="sub">{{ $alt->relation_type }} · {{ $alt->mpn ?: $alt->sku }}</span></p>@empty<p class="sub">Alternative parts and accessories are being mapped.</p>@endforelse</div>
@@ -159,12 +245,12 @@
     </div>
 </section>
 
-<section class="section" style="background:#fff">
+<section class="section product-detail-section">
     <div class="wrap grid" style="grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);align-items:start">
         <div class="panel" style="padding:22px">
             <div class="section-head" style="margin-bottom:12px"><div><p class="eyebrow">Reviews & Q&A</p><h2>Engineering feedback</h2></div><span class="badge b-info">{{ $reviewBadge }}</span></div>
             @forelse($reviews as $review)
-                <article style="padding:14px 0;border-top:1px solid #e5eef7">
+                <article class="product-review">
                     <div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><strong>{{ $review->title ?: 'Product review' }}</strong><span class="badge b-ok">{{ $review->rating }}/5</span></div>
                     <p>{{ $review->body }}</p>
                     <p class="sub">{{ $review->reviewer_name ?: 'NeoGiga customer' }}{{ $review->use_case ? ' · Use case: '.$review->use_case : '' }}</p>
@@ -194,11 +280,15 @@
         <div class="section-head"><div><p class="eyebrow">Related products</p><h2>Similar engineering parts</h2></div></div>
         <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
             @forelse($related as $r)
-                <article class="product-card"><div class="product-img">{{ $r->brand->name ?? 'Part' }}</div><h3><a href="/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="/products/{{ $r->slug }}">View</a></article>
+                @php($relatedImage = $r->images->first())
+                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}">View</a></article>
             @empty
                 <div class="panel" style="padding:24px"><p class="sub">Related products are being indexed.</p></div>
             @endforelse
         </div>
     </div>
 </section>
+<script>
+(function(){var main=document.getElementById('product-gallery-main-image'),zoom=document.getElementById('product-gallery-zoom');if(!main||!zoom)return;document.querySelectorAll('[data-gallery-src]').forEach(function(button){button.addEventListener('click',function(){document.querySelectorAll('[data-gallery-src]').forEach(function(item){item.classList.remove('active')});button.classList.add('active');main.src=button.dataset.gallerySrc;main.alt=button.dataset.galleryAlt;zoom.href=button.dataset.gallerySrc;zoom.setAttribute('aria-label','Open enlarged image: '+button.dataset.galleryAlt)})})})();
+</script>
 @endsection

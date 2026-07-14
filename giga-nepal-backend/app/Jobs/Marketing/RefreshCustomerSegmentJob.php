@@ -15,9 +15,7 @@ class RefreshCustomerSegmentJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public array $payload = [])
-    {
-    }
+    public function __construct(public array $payload = []) {}
 
     public function handle(CustomerSegmentationService $segments): void
     {

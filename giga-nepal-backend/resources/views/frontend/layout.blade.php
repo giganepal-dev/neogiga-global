@@ -6,29 +6,36 @@
         ? $activePrefix
         : config('neogiga_global.default_prefix', 'en');
     $publicBase = '/'.$activePrefix;
+    $sensitivePage = request()->is('cart', 'checkout*', 'forgot-password', 'reset-password*', 'login', 'register', 'account*');
+    $resolvedRobots = $robots ?? ($sensitivePage ? 'noindex,nofollow' : ($marketplaceSeo['robots'] ?? 'index,follow'));
+    $resolvedCanonical = $canonical ?? ($marketplaceSeo['canonical'] ?? url()->current());
+    $resolvedSocialImage = $ogImage ?? ($marketplaceSeo['og_image'] ?? null) ?: url('/images/og/neogiga-default-2026.png');
 @endphp
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', $marketplaceSeo['title'] ?? 'NeoGiga - Global Engineering Marketplace')</title>
     <meta name="description" content="@yield('description', $marketplaceSeo['description'] ?? 'Global marketplace for semiconductors, IoT, robotics, automation, battery technology, power storage and engineering tools.')">
-    <link rel="canonical" href="{{ $canonical ?? ($marketplaceSeo['canonical'] ?? url()->current()) }}">
-    <meta name="robots" content="{{ $marketplaceSeo['robots'] ?? 'index, follow' }}">
+    <link rel="canonical" href="{{ $resolvedCanonical }}">
+    <meta name="robots" content="{{ $resolvedRobots }}">
     <meta property="og:type" content="@yield('og_type', 'website')">
     <meta property="og:site_name" content="NeoGiga">
     <meta property="og:title" content="@yield('title', $marketplaceSeo['og_title'] ?? 'NeoGiga')">
     <meta property="og:description" content="@yield('description', $marketplaceSeo['og_description'] ?? 'Global engineering marketplace.')">
-    <meta property="og:url" content="{{ $canonical ?? ($marketplaceSeo['canonical'] ?? url()->current()) }}">
-    @if(!empty($marketplaceSeo['og_image']))<meta property="og:image" content="{{ $marketplaceSeo['og_image'] }}">@endif
+    <meta property="og:url" content="{{ $resolvedCanonical }}">
+    <meta property="og:image" content="{{ $resolvedSocialImage }}">
+    <meta property="og:image:alt" content="@yield('title', $marketplaceSeo['og_title'] ?? 'NeoGiga')">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@yield('title', $marketplaceSeo['twitter_title'] ?? 'NeoGiga')">
     <meta name="twitter:description" content="@yield('description', $marketplaceSeo['twitter_description'] ?? 'Global engineering marketplace.')">
-    @if(!empty($marketplaceSeo['twitter_image']))<meta name="twitter:image" content="{{ $marketplaceSeo['twitter_image'] }}">@endif
+    <meta name="twitter:image" content="{{ $twitterImage ?? ($marketplaceSeo['twitter_image'] ?? null) ?: $resolvedSocialImage }}">
     @if(!empty($marketplaceSeo['schema_json']))<script type="application/ld+json">{!! $marketplaceSeo['schema_json'] !!}</script>@endif
     @foreach(($marketplaceContext['hreflang'] ?? []) as $alternate)
         <link rel="alternate" hreflang="{{ $alternate['hreflang'] }}" href="{{ $alternate['url'] }}">
     @endforeach
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23081527'/><path d='M9 22V10l14 12V10' stroke='%2319D3F5' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url('/images/brand/neogiga-favicon-32.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url('/images/brand/neogiga-icon-192.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url('/images/brand/neogiga-apple-touch-icon-180.png') }}">
     @stack('head')
     <style>
         /* NeoGiga "Precision Engineering" design system (dark, platform-wide) */
@@ -49,14 +56,16 @@
         .section{padding:64px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:24px}.section h2,.section-title{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:700;letter-spacing:-.015em;line-height:1.1;margin:0;color:var(--on)}.sub{color:var(--muted)}
         .grid{display:grid;gap:20px}.category-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
         .category-card,.product-card,.info-card{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);padding:20px;backdrop-filter:blur(12px);transition:transform .2s,border-color .2s,box-shadow .2s}.category-card:hover,.product-card:hover{border-color:rgba(40,216,251,.5);box-shadow:0 20px 50px rgba(0,0,0,.35);transform:translateY(-3px)}
-        .cat-icon{width:44px;height:44px;border-radius:12px;background:rgba(40,216,251,.12);color:var(--cyan);display:grid;place-items:center;font-weight:700;margin-bottom:12px}.product-card{display:flex;flex-direction:column;gap:10px}.product-img{aspect-ratio:4/3;border-radius:10px;background:linear-gradient(135deg,var(--s2),var(--s1));display:grid;place-items:center;color:var(--faint);font-weight:700}
+        .cat-icon{width:44px;height:44px;border-radius:12px;background:rgba(40,216,251,.12);color:var(--cyan);display:grid;place-items:center;font-weight:700;margin-bottom:12px}.product-card{display:flex;flex-direction:column;gap:10px}.product-img{aspect-ratio:4/3;border-radius:10px;background-color:var(--s1);background-image:url('{{ url('/images/products/neogiga-product-placeholder-2026.png') }}');background-position:center;background-repeat:no-repeat;background-size:cover;display:grid;place-items:center;color:#fff;font-weight:700;text-shadow:0 1px 5px rgba(0,0,0,.9);overflow:hidden}
         .badge{display:inline-flex;align-items:center;gap:4px;border-radius:8px;padding:3px 9px;font-size:.72rem;font-weight:600;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;border:1px solid transparent}.b-ok{background:rgba(16,185,129,.15);color:#34d399;border-color:rgba(16,185,129,.3)}.b-warn{background:rgba(249,189,44,.15);color:var(--gold);border-color:rgba(249,189,44,.3)}.b-info{background:rgba(40,216,251,.14);color:var(--cyan);border-color:rgba(40,216,251,.3)}.b-muted{background:rgba(255,255,255,.06);color:var(--muted);border-color:var(--line)}
         .layout-2{display:grid;grid-template-columns:280px 1fr;gap:24px}.filter{position:sticky;top:140px;align-self:start;padding:18px;background:var(--glass);border:1px solid var(--line);border-radius:var(--r)}.field{display:grid;gap:6px;margin-bottom:12px}.field label{font-weight:600;color:var(--muted);font-size:.8rem}.control{width:100%;border:1px solid var(--line);border-radius:10px;min-height:44px;padding:8px 12px;background:var(--s1);color:var(--on)}.control:focus{outline:0;border-color:var(--cyan)}
         .spec-table{width:100%;border-collapse:collapse;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:.86rem}.spec-table th,.spec-table td{padding:11px 14px;border-bottom:1px solid var(--line);text-align:left;color:var(--on)}.spec-table th{background:var(--s1);color:var(--muted);width:38%;font-weight:600}
+        .product-gallery{display:grid;gap:10px}.product-gallery-main{display:grid;place-items:center;aspect-ratio:4/3;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}.product-gallery-main img{width:100%;height:100%;object-fit:contain}.product-gallery-main img.product-gallery-placeholder{object-fit:cover}.product-gallery-thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.product-gallery-thumb{display:grid;place-items:center;aspect-ratio:1;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff;color:var(--faint);padding:0}.product-gallery-thumb img{width:100%;height:100%;object-fit:contain}.product-gallery-thumb.active,.product-gallery-thumb:hover,.product-gallery-thumb:focus-visible{border-color:var(--cyan);outline:0;box-shadow:0 0 0 2px rgba(40,216,251,.18)}
+        .product-price-card{padding:14px;border:1px solid rgba(40,216,251,.28);border-radius:10px;background:rgba(40,216,251,.07);margin-bottom:12px}.product-price-card strong{display:block;color:#fff;font-size:1.7rem;margin:2px 0}.product-detail-section{background:var(--bg2)}.product-review{padding:14px 0;border-top:1px solid var(--line)}.spec-group th{background:rgba(40,216,251,.11);color:var(--cyan)}
         .crumbs{display:flex;flex-wrap:wrap;gap:7px;align-items:center;color:var(--faint);font-size:.85rem;margin:18px 0}.crumbs a{color:var(--cyan)}
         .footer{background:var(--bg2);color:var(--muted);padding:56px 0 100px;border-top:1px solid var(--line)}.foot-grid{display:grid;grid-template-columns:1.5fr repeat(4,1fr);gap:24px}.footer h3{color:#fff;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em}.footer a{display:block;color:var(--muted);margin:8px 0;transition:color .15s}.footer a:hover{color:var(--cyan)}.newsletter{display:flex;gap:8px;flex-wrap:wrap}.newsletter input{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--s1);color:var(--on);padding:0 14px}
         .float-ai{position:fixed;right:18px;bottom:20px;z-index:50;background:var(--cyan);color:#003640;border-radius:999px;padding:12px 18px;font-weight:700;box-shadow:0 14px 40px rgba(40,216,251,.3);transition:transform .15s}.float-ai:hover{transform:translateY(-2px)}.mobile-bottom{display:none}
-        @media(max-width:980px){.head-main{grid-template-columns:1fr;gap:10px;padding:12px 0}.head-actions{overflow-x:auto}.search{grid-template-columns:1fr auto}.search select{display:none}.nav-row{display:none}.hero-grid,.layout-2{grid-template-columns:1fr}.foot-grid{grid-template-columns:1fr 1fr}.filter{position:static}.mobile-bottom{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:55;background:rgba(11,15,17,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);justify-content:space-around;padding:8px 6px}.mobile-bottom a{color:var(--muted);font-size:.75rem;font-weight:600;text-align:center}.float-ai{bottom:64px}.hero h1{font-size:3rem}}
+        @media(max-width:980px){.head-main{grid-template-columns:1fr;gap:10px;padding:12px 0}.head-actions{overflow-x:auto}.search{grid-template-columns:1fr auto}.search select{display:none}.nav-row{display:none}.hero-grid,.layout-2,.product-primary-grid{grid-template-columns:1fr!important}.foot-grid{grid-template-columns:1fr 1fr}.filter{position:static}.mobile-bottom{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:55;background:rgba(11,15,17,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);justify-content:space-around;padding:8px 6px}.mobile-bottom a{color:var(--muted);font-size:.75rem;font-weight:600;text-align:center}.float-ai{bottom:64px}.hero h1{font-size:3rem}}
         @media(max-width:620px){.wrap{width:min(var(--max),calc(100% - 24px))}.hero-grid{padding:44px 0}.hero h1{font-size:2.5rem}.section{padding:44px 0}.foot-grid{grid-template-columns:1fr 1fr}.ai-bar{display:grid}.category-grid{grid-template-columns:1fr 1fr}.section-head{display:block}.btn{width:100%}}
         @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.category-card:hover,.product-card:hover,.btn:hover,.float-ai:hover{transform:none}}
     </style>
@@ -104,7 +113,7 @@
 <header class="site-head">
     <div class="wrap head-main">
         <a class="brand" href="{{ $publicBase }}" aria-label="NeoGiga home">
-            <span class="mark"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M9 22V10l14 12V10" stroke="#19D3F5" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="mark"><img src="{{ url('/images/brand/neogiga-icon-192.png') }}" alt="" width="30" height="30" aria-hidden="true"></span>
             <span>NeoGiga<small>Engineering Marketplace</small></span>
         </a>
         <form class="search" method="get" action="{{ $publicBase }}/products" role="search">
@@ -140,7 +149,7 @@
                 </div>
             </details>
             <nav class="primary-nav" aria-label="Primary navigation">
-                <a href="{{ $publicBase }}/products">Products</a><a href="{{ $publicBase }}/categories">Categories</a><a href="{{ $publicBase }}/ai-commerce">AI Builder</a><a href="{{ $publicBase }}/rfq">RFQ</a><a href="{{ $publicBase }}/lms">LMS</a><a href="{{ $publicBase }}/distributors">Warehouses</a>
+                <a href="{{ $publicBase }}/products">Products</a><a href="{{ $publicBase }}/categories">Categories</a><a href="{{ $publicBase }}/brands">Brands</a><a href="{{ $publicBase }}/ai-commerce">AI Builder</a><a href="{{ $publicBase }}/rfq">RFQ</a><a href="{{ $publicBase }}/lms">LMS</a><a href="{{ $publicBase }}/distributors">Warehouses</a>
             </nav>
         </div>
     </div>
@@ -148,8 +157,8 @@
 <main id="main">@yield('content')</main>
 <footer class="footer">
     <div class="wrap foot-grid">
-        <div><a class="brand" href="{{ $publicBase }}"><span class="mark">NG</span><span>NeoGiga<small>Engineering the Future</small></span></a><p>Premium marketplace for semiconductors, IoT, robotics, automation, battery technology, power storage and industrial engineering tools.</p><form class="newsletter" method="post" action="/api/v1/newsletter/subscribe"><input type="email" name="email" placeholder="Engineering newsletter" aria-label="Email"><button class="btn btn-gold" type="submit">Subscribe</button></form></div>
-        <div><h3>Products</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=sensors">Sensors</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/products?category=power-storage">Power storage</a></div>
+        <div><a class="brand" href="{{ $publicBase }}"><span class="mark"><img src="{{ url('/images/brand/neogiga-icon-192.png') }}" alt="" width="30" height="30" aria-hidden="true"></span><span>NeoGiga<small>Engineering the Future</small></span></a><p>Premium marketplace for semiconductors, IoT, robotics, automation, battery technology, power storage and industrial engineering tools.</p><form class="newsletter" method="post" action="/api/v1/newsletter/subscribe"><input type="email" name="email" placeholder="Engineering newsletter" aria-label="Email"><button class="btn btn-gold" type="submit">Subscribe</button></form></div>
+        <div><h3>Products</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=sensors">Sensors</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/brands">Brands</a></div>
         <div><h3>Company</h3><a href="{{ $publicBase }}/ai-commerce">AI commerce</a><a href="{{ $publicBase }}/lms">Learning hub</a><a href="{{ $publicBase }}/rfq">RFQ sourcing</a><a href="{{ $publicBase }}/distributors">Distributors</a></div>
         <div><h3>Seller</h3><a href="{{ $publicBase }}/sell-on-neogiga">Become a seller</a><a href="{{ $publicBase }}/seller-early-access">Early access</a><a href="/admin/login">Seller portal</a><a href="/admin/login">B2B login</a></div>
         <div><h3>Countries</h3>@foreach(($marketplaceContext['editions'] ?? []) as $edition)<a href="{{ $edition['url'] }}">{{ $edition['name'] }}</a>@endforeach<a href="#">Bangladesh</a><a href="#">Sri Lanka</a></div>

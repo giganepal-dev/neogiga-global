@@ -2,10 +2,11 @@
 
 namespace App\Models\Marketplace;
 
+use App\Models\Manufacturer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Schema;
 
@@ -20,10 +21,32 @@ class Product extends Model
         'type',
         'status',
         'brand_id',
+        'manufacturer_id',
         'category_id',
         'vendor_id',
+        'manufacturer_name',
         'description',
         'short_description',
+        'base_price',
+        'cost_price',
+        'sale_price',
+        'normalized_mpn',
+        'gtin',
+        'hs_code',
+        'eccn',
+        'lifecycle_status',
+        'source_name',
+        'source_url',
+        'source_file',
+        'source_page_url',
+        'downloaded_at',
+        'imported_at',
+        'data_year',
+        'license_note',
+        'confidence_level',
+        'original_raw_value',
+        'normalized_value',
+        'last_verified_at',
         'is_featured',
         'is_virtual',
         'is_downloadable',
@@ -59,11 +82,19 @@ class Product extends Model
         'seo_meta' => 'array',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'downloaded_at' => 'datetime',
+        'imported_at' => 'datetime',
+        'last_verified_at' => 'datetime',
     ];
 
     public function brand(): BelongsTo
     {
         return $this->belongsTo(ProductBrand::class, 'brand_id');
+    }
+
+    public function manufacturer(): BelongsTo
+    {
+        return $this->belongsTo(Manufacturer::class, 'manufacturer_id');
     }
 
     public function category(): BelongsTo
@@ -83,7 +114,7 @@ class Product extends Model
 
     public function specGroups(): HasMany
     {
-        return $this->hasMany(ProductSpecGroup::class);
+        return $this->hasMany(ProductSpecGroup::class, 'category_id', 'category_id');
     }
 
     public function specs(): HasMany
@@ -93,7 +124,17 @@ class Product extends Model
 
     public function images(): HasMany
     {
-        return $this->hasMany(ProductImage::class);
+        return $this->hasMany(ProductImage::class)->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function activeImages(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function primaryImage(): HasOne
+    {
+        return $this->hasOne(ProductImage::class)->where('is_active', true)->where('is_primary', true);
     }
 
     public function marketplacePrices(): HasMany

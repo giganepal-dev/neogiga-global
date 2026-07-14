@@ -8,6 +8,7 @@ use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductBrand;
 use App\Models\Marketplace\ProductCategory;
 use App\Services\Catalog\CatalogSearchService;
+use App\Services\Product\ProductImageManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,21 +44,27 @@ class ProductController extends Controller
     {
         $product = $this->baseQuery()
             ->bySlug($slug)
-            ->with(['images', 'variants', 'specGroups', 'specs', 'vendor:id,name,slug'])
+            ->with(['images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order'), 'variants', 'specGroups', 'specs', 'vendor:id,name,slug'])
             ->first();
 
-        if (!$product) {
+        if (! $product) {
             return $this->error('Product not found', 404);
         }
 
-        return $this->success($product);
+        $payload = $product->toArray();
+        $payload['images'] = $product->images
+            ->map(fn ($image) => app(ProductImageManager::class)->serialize($image))
+            ->values()
+            ->all();
+
+        return $this->success($payload);
     }
 
     public function byCategory(Request $request, string $slug): JsonResponse
     {
         $category = ProductCategory::where('slug', $slug)->where('is_active', true)->first();
 
-        if (!$category) {
+        if (! $category) {
             return $this->error('Category not found', 404);
         }
 
@@ -74,7 +81,7 @@ class ProductController extends Controller
     {
         $brand = ProductBrand::where('slug', $slug)->where('is_active', true)->first();
 
-        if (!$brand) {
+        if (! $brand) {
             return $this->error('Brand not found', 404);
         }
 

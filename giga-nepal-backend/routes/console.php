@@ -15,8 +15,10 @@ use App\Jobs\Marketing\CalculateTrendingProductsJob;
 use App\Jobs\Marketing\DetectAbandonedCartsJob;
 use App\Jobs\Marketing\GenerateRegionalSalesReportJob;
 use App\Jobs\Marketing\RefreshCustomerSegmentJob;
+use App\Jobs\Marketing\PrepareScheduledEmailCampaignsJob;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Schema;
@@ -50,6 +52,326 @@ Artisan::command('neogiga:smoke', function () {
 
     return $failed ? self::FAILURE : self::SUCCESS;
 })->purpose('Run production-safe NeoGiga smoke checks without migrations or data changes.');
+
+Artisan::command('neogiga:audit-catalog {--json : Print JSON instead of a table.}', function () {
+    $count = fn (string $table, ?callable $scope = null): int => Schema::hasTable($table)
+        ? (int) tap(DB::table($table), fn ($query) => $scope ? $scope($query) : null)->count()
+        : 0;
+
+    $has = fn (string $table, string $column): bool => Schema::hasTable($table) && Schema::hasColumn($table, $column);
+
+    $report = [
+        'generated_at' => now()->toIso8601String(),
+        'tables' => [
+            'products' => Schema::hasTable('products'),
+            'product_brands' => Schema::hasTable('product_brands'),
+            'manufacturers' => Schema::hasTable('manufacturers'),
+            'manufacturer_aliases' => Schema::hasTable('manufacturer_aliases'),
+            'product_categories' => Schema::hasTable('product_categories'),
+            'inventory_stocks' => Schema::hasTable('inventory_stocks'),
+            'marketplace_product_prices' => Schema::hasTable('marketplace_product_prices'),
+            'vendor_product_prices' => Schema::hasTable('vendor_product_prices'),
+        ],
+        'counts' => [
+            'products' => $count('products'),
+            'published_products' => $count('products', fn ($q) => $q->whereIn('status', ['active', 'approved', 'published'])),
+            'products_with_brand' => $count('products', fn ($q) => $q->whereNotNull('brand_id')),
+            'products_with_manufacturer_id' => $has('products', 'manufacturer_id') ? $count('products', fn ($q) => $q->whereNotNull('manufacturer_id')) : 0,
+            'products_with_manufacturer_name' => $has('products', 'manufacturer_name') ? $count('products', fn ($q) => $q->whereNotNull('manufacturer_name')->where('manufacturer_name', '<>', '')) : 0,
+            'products_with_mpn' => $count('products', fn ($q) => $q->whereNotNull('mpn')->where('mpn', '<>', '')),
+            'products_with_gtin' => $has('products', 'gtin') ? $count('products', fn ($q) => $q->whereNotNull('gtin')->where('gtin', '<>', '')) : 0,
+            'brands' => $count('product_brands'),
+            'brands_with_manufacturer' => $has('product_brands', 'manufacturer_id') ? $count('product_brands', fn ($q) => $q->whereNotNull('manufacturer_id')) : 0,
+            'manufacturers' => $count('manufacturers'),
+            'manufacturer_aliases' => $count('manufacturer_aliases'),
+            'categories' => $count('product_categories'),
+            'inventory_rows' => $count('inventory_stocks'),
+        ],
+        'gaps' => [
+            'dedicated_manufacturer_records_needed' => $has('products', 'manufacturer_id') ? $count('products', fn ($q) => $q->whereNull('manufacturer_id')->whereNotNull('manufacturer_name')->where('manufacturer_name', '<>', '')) : 0,
+            'brand_to_manufacturer_mapping_needed' => $has('product_brands', 'manufacturer_id') ? $count('product_brands', fn ($q) => $q->whereNull('manufacturer_id')) : $count('product_brands'),
+            'mpn_normalization_needed' => $has('products', 'normalized_mpn') ? $count('products', fn ($q) => $q->whereNotNull('mpn')->where(function ($where) {
+                $where->whereNull('normalized_mpn')->orWhere('normalized_mpn', '');
+            })) : $count('products', fn ($q) => $q->whereNotNull('mpn')),
+        ],
+    ];
+
+    $path = storage_path('reports/catalog_identity_audit.json');
+    File::ensureDirectoryExists(dirname($path));
+    File::put($path, json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+    if ($this->option('json')) {
+        $this->line(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    } else {
+        $this->info('Catalog identity audit written to '.$path);
+        $this->table(['Metric', 'Count'], collect($report['counts'])->map(fn ($value, $key) => [$key, $value])->all());
+        $this->table(['Gap', 'Count'], collect($report['gaps'])->map(fn ($value, $key) => [$key, $value])->all());
+    }
+
+    return self::SUCCESS;
+})->purpose('Audit catalog identity, brand, manufacturer, product identifier, and stock architecture coverage.');
+
+Artisan::command('neogiga:generate-seo-content
+    {--type=all : products, brands, categories, manufacturers, sellers, or all}
+    {--country=Global : Global or regional country name used in SEO templates}
+    {--website-tag=Engineering Marketplace : Website tag appended to SEO titles}
+    {--limit=0 : Limit rows per type, 0 means all}
+    {--apply : Persist generated fields. Without this flag the command is a dry-run}
+    {--force : Rewrite existing non-generated/manual content}
+    {--skip-specs : Do not create/update derived product specifications}', function () {
+    $generator = app(\App\Services\Seo\CatalogSeoContentGenerator::class);
+    $type = strtolower((string) $this->option('type'));
+    $country = trim((string) $this->option('country')) ?: 'Global';
+    $websiteTag = trim((string) $this->option('website-tag')) ?: 'Engineering Marketplace';
+    $limit = max(0, (int) $this->option('limit'));
+    $apply = (bool) $this->option('apply');
+    $force = (bool) $this->option('force');
+    $writeSpecs = ! (bool) $this->option('skip-specs');
+
+    $allowed = ['products', 'brands', 'categories', 'manufacturers', 'sellers', 'all'];
+    if (! in_array($type, $allowed, true)) {
+        $this->error('Invalid --type. Use one of: '.implode(', ', $allowed));
+
+        return self::FAILURE;
+    }
+
+    $stats = [];
+    $shouldRun = fn (string $scope): bool => $type === 'all' || $type === $scope;
+    $decode = function (mixed $value): array {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (! is_string($value) || trim($value) === '') {
+            return [];
+        }
+        $decoded = json_decode($value, true);
+
+        return is_array($decoded) ? $decoded : [];
+    };
+    $isGeneratedMeta = fn (array $meta): bool => (($meta['source'] ?? null) === 'neogiga_seo_generator')
+        || (($meta['seo_source'] ?? null) === 'neogiga_seo_generator');
+    $blank = fn (mixed $value): bool => trim((string) $value) === '';
+    $canWrite = fn (mixed $current, array $meta = []): bool => $force || $blank($current) || $isGeneratedMeta($meta);
+    $touch = fn (): array => ['updated_at' => now()];
+
+    if ($shouldRun('products') && Schema::hasTable('products')) {
+        $stats['products'] = ['scanned' => 0, 'updated' => 0, 'skipped' => 0, 'specs' => 0];
+        $query = DB::table('products as p')
+            ->leftJoin('product_brands as b', 'b.id', '=', 'p.brand_id')
+            ->leftJoin('product_categories as c', 'c.id', '=', 'p.category_id')
+            ->when(Schema::hasTable('manufacturers') && Schema::hasColumn('products', 'manufacturer_id'), fn ($q) => $q->leftJoin('manufacturers as m', 'm.id', '=', 'p.manufacturer_id'))
+            ->select([
+                'p.*',
+                'b.name as brand_name',
+                'c.name as category_name',
+            ])
+            ->when(Schema::hasTable('manufacturers') && Schema::hasColumn('products', 'manufacturer_id'), fn ($q) => $q->addSelect('m.name as manufacturer_record_name'));
+
+        $processProductRows = function ($rows) use (&$stats, $generator, $country, $websiteTag, $apply, $force, $writeSpecs, $decode, $canWrite, $isGeneratedMeta, $touch) {
+            foreach ($rows as $product) {
+                $stats['products']['scanned']++;
+                $generated = $generator->product($product, $country, $websiteTag);
+                $existingSeo = $decode($product->seo_meta ?? null);
+                $updates = [];
+
+                if (Schema::hasColumn('products', 'meta_title') && $canWrite($product->meta_title ?? null, $existingSeo)) {
+                    $updates['meta_title'] = $generated['meta_title'];
+                }
+                if (Schema::hasColumn('products', 'meta_description') && $canWrite($product->meta_description ?? null, $existingSeo)) {
+                    $updates['meta_description'] = $generated['meta_description'];
+                }
+                if ($canWrite($product->short_description ?? null, $existingSeo)) {
+                    $updates['short_description'] = $generated['short_description'];
+                }
+                if ($canWrite($product->description ?? null, $existingSeo)) {
+                    $updates['description'] = $generated['description'];
+                }
+                if (Schema::hasColumn('products', 'seo_meta')) {
+                    $updates['seo_meta'] = json_encode(array_merge($existingSeo, $generated['seo_meta']));
+                }
+                if (Schema::hasColumn('products', 'normalized_mpn') && trim((string) ($product->normalized_mpn ?? '')) === '' && trim((string) ($product->mpn ?? '')) !== '') {
+                    $updates['normalized_mpn'] = strtoupper((string) preg_replace('/\s+/', '', (string) $product->mpn));
+                }
+
+                if ($updates !== []) {
+                    $updates += $touch();
+                    if ($apply) {
+                        DB::table('products')->where('id', $product->id)->update($updates);
+                    }
+                    $stats['products']['updated']++;
+                } else {
+                    $stats['products']['skipped']++;
+                }
+
+                if ($apply && Schema::hasTable('product_seo_meta')) {
+                    $existingRow = DB::table('product_seo_meta')->where('product_id', $product->id)->first();
+                    $rowMeta = $decode($existingRow->metadata ?? null);
+                    if (! $existingRow || $force || $isGeneratedMeta($rowMeta) || trim((string) ($existingRow->meta_title ?? '')) === '') {
+                        DB::table('product_seo_meta')->updateOrInsert(
+                            ['product_id' => $product->id],
+                            [
+                                'product_id' => $product->id,
+                                'meta_title' => $generated['meta_title'],
+                                'meta_description' => $generated['meta_description'],
+                                'canonical_url' => url('/products/'.$product->slug),
+                                'robots' => 'index,follow',
+                                'schema_type' => 'Product',
+                                'confidence_level' => 'generated_from_catalog_fields',
+                                'metadata' => json_encode($generated['seo_meta']),
+                                'created_at' => $existingRow->created_at ?? now(),
+                                'updated_at' => now(),
+                            ]
+                        );
+                    }
+                }
+
+                if ($apply && $writeSpecs && Schema::hasTable('product_specs')) {
+                    foreach ($generated['specifications'] as $name => $value) {
+                        $existing = DB::table('product_specs')->where('product_id', $product->id)->where('name', $name)->first();
+                        if (! $existing || $force || trim((string) ($existing->value ?? '')) === '') {
+                            DB::table('product_specs')->updateOrInsert(
+                                ['product_id' => $product->id, 'name' => $name],
+                                [
+                                    'product_id' => $product->id,
+                                    'name' => $name,
+                                    'value' => $value,
+                                    'sort_order' => 50,
+                                    'is_visible' => true,
+                                    'is_filterable' => false,
+                                    'created_at' => $existing->created_at ?? now(),
+                                    'updated_at' => now(),
+                                ]
+                            );
+                            $stats['products']['specs']++;
+                        }
+                    }
+                }
+            }
+        };
+
+        if ($limit > 0) {
+            $processProductRows($query->orderBy('p.id')->limit($limit)->get());
+        } else {
+            $query->orderBy('p.id')->chunkById(500, $processProductRows, 'p.id', 'id');
+        }
+    }
+
+    if ($shouldRun('brands') && Schema::hasTable('product_brands')) {
+        $stats['brands'] = ['scanned' => 0, 'updated' => 0, 'skipped' => 0];
+        $query = DB::table('product_brands')->orderBy('id');
+        if ($limit > 0) {
+            $query->limit($limit);
+        }
+        foreach ($query->get() as $brand) {
+            $stats['brands']['scanned']++;
+            $generated = $generator->brand($brand, $country, $websiteTag);
+            $existingSeo = $decode($brand->seo_meta ?? null);
+            if (! $canWrite($brand->description ?? null, $existingSeo) && ! $canWrite($brand->seo_meta ?? null, $existingSeo)) {
+                $stats['brands']['skipped']++;
+                continue;
+            }
+            if ($apply) {
+                DB::table('product_brands')->where('id', $brand->id)->update([
+                    'description' => $canWrite($brand->description ?? null, $existingSeo) ? $generated['description'] : $brand->description,
+                    'seo_meta' => json_encode(array_merge($existingSeo, $generated['seo_meta'])),
+                    'updated_at' => now(),
+                ]);
+            }
+            $stats['brands']['updated']++;
+        }
+    }
+
+    if ($shouldRun('categories') && Schema::hasTable('product_categories')) {
+        $stats['categories'] = ['scanned' => 0, 'updated' => 0, 'skipped' => 0];
+        $query = DB::table('product_categories')->orderBy('id');
+        if ($limit > 0) {
+            $query->limit($limit);
+        }
+        foreach ($query->get() as $category) {
+            $stats['categories']['scanned']++;
+            $generated = $generator->category($category, $country, $websiteTag);
+            $existingSeo = $decode($category->seo_meta ?? null);
+            if (! $canWrite($category->description ?? null, $existingSeo) && ! $canWrite($category->seo_meta ?? null, $existingSeo)) {
+                $stats['categories']['skipped']++;
+                continue;
+            }
+            if ($apply) {
+                DB::table('product_categories')->where('id', $category->id)->update([
+                    'description' => $canWrite($category->description ?? null, $existingSeo) ? $generated['description'] : $category->description,
+                    'seo_meta' => json_encode(array_merge($existingSeo, $generated['seo_meta'])),
+                    'updated_at' => now(),
+                ]);
+            }
+            $stats['categories']['updated']++;
+        }
+    }
+
+    if ($shouldRun('manufacturers') && Schema::hasTable('manufacturers')) {
+        $stats['manufacturers'] = ['scanned' => 0, 'updated' => 0, 'skipped' => 0];
+        $query = DB::table('manufacturers')->orderBy('id');
+        if ($limit > 0) {
+            $query->limit($limit);
+        }
+        foreach ($query->get() as $manufacturer) {
+            $stats['manufacturers']['scanned']++;
+            $generated = $generator->manufacturer($manufacturer, $country, $websiteTag);
+            $existingMeta = $decode($manufacturer->metadata ?? null);
+            $updates = [];
+            foreach (['seo_title', 'seo_description', 'overview'] as $field) {
+                if ($canWrite($manufacturer->{$field} ?? null, $existingMeta)) {
+                    $updates[$field] = $generated[$field];
+                }
+            }
+            $updates['metadata'] = json_encode(array_merge($existingMeta, [
+                'seo_source' => 'neogiga_seo_generator',
+                'seo_country' => $country,
+                'seo_website_tag' => $websiteTag,
+                'seo_generated_at' => now()->toIso8601String(),
+            ]));
+            if ($updates === ['metadata' => $updates['metadata']]) {
+                $stats['manufacturers']['skipped']++;
+                continue;
+            }
+            if ($apply) {
+                DB::table('manufacturers')->where('id', $manufacturer->id)->update($updates + ['updated_at' => now()]);
+            }
+            $stats['manufacturers']['updated']++;
+        }
+    }
+
+    if ($shouldRun('sellers') && Schema::hasTable('vendors')) {
+        $stats['sellers'] = ['scanned' => 0, 'updated' => 0, 'skipped' => 0];
+        $query = DB::table('vendors')->orderBy('id');
+        if ($limit > 0) {
+            $query->limit($limit);
+        }
+        foreach ($query->get() as $seller) {
+            $stats['sellers']['scanned']++;
+            $generated = $generator->seller($seller, $country, $websiteTag);
+            $existingMeta = $decode($seller->metadata ?? null);
+            $existingGenerated = $isGeneratedMeta($existingMeta);
+            if (! $force && ! $existingGenerated && ! $blank($seller->description ?? null) && ! $blank($seller->metadata ?? null)) {
+                $stats['sellers']['skipped']++;
+                continue;
+            }
+            if ($apply) {
+                DB::table('vendors')->where('id', $seller->id)->update([
+                    'description' => $canWrite($seller->description ?? null, $existingMeta) ? $generated['description'] : $seller->description,
+                    'metadata' => json_encode(array_merge($existingMeta, $generated['metadata'])),
+                    'updated_at' => now(),
+                ]);
+            }
+            $stats['sellers']['updated']++;
+        }
+    }
+
+    $this->line($apply ? 'APPLIED generated SEO/content.' : 'DRY-RUN only. Re-run with --apply to persist.');
+    foreach ($stats as $scope => $scopeStats) {
+        $this->line($scope.': '.json_encode($scopeStats));
+    }
+
+    return self::SUCCESS;
+})->purpose('Generate SEO titles, meta descriptions, descriptions, short descriptions, and derived product specs without changing frontend design.');
 
 Artisan::command('jlcpcb:repair-skus {--apply : Persist SKU changes. Without this flag the command is a dry-run.} {--limit=0 : Maximum rows to process, 0 means all.}', function () {
     if (! Schema::hasTable('catalog_product_sources') || ! Schema::hasTable('catalog_sources') || ! Schema::hasTable('products')) {
@@ -856,3 +1178,4 @@ Schedule::job(new CalculateTrendingCategoriesJob)->hourly();
 Schedule::job(new CalculateTopSearchTermsJob)->hourly();
 Schedule::job(new RefreshCustomerSegmentJob)->daily();
 Schedule::job(new GenerateRegionalSalesReportJob)->daily();
+Schedule::job(new PrepareScheduledEmailCampaignsJob)->everyMinute()->withoutOverlapping();

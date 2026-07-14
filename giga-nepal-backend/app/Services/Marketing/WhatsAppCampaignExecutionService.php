@@ -9,7 +9,7 @@ class WhatsAppCampaignExecutionService
     public function queueCampaign(int $campaignId, bool $test = false, ?string $testPhone = null): array
     {
         $campaign = DB::table('whatsapp_campaigns')->find($campaignId);
-        if (!$campaign) {
+        if (! $campaign) {
             return ['campaign_id' => $campaignId, 'eligible' => 0, 'queued' => 0, 'skipped' => 0, 'error' => 'Campaign not found.'];
         }
 
@@ -19,8 +19,9 @@ class WhatsAppCampaignExecutionService
         $counts = ['campaign_id' => $campaignId, 'eligible' => count($recipients), 'queued' => 0, 'skipped' => 0, 'test_mode' => $test];
 
         foreach ($recipients as $recipient) {
-            if (!$test && !$this->canQueue($recipient->phone)) {
+            if (! $test && ! $this->canQueue($recipient->phone)) {
                 $counts['skipped']++;
+
                 continue;
             }
 
@@ -63,7 +64,7 @@ class WhatsAppCampaignExecutionService
             $counts['queued']++;
         }
 
-        if (!$test && $counts['queued'] > 0) {
+        if (! $test && $counts['queued'] > 0) {
             DB::table('whatsapp_campaigns')->where('id', $campaignId)->update(['status' => 'queued', 'updated_at' => now()]);
         }
 
@@ -142,11 +143,12 @@ class WhatsAppCampaignExecutionService
             return $rules;
         }
 
-        if (!$rules) {
+        if (! $rules) {
             return [];
         }
 
         $decoded = json_decode((string) $rules, true);
+
         return is_array($decoded) ? $decoded : [];
     }
 

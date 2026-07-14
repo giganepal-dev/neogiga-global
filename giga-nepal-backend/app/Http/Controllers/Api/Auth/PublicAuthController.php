@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\Auth\AuthService;
+use App\Services\Marketing\AccountCommunicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class PublicAuthController extends Controller
 {
     use ApiResponses;
 
-    public function register(RegisterRequest $request, AuthService $auth): JsonResponse
+    public function register(RegisterRequest $request, AuthService $auth, AccountCommunicationService $communications): JsonResponse
     {
         $role = $auth->role('customer', [
             'display_name' => 'Customer',
@@ -29,11 +30,12 @@ class PublicAuthController extends Controller
         unset($data['phone']);
 
         $user = User::create($data + ['role_id' => $role->id]);
+        $communications->registration($user);
 
         return $this->success([
             'user' => new UserResource($user),
             'token' => $auth->issueToken($user),
-            'email_verification' => 'placeholder_pending',
+            'email_verification' => 'queued_transactional',
         ], 201);
     }
 

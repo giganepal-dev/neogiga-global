@@ -47,13 +47,16 @@ class GlobalSeoI18nService
             '{manufacturer}' => (string) ($product['manufacturer'] ?? $product['brand'] ?? 'Manufacturer'),
         ];
 
+        $slug = (string) ($product['slug'] ?? Str::slug($replacements['{name}']));
+        $indexable = (bool) ($product['indexable'] ?? true);
+
         return [
             'locale' => $marketplace['locale'] ?? 'en',
             'currency' => $marketplace['currency'] ?? 'USD',
-            'title' => Str::limit(strtr(config('neogiga_global.seo_templates.product_title'), $replacements), 90, ''),
+            'title' => Str::limit(strtr(config('neogiga_global.seo_templates.product_title'), $replacements), 60, ''),
             'description' => Str::limit(strtr(config('neogiga_global.seo_templates.product_description'), $replacements), 158, ''),
-            'canonical' => 'https://neogiga.com/' . $prefix . '/products/' . Str::slug($replacements['{name}']),
-            'robots' => 'noindex,nofollow',
+            'canonical' => 'https://neogiga.com/' . $prefix . '/products/' . $slug,
+            'robots' => $indexable ? 'index,follow' : 'noindex,nofollow',
             'structured_data_type' => 'Product',
         ];
     }
