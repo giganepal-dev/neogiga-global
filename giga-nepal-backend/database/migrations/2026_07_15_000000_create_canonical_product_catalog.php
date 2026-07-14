@@ -146,7 +146,7 @@ return new class extends Migration
                 $table->timestamps();
                 
                 $table->unique(['canonical_product_id', 'sku']);
-                $table->index(['sku']);
+                // Index on sku is already created by unique index above, avoid duplicate
                 $table->index(['mpn']);
             });
         }
