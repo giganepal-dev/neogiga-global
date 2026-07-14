@@ -1,1 +1,55 @@
-Nothing should be ignored based on the provided file changes. The only added file is a PHP source code file (`giga-nepal-backend/app/Models/Email/EmailProvider.php`), which should not be ignored.
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
+
+# Dependencies
+vendor/
+node_modules/
+.env
+.env.local
+*.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# PHP specific
+*.php~
+*.php.bak
+.php_cs.cache
+
+# Laravel/Lumen specific
+bootstrap/cache/
+storage/logs/
+storage/framework/
+public/storage/
+
+# Build directories
+dist/
+build/
+target/
+```
