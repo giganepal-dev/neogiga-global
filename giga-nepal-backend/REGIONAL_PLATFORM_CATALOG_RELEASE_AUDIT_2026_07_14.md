@@ -121,6 +121,7 @@ Sample legacy slugs do not currently exist in the Laravel catalog. Therefore DNS
 - Uses the NeoGiga logo placeholder only when verified product media is absent.
 - Links category, product, brand, manufacturer, RFQ, seller, AI, LMS and warehouse workflows to registered routes.
 - Shows inactive prefix editions as “Coming soon” and preserves noindex behavior.
+- Keeps Nepal/India canonical and hreflang origins on the currently live NP/IN Laravel hosts; environment-overridable branded-apex cutover values are changed only after the migration gates below pass.
 
 ### Admin panel
 

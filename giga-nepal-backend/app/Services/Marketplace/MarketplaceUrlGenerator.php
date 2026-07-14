@@ -5,9 +5,8 @@ namespace App\Services\Marketplace;
 use App\Models\Marketplace\Marketplace;
 
 /**
- * Builds a canonical URL for a marketplace: prefers an active branded domain
- * (the 3 existing domain-based marketplaces) and falls back to a path-prefix
- * URL on the global domain (the 22 new path-based marketplaces).
+ * Builds a canonical URL for a marketplace, honoring a temporary live-host
+ * override while a separately hosted branded domain awaits migration.
  */
 class MarketplaceUrlGenerator
 {
@@ -16,10 +15,9 @@ class MarketplaceUrlGenerator
         $path = '/' . ltrim($path, '/');
         $path = $path === '/' ? '' : $path;
 
-        // SEO URLs must use the configured canonical host. Active domain rows
-        // may include aliases such as np.neogiga.com while canonical_domain is
-        // the branded production host (for example giganepal.com).
-        $domain = $marketplace->canonical_domain ?: $marketplace->domain;
+        $domain = $this->canonicalHostOverride($marketplace)
+            ?: $marketplace->canonical_domain
+            ?: $marketplace->domain;
 
         if (! $domain) {
             if ($marketplace->relationLoaded('domains')) {
@@ -42,5 +40,21 @@ class MarketplaceUrlGenerator
         }
 
         return 'https://neogiga.com' . $path;
+    }
+
+    public function canonicalHostOverride(Marketplace $marketplace): ?string
+    {
+        $overrides = (array) config('neogiga_global.canonical_host_overrides', []);
+        $domain = trim((string) ($overrides[strtoupper((string) $marketplace->code)] ?? ''));
+        if ($domain === '') {
+            return null;
+        }
+
+        $domain = strtolower((string) preg_replace('#^https?://#i', '', $domain));
+        $domain = trim($domain, '/');
+
+        return filter_var($domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false
+            ? $domain
+            : null;
     }
 }
