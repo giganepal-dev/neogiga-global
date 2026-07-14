@@ -7,6 +7,36 @@ use Illuminate\Support\Str;
 
 class AdafruitImporter extends BaseImporter
 {
+    public function getSupplierSlug(): string
+    {
+        return 'adafruit';
+    }
+
+    protected function getSupplierName(): string
+    {
+        return 'Adafruit';
+    }
+
+    protected function getSupplierTier(): string
+    {
+        return '1';
+    }
+
+    protected function getSupplierDescription(): ?string
+    {
+        return null;
+    }
+
+    protected function getSupplierWebsite(): ?string
+    {
+        return null;
+    }
+
+    protected function getSupplierCountry(): ?string
+    {
+        return null;
+    }
+
     protected string $supplierCode = 'adafruit';
     protected string $supplierName = 'Adafruit';
     protected int $supplierTier = 1;
@@ -74,7 +104,7 @@ class AdafruitImporter extends BaseImporter
     /**
      * Fetch products from Adafruit
      */
-    public function fetchProducts(int $page = 1, int $perPage = 100): array
+    public function fetchProducts(array $options = []): \Generator
     {
         $products = [];
         
@@ -91,13 +121,13 @@ class AdafruitImporter extends BaseImporter
             }
         }
 
-        return $products;
+        yield from $products;
     }
 
     /**
      * Normalize Adafruit product data to our schema
      */
-    protected function normalizeProduct(array $product): array
+    public function normalizeProduct(array $product): array
     {
         return [
             'external_id' => $product['id'],
