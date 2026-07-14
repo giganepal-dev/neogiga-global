@@ -7,6 +7,7 @@ use App\Models\Marketplace\Currency;
 use App\Models\Marketplace\Marketplace;
 use App\Models\Marketplace\MarketplaceDomain;
 use App\Models\Marketplace\Product;
+use App\Models\Marketplace\ProductSeoMeta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -121,6 +122,86 @@ class RegionalPlatformHomepageTest extends TestCase
         $this->get('https://neogiga.com/np')
             ->assertOk()
             ->assertSee('<link rel="canonical" href="https://np.neogiga.com/en">', false);
+    }
+
+    public function test_import_generated_product_seo_does_not_override_nepal_or_india_page_seo(): void
+    {
+        $this->marketplace('GLOBAL', 'NeoGiga Global', 'GL', 'USD', 'neogiga.com', 'NeoGiga Global Engineering Marketplace');
+        $nepal = $this->marketplace('NEPAL', 'GigaNepal', 'NP', 'NPR', 'giganepal.com', 'GigaNepal Engineering Marketplace');
+        $india = $this->marketplace('INDIA', 'NeoGiga India', 'IN', 'INR', 'neogiga.in', 'NeoGiga India Engineering Marketplace');
+        MarketplaceDomain::create(['marketplace_id' => $nepal->id, 'domain' => 'np.neogiga.com', 'is_primary' => false, 'is_active' => true]);
+        MarketplaceDomain::create(['marketplace_id' => $india->id, 'domain' => 'in.neogiga.com', 'is_primary' => false, 'is_active' => true]);
+        $product = Product::create([
+            'name' => 'Regional Canonical Test',
+            'slug' => 'regional-canonical-test',
+            'sku' => 'NG-REGIONAL-CANONICAL-TEST',
+            'mpn' => 'NG-RCT-100',
+            'description' => 'A complete imported product used to verify regional product SEO.',
+            'status' => 'approved',
+            'visibility_status' => 'public',
+            'track_inventory' => true,
+        ]);
+        ProductSeoMeta::create([
+            'product_id' => $product->id,
+            'meta_title' => 'Imported global product title',
+            'meta_description' => 'Imported global product description.',
+            'canonical_url' => 'https://neogiga.com/en/products/'.$product->slug,
+            'robots' => 'index,follow',
+            'is_manual_override' => false,
+            'is_locked' => false,
+            'active_source' => 'generated',
+            'confidence_level' => 'medium_source_derived',
+            'metadata' => ['source' => 'elecforest_deterministic_seo_generator'],
+        ]);
+        Cache::flush();
+
+        $this->get('https://np.neogiga.com/en/products/'.$product->slug)
+            ->assertOk()
+            ->assertSee('<title>Buy Regional Canonical Test on NeoGiga Nepal | NeoGiga Engineering Marketplace</title>', false)
+            ->assertSee('<link rel="canonical" href="https://np.neogiga.com/en/products/'.$product->slug.'">', false)
+            ->assertDontSee('<link rel="canonical" href="https://neogiga.com/en/products/'.$product->slug.'">', false);
+
+        $this->get('https://in.neogiga.com/en/products/'.$product->slug)
+            ->assertOk()
+            ->assertSee('<title>Buy Regional Canonical Test on NeoGiga India | NeoGiga Engineering Marketplace</title>', false)
+            ->assertSee('<link rel="canonical" href="https://in.neogiga.com/en/products/'.$product->slug.'">', false)
+            ->assertDontSee('<link rel="canonical" href="https://neogiga.com/en/products/'.$product->slug.'">', false);
+    }
+
+    public function test_genuinely_manual_product_seo_remains_preserved_on_regional_page(): void
+    {
+        $nepal = $this->marketplace('NEPAL', 'GigaNepal', 'NP', 'NPR', 'giganepal.com', 'GigaNepal Engineering Marketplace');
+        MarketplaceDomain::create(['marketplace_id' => $nepal->id, 'domain' => 'np.neogiga.com', 'is_primary' => false, 'is_active' => true]);
+        $product = Product::create([
+            'name' => 'Manual Regional SEO',
+            'slug' => 'manual-regional-seo',
+            'sku' => 'NG-MANUAL-REGIONAL-SEO',
+            'mpn' => 'NG-MRS-100',
+            'description' => 'A complete product with an explicitly approved manual SEO override.',
+            'status' => 'approved',
+            'visibility_status' => 'public',
+            'track_inventory' => true,
+        ]);
+        ProductSeoMeta::create([
+            'product_id' => $product->id,
+            'meta_title' => 'Human-approved regional product title',
+            'meta_description' => 'Human-approved regional product description.',
+            'canonical_url' => 'https://editor.example/products/manual-regional-seo',
+            'robots' => 'index,follow',
+            'robots_reason' => 'Approved by a catalog editor.',
+            'is_manual_override' => true,
+            'is_locked' => true,
+            'active_source' => 'manual',
+            'confidence_level' => 'manual_admin_override',
+            'metadata' => ['source' => 'manual_admin_override', 'saved_via' => 'admin.web'],
+        ]);
+        Cache::flush();
+
+        $this->get('https://np.neogiga.com/en/products/'.$product->slug)
+            ->assertOk()
+            ->assertSee('<title>Human-approved regional product title</title>', false)
+            ->assertSee('<link rel="canonical" href="https://editor.example/products/manual-regional-seo">', false)
+            ->assertDontSee('<title>Buy Manual Regional SEO on NeoGiga Nepal', false);
     }
 
     private function regionalGet(string $host)
