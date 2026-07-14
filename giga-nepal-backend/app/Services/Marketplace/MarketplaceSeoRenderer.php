@@ -84,8 +84,11 @@ class MarketplaceSeoRenderer
             $path = $this->canonicalRegionalPath($path);
         }
 
+        $overrideHost = $this->urls->canonicalHostOverride($marketplace);
         $configured = trim((string) ($marketplace->seo_canonical_url ?: ''));
-        if ($configured !== '' && parse_url($configured, PHP_URL_HOST)) {
+        if ($overrideHost) {
+            $origin = 'https://'.$overrideHost;
+        } elseif ($configured !== '' && parse_url($configured, PHP_URL_HOST)) {
             $scheme = parse_url($configured, PHP_URL_SCHEME) ?: 'https';
             $origin = $scheme . '://' . parse_url($configured, PHP_URL_HOST);
         } else {

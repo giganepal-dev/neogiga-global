@@ -49,8 +49,8 @@ class RegionalPlatformHomepageTest extends TestCase
         Cache::flush();
 
         $global = $this->regionalGet('neogiga.com');
-        $nepal = $this->regionalGet('giganepal.com');
-        $india = $this->regionalGet('neogiga.in');
+        $nepal = $this->regionalGet('np.neogiga.com');
+        $india = $this->regionalGet('in.neogiga.com');
 
         $global->assertOk()
             ->assertSee('<title>NeoGiga Global Engineering Marketplace</title>', false)
@@ -59,14 +59,14 @@ class RegionalPlatformHomepageTest extends TestCase
             ->assertDontSee('India Edition · Preview');
         $nepal->assertOk()
             ->assertSee('<title>GigaNepal Engineering Marketplace</title>', false)
-            ->assertSee('<link rel="canonical" href="https://giganepal.com/en">', false)
+            ->assertSee('<link rel="canonical" href="https://np.neogiga.com/en">', false)
             ->assertSee('GigaNepal')
             ->assertSee('NPR')
             ->assertSee('1.05 USD')
             ->assertDontSee('1.05 NPR');
         $india->assertOk()
             ->assertSee('<title>NeoGiga India Engineering Marketplace</title>', false)
-            ->assertSee('<link rel="canonical" href="https://neogiga.in/en">', false)
+            ->assertSee('<link rel="canonical" href="https://in.neogiga.com/en">', false)
             ->assertSee('NeoGiga India')
             ->assertSee('INR');
 
@@ -78,17 +78,17 @@ class RegionalPlatformHomepageTest extends TestCase
                 ->assertSee('Shared NeoGiga platform');
         }
 
-        $global->assertSee('hreflang="en-np" href="https://giganepal.com/en"', false)
-            ->assertSee('hreflang="en-in" href="https://neogiga.in/en"', false);
+        $global->assertSee('hreflang="en-np" href="https://np.neogiga.com/en"', false)
+            ->assertSee('hreflang="en-in" href="https://in.neogiga.com/en"', false);
 
         $this->regionalGet('www.giganepal.com')
             ->assertOk()
             ->assertSee('<title>GigaNepal Engineering Marketplace</title>', false)
-            ->assertSee('<link rel="canonical" href="https://giganepal.com/en">', false);
+            ->assertSee('<link rel="canonical" href="https://np.neogiga.com/en">', false);
         $this->regionalGet('np.neogiga.com')
             ->assertOk()
             ->assertSee('<title>GigaNepal Engineering Marketplace</title>', false)
-            ->assertSee('<link rel="canonical" href="https://giganepal.com/en">', false);
+            ->assertSee('<link rel="canonical" href="https://np.neogiga.com/en">', false);
     }
 
     public function test_regional_hosts_permanently_redirect_marketplace_prefix_aliases_to_their_en_tree(): void
@@ -101,26 +101,26 @@ class RegionalPlatformHomepageTest extends TestCase
 
         $this->get('https://giganepal.com/in')
             ->assertStatus(301)
-            ->assertRedirect('https://giganepal.com/en');
+            ->assertRedirect('https://np.neogiga.com/en');
         $this->get('https://giganepal.com/np/products?q=esp32&sort=price')
             ->assertStatus(301)
-            ->assertRedirect('https://giganepal.com/en/products?q=esp32&sort=price');
+            ->assertRedirect('https://np.neogiga.com/en/products?q=esp32&sort=price');
         $this->get('https://np.neogiga.com/bd/categories/sensors')
             ->assertStatus(301)
-            ->assertRedirect('https://giganepal.com/en/categories/sensors');
+            ->assertRedirect('https://np.neogiga.com/en/categories/sensors');
         $this->get('https://giganepal.com/lk')
             ->assertStatus(301)
-            ->assertRedirect('https://giganepal.com/en');
+            ->assertRedirect('https://np.neogiga.com/en');
         $this->get('https://neogiga.in/np/products')
             ->assertStatus(301)
-            ->assertRedirect('https://neogiga.in/en/products');
+            ->assertRedirect('https://in.neogiga.com/en/products');
 
         $this->get('https://giganepal.com/en')
             ->assertOk()
-            ->assertSee('<link rel="canonical" href="https://giganepal.com/en">', false);
+            ->assertSee('<link rel="canonical" href="https://np.neogiga.com/en">', false);
         $this->get('https://neogiga.com/np')
             ->assertOk()
-            ->assertSee('<link rel="canonical" href="https://giganepal.com/en">', false);
+            ->assertSee('<link rel="canonical" href="https://np.neogiga.com/en">', false);
     }
 
     private function regionalGet(string $host)

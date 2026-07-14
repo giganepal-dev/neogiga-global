@@ -74,7 +74,7 @@ class MarketplaceSeoRenderTest extends TestCase
         $this->assertSame('https://bd.neogiga.com/en/products/example-part', $tags['canonical']);
     }
 
-    public function test_canonical_domain_wins_over_an_alias_and_preserves_the_page_path(): void
+    public function test_live_host_override_wins_until_branded_domain_cutover_and_preserves_the_page_path(): void
     {
         $m = $this->make([
             'code' => 'NEPAL',
@@ -87,7 +87,7 @@ class MarketplaceSeoRenderTest extends TestCase
 
         $tags = $this->renderer()->tags($m, 'https://np.neogiga.com/en/categories/sensors');
 
-        $this->assertSame('https://giganepal.com/en/categories/sensors', $tags['canonical']);
+        $this->assertSame('https://np.neogiga.com/en/categories/sensors', $tags['canonical']);
     }
 
     public function test_dedicated_regional_canonical_normalizes_marketplace_prefix_aliases(): void
@@ -103,7 +103,7 @@ class MarketplaceSeoRenderTest extends TestCase
 
         $tags = $this->renderer()->tags($m, 'https://neogiga.com/in/products/example-part?ref=ignored');
 
-        $this->assertSame('https://giganepal.com/en/products/example-part', $tags['canonical']);
+        $this->assertSame('https://np.neogiga.com/en/products/example-part', $tags['canonical']);
     }
 
     public function test_non_indexable_marketplace_is_noindex(): void

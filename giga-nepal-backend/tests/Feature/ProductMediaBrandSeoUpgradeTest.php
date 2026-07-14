@@ -151,7 +151,7 @@ class ProductMediaBrandSeoUpgradeTest extends TestCase
         $nepalProduct = $templates->product($product, $nepal);
         $this->assertSame('Buy Precision Sensor on NeoGiga Nepal | NeoGiga Engineering Marketplace', $nepalProduct['title']);
         $this->assertStringContainsString('B2B Sourcing from Nepal Warehouse.', $nepalProduct['description']);
-        $this->assertSame('https://giganepal.com/en/products/precision-sensor', $nepalProduct['canonical']);
+        $this->assertSame('https://np.neogiga.com/en/products/precision-sensor', $nepalProduct['canonical']);
 
         $regionalCategory = $templates->category($category, $regional);
         $this->assertSame('Buy Engineering Sensors on NeoGiga Bangladesh | NeoGiga Engineering Marketplace', $regionalCategory['title']);
