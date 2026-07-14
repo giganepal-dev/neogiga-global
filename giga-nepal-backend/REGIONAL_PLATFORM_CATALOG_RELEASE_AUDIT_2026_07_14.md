@@ -232,12 +232,14 @@ Until these are complete, the safe production state is the shared Laravel platfo
 
 ## Production result
 
-The governed production apply completed. The exact deployment, backup and command results below are recorded from production; final independent database reconciliation and live browser evidence are deliberately marked pending rather than inferred from local tests.
+The governed production apply and the independent post-apply reconciliation completed. The deployment, backup, database, file-integrity, queue and live-browser results below were observed directly in production rather than inferred from local tests.
 
 ### Deployment and immutable backups
 
-- Live release: `/home/neogiga/laravel/releases/20260714-214657-catalog-release-width-fix`
-- Git commit: `70d2127`
+- Catalog-apply release: `/home/neogiga/laravel/releases/20260714-214657-catalog-release-width-fix` at Git commit `70d2127`
+- Current live release: `/home/neogiga/laravel/releases/20260714-223816-regional-media-origin` at Git commit `799866a`
+- Retained intermediate regional SEO/queue release: `/home/neogiga/laravel/releases/20260714-222324-regional-seo-queue` at Git commit `e078e63`
+- Production `.env` was copied without modification; both the source and final release file have SHA-256 `6f6523986ca471fdf622a1b32a1591500aa0dc88bf93c47029c4e5256fef29f3`.
 - Full immutable backup: `/home/neogiga/backups/regional-catalog-release-20260714-212602-retry1`
   - PostgreSQL custom-format dump SHA-256: `221be4c39dade47ec85e729467eef5c58c6771d0e66bee7b07d5206e6e72a009`
   - storage archive SHA-256: `6d919f1174c23a365164d3dc0367ed19b91a960c02e6157cccb37679a86842b4`
@@ -262,6 +264,7 @@ Incremental migration `2026_07_14_182000_widen_marketplace_price_review_status` 
 - Checksum-, signature- and local-file-verified real images activated: 9,777
 - Allocation per released product: 8,000 Shenzhen, 667 Kathmandu, 667 New Delhi and 666 Dubai, totaling 10,000 units
 - Private completion report: `catalog-releases/20260714-161552-101019-483f0c2a1b3f2921-completed.json`
+- Completion-report SHA-256: `3a969ebd6783c7113fc8b23a2d6351acacf94e0b64058dc9ebd36e3af0e51e9d`; JSON readback and all expected completion fields passed.
 
 The apply used the required backup reference and exact count/hash gates. The operator explicitly acknowledged the media-publication risk. Image-file integrity was verified, but independent media licensing was not established or claimed. The original review work remains open:
 
@@ -277,12 +280,45 @@ The apply used the required backup reference and exact count/hash gates. The ope
 
 Nepal and India canonical, hreflang, prefix-redirect and geo-recommendation output remains on the live Laravel hosts `np.neogiga.com` and `in.neogiga.com`. Canonicals do not point at the unmigrated branded WordPress apex paths. The independent `giganepal.com` and `neogiga.in` WordPress systems and their stored data remain untouched; their cutovers are still blocked by the backup, import-reconciliation, legacy-URL, mail and DNS gates above.
 
-### Evidence still pending
+### Independent database reconciliation
 
-The following evidence must be added after independent post-apply checks; this document does not claim those checks have completed yet:
+| Check | Production result |
+|---|---:|
+| Products / remaining drafts / released by exact plan hash | 73,058 / 1 / 3,176 |
+| Marketplace prices / governed release prices | 73,056 / 3,176 |
+| Inventory stocks / governed release stocks | 89,586 / 12,704 |
+| Inventory movements / governed release movements / unique release keys | 12,707 / 12,704 / 12,704 |
+| Active images / governed release images / governed primary images | 79,658 / 9,777 / 3,176 |
+| Available events / release audit records / sentinel quarantine events | 3,176 / 3,176 / 1 |
+| Open governed review tasks | 12,815 |
+| Total allocated release units | 31,760,000 |
 
-- exact final database reconciliation totals and per-warehouse sums;
-- confirmation that the post-apply dry run has zero remaining eligible products and only the quarantined sentinel draft;
-- completion-report checksum/readback and final failed-job baseline comparison;
-- live global, Nepal and India product-page canaries, real-image response checks, canonical/robots checks and browser screenshots;
-- final public-media file-count comparison and admin/health route canaries.
+Every product-state, exact-price, price-source, provenance, SEO-indexability, stock-rollup, stock-value, stock-provenance, movement-link, movement-provenance, event-cardinality, event-payload, audit-cardinality, audit-payload, price-history, image-metadata, image-coverage, media-review-cardinality and media-review-evidence anomaly query returned zero failures. The release price equals the imported supplier cost and `sale_price * 100 = cost_price * 105` at four-decimal precision for all 3,176 products.
+
+| Warehouse | Release rows | Allocated units |
+|---|---:|---:|
+| Shenzhen, China | 3,176 | 25,408,000 |
+| Kathmandu, Nepal | 3,176 | 2,118,392 |
+| New Delhi, India | 3,176 | 2,118,392 |
+| Dubai, UAE | 3,176 | 2,115,216 |
+
+The internal verification warehouse received zero release stock. The `NG-EF-` sentinel remains the only draft, hidden and `noindex,nofollow`, with zero price rows, zero stock rows and zero active images. The post-apply dry run returned one draft found, zero eligible, one quarantined, zero blocked and zero proposed price, stock, movement or unit writes.
+
+### Media, queue and storage verification
+
+- A second read of all 9,777 governed image files verified the stored SHA-256 checksum, byte count, MIME signature and image dimensions; `bad_count=0`.
+- All 9,777 linked supplier assets retain `rights_status=pending_review`, every release image records `license_independently_verified=false`, and all 3,176 media-rights reviews remain open.
+- The ElecForest search rebuild completed as job `#20`: 3,177 source-linked products indexed and 15,885 facet rows produced. The jobs table is empty.
+- Six historical failed-job records remain preserved. Zero failed at or after the governed release start. Pre-release JLCPCB rebuild `#19` timed out before the catalog apply, was retained for audit and marked terminally failed; completed rebuild `#18` remains its superseding successful run. Long catalog rebuilds now use the dedicated `database_imports` / `catalog-imports` worker with aligned timeout, retry and failure-state handling.
+- Persistent public media remains exactly 78,000 files. Total persistent storage is 78,497 files after completion reports, logs and compiled framework cache files; no public media disappeared.
+
+### Live application and browser canaries
+
+- Global, Nepal and India home pages rendered the shared NeoGiga design with separate titles and canonicals on `neogiga.com`, `np.neogiga.com` and `in.neogiga.com`; Bangladesh remained `noindex,nofollow`.
+- Released product `96984` returned 200 on all three hosts with `index,follow`, the correct host-specific title/canonical, price and four warehouse rows. Its exact stored cost/sale values are USD `1.7300` / `1.8165`; the storefront displays `$ 1.82`.
+- The real product JPEG is same-origin on each regional host, returns 200 as `image/jpeg` with 48,192 bytes, and browser rendering reported natural dimensions 804×731. This preserves the strict `img-src 'self'` CSP without weakening it.
+- `/health` returned `status=ok` for the application, PostgreSQL, database cache, empty queue and storage paths. `https://admin.neogiga.com/admin/login` returned the functional email/password form with `noindex,nofollow`.
+- Regional prefix aliases still return 301 while preserving path/query; global prefix routes remain available. Apache, all PHP-FPM services and all four queue services were active after the final atomic release switch.
+- `giganepal.com` and `neogiga.in` still resolve through their independent WordPress systems with 200 responses and `wp-json` links. No branded-apex data or design was switched.
+
+Final local verification passed 189 tests with 1,031 assertions and 11 intentional skips, targeted Pint, PHP syntax, Composer validation, route/config/view caches and production health checks.
