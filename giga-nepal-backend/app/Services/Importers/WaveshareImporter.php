@@ -7,6 +7,36 @@ use Illuminate\Support\Str;
 
 class WaveshareImporter extends BaseImporter
 {
+    public function getSupplierSlug(): string
+    {
+        return 'waveshare';
+    }
+
+    protected function getSupplierName(): string
+    {
+        return 'Waveshare';
+    }
+
+    protected function getSupplierTier(): string
+    {
+        return '1';
+    }
+
+    protected function getSupplierDescription(): ?string
+    {
+        return null;
+    }
+
+    protected function getSupplierWebsite(): ?string
+    {
+        return null;
+    }
+
+    protected function getSupplierCountry(): ?string
+    {
+        return null;
+    }
+
     protected string $supplierCode = 'waveshare';
     protected string $supplierName = 'Waveshare';
     protected int $supplierTier = 1;
@@ -73,7 +103,7 @@ class WaveshareImporter extends BaseImporter
     /**
      * Fetch products from Waveshare
      */
-    public function fetchProducts(int $page = 1, int $perPage = 100): array
+    public function fetchProducts(array $options = []): \Generator
     {
         $products = [];
         
@@ -90,13 +120,13 @@ class WaveshareImporter extends BaseImporter
             }
         }
 
-        return $products;
+        yield from $products;
     }
 
     /**
      * Normalize Waveshare product data to our schema
      */
-    protected function normalizeProduct(array $product): array
+    public function normalizeProduct(array $product): array
     {
         return [
             'external_id' => $product['id'],
