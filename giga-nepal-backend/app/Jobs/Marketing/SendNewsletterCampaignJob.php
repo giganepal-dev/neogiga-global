@@ -16,6 +16,7 @@ class SendNewsletterCampaignJob implements ShouldQueue
 
     public function __construct(public array $payload = [])
     {
+        $this->onQueue((string) config('marketing.email.queue', 'marketing'));
     }
 
     public function handle(CampaignExecutionService $campaigns): void
@@ -23,9 +24,15 @@ class SendNewsletterCampaignJob implements ShouldQueue
         $campaignId = (int) ($this->payload['campaign_id'] ?? $this->payload['id'] ?? 0);
         if ($campaignId < 1) {
             Log::warning('SendNewsletterCampaignJob skipped without campaign_id', ['payload' => $this->payload]);
+
             return;
         }
 
-        Log::info('SendNewsletterCampaignJob queued campaign in safe mode', $campaigns->sendNewsletterCampaign($campaignId));
+        $test = (bool) ($this->payload['test'] ?? false);
+        $result = $campaigns->sendNewsletterCampaign($campaignId, $test, $this->payload['test_email'] ?? null);
+        if (! $test && ($result['queued'] ?? 0) > 0 && ! isset($result['error'])) {
+            SendNewsletterEmailBatchJob::dispatch($campaignId);
+        }
+        Log::info('SendNewsletterCampaignJob prepared newsletter campaign', array_diff_key($result, ['recipients' => true]));
     }
 }

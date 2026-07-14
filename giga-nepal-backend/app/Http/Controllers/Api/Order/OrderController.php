@@ -10,8 +10,10 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Marketplace\Cart as CartModel;
 use App\Services\Affiliate\AffiliateService;
+use App\Services\Payments\PaymentMethodPolicyService;
 use App\Services\Promotion\CouponService;
 use App\Services\Promotion\GiftCardService;
+use App\Services\Marketing\OrderNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,7 @@ class OrderController extends Controller
         private readonly AffiliateService $affiliates,
         private readonly CouponService $coupons,
         private readonly GiftCardService $giftCards,
+        private readonly PaymentMethodPolicyService $paymentMethods,
     ) {
     }
 
@@ -32,7 +35,7 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'confirm' => ['accepted'],
-            'payment_method' => ['required', 'in:bank_transfer,cod,manual'],
+            'payment_method' => ['required', 'string', 'max:80'],
             'billing_address' => ['sometimes', 'array'],
             'shipping_address' => ['sometimes', 'array'],
             'customer_notes' => ['sometimes', 'nullable', 'string', 'max:1000'],
@@ -48,6 +51,8 @@ class OrderController extends Controller
         if (!$cart || $cart->items->isEmpty()) {
             return $this->error('Active cart is empty.', 422);
         }
+
+        $this->paymentMethods->assertAllowed($validated['payment_method'], $cart->marketplace_id, $cart->currency_code);
 
         foreach ($cart->items as $item) {
             if (!$this->hasStock($item->product_id, $cart->marketplace_id, $item->quantity, $item->variant_id)) {
@@ -169,6 +174,8 @@ class OrderController extends Controller
             } catch (\Throwable) {
                 // non-critical: referral tracking failure does not affect the order
             }
+
+            DB::afterCommit(fn () => app(OrderNotificationService::class)->orderPlaced($request->user()->email, $order, $request->user()->name));
 
             return $this->success($order->fresh()->load(['items', 'payments']), 201);
         });

@@ -60,6 +60,36 @@ class MarketplaceSeoRenderTest extends TestCase
         $this->assertSame('Components in Bangladesh | NeoGiga', $tags['title']);
     }
 
+    public function test_marketplace_home_canonical_is_extended_with_the_current_catalog_path(): void
+    {
+        $m = $this->make([
+            'is_active' => true,
+            'is_visible' => true,
+            'indexable' => true,
+            'seo_canonical_url' => 'https://bd.neogiga.com/',
+        ]);
+
+        $tags = $this->renderer()->tags($m, 'https://bd.neogiga.com/en/products/example-part?ref=ignored');
+
+        $this->assertSame('https://bd.neogiga.com/en/products/example-part', $tags['canonical']);
+    }
+
+    public function test_canonical_domain_wins_over_an_alias_and_preserves_the_page_path(): void
+    {
+        $m = $this->make([
+            'code' => 'NEPAL',
+            'is_active' => true,
+            'is_visible' => true,
+            'indexable' => true,
+            'domain' => 'np.neogiga.com',
+            'canonical_domain' => 'giganepal.com',
+        ]);
+
+        $tags = $this->renderer()->tags($m, 'https://np.neogiga.com/en/categories/sensors');
+
+        $this->assertSame('https://giganepal.com/en/categories/sensors', $tags['canonical']);
+    }
+
     public function test_non_indexable_marketplace_is_noindex(): void
     {
         $m = $this->make(['is_active' => true, 'is_visible' => false, 'indexable' => false]);

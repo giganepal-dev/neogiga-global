@@ -9,6 +9,7 @@ use App\Models\Distributor\Distributor;
 use App\Models\Marketplace\Vendor;
 use App\Models\Onboarding\DistributorApplication;
 use App\Models\Onboarding\SellerApplication;
+use App\Services\Marketing\TransactionalCommunicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -37,15 +38,16 @@ class OnboardingAdminController extends Controller
         return $this->success(SellerApplication::findOrFail($application));
     }
 
-    public function updateSellerStatus(ApplicationStatusRequest $request, int $application): JsonResponse
+    public function updateSellerStatus(ApplicationStatusRequest $request, int $application, TransactionalCommunicationService $communications): JsonResponse
     {
         $record = SellerApplication::findOrFail($application);
         $this->updateStatus($record, $request);
+        if ($record->status === 'approved_for_onboarding') $communications->queue('seller_application_approved', $record->email, ['customer_name' => $record->contact_name ?? $record->business_name, 'related_type' => 'seller_application', 'related_id' => $record->id, 'country_id' => $record->country_id ?? null, 'event_id' => 'approved-'.$record->id]);
 
         return $this->success($record->fresh());
     }
 
-    public function convertSellerToVendor(Request $request, int $application): JsonResponse
+    public function convertSellerToVendor(Request $request, int $application, TransactionalCommunicationService $communications): JsonResponse
     {
         if (! Schema::hasTable('vendors')) {
             return $this->error('Vendor table is not available.', 503);
@@ -71,6 +73,7 @@ class OnboardingAdminController extends Controller
         ])->save();
 
         $this->log('seller_application.converted_to_vendor', $request, ['application_id' => $record->id, 'vendor_id' => $vendor->id]);
+        $communications->queue('seller_application_approved', $record->email, ['customer_name' => $record->contact_name ?? $record->business_name, 'related_type' => 'seller_application', 'related_id' => $record->id, 'country_id' => $record->country_id ?? null, 'event_id' => 'approved-'.$record->id]);
 
         return $this->success(['application' => $record->fresh(), 'vendor' => $vendor], 201);
     }
@@ -93,15 +96,16 @@ class OnboardingAdminController extends Controller
         return $this->success(DistributorApplication::findOrFail($application));
     }
 
-    public function updateDistributorStatus(ApplicationStatusRequest $request, int $application): JsonResponse
+    public function updateDistributorStatus(ApplicationStatusRequest $request, int $application, TransactionalCommunicationService $communications): JsonResponse
     {
         $record = DistributorApplication::findOrFail($application);
         $this->updateStatus($record, $request);
+        if ($record->status === 'approved_for_onboarding') $communications->queue('distributor_application_approved', $record->email, ['customer_name' => $record->contact_name ?? $record->business_name, 'related_type' => 'distributor_application', 'related_id' => $record->id, 'country_id' => $record->country_id ?? null, 'event_id' => 'approved-'.$record->id]);
 
         return $this->success($record->fresh());
     }
 
-    public function convertDistributor(Request $request, int $application): JsonResponse
+    public function convertDistributor(Request $request, int $application, TransactionalCommunicationService $communications): JsonResponse
     {
         if (! Schema::hasTable('distributors')) {
             return $this->error('Distributor table is not available.', 503);
@@ -130,6 +134,7 @@ class OnboardingAdminController extends Controller
         ])->save();
 
         $this->log('distributor_application.converted_to_distributor', $request, ['application_id' => $record->id, 'distributor_id' => $distributor->id]);
+        $communications->queue('distributor_application_approved', $record->email, ['customer_name' => $record->contact_name ?? $record->business_name, 'related_type' => 'distributor_application', 'related_id' => $record->id, 'country_id' => $record->country_id ?? null, 'event_id' => 'approved-'.$record->id]);
 
         return $this->success(['application' => $record->fresh(), 'distributor' => $distributor], 201);
     }

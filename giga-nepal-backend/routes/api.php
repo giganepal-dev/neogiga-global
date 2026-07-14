@@ -337,7 +337,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/overview', [AdminConsoleController::class, 'overview']);
             Route::get('/navigation', [AdminConsoleController::class, 'navigation']);
             Route::get('/settings', [AdminConsoleController::class, 'settings']);
-            Route::post('/settings', [AdminConsoleController::class, 'storeSetting'])->middleware('throttle:writes');
+            Route::post('/settings', [AdminConsoleController::class, 'storeSetting'])->middleware(['admin.permission:settings.manage', 'throttle:writes']);
             Route::get('/media', [AdminConsoleController::class, 'media']);
             Route::post('/media', [AdminConsoleController::class, 'storeMedia'])->middleware('throttle:writes');
             Route::get('/seo', [AdminConsoleController::class, 'seo']);
@@ -459,8 +459,12 @@ use App\Http\Controllers\Api\Admin\Marketing\CampaignAdminController as Marketin
 use App\Http\Controllers\Api\Admin\Marketing\AnalyticsAdminController as MarketingAnalyticsAdminController;
 use App\Http\Controllers\Api\Admin\Marketing\DashboardAdminController as MarketingDashboardAdminController;
 use App\Http\Controllers\Api\Admin\Marketing\SettingsAdminController as MarketingSettingsAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\CustomerImportController as MarketingCustomerImportController;
+use App\Http\Controllers\Api\Marketing\EmailWebhookController;
 
 $marketingPublic = function () {
+    Route::post('/email/webhooks/{provider}', EmailWebhookController::class)
+        ->where('provider', '[a-z0-9_-]+')->middleware('throttle:120,1');
     Route::post('/newsletter/subscribe', [MarketingNewsletterController::class, 'subscribe'])->middleware('throttle:writes');
     Route::post('/newsletter/confirm', [MarketingNewsletterController::class, 'confirm'])->middleware('throttle:writes');
     Route::post('/newsletter/unsubscribe', [MarketingNewsletterController::class, 'unsubscribe'])->middleware('throttle:writes');
@@ -483,17 +487,87 @@ $marketingPublic = function () {
 };
 
 $marketingAdmin = function () {
-    Route::get('/customers', [MarketingCrmController::class, 'customers']); Route::get('/customers/{customer}', [MarketingCrmController::class, 'customer'])->whereNumber('customer');
-    Route::get('/customer-segments', [MarketingCrmController::class, 'segments']); Route::post('/customer-segments', [MarketingCrmController::class, 'storeSegment']); Route::post('/customer-segments/{segment}/refresh', [MarketingCrmController::class, 'refreshSegment'])->whereNumber('segment');
-    Route::get('/contact-lists', [MarketingCrmController::class, 'contactLists']); Route::post('/contact-lists', [MarketingCrmController::class, 'storeContactList']); Route::post('/contact-lists/{list}/members', [MarketingCrmController::class, 'addMembers'])->whereNumber('list');
-    Route::get('/newsletter/subscribers', [MarketingNewsletterAdminController::class, 'subscribers']); Route::get('/newsletter/templates', [MarketingNewsletterAdminController::class, 'templates']); Route::post('/newsletter/templates', [MarketingNewsletterAdminController::class, 'storeTemplate']); Route::get('/newsletter/campaigns', [MarketingNewsletterAdminController::class, 'campaigns']); Route::post('/newsletter/campaigns', [MarketingNewsletterAdminController::class, 'storeCampaign']); Route::post('/newsletter/campaigns/{campaign}/preview', [MarketingNewsletterAdminController::class, 'preview'])->whereNumber('campaign'); Route::post('/newsletter/campaigns/{campaign}/schedule', [MarketingNewsletterAdminController::class, 'schedule'])->whereNumber('campaign'); Route::post('/newsletter/campaigns/{campaign}/send-test', [MarketingNewsletterAdminController::class, 'sendTest'])->whereNumber('campaign'); Route::post('/newsletter/campaigns/{campaign}/send-now', [MarketingNewsletterAdminController::class, 'sendNow'])->whereNumber('campaign');
-    Route::get('/email/templates', [MarketingEmailAdminController::class, 'templates']); Route::post('/email/templates', [MarketingEmailAdminController::class, 'storeTemplate']); Route::patch('/email/templates/{template}', [MarketingEmailAdminController::class, 'updateTemplate'])->whereNumber('template'); Route::get('/email/campaigns', [MarketingEmailAdminController::class, 'campaigns']); Route::post('/email/campaigns', [MarketingEmailAdminController::class, 'storeCampaign']); Route::post('/email/campaigns/{campaign}/preview', [MarketingEmailAdminController::class, 'preview'])->whereNumber('campaign'); Route::post('/email/campaigns/{campaign}/schedule', [MarketingEmailAdminController::class, 'schedule'])->whereNumber('campaign'); Route::post('/email/campaigns/{campaign}/send-test', [MarketingEmailAdminController::class, 'sendTest'])->whereNumber('campaign'); Route::post('/email/campaigns/{campaign}/send-now', [MarketingEmailAdminController::class, 'sendNow'])->whereNumber('campaign'); Route::get('/email/events', [MarketingEmailAdminController::class, 'events']); Route::get('/email/automation-rules', [MarketingEmailAdminController::class, 'automationRules']); Route::post('/email/automation-rules', [MarketingEmailAdminController::class, 'storeAutomationRule']); Route::patch('/email/automation-rules/{rule}', [MarketingEmailAdminController::class, 'updateAutomationRule'])->whereNumber('rule');
-    Route::get('/abandoned-carts', [MarketingAbandonedCartAdminController::class, 'index']); Route::get('/abandoned-carts/recovery-report', [MarketingAbandonedCartAdminController::class, 'report']); Route::get('/abandoned-carts/{cart}', [MarketingAbandonedCartAdminController::class, 'show'])->whereNumber('cart'); Route::post('/abandoned-carts/{cart}/send-reminder', [MarketingAbandonedCartAdminController::class, 'sendReminder'])->whereNumber('cart');
-    Route::get('/whatsapp/templates', [MarketingWhatsappAdminController::class, 'templates']); Route::post('/whatsapp/templates', [MarketingWhatsappAdminController::class, 'storeTemplate']); Route::get('/whatsapp/campaigns', [MarketingWhatsappAdminController::class, 'campaigns']); Route::post('/whatsapp/campaigns', [MarketingWhatsappAdminController::class, 'storeCampaign']); Route::post('/whatsapp/campaigns/{campaign}/preview', [MarketingWhatsappAdminController::class, 'preview'])->whereNumber('campaign'); Route::post('/whatsapp/campaigns/{campaign}/schedule', [MarketingWhatsappAdminController::class, 'schedule'])->whereNumber('campaign'); Route::post('/whatsapp/campaigns/{campaign}/send-test', [MarketingWhatsappAdminController::class, 'sendTest'])->whereNumber('campaign'); Route::post('/whatsapp/campaigns/{campaign}/send-now', [MarketingWhatsappAdminController::class, 'sendNow'])->whereNumber('campaign'); Route::get('/whatsapp/events', [MarketingWhatsappAdminController::class, 'events']); Route::post('/whatsapp/export-recipients', [MarketingWhatsappAdminController::class, 'exportRecipients']);
-    Route::post('/campaigns/audience-preview', [MarketingCampaignAdminController::class, 'audiencePreview']); Route::get('/campaigns/audience-count', [MarketingCampaignAdminController::class, 'audienceCount']); Route::post('/campaigns/create-multi-channel', [MarketingCampaignAdminController::class, 'createMultiChannel']);
-    Route::get('/analytics/dashboard', [MarketingAnalyticsAdminController::class, 'dashboard']); Route::get('/analytics/trending-products', [MarketingAnalyticsAdminController::class, 'trendingProducts']); Route::get('/analytics/trending-categories', [MarketingAnalyticsAdminController::class, 'trendingCategories']); Route::get('/analytics/top-searches', [MarketingAnalyticsAdminController::class, 'topSearches']); Route::get('/analytics/regional-orders', [MarketingAnalyticsAdminController::class, 'regionalOrders']); Route::get('/analytics/country-sales', [MarketingAnalyticsAdminController::class, 'countrySales']); Route::get('/analytics/campaign-performance', [MarketingAnalyticsAdminController::class, 'campaignPerformance']);
-    Route::get('/dashboard/overview', [MarketingDashboardAdminController::class, 'overview']); Route::get('/dashboard/{type}', [MarketingDashboardAdminController::class, 'proxy']);
-    Route::get('/settings/marketing', [MarketingSettingsAdminController::class, 'marketing']); Route::patch('/settings/marketing', [MarketingSettingsAdminController::class, 'updateMarketing']); Route::get('/settings/analytics', [MarketingSettingsAdminController::class, 'analytics']); Route::patch('/settings/analytics', [MarketingSettingsAdminController::class, 'updateAnalytics']);
+    Route::post('/customer-imports/preview', [MarketingCustomerImportController::class, 'preview'])->middleware('admin.permission:customers.import');
+    Route::post('/customer-imports', [MarketingCustomerImportController::class, 'execute'])->middleware('admin.permission:customers.import');
+    Route::get('/customer-imports/{import}', [MarketingCustomerImportController::class, 'status'])->whereNumber('import')->middleware('admin.permission:customers.view');
+    Route::get('/customers', [MarketingCrmController::class, 'customers'])->middleware('admin.permission:customers.view');
+    Route::get('/customers/export', [MarketingCrmController::class, 'export'])->middleware('admin.permission:customers.export');
+    Route::get('/customers/country-summary', [MarketingCrmController::class, 'countrySummary'])->middleware('admin.permission:customers.view');
+    Route::get('/customers/{customer}', [MarketingCrmController::class, 'customer'])->whereNumber('customer')->middleware('admin.permission:customers.view');
+    Route::get('/customer-accounts', [MarketingCrmController::class, 'accounts'])->middleware('admin.permission:customers.view');
+    Route::get('/customer-contacts', [MarketingCrmController::class, 'contacts'])->middleware('admin.permission:customers.view');
+    Route::get('/customer-consents', [MarketingCrmController::class, 'consents'])->middleware('admin.permission:customers.consent.manage');
+    Route::get('/customer-suppressions', [MarketingCrmController::class, 'suppressions'])->middleware('admin.permission:customers.suppression.manage');
+    Route::get('/customer-segments', [MarketingCrmController::class, 'segments'])->middleware('admin.permission:customers.view');
+    Route::post('/customer-segments', [MarketingCrmController::class, 'storeSegment'])->middleware('admin.permission:campaigns.create');
+    Route::post('/customer-segments/{segment}/refresh', [MarketingCrmController::class, 'refreshSegment'])->whereNumber('segment')->middleware('admin.permission:campaigns.create');
+    Route::get('/contact-lists', [MarketingCrmController::class, 'contactLists'])->middleware('admin.permission:customers.view');
+    Route::post('/contact-lists', [MarketingCrmController::class, 'storeContactList'])->middleware('admin.permission:campaigns.create');
+    Route::post('/contact-lists/{list}/members', [MarketingCrmController::class, 'addMembers'])->whereNumber('list')->middleware('admin.permission:campaigns.create');
+    Route::get('/newsletter/subscribers', [MarketingNewsletterAdminController::class, 'subscribers'])->middleware('admin.permission:customers.view');
+    Route::get('/newsletter/templates', [MarketingNewsletterAdminController::class, 'templates'])->middleware('admin.permission:campaigns.view');
+    Route::post('/newsletter/templates', [MarketingNewsletterAdminController::class, 'storeTemplate'])->middleware('admin.permission:email.templates.manage');
+    Route::patch('/newsletter/templates/{template}', [MarketingNewsletterAdminController::class, 'updateTemplate'])->whereNumber('template')->middleware('admin.permission:email.templates.manage');
+    Route::get('/newsletter/campaigns', [MarketingNewsletterAdminController::class, 'campaigns'])->middleware('admin.permission:campaigns.view');
+    Route::post('/newsletter/campaigns', [MarketingNewsletterAdminController::class, 'storeCampaign'])->middleware('admin.permission:campaigns.create');
+    Route::post('/newsletter/campaigns/{campaign}/preview', [MarketingNewsletterAdminController::class, 'preview'])->whereNumber('campaign')->middleware('admin.permission:campaigns.view');
+    Route::post('/newsletter/campaigns/{campaign}/approve', [MarketingNewsletterAdminController::class, 'approve'])->whereNumber('campaign')->middleware('admin.permission:campaigns.approve');
+    Route::post('/newsletter/campaigns/{campaign}/schedule', [MarketingNewsletterAdminController::class, 'schedule'])->whereNumber('campaign')->middleware('admin.permission:campaigns.schedule');
+    Route::post('/newsletter/campaigns/{campaign}/send-test', [MarketingNewsletterAdminController::class, 'sendTest'])->whereNumber('campaign')->middleware('admin.permission:campaigns.test');
+    Route::post('/newsletter/campaigns/{campaign}/send-now', [MarketingNewsletterAdminController::class, 'sendNow'])->whereNumber('campaign')->middleware('admin.permission:campaigns.send');
+    Route::post('/newsletter/campaigns/{campaign}/pause', [MarketingNewsletterAdminController::class, 'pause'])->whereNumber('campaign')->middleware('admin.permission:campaigns.send');
+    Route::post('/newsletter/campaigns/{campaign}/resume', [MarketingNewsletterAdminController::class, 'resume'])->whereNumber('campaign')->middleware('admin.permission:campaigns.send');
+    Route::post('/newsletter/campaigns/{campaign}/cancel', [MarketingNewsletterAdminController::class, 'cancel'])->whereNumber('campaign')->middleware('admin.permission:campaigns.send');
+    Route::get('/email/templates', [MarketingEmailAdminController::class, 'templates'])->middleware('admin.permission:campaigns.view');
+    Route::post('/email/templates', [MarketingEmailAdminController::class, 'storeTemplate'])->middleware('admin.permission:campaigns.create');
+    Route::patch('/email/templates/{template}', [MarketingEmailAdminController::class, 'updateTemplate'])->whereNumber('template')->middleware('admin.permission:campaigns.create');
+    Route::get('/email/campaigns', [MarketingEmailAdminController::class, 'campaigns'])->middleware('admin.permission:campaigns.view');
+    Route::post('/email/campaigns', [MarketingEmailAdminController::class, 'storeCampaign'])->middleware('admin.permission:campaigns.create');
+    Route::post('/email/campaigns/{campaign}/preview', [MarketingEmailAdminController::class, 'preview'])->whereNumber('campaign')->middleware('admin.permission:campaigns.view');
+    Route::post('/email/campaigns/{campaign}/approve', [MarketingEmailAdminController::class, 'approve'])->whereNumber('campaign')->middleware('admin.permission:campaigns.approve');
+    Route::post('/email/campaigns/{campaign}/schedule', [MarketingEmailAdminController::class, 'schedule'])->whereNumber('campaign')->middleware('admin.permission:campaigns.schedule');
+    Route::post('/email/campaigns/{campaign}/send-test', [MarketingEmailAdminController::class, 'sendTest'])->whereNumber('campaign')->middleware('admin.permission:campaigns.test');
+    Route::post('/email/campaigns/{campaign}/send-now', [MarketingEmailAdminController::class, 'sendNow'])->whereNumber('campaign')->middleware('admin.permission:campaigns.send');
+    Route::post('/email/campaigns/{campaign}/pause', [MarketingEmailAdminController::class, 'pause'])->whereNumber('campaign')->middleware('admin.permission:campaigns.send');
+    Route::post('/email/campaigns/{campaign}/resume', [MarketingEmailAdminController::class, 'resume'])->whereNumber('campaign')->middleware('admin.permission:campaigns.send');
+    Route::post('/email/campaigns/{campaign}/cancel', [MarketingEmailAdminController::class, 'cancel'])->whereNumber('campaign')->middleware('admin.permission:campaigns.send');
+    Route::post('/email/provider/test', [MarketingEmailAdminController::class, 'providerTest'])->middleware('admin.permission:email.providers.manage');
+    Route::post('/email/transactional/test', [MarketingEmailAdminController::class, 'transactionalProviderTest'])->middleware('admin.permission:email.providers.manage');
+    Route::get('/email/events', [MarketingEmailAdminController::class, 'events'])->middleware('admin.permission:email.events.view');
+    Route::get('/email/automation-rules', [MarketingEmailAdminController::class, 'automationRules'])->middleware('admin.permission:campaigns.view');
+    Route::post('/email/automation-rules', [MarketingEmailAdminController::class, 'storeAutomationRule'])->middleware('admin.permission:campaigns.create');
+    Route::patch('/email/automation-rules/{rule}', [MarketingEmailAdminController::class, 'updateAutomationRule'])->whereNumber('rule')->middleware('admin.permission:campaigns.create');
+    Route::get('/abandoned-carts', [MarketingAbandonedCartAdminController::class, 'index'])->middleware('admin.permission:campaigns.view');
+    Route::get('/abandoned-carts/recovery-report', [MarketingAbandonedCartAdminController::class, 'report'])->middleware('admin.permission:campaigns.view');
+    Route::get('/abandoned-carts/{cart}', [MarketingAbandonedCartAdminController::class, 'show'])->whereNumber('cart')->middleware('admin.permission:campaigns.view');
+    Route::post('/abandoned-carts/{cart}/send-reminder', [MarketingAbandonedCartAdminController::class, 'sendReminder'])->whereNumber('cart')->middleware('admin.permission:campaigns.send');
+    Route::get('/whatsapp/templates', [MarketingWhatsappAdminController::class, 'templates'])->middleware('admin.permission:campaigns.view');
+    Route::post('/whatsapp/templates', [MarketingWhatsappAdminController::class, 'storeTemplate'])->middleware('admin.permission:email.templates.manage');
+    Route::get('/whatsapp/campaigns', [MarketingWhatsappAdminController::class, 'campaigns'])->middleware('admin.permission:campaigns.view');
+    Route::post('/whatsapp/campaigns', [MarketingWhatsappAdminController::class, 'storeCampaign'])->middleware('admin.permission:campaigns.create');
+    Route::post('/whatsapp/campaigns/{campaign}/preview', [MarketingWhatsappAdminController::class, 'preview'])->whereNumber('campaign')->middleware('admin.permission:campaigns.view');
+    Route::post('/whatsapp/campaigns/{campaign}/schedule', [MarketingWhatsappAdminController::class, 'schedule'])->whereNumber('campaign')->middleware('admin.permission:campaigns.schedule');
+    Route::post('/whatsapp/campaigns/{campaign}/send-test', [MarketingWhatsappAdminController::class, 'sendTest'])->whereNumber('campaign')->middleware('admin.permission:campaigns.test');
+    Route::post('/whatsapp/campaigns/{campaign}/send-now', [MarketingWhatsappAdminController::class, 'sendNow'])->whereNumber('campaign')->middleware('admin.permission:campaigns.send');
+    Route::get('/whatsapp/events', [MarketingWhatsappAdminController::class, 'events'])->middleware('admin.permission:email.events.view');
+    Route::post('/whatsapp/export-recipients', [MarketingWhatsappAdminController::class, 'exportRecipients'])->middleware('admin.permission:customers.export');
+    Route::post('/campaigns/audience-preview', [MarketingCampaignAdminController::class, 'audiencePreview'])->middleware('admin.permission:campaigns.view');
+    Route::get('/campaigns/audience-count', [MarketingCampaignAdminController::class, 'audienceCount'])->middleware('admin.permission:campaigns.view');
+    Route::post('/campaigns/create-multi-channel', [MarketingCampaignAdminController::class, 'createMultiChannel'])->middleware('admin.permission:campaigns.create');
+    Route::get('/analytics/dashboard', [MarketingAnalyticsAdminController::class, 'dashboard'])->middleware('admin.permission:campaigns.view');
+    Route::get('/analytics/trending-products', [MarketingAnalyticsAdminController::class, 'trendingProducts'])->middleware('admin.permission:campaigns.view');
+    Route::get('/analytics/trending-categories', [MarketingAnalyticsAdminController::class, 'trendingCategories'])->middleware('admin.permission:campaigns.view');
+    Route::get('/analytics/top-searches', [MarketingAnalyticsAdminController::class, 'topSearches'])->middleware('admin.permission:campaigns.view');
+    Route::get('/analytics/regional-orders', [MarketingAnalyticsAdminController::class, 'regionalOrders'])->middleware('admin.permission:campaigns.view');
+    Route::get('/analytics/country-sales', [MarketingAnalyticsAdminController::class, 'countrySales'])->middleware('admin.permission:campaigns.view');
+    Route::get('/analytics/campaign-performance', [MarketingAnalyticsAdminController::class, 'campaignPerformance'])->middleware('admin.permission:campaigns.view');
+    Route::get('/analytics/newsletter-performance', [MarketingAnalyticsAdminController::class, 'newsletterPerformance'])->middleware('admin.permission:campaigns.view');
+    Route::get('/dashboard/overview', [MarketingDashboardAdminController::class, 'overview'])->middleware('admin.permission:campaigns.view');
+    Route::get('/dashboard/{type}', [MarketingDashboardAdminController::class, 'proxy'])->middleware('admin.permission:campaigns.view');
+    Route::get('/settings/marketing', [MarketingSettingsAdminController::class, 'marketing'])->middleware('admin.permission:email.providers.manage');
+    Route::patch('/settings/marketing', [MarketingSettingsAdminController::class, 'updateMarketing'])->middleware('admin.permission:email.providers.manage');
+    Route::get('/settings/analytics', [MarketingSettingsAdminController::class, 'analytics'])->middleware('admin.permission:email.providers.manage');
+    Route::patch('/settings/analytics', [MarketingSettingsAdminController::class, 'updateAnalytics'])->middleware('admin.permission:email.providers.manage');
 };
 
 $marketingPublic();
@@ -623,6 +697,17 @@ $financeAdmin = function () {
 };
 Route::middleware('admin.token')->prefix('admin')->group($financeAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($financeAdmin);
+
+$productMediaAdmin = function () {
+    Route::get('/products/{product}/images', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'index'])->whereNumber('product')->middleware('admin.permission:catalog.manage');
+    Route::post('/products/{product}/images', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'store'])->whereNumber('product')->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
+    Route::patch('/products/{product}/images/reorder', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'reorder'])->whereNumber('product')->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
+    Route::patch('/products/{product}/images/{image}', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'update'])->whereNumber(['product', 'image'])->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
+    Route::post('/products/{product}/images/{image}/primary', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'primary'])->whereNumber(['product', 'image'])->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
+    Route::delete('/products/{product}/images/{image}', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'destroy'])->whereNumber(['product', 'image'])->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
+};
+Route::middleware('admin.token')->prefix('admin')->group($productMediaAdmin);
+Route::middleware('admin.token')->prefix('v1/admin')->group($productMediaAdmin);
 
 /*
 |--------------------------------------------------------------------------
@@ -777,8 +862,9 @@ Route::prefix('v1/auth')->group(function () {
 
     Route::middleware(['api.token', 'throttle:6,1'])->group(function () {
         Route::post('/email/verification-notification', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'sendVerification'])->name('verification.send');
-        Route::get('/verify-email/{id}/{hash}', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
     });
+    Route::get('/verify-email/{id}/{hash}', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'verify'])
+        ->whereNumber('id')->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 });
 
 /*
@@ -829,4 +915,3 @@ Route::prefix('v1/pcb/public')->group(function () {
     // Route::post('quote/calculate', [PcbPublicQuoteController::class, 'calculate']);
     // Route::get('capabilities', [PcbCapabilitiesController::class, 'index']);
 });
-

@@ -10,6 +10,8 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\RegionalCommerceService;
+use App\Services\Payments\PaymentMethodPolicyService;
+use App\Services\Marketing\OrderNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -103,6 +105,7 @@ class CartPageController extends Controller
             'cart' => $cart->load(['items.product.brand']),
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'routes' => app(RegionalCommerceService::class)->cartRoutes($cart),
+            'paymentMethods' => app(PaymentMethodPolicyService::class)->allowedMethods($cart->marketplace_id, $cart->currency_code),
         ]);
     }
 
@@ -115,7 +118,7 @@ class CartPageController extends Controller
             'company' => ['nullable', 'string', 'max:180'],
             'country_id' => ['nullable', 'integer', 'exists:countries,id'],
             'address' => ['nullable', 'string', 'max:1000'],
-            'payment_method' => ['required', 'in:manual,bank_transfer,cod'],
+            'payment_method' => ['required', 'string', 'max:80'],
             'customer_notes' => ['nullable', 'string', 'max:1000'],
             'confirm' => ['accepted'],
         ]);
@@ -124,6 +127,8 @@ class CartPageController extends Controller
         if ($cart->items->isEmpty()) {
             return redirect('/cart')->with('error', 'Cart is empty.');
         }
+
+        app(PaymentMethodPolicyService::class)->assertAllowed($data['payment_method'], $cart->marketplace_id, $cart->currency_code);
 
         $order = DB::transaction(function () use ($cart, $data) {
             app(RegionalCommerceService::class)->applyCartEstimates($cart, (int) ($data['country_id'] ?? 0));
@@ -190,6 +195,8 @@ class CartPageController extends Controller
             ]);
 
             $cart->forceFill(['is_active' => false])->save();
+
+            DB::afterCommit(fn () => app(OrderNotificationService::class)->orderPlaced($data['email'], $order, $data['name']));
 
             return $order;
         });

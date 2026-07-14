@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Jobs\RebuildApprovedImportSearchIndexJob;
 use App\Models\Marketplace\VendorProduct;
+use App\Models\Marketplace\Product;
+use App\Models\Marketplace\ProductSeoMeta;
 use App\Services\Erp\DocumentNumberService;
 use App\Services\Inventory\TransferService;
 use App\Services\Catalog\CatalogSearchRebuildService;
 use App\Services\Product\ProductApprovalService;
+use App\Services\Marketing\OrderNotificationService;
+use App\Services\Seo\CatalogSeoTemplateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -1059,24 +1063,83 @@ class CommerceOpsController extends Controller
             'robots' => ['required', 'string', 'max:80'],
             'schema_type' => ['required', 'string', 'max:80'],
             'confidence_level' => ['required', 'string', 'max:80'],
+            'robots_reason' => ['nullable', 'string', 'max:1000'],
+            'is_locked' => ['nullable', 'boolean'],
         ]);
 
-        DB::table('product_seo_meta')->updateOrInsert(
-            ['product_id' => $product],
-            $data + [
-                'product_id' => $product,
-                'metadata' => json_encode(['saved_via' => 'admin.web']),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        );
-        DB::table('products')->where('id', $product)->update([
-            'seo_meta' => json_encode(['title' => $data['meta_title'] ?? null, 'description' => $data['meta_description'] ?? null]),
-            'updated_at' => now(),
-        ]);
+        $catalogProduct = Product::findOrFail($product);
+        $templates = app(CatalogSeoTemplateService::class);
+
+        DB::transaction(function () use ($request, $catalogProduct, $data, $templates) {
+            $record = ProductSeoMeta::firstOrNew(['product_id' => $catalogProduct->id]);
+            $metadata = is_array($record->metadata) ? $record->metadata : [];
+            $record->fill([
+                'title' => $data['meta_title'] ?? null,
+                'meta_title' => $data['meta_title'] ?? null,
+                'meta_description' => $data['meta_description'] ?? null,
+                'canonical_url' => $data['canonical_url'] ?? null,
+                'robots' => $data['robots'],
+                'robots_reason' => $data['robots_reason'] ?? 'Manual admin SEO override.',
+                'schema_type' => $data['schema_type'],
+                'confidence_level' => $data['confidence_level'],
+                'is_manual_override' => true,
+                'is_locked' => (bool) ($data['is_locked'] ?? false),
+                'active_source' => 'manual',
+                'modified_by' => $request->user()?->id,
+                'metadata' => array_merge($metadata, [
+                    'saved_via' => 'admin.web',
+                    'source' => 'manual_admin_override',
+                    'source_notes' => 'Manual product SEO saved through the permission-gated admin panel.',
+                    'confidence_level' => $data['confidence_level'],
+                    'last_updated' => now()->toIso8601String(),
+                    'advisory_disclaimer' => CatalogSeoTemplateService::DISCLAIMER,
+                ]),
+            ]);
+            $record->save();
+
+            $existing = is_array($catalogProduct->seo_meta) ? $catalogProduct->seo_meta : [];
+            $catalogProduct->update(['seo_meta' => array_merge($existing, [
+                'title' => $data['meta_title'] ?? null,
+                'description' => $data['meta_description'] ?? null,
+                'canonical_url' => $data['canonical_url'] ?? null,
+                'robots' => $data['robots'],
+                'robots_reason' => $data['robots_reason'] ?? 'Manual admin SEO override.',
+                'manual_override' => true,
+                'locked' => (bool) ($data['is_locked'] ?? false),
+                'active_source' => 'manual',
+                'source' => 'manual_admin_override',
+                'last_updated' => now()->toIso8601String(),
+            ])]);
+
+            $templates->recordVersion('product', $catalogProduct->id, [
+                'title' => $data['meta_title'] ?? null,
+                'description' => $data['meta_description'] ?? null,
+                'canonical' => $data['canonical_url'] ?? null,
+                'robots' => $data['robots'],
+                'robots_reason' => $data['robots_reason'] ?? 'Manual admin SEO override.',
+                'active_source' => 'manual',
+                'template_version' => $record->template_version,
+                'source_notes' => 'Manual product SEO saved through the admin panel.',
+                'confidence_level' => $data['confidence_level'],
+            ], 'manual_override', $request->user()?->id);
+            $templates->invalidate('product', $catalogProduct->id);
+        }, 3);
         $this->auditAdminAction($request, 'product_seo_saved', 'product_seo_meta', null, ['product_id' => $product]);
 
         return back()->with('status', 'Product SEO saved.');
+    }
+
+    public function rollbackProductSeo(Request $request, int $product, int $version): RedirectResponse
+    {
+        try {
+            app(CatalogSeoTemplateService::class)->rollbackVersion('product', $product, $version, $request->user()?->id);
+        } catch (\RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        $this->auditAdminAction($request, 'product_seo_rolled_back', 'catalog_seo_versions', $version, ['product_id' => $product]);
+
+        return back()->with('status', 'Product SEO restored from version history; a pre-rollback snapshot was retained.');
     }
 
     // ---- Seller / vendor management ---------------------------------------
@@ -2768,6 +2831,11 @@ class CommerceOpsController extends Controller
             ]);
         });
 
+        $notifications = app(OrderNotificationService::class);
+        if ($email = $notifications->recipient($row)) {
+            $notifications->orderStatus($email, $row->order_number, $data['status'], $row->id, $row->marketplace_id);
+        }
+
         return back()->with('status', "Order {$row->order_number}: {$row->status} → {$data['status']}.");
     }
 
@@ -2794,6 +2862,12 @@ class CommerceOpsController extends Controller
             'delivered_at' => $data['delivered_at'] ?? null,
             'updated_at' => now(),
         ]);
+
+        $updatedOrder = DB::table('orders')->where('id', $order)->first();
+        $notifications = app(OrderNotificationService::class);
+        if ($updatedOrder && $updatedOrder->tracking_number && ($email = $notifications->recipient($updatedOrder))) {
+            $notifications->tracking($email, $updatedOrder);
+        }
 
         $this->auditAdminAction($request, 'order_tracking_updated', 'orders', $order, [
             'order_number' => $row->order_number,
@@ -3235,14 +3309,15 @@ class CommerceOpsController extends Controller
 
     // ---- Users ----------------------------------------------------------------
 
-    public function sendPasswordReset(int $user): RedirectResponse
+    public function sendPasswordReset(int $user, \App\Services\Marketing\AccountCommunicationService $communications): RedirectResponse
     {
-        $email = DB::table('users')->where('id', $user)->value('email');
-        if (! $email) {
+        $record = \App\Models\User::find($user);
+        if (! $record) {
             return back()->with('error', 'User not found.');
         }
 
-        \Illuminate\Support\Facades\Password::sendResetLink(['email' => $email]);
+        $token = \Illuminate\Support\Facades\Password::broker()->createToken($record);
+        $communications->passwordReset($record, $token, route('password.reset', ['token' => $token, 'email' => $record->email]));
 
         return back()->with('status', "Password reset link sent to user #{$user}.");
     }
@@ -3264,7 +3339,7 @@ class CommerceOpsController extends Controller
 
     // ---- Onboarding applications --------------------------------------------
 
-    public function updateApplicationStatus(Request $request, string $type, int $id): RedirectResponse
+    public function updateApplicationStatus(Request $request, string $type, int $id, \App\Services\Marketing\TransactionalCommunicationService $communications): RedirectResponse
     {
         abort_unless(in_array($type, ['seller', 'distributor'], true), 404);
         $table = $type . '_applications';
@@ -3275,12 +3350,20 @@ class CommerceOpsController extends Controller
             'admin_notes' => ['nullable', 'string', 'max:3000'],
         ]);
 
-        $updated = DB::table($table)->where('id', $id)->update([
+        $application = DB::table($table)->where('id', $id)->first();
+        $updated = $application ? DB::table($table)->where('id', $id)->update([
             'status' => $data['status'],
             'admin_notes' => $data['admin_notes'] ?? DB::raw('admin_notes'),
             'reviewed_at' => now(),
             'updated_at' => now(),
-        ]);
+        ]) : 0;
+        if ($updated && $data['status'] === 'approved_for_onboarding' && filter_var($application->email ?? null, FILTER_VALIDATE_EMAIL)) {
+            $communications->queue($type.'_application_approved', $application->email, [
+                'customer_name' => $application->contact_name ?? $application->business_name ?? 'Applicant',
+                'related_type' => $type.'_application', 'related_id' => $id,
+                'country_id' => $application->country_id ?? null, 'event_id' => 'approved-'.$id,
+            ]);
+        }
 
         return $updated
             ? back()->with('status', ucfirst($type) . " application #{$id} → {$data['status']}.")

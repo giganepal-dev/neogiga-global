@@ -10,8 +10,10 @@ class ProductSpecGroup extends Model
 {
     protected $fillable = [
         'product_id',
+        'category_id',
         'name',
         'sort_order',
+        'is_active',
     ];
 
     public function product(): BelongsTo

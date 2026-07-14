@@ -11,6 +11,9 @@ use App\Jobs\Marketing\RefreshCustomerSegmentJob;
 use App\Jobs\Marketing\SendAbandonedCartReminderJob;
 use App\Jobs\Marketing\SendTransactionalEmailJob;
 use App\Models\User;
+use App\Services\Marketing\CustomerSegmentationService;
+use App\Services\Marketing\EmailProviderManager;
+use App\Services\Marketing\EmailQueueService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -51,9 +54,9 @@ class MarketingJobsTest extends TestCase
             ['query' => 'esp32', 'occurred_at' => now(), 'created_at' => now(), 'updated_at' => now()],
         ]);
 
-        (new CalculateTrendingProductsJob())->handle();
-        (new CalculateTrendingCategoriesJob())->handle();
-        (new CalculateTopSearchTermsJob())->handle();
+        (new CalculateTrendingProductsJob)->handle();
+        (new CalculateTrendingCategoriesJob)->handle();
+        (new CalculateTopSearchTermsJob)->handle();
 
         $this->assertDatabaseHas('trending_products', ['product_id' => $productId]);
         $this->assertDatabaseHas('trending_categories', ['category_id' => $categoryId]);
@@ -100,7 +103,7 @@ class MarketingJobsTest extends TestCase
         $this->assertSame(1, DB::table('abandoned_cart_items')->where('abandoned_cart_id', $abandoned->id)->count());
 
         app(SendAbandonedCartReminderJob::class, ['payload' => ['abandoned_cart_id' => $abandoned->id]])
-            ->handle(app(\App\Services\Marketing\EmailQueueService::class));
+            ->handle(app(EmailQueueService::class));
 
         $this->assertDatabaseHas('abandoned_cart_reminders', [
             'abandoned_cart_id' => $abandoned->id,
@@ -134,7 +137,7 @@ class MarketingJobsTest extends TestCase
         ]);
 
         (new RefreshCustomerSegmentJob(['segment_id' => $segmentId]))
-            ->handle(app(\App\Services\Marketing\CustomerSegmentationService::class));
+            ->handle(app(CustomerSegmentationService::class));
 
         $this->assertDatabaseHas('customer_segment_members', [
             'customer_segment_id' => $segmentId,
@@ -178,7 +181,7 @@ class MarketingJobsTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        (new GenerateRegionalSalesReportJob())->handle();
+        (new GenerateRegionalSalesReportJob)->handle();
         $this->assertSame('99.00', (string) DB::table('regional_sales_reports')->value('amount'));
 
         app(SendTransactionalEmailJob::class, ['payload' => [
@@ -186,8 +189,8 @@ class MarketingJobsTest extends TestCase
             'subject' => 'NeoGiga test',
             'text_body' => 'Queued by job test.',
         ]])->handle(
-            app(\App\Services\Marketing\EmailProviderManager::class),
-            app(\App\Services\Marketing\EmailQueueService::class),
+            app(EmailProviderManager::class),
+            app(EmailQueueService::class),
         );
 
         $this->assertDatabaseHas('email_messages', [

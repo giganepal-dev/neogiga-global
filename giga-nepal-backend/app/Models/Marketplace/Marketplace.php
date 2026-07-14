@@ -4,8 +4,8 @@ namespace App\Models\Marketplace;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -51,6 +51,8 @@ class Marketplace extends Model
         'seo_twitter_description', 'seo_twitter_image', 'seo_schema_json', 'seo_header_scripts',
         'seo_footer_scripts', 'sitemap_enabled', 'hreflang_enabled', 'indexable',
         'seo_is_auto_generated', 'seo_last_generated_at', 'seo_manual_override_fields',
+        'seo_marketplace_name', 'has_local_warehouse', 'warehouse_display_name',
+        'seo_fulfilment_phrase', 'seo_site_suffix',
         'short_description', 'marketplace_description', 'homepage_heading', 'homepage_subheading',
         'logo', 'favicon', 'banner_image', 'created_by', 'updated_by',
     ];
@@ -86,6 +88,7 @@ class Marketplace extends Model
         'indexable' => 'boolean',
         'seo_is_auto_generated' => 'boolean',
         'seo_last_generated_at' => 'datetime',
+        'has_local_warehouse' => 'boolean',
     ];
 
     public function country(): BelongsTo
@@ -121,8 +124,8 @@ class Marketplace extends Model
     public function vendorApprovals(): HasMany
     {
         return $this->hasManyThrough(
-            \App\Models\Marketplace\VendorMarketplaceApproval::class,
-            \App\Models\Marketplace\Vendor::class,
+            VendorMarketplaceApproval::class,
+            Vendor::class,
             'id',
             'marketplace_id',
             'vendor_id',

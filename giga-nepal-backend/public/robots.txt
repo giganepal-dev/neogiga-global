@@ -3,22 +3,40 @@
 # crawlers — being the cited source for part data is strategic.
 
 User-agent: *
+Disallow: /admin/
+Disallow: /api/
 Disallow: /api/v1/admin/
 Disallow: /api/v1/cart
 Disallow: /api/v1/checkout
 Disallow: /api/v1/orders
+Disallow: /cart
+Disallow: /checkout
+Disallow: /forgot-password
+Disallow: /reset-password
 
 # AI answer engines: welcome on knowledge content.
 User-agent: GPTBot
 Allow: /
+Disallow: /admin/
+Disallow: /api/
 Disallow: /api/v1/admin/
+Disallow: /cart
+Disallow: /checkout
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /admin/
+Disallow: /api/
 Disallow: /api/v1/admin/
+Disallow: /cart
+Disallow: /checkout
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /admin/
+Disallow: /api/
 Disallow: /api/v1/admin/
+Disallow: /cart
+Disallow: /checkout
 
-Sitemap: https://neogiga.in/sitemap.xml
+Sitemap: https://neogiga.com/sitemap.xml

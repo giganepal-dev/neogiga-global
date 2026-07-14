@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>@yield('title', 'Dashboard') · NeoGiga Admin</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230F172A'/><path d='M9 22V10l14 12V10' stroke='%2319D3F5' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url('/images/brand/neogiga-favicon-32.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url('/images/brand/neogiga-apple-touch-icon-180.png') }}">
     <style>
         :root{
             --navy:#0F172A;--navy-2:#111f38;--slate:#334155;--line:#E2E8F0;
@@ -219,6 +220,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round"/></svg>
                 Import Review
             </a>
+            <a href="/admin/imports/elecforest" class="{{ str_starts_with($r,'admin/imports/elecforest') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round"/></svg>
+                ElecForest Imports
+            </a>
             <a href="/admin/marketplaces" class="{{ str_starts_with($r,'admin/marketplaces') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>
                 Marketplaces
@@ -254,14 +259,25 @@
             </a>
 
             <span class="lbl">Growth</span>
+            @if(auth()->user()?->hasPermission('campaigns.view'))
             <a href="/admin/marketing" class="{{ $r==='admin/marketing' ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h16M8 15l3-3 3 2 5-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Marketing &amp; CRM
             </a>
+            @endif
+            @if(auth()->user()?->hasPermission('customers.view'))
             <a href="/admin/marketing/crm" class="{{ str_starts_with($r,'admin/marketing/crm') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="3"/><path d="M2 20a6 6 0 0112 0M17 11a3 3 0 100-6M16 20a5 5 0 016-4" stroke-linecap="round"/></svg>
                 CRM &amp; Segments
             </a>
+            @endif
+            @if(auth()->user()?->hasPermission('customers.import'))
+            <a href="/admin/marketing/customer-imports" class="{{ str_starts_with($r,'admin/marketing/customer-imports') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round"/></svg>
+                Customer Imports
+            </a>
+            @endif
+            @if(auth()->user()?->hasPermission('campaigns.view'))
             <a href="/admin/marketing/newsletter" class="{{ str_starts_with($r,'admin/marketing/newsletter') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6" stroke-linejoin="round"/></svg>
                 Newsletter
@@ -287,6 +303,13 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3l7 3v5c0 4.5-2.8 8.5-7 10-4.2-1.5-7-5.5-7-10V6l7-3z" stroke-linejoin="round"/></svg>
                 Audit Log
             </a>
+            @endif
+            @if(auth()->user()?->hasPermission('email.providers.manage'))
+            <a href="/admin/marketing/settings" class="{{ str_starts_with($r,'admin/marketing/settings') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/><path d="M4 12h2m12 0h2M12 4v2m0 12v2" stroke-linecap="round"/></svg>
+                Communication Settings
+            </a>
+            @endif
 
             <span class="lbl">Commerce</span>
             <a href="/admin/orders" class="{{ str_starts_with($r,'admin/orders') ? 'active':'' }}">

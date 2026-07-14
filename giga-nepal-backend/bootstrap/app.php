@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Middleware\EnsureAdminToken;
+use App\Http\Middleware\EnsureAdminTokenPermission;
 use App\Http\Middleware\EnsureAdminWeb;
+use App\Http\Middleware\EnsureAdminWebPermission;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\ForceMarketplaceRecommendationRedirect;
@@ -25,7 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Interim admin gate; replace with Sanctum + policies in Phase 1 (SEC-01/02).
         $middleware->alias([
             'admin.token' => EnsureAdminToken::class,
+            'admin.permission' => EnsureAdminTokenPermission::class,
             'admin.web' => EnsureAdminWeb::class,
+            'admin.web.permission' => EnsureAdminWebPermission::class,
             'api.token' => AuthenticateApiToken::class,
             'permission' => EnsurePermission::class,
         ]);

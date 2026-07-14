@@ -19,6 +19,7 @@ return [
     // Prefer ADMIN_API_TOKEN_HASH=sha256(token) in production.
     'admin_api_token' => env('ADMIN_API_TOKEN'),
     'admin_api_token_hash' => env('ADMIN_API_TOKEN_HASH'),
+    'admin_api_token_permissions' => array_filter(array_map('trim', explode(',', (string) env('ADMIN_API_TOKEN_PERMISSIONS', '')))),
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),

@@ -1,4 +1,39 @@
 <?php
+
 namespace App\Http\Controllers\Api\Marketing;
-use App\Http\Controllers\Concerns\ApiResponses; use App\Http\Controllers\Controller; use Illuminate\Http\JsonResponse; use Illuminate\Http\Request; use Illuminate\Support\Facades\DB;
-class AnalyticsController extends Controller { use ApiResponses; public function event(Request $r): JsonResponse { $d=$r->validate(['event_name'=>'required|string|max:120','event_type'=>'nullable|string|max:80','metadata'=>'array']); DB::table('analytics_events')->insert(['event_name'=>$d['event_name'],'event_type'=>$d['event_type']??$d['event_name'],'metadata'=>json_encode($d['metadata']??[]),'occurred_at'=>now(),'created_at'=>now(),'updated_at'=>now()]); return $this->success(['message'=>'Event tracked.'],201); } public function productView(Request $r): JsonResponse { $d=$r->validate(['product_id'=>'required|integer','metadata'=>'array']); DB::table('product_views')->insert(['product_id'=>$d['product_id'],'metadata'=>json_encode($d['metadata']??[]),'occurred_at'=>now(),'created_at'=>now(),'updated_at'=>now()]); return $this->success(['message'=>'Product view tracked.'],201); } public function search(Request $r): JsonResponse { $d=$r->validate(['query'=>'required|string|max:190','metadata'=>'array']); DB::table('product_searches')->insert(['query'=>$d['query'],'metadata'=>json_encode($d['metadata']??[]),'occurred_at'=>now(),'created_at'=>now(),'updated_at'=>now()]); DB::table('top_search_terms')->updateOrInsert(['term'=>$d['query']],['search_count'=>DB::raw('COALESCE(search_count,0)+1'),'updated_at'=>now(),'created_at'=>now()]); return $this->success(['message'=>'Search tracked.'],201); } }
+
+use App\Http\Controllers\Concerns\ApiResponses;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class AnalyticsController extends Controller
+{
+    use ApiResponses;
+
+    public function event(Request $r): JsonResponse
+    {
+        $d = $r->validate(['event_name' => 'required|string|max:120', 'event_type' => 'nullable|string|max:80', 'metadata' => 'array']);
+        DB::table('analytics_events')->insert(['event_name' => $d['event_name'], 'event_type' => $d['event_type'] ?? $d['event_name'], 'metadata' => json_encode($d['metadata'] ?? []), 'occurred_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+
+        return $this->success(['message' => 'Event tracked.'], 201);
+    }
+
+    public function productView(Request $r): JsonResponse
+    {
+        $d = $r->validate(['product_id' => 'required|integer', 'metadata' => 'array']);
+        DB::table('product_views')->insert(['product_id' => $d['product_id'], 'metadata' => json_encode($d['metadata'] ?? []), 'occurred_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+
+        return $this->success(['message' => 'Product view tracked.'], 201);
+    }
+
+    public function search(Request $r): JsonResponse
+    {
+        $d = $r->validate(['query' => 'required|string|max:190', 'metadata' => 'array']);
+        DB::table('product_searches')->insert(['query' => $d['query'], 'metadata' => json_encode($d['metadata'] ?? []), 'occurred_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('top_search_terms')->updateOrInsert(['term' => $d['query']], ['search_count' => DB::raw('COALESCE(search_count,0)+1'), 'updated_at' => now(), 'created_at' => now()]);
+
+        return $this->success(['message' => 'Search tracked.'], 201);
+    }
+}

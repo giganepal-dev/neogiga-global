@@ -1,130 +1,51 @@
 @extends('frontend.layout')
-@php
-    $seoTitle = $seoTitle ?? ($brand->seo_meta['title'] ?? "Buy {$brand->name} Products on NeoGiga | NeoGiga Engineering Marketplace");
-    $seoDescription = $seoDescription ?? ($brand->seo_meta['description'] ?? "Shop {$brand->name} electronic components, semiconductors, modules and engineering products on NeoGiga. Authorized distributors, competitive pricing and regional availability.");
-@endphp
-@section('title', $seoTitle)
-@section('description', \Illuminate\Support\Str::limit(strip_tags($seoDescription), 158))
+@section('title', $pageSeo['title'])
+@section('description', $pageSeo['description'])
 
 @push('head')
 <script type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
-    '@type' => 'BreadcrumbList',
-    'itemListElement' => [
-        ['@type'=>'ListItem','position'=>1,'name'=>'Home','item'=>url($publicBase)],
-        ['@type'=>'ListItem','position'=>2,'name'=>'Brands','item'=>url($publicBase.'/brands')],
-        ['@type'=>'ListItem','position'=>3,'name'=>$brand->name,'item'=>url($publicBase.'/brands/'.$brand->slug)],
-    ],
+    '@type' => 'Brand',
+    'name' => $brand->name,
+    'url' => $pageSeo['canonical'],
+    'logo' => $brand->logo_path,
+    'description' => strip_tags($brand->description ?: $brand->short_description ?: $pageSeo['description']),
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
 @endpush
 
-@push('head')
-@if($brand->logo_path)
-<meta property="og:image" content="{{ asset($brand->logo_path) }}">
-@endif
-@endpush
-
 @section('content')
-<nav class="crumbs" aria-label="Breadcrumb">
-    <a href="{{ $publicBase }}">Home</a><span>/</span>
-    <a href="{{ url($publicBase.'/brands') }}">Brands</a><span>/</span>
-    <strong style="color:var(--soft)">{{ $brand->name }}</strong>
-</nav>
+@php($publicBase = '/'.($marketplaceContext['locale'] ?? 'en'))
+<div class="wrap section">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span>/</span><a href="{{ $publicBase }}/brands">Brands</a><span>/</span><strong>{{ $brand->name }}</strong></nav>
+    <section class="panel" style="padding:28px;margin:20px 0 28px">
+        @if($brand->banner_path)<img src="{{ $brand->banner_path }}" alt="{{ $brand->name }} engineering products" width="1200" height="320" style="width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin-bottom:20px">@endif
+        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+            @if($brand->logo_path)<img src="{{ $brand->logo_path }}" alt="{{ $brand->name }} logo" width="180" height="90" style="max-width:180px;max-height:90px;object-fit:contain;background:#fff;border-radius:10px;padding:8px">@else<div class="cat-icon" style="width:72px;height:72px;font-size:1.5rem">{{ strtoupper(substr($brand->name, 0, 1)) }}</div>@endif
+            <div style="flex:1;min-width:240px"><p class="eyebrow">Brand catalog</p><h1 class="section-title">{{ $brand->name }}</h1><p class="sub">{{ $brand->description ?: $brand->short_description ?: $pageSeo['description'] }}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge b-info">{{ number_format($products->total()) }} public products</span>@if($brand->manufacturer)<a class="badge b-muted" href="{{ $publicBase }}/manufacturer/{{ $brand->manufacturer->slug }}">Manufacturer: {{ $brand->manufacturer->name }}</a>@endif</div></div>
+        </div>
+    </section>
 
-{{-- Brand header --}}
-<div style="background:rgba(13,34,64,.55);border:1px solid var(--line);border-radius:var(--r);padding:24px;margin-bottom:24px">
-    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
-        @if($brand->logo_path)
-            <img src="{{ asset($brand->logo_path) }}" alt="{{ $brand->name }}" style="width:100px;height:100px;object-fit:contain;background:#fff;border-radius:var(--r);padding:8px">
-        @else
-            <div style="width:100px;height:100px;display:grid;place-items:center;background:rgba(40,216,251,.08);border:1px solid rgba(40,216,251,.3);border-radius:var(--r);color:var(--cyan);font-weight:700;font-size:2rem">{{ substr($brand->name, 0, 2) }}</div>
-        @endif
-        <div style="flex:1;min-width:280px">
-            <h1 style="margin:0 0 8px;font-size:1.8rem">{{ $brand->name }}</h1>
-            @if($brand->country)
-                <p style="color:var(--muted);margin:0 0 12px;font-size:.95rem">Origin: {{ $brand->country->name }}</p>
-            @endif
-            @if($brand->website_url)
-                <a href="{{ $brand->website_url }}" target="_blank" rel="noopener" style="color:var(--cyan);font-size:.9rem;text-decoration:none">Visit official website →</a>
-            @endif
-            @if($brand->is_featured)
-                <span style="display:inline-block;margin-top:12px;padding:6px 14px;background:rgba(249,189,44,.15);border:1px solid rgba(249,189,44,.4);border-radius:999px;font-size:.8rem;color:var(--gold);font-weight:600">Featured Brand</span>
-            @endif
+    @if($categories->isNotEmpty())<div class="section-head"><div><p class="eyebrow">Categories</p><h2>Product categories</h2></div></div><div class="category-grid grid" style="margin-bottom:34px">@foreach($categories as $category)<a class="category-card" href="{{ $publicBase }}/categories/{{ $category->slug }}"><h3>{{ $category->name }}</h3><span class="badge b-muted">{{ number_format($category->products_count) }} products</span></a>@endforeach</div>@endif
+
+    <div class="section-head"><div><p class="eyebrow">Catalog</p><h2>{{ $brand->name }} products</h2></div><a class="btn btn-ghost" href="{{ $publicBase }}/products?brand_id={{ $brand->id }}">Open filtered catalog</a></div>
+    @if($products->count())
+        <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
+            @foreach($products as $product)
+                @php($image = $product->images->firstWhere('is_primary', true) ?: $product->images->first())
+                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $product->slug }}"><div class="product-img"><img src="{{ $image?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $image?->alt_text ?: $product->name }}" width="480" height="360" loading="lazy" style="width:100%;height:100%;object-fit:contain;background:#081527"></div><h3>{{ $product->name }}</h3></a><p class="sub">{{ $product->mpn ?: $product->sku }}{{ $product->category ? ' · '.$product->category->name : '' }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $product->slug }}">View product</a></article>
+            @endforeach
         </div>
-    </div>
-    @if($brand->description)
-        <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--line)">
-            <p style="color:var(--muted);line-height:1.6">{{ $brand->description }}</p>
-        </div>
+        @if($products->hasPages())<div style="margin-top:24px">{{ $products->links() }}</div>@endif
+    @else
+        <div class="panel" style="padding:28px"><h3>Brand page available</h3><p class="sub">No public products are currently listed for this brand. Regional stock, price, or RFQ availability does not affect this brand identity page.</p><a class="btn btn-primary" href="{{ $publicBase }}/rfq">Request a {{ $brand->name }} part</a></div>
     @endif
+
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:34px">
+        <section class="info-card"><h2>Regional availability</h2>@forelse($regionalAvailability as $row)<p><strong>{{ $row->name ?: 'Regional network' }}</strong><br><span class="sub">{{ number_format($row->product_count) }} products · {{ number_format($row->available_quantity) }} units</span></p>@empty<p class="sub">Use RFQ for global or regional availability. A missing local stock row does not make this brand unavailable.</p>@endforelse</section>
+        <section class="info-card"><h2>Technical resources</h2>@forelse($technicalResources as $resource)<p><a href="{{ $resource->file_url ?: $resource->source_url }}" rel="nofollow"><strong>{{ $resource->title }}</strong></a><br><span class="sub">{{ $resource->product_name }} · {{ $resource->document_type }}</span></p>@empty<p class="sub">Datasheets and technical resources will appear as verified files are linked.</p>@endforelse</section>
+        <section class="info-card"><h2>Source and verification</h2><p class="sub">Data source: NeoGiga catalog identity{{ $brand->manufacturer ? ' / '.$brand->manufacturer->name : '' }}.</p>@if($brand->website_url)<details><summary style="cursor:pointer;color:var(--cyan)">References</summary><p><a href="{{ $brand->website_url }}" rel="nofollow noopener" target="_blank">Manufacturer website</a></p></details>@endif<p class="sub">{{ $pageSeo['source_notes'] }} · confidence: {{ $pageSeo['confidence_level'] }} · updated {{ $pageSeo['last_updated'] }} · Advisory only</p></section>
+    </div>
 </div>
-
-{{-- Products grid --}}
-<h2 style="font-size:1.2rem;margin:0 0 16px;color:var(--soft)">Products by {{ $brand->name }}</h2>
-
-@if ($products->isEmpty())
-    <div style="background:rgba(13,34,64,.5);border:1px solid var(--line);border-radius:var(--r);padding:40px 22px;text-align:center;color:var(--muted)">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="none" style="opacity:.6;margin-bottom:8px"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8" stroke="#5b7a99" stroke-width="1.4" stroke-linejoin="round"/></svg>
-        <h3 style="color:var(--soft);margin:0 0 4px">No products available yet</h3>
-        <p style="margin:0 auto;max-width:44ch">Products from {{ $brand->name }} are being onboarded. Check back soon or contact us for sourcing requests.</p>
-        <a href="/{{ $activePrefix }}/rfq" class="btn btn-primary" style="margin-top:16px">Request a Quote</a>
-    </div>
-@else
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px">
-        @foreach ($products as $p)
-            <article class="product-card" style="background:rgba(13,34,64,.55);border:1px solid var(--line);border-radius:var(--r);padding:16px;transition:transform .15s ease,border-color .15s ease">
-                <a href="{{ url($publicBase.'/products/'.$p->slug) }}" style="text-decoration:none;color:inherit;display:block">
-                    @if($p->primaryImage)
-                        <img src="{{ asset($p->primaryImage->image_path) }}" alt="{{ $p->name }}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:calc(var(--r) - 2px);margin-bottom:12px;background:rgba(13,34,64,.8)">
-                    @else
-                        <div style="width:100%;aspect-ratio:1;display:grid;place-items:center;background:rgba(40,216,251,.06);border:1px solid var(--line);border-radius:calc(var(--r) - 2px);margin-bottom:12px;color:var(--cyan);font-weight:600">{{ substr($p->name, 0, 2) }}</div>
-                    @endif
-                    <h3 style="font-size:1rem;margin:0 0 6px;line-clamp:2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ $p->name }}</h3>
-                    @if($p->mpn)
-                        <p style="font-size:.8rem;color:var(--muted);margin:0 0 8px">MPN: {{ $p->mpn }}</p>
-                    @endif
-                    @if($p->category)
-                        <span style="display:inline-block;padding:4px 10px;background:rgba(40,216,251,.08);border:1px solid rgba(40,216,251,.25);border-radius:999px;font-size:.75rem;color:var(--cyan)">{{ $p->category->name }}</span>
-                    @endif
-                </a>
-            </article>
-        @endforeach
-    </div>
-
-    {{-- Pagination --}}
-    @if ($products->hasPages())
-        <div style="margin-top:32px;display:flex;justify-content:center">
-            {{ $products->links('vendor.pagination.tailwind') }}
-        </div>
-    @endif
-@endif
-
-{{-- Related brands --}}
-@php
-    $relatedBrands = \App\Models\Marketplace\ProductBrand::query()
-        ->where('id', '!=', $brand->id)
-        ->where('is_active', true)
-        ->whereNotNull('country_id')
-        ->where('country_id', $brand->country_id ?? 0)
-        ->orderBy('is_featured', 'desc')
-        ->limit(4)
-        ->get();
-@endphp
-@if($relatedBrands->isNotEmpty())
-    <h2 style="font-size:1.1rem;margin:32px 0 16px;color:var(--soft)">Other brands from {{ $brand->country?->name ?? 'this region' }}</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
-        @foreach($relatedBrands as $rb)
-            <a href="{{ url($publicBase.'/brands/'.$rb->slug) }}" style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(13,34,64,.4);border:1px solid var(--line);border-radius:var(--r);text-decoration:none;color:inherit">
-                @if($rb->logo_path)
-                    <img src="{{ asset($rb->logo_path) }}" alt="{{ $rb->name }}" style="width:40px;height:40px;object-fit:contain;border-radius:6px">
-                @else
-                    <div style="width:40px;height:40px;display:grid;place-items:center;background:rgba(40,216,251,.08);border:1px solid rgba(40,216,251,.25);border-radius:6px;color:var(--cyan);font-weight:600;font-size:.85rem">{{ substr($rb->name, 0, 2) }}</div>
-                @endif
-                <span style="font-size:.9rem;font-weight:500">{{ $rb->name }}</span>
-            </a>
-        @endforeach
-    </div>
-@endif
 @endsection

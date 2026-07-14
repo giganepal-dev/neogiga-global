@@ -11,6 +11,7 @@ use App\Http\Resources\UserResource;
 use App\Models\Distributor\Distributor;
 use App\Services\Auth\AuthService;
 use App\Services\Distributor\DistributorRegistrationService;
+use App\Services\Marketing\AccountCommunicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,9 +19,10 @@ class DistributorAuthController extends Controller
 {
     use ApiResponses;
 
-    public function register(DistributorRegisterRequest $request, DistributorRegistrationService $registration, AuthService $auth): JsonResponse
+    public function register(DistributorRegisterRequest $request, DistributorRegistrationService $registration, AuthService $auth, AccountCommunicationService $communications): JsonResponse
     {
         [$user, $distributor] = $registration->register($request->validated());
+        $communications->application($user, 'distributor', (int) $distributor->id);
 
         return $this->success([
             'user' => new UserResource($user),

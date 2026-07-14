@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
+use App\Services\Marketplace\GlobalMarketplaceContextService;
+use App\Services\Seo\CatalogSeoTemplateService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class CategoryController extends Controller
@@ -42,6 +44,7 @@ class CategoryController extends Controller
             ->get();
 
         $products = Product::query()
+            ->with(['images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1)])
             ->where('category_id', $category->id)
             ->published()
             ->latest('id')
@@ -50,8 +53,24 @@ class CategoryController extends Controller
 
         $breadcrumb = $this->breadcrumb($category);
         $relatedLessons = $this->relatedLessons($category);
+        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context(request());
+        $pageSeo = app(CatalogSeoTemplateService::class)->activeCategory(
+            $category,
+            $marketplaceContext['current'] ?? null,
+            $marketplaceContext['locale'] ?? 'en',
+        );
 
-        return view('frontend.categories.show', compact('category', 'children', 'products', 'breadcrumb', 'relatedLessons'));
+        return view('frontend.categories.show', [
+            'category' => $category,
+            'children' => $children,
+            'products' => $products,
+            'breadcrumb' => $breadcrumb,
+            'relatedLessons' => $relatedLessons,
+            'pageSeo' => $pageSeo,
+            'canonical' => $pageSeo['canonical'],
+            'robots' => $pageSeo['robots'],
+            'robotsReason' => $pageSeo['robots_reason'],
+        ]);
     }
 
     /**
@@ -62,19 +81,30 @@ class CategoryController extends Controller
         $chain = [];
         $node = $category;
         $guard = 0;
+        $publicBase = $this->publicBase();
 
         while ($node && $guard++ < 12) {
-            array_unshift($chain, ['name' => $node->name, 'url' => url('/categories/'.$node->slug)]);
+            array_unshift($chain, ['name' => $node->name, 'url' => $publicBase.'/categories/'.$node->slug]);
             $node = $node->parent;
         }
 
         return array_merge(
             [
-                ['name' => 'Home', 'url' => url('/')],
-                ['name' => 'Categories', 'url' => url('/categories')],
+                ['name' => 'Home', 'url' => $publicBase],
+                ['name' => 'Categories', 'url' => $publicBase.'/categories'],
             ],
             $chain,
         );
+    }
+
+    private function publicBase(): string
+    {
+        $prefix = strtolower((string) request()->segment(1));
+        if (! array_key_exists($prefix, config('neogiga_global.prefixes', []))) {
+            $prefix = config('neogiga_global.default_prefix', 'en');
+        }
+
+        return '/'.$prefix;
     }
 
     /**

@@ -20,6 +20,20 @@
     ],
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type' => 'ItemList',
+    'name' => 'NeoGiga engineering categories',
+    'numberOfItems' => $roots->count(),
+    'itemListElement' => $roots->values()->map(fn($category, $index) => [
+        '@type' => 'ListItem',
+        'position' => $index + 1,
+        'name' => $category->name,
+        'url' => url($publicBase.'/categories/'.$category->slug),
+    ])->all(),
+], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
+</script>
 @endpush
 
 @section('content')
@@ -32,7 +46,10 @@
     @foreach ($roots as $root)
         <section style="background:rgba(13,34,64,.55);border:1px solid var(--line);border-radius:var(--r);padding:18px">
             <a href="{{ $publicBase }}/categories/{{ $root->slug }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-                <strong style="font-size:1.05rem">{{ $root->name }}</strong>
+                <span style="display:flex;align-items:center;gap:10px;min-width:0">
+                    <img src="{{ $root->image_path ?: url('/images/brand/neogiga-icon-512.png') }}" alt="{{ $root->name }} category" width="42" height="42" loading="lazy" style="width:42px;height:42px;object-fit:contain;border-radius:8px;background:#081527;flex:none">
+                    <strong style="font-size:1.05rem">{{ $root->name }}</strong>
+                </span>
                 <span aria-hidden="true" style="color:var(--cyan)">→</span>
             </a>
             @if ($root->children->isNotEmpty())

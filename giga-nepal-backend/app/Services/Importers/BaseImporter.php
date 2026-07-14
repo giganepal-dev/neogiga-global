@@ -19,15 +19,41 @@ abstract class BaseImporter
     protected array $stats = ['created' => 0, 'updated' => 0, 'failed' => 0];
     protected ?\Illuminate\Console\Command $command = null;
 
-    abstract public function getSupplierSlug(): string;
     abstract public function fetchCategories(): array;
-    abstract public function fetchProducts(array $options = []): \Generator;
-    abstract public function normalizeProduct(array $rawProduct): array;
-    abstract protected function getSupplierName(): string;
-    abstract protected function getSupplierTier(): string;
-    abstract protected function getSupplierDescription(): ?string;
-    abstract protected function getSupplierWebsite(): ?string;
-    abstract protected function getSupplierCountry(): ?string;
+    abstract public function fetchProducts(int $page = 1, int $perPage = 100): array;
+    abstract protected function normalizeProduct(array $rawProduct): array;
+
+    public function getSupplierSlug(): string
+    {
+        return $this->supplierCode ?? Str::slug($this->getSupplierName());
+    }
+
+    protected function getSupplierName(): string
+    {
+        return $this->supplierName ?? Str::headline($this->getSupplierSlug());
+    }
+
+    protected function getSupplierTier(): string
+    {
+        $tier = $this->supplierTier ?? 'tier_1';
+
+        return is_numeric($tier) ? 'tier_' . (int) $tier : (string) $tier;
+    }
+
+    protected function getSupplierDescription(): ?string
+    {
+        return $this->supplierDescription ?? null;
+    }
+
+    protected function getSupplierWebsite(): ?string
+    {
+        return $this->baseUrl ?? null;
+    }
+
+    protected function getSupplierCountry(): ?string
+    {
+        return $this->supplierCountry ?? null;
+    }
 
     public function setCommand(\Illuminate\Console\Command $command): self
     {
