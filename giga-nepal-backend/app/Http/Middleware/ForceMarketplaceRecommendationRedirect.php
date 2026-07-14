@@ -78,7 +78,9 @@ class ForceMarketplaceRecommendationRedirect
         if (! empty($edition['domain'])) {
             // Dedicated regional domains currently run independent storefronts;
             // do not force users into path-for-path URLs that may not exist there.
-            return 'https://' . $edition['domain'] . '/' . ($query ? '?' . $query : '');
+            $liveRoot = rtrim((string) ($edition['url'] ?? ('https://' . $edition['domain'])), '/');
+
+            return $liveRoot . '/' . ($query ? '?' . $query : '');
         }
 
         $prefix = trim((string) ($edition['url_prefix'] ?: config('neogiga_global.default_prefix', 'en')), '/');

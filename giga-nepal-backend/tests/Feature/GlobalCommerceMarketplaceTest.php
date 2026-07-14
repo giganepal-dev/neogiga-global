@@ -239,7 +239,7 @@ class GlobalCommerceMarketplaceTest extends TestCase
         ]));
 
         $this->assertSame(302, $response->getStatusCode());
-        $this->assertSame('https://neogiga.in/?q=esp32', $response->headers->get('Location'));
+        $this->assertSame('https://in.neogiga.com/?q=esp32', $response->headers->get('Location'));
     }
 
     public function test_force_marketplace_redirect_skips_crawlers(): void

@@ -11,6 +11,15 @@ return [
     'default_prefix' => 'en',
     'x_default' => 'https://neogiga.com/en',
 
+    // Keep canonicals on the Laravel regional hosts until the branded apex
+    // sites have completed their separately governed data/mail/DNS cutover.
+    // The cutover can change these environment values without rewriting SEO
+    // rows or marketplace history.
+    'canonical_host_overrides' => [
+        'NEPAL' => env('NEOGIGA_NEPAL_CANONICAL_HOST', 'np.neogiga.com'),
+        'INDIA' => env('NEOGIGA_INDIA_CANONICAL_HOST', 'in.neogiga.com'),
+    ],
+
     'prefixes' => [
         'en' => ['country' => 'Global', 'locale' => 'en', 'currency' => 'USD', 'domain' => 'neogiga.com', 'brand' => 'NeoGiga'],
         'in' => ['country' => 'India', 'locale' => 'en-IN', 'currency' => 'INR', 'domain' => 'neogiga.in', 'brand' => 'NeoGiga India'],
