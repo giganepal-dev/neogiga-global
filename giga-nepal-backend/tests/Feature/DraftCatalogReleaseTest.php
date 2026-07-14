@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Services\Catalog\DraftCatalogReleaseService;
 use App\Services\CatalogImport\Elecforest\ElecforestImporter;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -196,6 +198,50 @@ class DraftCatalogReleaseTest extends TestCase
         $this->assertSame('draft', DB::table('products')->where('id', $catalog['product_id'])->value('status'));
         $this->assertDatabaseCount('marketplace_product_prices', 0);
         $this->assertDatabaseCount('inventory_stocks', 0);
+    }
+
+    public function test_compatibility_migration_widens_legacy_review_status_without_changing_data(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('PostgreSQL character-width compatibility coverage.');
+        }
+
+        $productId = DB::table('products')->insertGetId([
+            'name' => 'Review status compatibility product',
+            'slug' => 'review-status-compatibility-product',
+            'sku' => 'REVIEW-STATUS-COMPATIBILITY',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $priceId = DB::table('marketplace_product_prices')->insertGetId([
+            'product_id' => $productId,
+            'marketplace_id' => DB::table('marketplaces')->where('code', 'GLOBAL')->value('id'),
+            'base_price' => '1.0000',
+            'currency_code' => 'USD',
+            'is_active' => true,
+            'source_review_status' => 'legacy_review',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        Schema::table('marketplace_product_prices', function (Blueprint $table): void {
+            $table->string('source_review_status', 40)->nullable()->change();
+        });
+
+        $before = DB::selectOne(
+            'select character_maximum_length from information_schema.columns where table_schema = current_schema() and table_name = ? and column_name = ?',
+            ['marketplace_product_prices', 'source_review_status']
+        );
+        $this->assertSame(40, (int) $before->character_maximum_length);
+
+        $migration = require database_path('migrations/2026_07_14_182000_widen_marketplace_price_review_status.php');
+        $migration->up();
+
+        $after = DB::selectOne(
+            'select character_maximum_length from information_schema.columns where table_schema = current_schema() and table_name = ? and column_name = ?',
+            ['marketplace_product_prices', 'source_review_status']
+        );
+        $this->assertSame(80, (int) $after->character_maximum_length);
+        $this->assertSame('legacy_review', DB::table('marketplace_product_prices')->where('id', $priceId)->value('source_review_status'));
     }
 
     /** @return array{product_id:int,supplier_product_id:int,asset_id:int,image_id:int,image_path:string} */
