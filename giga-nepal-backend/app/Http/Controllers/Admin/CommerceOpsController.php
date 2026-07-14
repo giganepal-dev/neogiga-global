@@ -1478,7 +1478,9 @@ class CommerceOpsController extends Controller
         abort_unless(Schema::hasTable('catalog_index_rebuild_jobs'), 404);
 
         $jobId = $rebuilds->createJob($request->user()?->id, 'jlcpcb_parts_database');
-        RebuildApprovedImportSearchIndexJob::dispatch($jobId, 'jlcpcb_parts_database');
+        RebuildApprovedImportSearchIndexJob::dispatch($jobId, 'jlcpcb_parts_database')
+            ->onConnection(RebuildApprovedImportSearchIndexJob::CONNECTION)
+            ->onQueue(RebuildApprovedImportSearchIndexJob::QUEUE);
 
         $this->auditAdminAction($request, 'jlcpcb_search_rebuild_queued', 'catalog_index_rebuild_jobs', $jobId, [
             'source_code' => 'jlcpcb_parts_database',

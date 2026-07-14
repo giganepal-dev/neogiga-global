@@ -50,15 +50,27 @@ class CatalogSearchRebuildService
 
             return ['product_count' => $rows->count(), 'indexed_count' => $indexed, 'facet_count' => $facetCount];
         } catch (\Throwable $e) {
-            DB::table('catalog_index_rebuild_jobs')->where('id', $jobId)->update([
-                'status' => 'failed',
-                'error' => Str::limit($e->getMessage(), 5000),
-                'completed_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $this->markFailed($jobId, $e);
 
             throw $e;
         }
+    }
+
+    public function markFailed(int $jobId, \Throwable $exception): void
+    {
+        if (! Schema::hasTable('catalog_index_rebuild_jobs')) {
+            return;
+        }
+
+        DB::table('catalog_index_rebuild_jobs')
+            ->where('id', $jobId)
+            ->where('status', '!=', 'completed')
+            ->update([
+                'status' => 'failed',
+                'error' => Str::limit($exception->getMessage(), 5000),
+                'completed_at' => now(),
+                'updated_at' => now(),
+            ]);
     }
 
     public function createJob(?int $userId, string $sourceCode = 'jlcpcb_parts_database'): int

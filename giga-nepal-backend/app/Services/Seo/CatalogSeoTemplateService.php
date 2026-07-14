@@ -20,6 +20,12 @@ class CatalogSeoTemplateService
 
     public const DISCLAIMER = 'Advisory only';
 
+    private const GENERATED_SOURCES = [
+        'neogiga_seo_generator',
+        'catalog_seo_template',
+        'elecforest_deterministic_seo_generator',
+    ];
+
     public function __construct(private readonly MarketplaceUrlGenerator $urls) {}
 
     /** @return array<string, mixed> */
@@ -189,7 +195,7 @@ class CatalogSeoTemplateService
             || ($row->active_source ?? null) === 'manual'
             || ($metadata['saved_via'] ?? null) === 'admin.web'
             || (($row->confidence_level ?? null) === 'manual' && $source === '')
-            || ($source !== '' && ! in_array($source, ['neogiga_seo_generator', 'catalog_seo_template'], true));
+            || ($source !== '' && ! in_array($source, self::GENERATED_SOURCES, true));
     }
 
     public function isManualCategory(ProductCategory $category): bool
@@ -494,7 +500,7 @@ class CatalogSeoTemplateService
         return (bool) ($meta['manual_override'] ?? false)
             || (bool) ($meta['locked'] ?? false)
             || ($meta['active_source'] ?? null) === 'manual'
-            || ($source !== '' && ! in_array($source, ['neogiga_seo_generator', 'catalog_seo_template'], true));
+            || ($source !== '' && ! in_array($source, self::GENERATED_SOURCES, true));
     }
 
     private function clean(mixed $value): string

@@ -1,5 +1,5 @@
 [Unit]
-Description=NeoGiga customer spreadsheet import queue worker
+Description=NeoGiga customer and catalog import queue worker
 After=network-online.target postgresql.service
 
 [Service]
@@ -13,8 +13,8 @@ UMask=0002
 Restart=always
 RestartSec=5
 KillSignal=SIGTERM
-TimeoutStopSec=660
-ExecStart=/usr/bin/php /home/neogiga/laravel/current/artisan queue:work database --queue=imports --sleep=3 --tries=3 --timeout=600 --max-time=3600 --memory=512
+TimeoutStopSec=1860
+ExecStart=/usr/bin/php /home/neogiga/laravel/current/artisan queue:work database_imports --queue=imports,catalog-imports --sleep=3 --tries=3 --timeout=1800 --max-time=3600 --memory=512
 StandardOutput=append:/home/neogiga/laravel/current/storage/logs/imports-queue-worker.log
 StandardError=append:/home/neogiga/laravel/current/storage/logs/imports-queue-worker.log
 
