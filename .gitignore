@@ -1,2 +1,37 @@
-# Documentation
-docs/NEOGIGA_UI_RFQ_BOM_AUDIT.md
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+dist/
+build/
+target/
+
+# Dependencies
+vendor/
+node_modules/
+.env
+.env.local
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Laravel specific
+bootstrap/cache/
+storage/logs/
+storage/framework/
+public/storage/
+!.env.example
+```
