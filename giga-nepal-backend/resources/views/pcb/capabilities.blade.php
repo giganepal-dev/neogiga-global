@@ -124,6 +124,38 @@
             </div>
         </div>
 
+        <!-- PCBA / Assembly -->
+        <div class="specs-section"><h2>PCB Assembly (PCBA)</h2>
+            <div class="specs-grid">
+                <div><h3 style="font-size:.95rem;margin:0 0 10px;color:var(--muted)">Assembly types</h3><table class="specs-table">
+                    <thead><tr><th>Type</th><th>Description</th></tr></thead>
+                    <tbody>@foreach($c['pcba']['assembly_types'] as $at)<tr><td style="font-weight:600">{{ $at['label'] }}</td><td style="color:var(--muted)">{{ $at['description'] }}</td></tr>@endforeach</tbody>
+                </table></div>
+                <div><h3 style="font-size:.95rem;margin:0 0 10px;color:var(--muted)">Component sourcing</h3><table class="specs-table">
+                    <tbody>@foreach($c['pcba']['component_sourcing'] as $cs)<tr><td style="font-weight:600">{{ $cs['label'] }}</td><td style="color:var(--muted)">{{ $cs['description'] }}</td></tr>@endforeach</tbody>
+                </table></div>
+            </div>
+            <div class="specs-grid" style="margin-top:12px">
+                <div><h3 style="font-size:.95rem;margin:0 0 10px;color:var(--muted)">Stencil options</h3><table class="specs-table">
+                    <tbody>@foreach($c['pcba']['stencil_options'] as $st)<tr><td style="font-weight:600">{{ $st['label'] }}</td><td style="color:var(--muted)">{{ $st['description'] }}</td></tr>@endforeach</tbody>
+                </table></div>
+                <div><h3 style="font-size:.95rem;margin:0 0 10px;color:var(--muted)">Testing</h3><table class="specs-table">
+                    <thead><tr><th>Type</th><th>Default</th></tr></thead>
+                    <tbody>@foreach($c['pcba']['testing_options'] as $to)<tr><td style="font-weight:600">{{ $to['label'] }}</td><td>@if($to['default'])<span class="cap-chip cap-yes">Standard</span>@else<span class="cap-chip cap-review">Optional</span>@endif</td></tr>@endforeach</tbody>
+                </table></div>
+            </div>
+            <div style="margin-top:12px;color:var(--muted);font-size:.86rem">
+                <b style="color:var(--on)">Min component:</b> {{ $c['pcba']['component_limits']['min_size'] }} |
+                <b style="color:var(--on)">BGA:</b> {{ $c['pcba']['component_limits']['bga_supported'] ? 'Supported' : 'By review' }} |
+                <b style="color:var(--on)">Lead-free:</b> {{ $c['pcba']['component_limits']['lead_free'] ? 'Standard' : 'By request' }}
+            </div>
+            <div style="margin-top:6px;color:var(--muted);font-size:.84rem">
+                <b style="color:var(--on)">Turnaround:</b> {{ $c['pcba']['turnaround']['standard'] }} (standard) |
+                {{ $c['pcba']['turnaround']['express'] }} (express)
+            </div>
+            <div class="notice" style="margin-top:10px;font-size:.84rem">{{ $c['pcba']['component_limits']['note'] }}</div>
+        </div>
+
         <!-- Lead times -->
         <div class="specs-section"><h2>Lead times</h2>
             <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">

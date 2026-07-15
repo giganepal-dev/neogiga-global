@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'NeoGiga PCB — PCB Fabrication & Engineering Platform')</title>
-    <meta name="description" content="@yield('description', 'Instant PCB quote, secure Gerber upload, DFM analysis, engineering review and production tracking. PCB fabrication from NeoGiga.')">
+    <title>@yield('title', 'NeoGiga PCB — PCB Fabrication & PCBA Assembly Platform')</title>
+    <meta name="description" content="@yield('description', 'Instant PCB and PCBA quote. Gerber upload, DFM analysis, SMT assembly, component sourcing, engineering review and production tracking from NeoGiga.')">
     <meta name="robots" content="@yield('robots', 'index,follow')">
     <link rel="canonical" href="{{ url()->current() }}">
     <link rel="icon" type="image/png" sizes="32x32" href="https://neogiga.com/images/brand/neogiga-favicon-32.png">
@@ -106,10 +106,10 @@
     <div class="wrap head-main">
         <a class="brand" href="https://neogiga.com/en" aria-label="NeoGiga home">
             <span class="mark">NG</span>
-            <span>NeoGiga<small>PCB Platform</small></span>
+            <span>NeoGiga<small>PCB & PCBA Platform</small></span>
         </a>
         <div style="display:flex;align-items:center;gap:8px;color:var(--cyan);font-weight:700;font-size:.9rem">
-            ⚡ PCB Fabrication & Assembly
+            ⚡ PCB & PCBA Platform
         </div>
         <div class="head-actions">
             @auth
@@ -152,7 +152,7 @@
     <div class="wrap foot-grid">
         <div>
             <a class="brand" href="https://neogiga.com/en"><span class="mark">NG</span><span>NeoGiga<small>Engineering Marketplace</small></span></a>
-            <p style="color:var(--muted);font-size:.86rem">PCB fabrication, assembly and component sourcing platform. Part of the NeoGiga global engineering marketplace.</p>
+            <p style="color:var(--muted);font-size:.86rem">PCB fabrication, SMT assembly and component sourcing platform. Part of the NeoGiga global engineering marketplace.</p>
         </div>
         <div><h3>PCB Platform</h3><a href="/en">Instant quote</a><a href="/en/capabilities">Capabilities</a><a href="/en/design-rules">Design rules</a><a href="/en/register">Start project</a></div>
         <div><h3>NeoGiga</h3><a href="https://neogiga.com/en/products">Products</a><a href="https://neogiga.com/en/categories">Categories</a><a href="https://neogiga.com/en/brands">Brands</a><a href="https://neogiga.com/en/rfq">Bulk RFQ</a></div>
