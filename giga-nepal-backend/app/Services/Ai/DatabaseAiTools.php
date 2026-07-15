@@ -3,6 +3,9 @@
 namespace App\Services\Ai;
 
 use App\Models\AiBomBuild;
+use App\Models\LmsCodeSample;
+use App\Models\LmsLesson;
+use App\Models\LmsProject;
 use App\Models\Marketplace\Cart;
 use App\Models\Marketplace\InventoryStock;
 use App\Models\Marketplace\MarketplaceProductPrice;
@@ -45,7 +48,7 @@ class DatabaseAiTools implements AiToolsContract
             ->with(['brand:id,name,slug', 'category:id,name,slug', 'images', 'specs', 'specGroups'])
             ->find($productId);
 
-        if (!$product) {
+        if (! $product) {
             return null;
         }
 
@@ -58,6 +61,10 @@ class DatabaseAiTools implements AiToolsContract
 
     public function getRegionalInventory(int $productId, ?int $marketplaceId = null): array
     {
+        if (! Product::query()->published()->whereKey($productId)->exists()) {
+            return ['product_id' => $productId, 'total_available' => 0, 'locations' => []];
+        }
+
         $stocks = InventoryStock::query()
             ->where('product_id', $productId)
             ->when($marketplaceId, fn ($q) => $q->where('marketplace_id', $marketplaceId))
@@ -78,7 +85,7 @@ class DatabaseAiTools implements AiToolsContract
     {
         $product = Product::query()->published()->find($productId);
 
-        if (!$product) {
+        if (! $product) {
             return ['product_id' => $productId, 'price' => null, 'source' => null];
         }
 
@@ -87,7 +94,8 @@ class DatabaseAiTools implements AiToolsContract
 
     public function getPriceTiers(int $productId, ?int $marketplaceId = null): array
     {
-        if (!Schema::hasTable('vendor_product_prices')) {
+        if (! Product::query()->published()->whereKey($productId)->exists()
+            || ! Schema::hasTable('vendor_product_prices')) {
             return ['product_id' => $productId, 'tiers' => []];
         }
 
@@ -105,9 +113,9 @@ class DatabaseAiTools implements AiToolsContract
     public function findAlternativeParts(int $productId, ?int $marketplaceId = null, int $limit = 10): array
     {
         $limit = max(1, min($limit, 25));
-        $product = Product::query()->find($productId);
+        $product = Product::query()->published()->find($productId);
 
-        if (!$product) {
+        if (! $product) {
             return ['product_id' => $productId, 'items' => []];
         }
 
@@ -123,7 +131,7 @@ class DatabaseAiTools implements AiToolsContract
 
     public function createProjectBOM(string $goalDescription, array $lines, ?int $userId = null): array
     {
-        if (!Schema::hasColumn('ai_bom_builds', 'goal_description')) {
+        if (! Schema::hasColumn('ai_bom_builds', 'goal_description')) {
             throw new AiToolUnavailableException(
                 'AI BOM persistence requires the ai_bom_builds schema (pending reconciliation, DB-02).'
             );
@@ -166,7 +174,7 @@ class DatabaseAiTools implements AiToolsContract
             ? null
             : Product::query()->published()->search($requestedPart)->first();
 
-        if (!$product) {
+        if (! $product) {
             return [
                 'requested' => $requestedPart,
                 'quantity' => $quantity,
@@ -191,12 +199,12 @@ class DatabaseAiTools implements AiToolsContract
 
     public function findLMSLessons(string $topic, int $limit = 5): array
     {
-        if (!Schema::hasTable('lms_lessons')) {
+        if (! Schema::hasTable('lms_lessons')) {
             return [];
         }
 
-        return \App\Models\LmsLesson::query()
-            ->where('title', 'like', '%' . $topic . '%')
+        return LmsLesson::query()
+            ->where('title', 'like', '%'.$topic.'%')
             ->limit(max(1, min($limit, 25)))
             ->get()
             ->map(fn ($lesson) => $lesson->only(['id', 'title', 'slug', 'course_id']))
@@ -205,12 +213,12 @@ class DatabaseAiTools implements AiToolsContract
 
     public function findTutorials(string $topic, int $limit = 5): array
     {
-        if (!Schema::hasTable('lms_projects')) {
+        if (! Schema::hasTable('lms_projects')) {
             return [];
         }
 
-        return \App\Models\LmsProject::query()
-            ->where('title', 'like', '%' . $topic . '%')
+        return LmsProject::query()
+            ->where('title', 'like', '%'.$topic.'%')
             ->limit(max(1, min($limit, 25)))
             ->get()
             ->map(fn ($project) => $project->only(['id', 'title', 'slug', 'difficulty_level']))
@@ -219,12 +227,12 @@ class DatabaseAiTools implements AiToolsContract
 
     public function generateSampleCode(string $topic, array $constraints = []): array
     {
-        if (!Schema::hasTable('lms_code_samples')) {
+        if (! Schema::hasTable('lms_code_samples')) {
             return ['items' => []];
         }
 
-        $items = \App\Models\LmsCodeSample::query()
-            ->where('title', 'like', '%' . $topic . '%')
+        $items = LmsCodeSample::query()
+            ->where('title', 'like', '%'.$topic.'%')
             ->limit(5)
             ->get()
             ->map(fn ($sample) => $sample->only(['id', 'title', 'language', 'code', 'lms_lesson_id', 'lms_project_id']))
@@ -246,7 +254,7 @@ class DatabaseAiTools implements AiToolsContract
     public function createCartDraft(int $userId, array $items, ?int $marketplaceId = null): array
     {
         return [
-            'reference' => 'CD-' . strtoupper(Str::random(10)),
+            'reference' => 'CD-'.strtoupper(Str::random(10)),
             'user_id' => $userId,
             'marketplace_id' => $marketplaceId,
             'items' => $items,
@@ -282,7 +290,7 @@ class DatabaseAiTools implements AiToolsContract
     public function createQuoteDraft(int $userId, array $lines): array
     {
         return [
-            'reference' => 'QD-' . strtoupper(Str::random(10)),
+            'reference' => 'QD-'.strtoupper(Str::random(10)),
             'user_id' => $userId,
             'lines' => $lines,
             'status' => 'draft_requires_human_review',
@@ -320,7 +328,7 @@ class DatabaseAiTools implements AiToolsContract
 
     public function handoffToHuman(?int $userId, string $reason, array $context = []): array
     {
-        $reference = 'HH-' . strtoupper(Str::random(10));
+        $reference = 'HH-'.strtoupper(Str::random(10));
 
         // Phase 2 will push into the support/sales queue with full transcript.
         Log::channel('single')->info('AI human-handoff requested', [

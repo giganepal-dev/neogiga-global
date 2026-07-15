@@ -2,6 +2,7 @@
 
 namespace App\Services\CommerceAi;
 
+use App\Models\Marketplace\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -26,7 +27,8 @@ class CommerceAiRecommendationService
             return null;
         }
 
-        $query = DB::table('products')->where('name', 'ilike', '%' . $name . '%');
+        $operator = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+        $query = Product::query()->published()->where('name', $operator, '%'.$name.'%');
 
         if (Schema::hasColumn('products', 'status')) {
             $query->orderByRaw("case when status = 'approved' then 0 else 1 end");

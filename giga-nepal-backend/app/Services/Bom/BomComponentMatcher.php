@@ -25,7 +25,7 @@ class BomComponentMatcher
     }
 
     /**
-     * @param iterable<int, array{line_no?:int, mpn?:?string, manufacturer?:?string}> $lines
+     * @param  iterable<int, array{line_no?:int, mpn?:?string, manufacturer?:?string}>  $lines
      * @return array<int, array{matched_product_id:?int, match_status:string, match_confidence:int, candidates:array}>
      */
     public function match(iterable $lines): array
@@ -111,6 +111,7 @@ class BomComponentMatcher
         $placeholders = implode(',', array_fill(0, count($norms), '?'));
 
         $rows = Product::query()
+            ->published()
             ->leftJoin('product_brands', 'products.brand_id', '=', 'product_brands.id')
             ->whereRaw("{$expr} in ({$placeholders})", $norms)
             ->get([

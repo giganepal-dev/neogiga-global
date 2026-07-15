@@ -23,8 +23,7 @@ class BomImportService
         private readonly BomImportParser $parser,
         private readonly BomComponentMatcher $matcher,
         private readonly RfqService $rfqs,
-    ) {
-    }
+    ) {}
 
     /**
      * Parse + persist + match a raw BOM (CSV text or pasted text).
@@ -112,8 +111,8 @@ class BomImportService
      */
     public function setLineMatch(BomImportLine $line, ?int $productId): BomImportLine
     {
-        if ($productId !== null && ! Product::whereKey($productId)->exists()) {
-            throw new RuntimeException("Product {$productId} does not exist.");
+        if ($productId !== null && ! Product::published()->whereKey($productId)->exists()) {
+            throw new RuntimeException("Product {$productId} is not publicly approved.");
         }
 
         $line->update([
@@ -144,10 +143,12 @@ class BomImportService
         }
 
         $items = $import->lines->map(function (BomImportLine $line) {
-            $product = $line->matched_product_id ? $line->matchedProduct()->first() : null;
+            $product = $line->matched_product_id
+                ? Product::published()->whereKey($line->matched_product_id)->first()
+                : null;
 
             return [
-                'product_id' => $line->matched_product_id,
+                'product_id' => $product?->id,
                 'sku' => $product?->sku,
                 'name' => $product?->name ?: ($line->description ?: ($line->mpn ?: 'Unspecified part')),
                 'quantity' => (float) $line->quantity,

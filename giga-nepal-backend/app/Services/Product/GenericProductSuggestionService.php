@@ -2,6 +2,7 @@
 
 namespace App\Services\Product;
 
+use App\Models\Marketplace\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -17,6 +18,12 @@ class GenericProductSuggestionService
             if ($type) {
                 $query->where('suggestion_type', $type);
             }
+            if (Schema::hasColumn('product_generic_suggestions', 'suggested_product_id')) {
+                $query->where(function ($suggestion) {
+                    $suggestion->whereNull('suggested_product_id')
+                        ->orWhereIn('suggested_product_id', Product::query()->published()->select('products.id'));
+                });
+            }
             $direct = $query->orderBy('priority')->limit(20)->get()->all();
         }
 
@@ -28,7 +35,9 @@ class GenericProductSuggestionService
             return [];
         }
 
-        $query = DB::table('product_related_items')->where('product_id', $productId);
+        $query = DB::table('product_related_items')
+            ->where('product_id', $productId)
+            ->whereIn('related_product_id', Product::query()->published()->select('products.id'));
         if (Schema::hasColumn('product_related_items', 'sort_order')) {
             $query->orderBy('sort_order');
         } else {

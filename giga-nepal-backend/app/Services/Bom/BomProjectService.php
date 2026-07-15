@@ -11,7 +11,7 @@ class BomProjectService
         return BomProject::query()
             ->where('is_public', true)
             ->where('status', 'published')
-            ->with('items')
+            ->with(['items' => fn ($items) => $items->publiclyAvailable()])
             ->latest();
     }
 

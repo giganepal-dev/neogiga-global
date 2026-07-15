@@ -5,15 +5,16 @@ namespace App\Http\Controllers\Api\Order;
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Cart;
+use App\Models\Marketplace\Cart as CartModel;
 use App\Models\Marketplace\InventoryStock;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Models\Marketplace\Cart as CartModel;
+use App\Models\Promotion\Coupon;
 use App\Services\Affiliate\AffiliateService;
+use App\Services\Marketing\OrderNotificationService;
 use App\Services\Payments\PaymentMethodPolicyService;
 use App\Services\Promotion\CouponService;
 use App\Services\Promotion\GiftCardService;
-use App\Services\Marketing\OrderNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,8 +29,7 @@ class OrderController extends Controller
         private readonly CouponService $coupons,
         private readonly GiftCardService $giftCards,
         private readonly PaymentMethodPolicyService $paymentMethods,
-    ) {
-    }
+    ) {}
 
     public function checkout(Request $request): JsonResponse
     {
@@ -44,25 +44,29 @@ class OrderController extends Controller
         $cart = Cart::query()
             ->active()
             ->where('user_id', $request->user()->id)
-            ->with(['items.product'])
+            ->with(['items.product' => fn ($products) => $products->published()])
             ->latest()
             ->first();
 
-        if (!$cart || $cart->items->isEmpty()) {
+        if (! $cart || $cart->items->isEmpty()) {
             return $this->error('Active cart is empty.', 422);
+        }
+
+        if ($cart->items->contains(fn ($item) => $item->product === null)) {
+            return $this->error('Cart contains a product that is no longer publicly available.', 422);
         }
 
         $this->paymentMethods->assertAllowed($validated['payment_method'], $cart->marketplace_id, $cart->currency_code);
 
         foreach ($cart->items as $item) {
-            if (!$this->hasStock($item->product_id, $cart->marketplace_id, $item->quantity, $item->variant_id)) {
+            if (! $this->hasStock($item->product_id, $cart->marketplace_id, $item->quantity, $item->variant_id)) {
                 return $this->error("Insufficient stock for {$item->product?->name}.", 422);
             }
         }
 
         return DB::transaction(function () use ($cart, $request, $validated) {
             $cart->calculateTotal();
-            $cart->refresh()->load(['items.product']);
+            $cart->refresh()->load(['items.product' => fn ($products) => $products->published()]);
 
             // Server-side promotions (re-validated from cart metadata; never trusted from client).
             $promo = $this->resolvePromotions($cart, $request->user()->id);
@@ -70,7 +74,7 @@ class OrderController extends Controller
             $orderGrand = max(0.0, round((float) $cart->grand_total - $promo['coupon_discount'], 2));
 
             $order = Order::create([
-                'order_number' => 'NG-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6)),
+                'order_number' => 'NG-'.now()->format('YmdHis').'-'.strtoupper(Str::random(6)),
                 'user_id' => $request->user()->id,
                 'marketplace_id' => $cart->marketplace_id,
                 'status' => 'pending',
@@ -119,12 +123,12 @@ class OrderController extends Controller
 
             // Redeem gift card up to the amount due (row-locked, server-side).
             $amountDue = (float) $order->grand_total;
-            if (!empty($promo['gift_card_code'])) {
+            if (! empty($promo['gift_card_code'])) {
                 try {
                     $gc = $this->giftCards->redeem($promo['gift_card_code'], $amountDue, $request->user()->id, $order->id);
                     if (($gc['applied'] ?? 0) > 0) {
                         Payment::create([
-                            'payment_number' => 'PAY-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6)),
+                            'payment_number' => 'PAY-'.now()->format('YmdHis').'-'.strtoupper(Str::random(6)),
                             'order_id' => $order->id,
                             'marketplace_id' => $order->marketplace_id,
                             'payment_method' => 'gift_card',
@@ -150,7 +154,7 @@ class OrderController extends Controller
             // Remaining balance due -> pending payment via the chosen method.
             if ($amountDue > 0) {
                 Payment::create([
-                    'payment_number' => 'PAY-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(6)),
+                    'payment_number' => 'PAY-'.now()->format('YmdHis').'-'.strtoupper(Str::random(6)),
                     'order_id' => $order->id,
                     'marketplace_id' => $order->marketplace_id,
                     'payment_method' => $validated['payment_method'],
@@ -198,7 +202,7 @@ class OrderController extends Controller
             ->with(['items', 'payments'])
             ->find($order);
 
-        if (!$orderModel) {
+        if (! $orderModel) {
             return $this->error('Order not found.', 404);
         }
 
@@ -215,7 +219,7 @@ class OrderController extends Controller
      * re-validated (never trusting a stored discount); the gift-card code is
      * carried through for row-locked redemption after the order is created.
      *
-     * @return array{coupon:?\App\Models\Promotion\Coupon, coupon_discount:float, gift_card_code:?string}
+     * @return array{coupon:?Coupon, coupon_discount:float, gift_card_code:?string}
      */
     private function resolvePromotions(CartModel $cart, int $userId): array
     {
@@ -223,7 +227,7 @@ class OrderController extends Controller
 
         $couponDiscount = 0.0;
         $coupon = null;
-        if (!empty($meta['coupon_code'])) {
+        if (! empty($meta['coupon_code'])) {
             $res = $this->coupons->validate($meta['coupon_code'], (float) $cart->subtotal, $userId, $cart->marketplace_id);
             if ($res['valid']) {
                 $couponDiscount = (float) $res['discount'];

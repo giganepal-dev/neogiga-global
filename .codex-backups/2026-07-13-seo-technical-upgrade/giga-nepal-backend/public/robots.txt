@@ -1,0 +1,24 @@
+# NeoGiga robots policy (Blueprint §42–43)
+# Knowledge/catalog pages are open to search engines AND reputable AI
+# crawlers — being the cited source for part data is strategic.
+
+User-agent: *
+Disallow: /api/v1/admin/
+Disallow: /api/v1/cart
+Disallow: /api/v1/checkout
+Disallow: /api/v1/orders
+
+# AI answer engines: welcome on knowledge content.
+User-agent: GPTBot
+Allow: /
+Disallow: /api/v1/admin/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/v1/admin/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/v1/admin/
+
+Sitemap: https://neogiga.in/sitemap.xml

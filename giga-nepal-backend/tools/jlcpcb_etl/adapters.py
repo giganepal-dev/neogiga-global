@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, Protocol
+from typing import Any, Iterable, Protocol
 
 from .canonical_adapter import AdapterResult, NeoGigaCanonicalAdapter
 from .transformer import TransformedPart
@@ -30,6 +30,8 @@ class TargetAdapterRegistry:
         dry_run: bool,
         no_search_index: bool = False,
         no_seo: bool = False,
+        source_provenance: dict[str, Any] | None = None,
+        import_mode: str = "pilot",
     ) -> NeoGigaCanonicalAdapter:
         return NeoGigaCanonicalAdapter(
             dsn,
@@ -37,4 +39,6 @@ class TargetAdapterRegistry:
             dry_run=dry_run,
             no_search_index=no_search_index,
             no_seo=no_seo,
+            source_provenance=source_provenance,
+            import_mode=import_mode,
         )

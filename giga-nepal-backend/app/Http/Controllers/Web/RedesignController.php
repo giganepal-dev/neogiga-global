@@ -64,7 +64,7 @@ class RedesignController extends Controller
         $stats = [
             'marketplaces' => $this->count('marketplaces'),
             'countries' => $this->count('countries'),
-            'products' => $this->count('products'),
+            'products' => $this->publishedProductCount(),
             'categories' => $this->count('product_categories'),
         ];
 
@@ -75,6 +75,15 @@ class RedesignController extends Controller
     {
         try {
             return Schema::hasTable($table) ? (int) DB::table($table)->count() : 0;
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function publishedProductCount(): int
+    {
+        try {
+            return (int) app(ProductVisibilityService::class)->publicProducts()->count();
         } catch (\Throwable) {
             return 0;
         }

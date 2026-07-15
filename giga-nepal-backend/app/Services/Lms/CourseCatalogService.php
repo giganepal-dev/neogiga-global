@@ -2,9 +2,10 @@
 
 namespace App\Services\Lms;
 
+use App\Models\Marketplace\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CourseCatalogService
@@ -15,7 +16,7 @@ class CourseCatalogService
             ->leftJoin('lms_course_categories as cat', 'cat.id', '=', 'c.lms_course_category_id')
             ->select('c.*', 'cat.name as category_name', 'cat.slug as category_slug')
             ->when(($filters['status'] ?? null), fn ($q, $status) => $q->where('c.status', $status))
-            ->when(!($filters['include_drafts'] ?? false), fn ($q) => $q->where('c.status', 'published'))
+            ->when(! ($filters['include_drafts'] ?? false), fn ($q) => $q->where('c.status', 'published'))
             ->when(($filters['level'] ?? null), fn ($q, $level) => $q->where('c.level', $level))
             ->when(($filters['category'] ?? null), fn ($q, $category) => $q->where('cat.slug', $category))
             ->when(($filters['q'] ?? null), fn ($q, $term) => $q->where(function ($inner) use ($term) {
@@ -32,7 +33,7 @@ class CourseCatalogService
             ->leftJoin('lms_courses as c', 'c.id', '=', 'p.lms_course_id')
             ->select('p.*', 'c.title as course_title', 'c.slug as course_slug')
             ->when(($filters['status'] ?? null), fn ($q, $status) => $q->where('p.status', $status))
-            ->when(!($filters['include_drafts'] ?? false), fn ($q) => $q->where('p.status', 'published'))
+            ->when(! ($filters['include_drafts'] ?? false), fn ($q) => $q->where('p.status', 'published'))
             ->when(($filters['difficulty'] ?? null), fn ($q, $level) => $q->where('p.difficulty_level', $level))
             ->when(($filters['course'] ?? null), fn ($q, $course) => $q->where('c.slug', $course))
             ->when(($filters['q'] ?? null), fn ($q, $term) => $q->where(function ($inner) use ($term) {
@@ -52,7 +53,7 @@ class CourseCatalogService
             ->where('p.status', 'published')
             ->first();
 
-        if (!$project) {
+        if (! $project) {
             return null;
         }
 
@@ -68,13 +69,17 @@ class CourseCatalogService
     public function projectComponents(string $slug): Collection
     {
         $project = DB::table('lms_projects')->where('slug', $slug)->where('status', 'published')->first();
-        if (!$project) {
-            return new Collection();
+        if (! $project) {
+            return new Collection;
         }
 
         return DB::table('lms_project_components as c')
             ->leftJoin('products as p', 'p.id', '=', 'c.product_id')
             ->where('c.lms_project_id', $project->id)
+            ->where(function ($component) {
+                $component->whereNull('c.product_id')
+                    ->orWhereIn('c.product_id', Product::query()->published()->select('products.id'));
+            })
             ->select('c.*', 'p.name as product_name', 'p.slug as product_slug', 'p.sku as product_sku')
             ->orderBy('c.sort_order')
             ->get();
@@ -83,8 +88,8 @@ class CourseCatalogService
     public function projectCodeSamples(string $slug): Collection
     {
         $project = DB::table('lms_projects')->where('slug', $slug)->where('status', 'published')->first();
-        if (!$project) {
-            return new Collection();
+        if (! $project) {
+            return new Collection;
         }
 
         return DB::table('lms_code_samples')
@@ -110,6 +115,7 @@ class CourseCatalogService
 
         return $modules->map(function ($module) use ($lessons) {
             $module->lessons = $lessons->get($module->id, collect())->values();
+
             return $module;
         });
     }
@@ -117,6 +123,7 @@ class CourseCatalogService
     public function createCourse(array $data): int
     {
         $title = $data['title'];
+
         return DB::table('lms_courses')->insertGetId([
             'lms_course_category_id' => $data['lms_course_category_id'] ?? null,
             'marketplace_id' => $data['marketplace_id'] ?? null,
@@ -144,6 +151,7 @@ class CourseCatalogService
     public function createProject(array $data): int
     {
         $title = $data['title'];
+
         return DB::table('lms_projects')->insertGetId([
             'lms_course_id' => $data['lms_course_id'] ?? null,
             'lms_skill_level_id' => $data['lms_skill_level_id'] ?? null,
@@ -167,6 +175,7 @@ class CourseCatalogService
     public function createLesson(array $data): int
     {
         $title = $data['title'];
+
         return DB::table('lms_lessons')->insertGetId([
             'lms_course_id' => $data['lms_course_id'] ?? null,
             'lms_project_id' => $data['lms_project_id'] ?? null,

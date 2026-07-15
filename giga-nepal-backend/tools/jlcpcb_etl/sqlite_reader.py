@@ -18,7 +18,10 @@ def stream_source_rows(
     mapping: SourceMapping,
     limit: int | None = None,
     offset: int = 0,
+    after_source_id: str | int | None = None,
 ) -> Iterator[dict[str, object]]:
+    if offset and after_source_id is not None:
+        raise ValueError("offset and after_source_id are mutually exclusive")
     conn = sqlite3.connect(f"file:{sqlite_path}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     try:
@@ -39,13 +42,21 @@ def stream_source_rows(
             if {"id", "name"}.issubset(manufacturer_columns):
                 select_sql += ', mf.name AS __manufacturer_name'
                 joins += ' LEFT JOIN "manufacturers" mf ON c."manufacturer_id" = mf."id"'
-        order_sql = f' ORDER BY c."{mapping.source_id}"' if mapping.source_id in parts_columns else ""
-        sql = f'SELECT {select_sql} FROM "{mapping.parts_table}" c{joins}{order_sql}'
-        params: list[int] = []
+        if mapping.source_id not in parts_columns:
+            raise RuntimeError(f"Stable source ID column is missing: {mapping.source_id}")
+        source_id_sql = f'c."{mapping.source_id}"'
+        where_sql = f" WHERE {source_id_sql} > ?" if after_source_id is not None else ""
+        order_sql = f" ORDER BY {source_id_sql}"
+        sql = f'SELECT {select_sql} FROM "{mapping.parts_table}" c{joins}{where_sql}{order_sql}'
+        params: list[str | int] = []
+        if after_source_id is not None:
+            params.append(after_source_id)
         if limit is not None:
             sql += " LIMIT ?"
             params.append(limit)
         if offset:
+            if limit is None:
+                sql += " LIMIT -1"
             sql += " OFFSET ?"
             params.append(offset)
         for row in conn.execute(sql, params):

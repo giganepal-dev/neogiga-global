@@ -18,9 +18,9 @@ class RebuildApprovedImportSearchIndexJob implements ShouldQueue
 
     public const QUEUE = 'catalog-imports';
 
-    public int $timeout = 1800;
+    public int $timeout = 3300;
 
-    public bool $failOnTimeout = true;
+    public bool $failOnTimeout = false;
 
     public function __construct(public int $jobId, public string $sourceCode = 'jlcpcb_parts_database')
     {

@@ -1,0 +1,10 @@
+## feature/jlcpcb-existing-data-import
+ M giga-nepal-backend/tools/jlcpcb_etl/output/sqlite_schema_report.json
+ M giga-nepal-backend/tools/jlcpcb_etl/output/validation_report.json
+ M giga-nepal-backend/tools/jlcpcb_etl/output/validation_report.md
+?? .codex-backups/
+?? giga-nepal-backend/.codex-backups/
+?? giga-nepal-backend/storage/backups/
+?? giga-nepal-backend/storage/reports/
+?? giga-nepal-backend/tools/jlcpcb_etl/__pycache__/
+?? giga-nepal-backend/tools/jlcpcb_etl/tests/__pycache__/

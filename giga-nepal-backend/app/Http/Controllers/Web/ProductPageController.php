@@ -24,8 +24,6 @@ use Illuminate\View\View;
  */
 class ProductPageController extends Controller
 {
-    private const VISIBLE = ['active', 'approved', 'published'];
-
     public function index(Request $request): View
     {
         $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
@@ -50,6 +48,7 @@ class ProductPageController extends Controller
             'category',
             'images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1),
         ])
+            ->published()
             ->withSum(['inventoryStocks as regional_available' => function ($query) use ($countryId) {
                 if ($countryId <= 0) {
                     return;
@@ -60,8 +59,6 @@ class ProductPageController extends Controller
                     $query->whereIn('warehouse_id', DB::table('warehouses')->where('country_id', $countryId)->select('id'));
                 }
             }], 'quantity_available')
-            ->whereIn('status', self::VISIBLE)
-            ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->when($category, fn ($query) => $query->where('category_id', $category->id))
             ->when($brandId > 0, fn ($query) => $query->where('brand_id', $brandId))
             ->when($manufacturer !== '', fn ($query) => $query->where(function ($w) use ($manufacturer) {
@@ -141,17 +138,15 @@ class ProductPageController extends Controller
         }
 
         $product = Product::with($relations)
+            ->published()
             ->where('slug', $slug)
-            ->whereIn('status', self::VISIBLE)
-            ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->firstOrFail();
 
         $related = Product::with([
             'brand',
             'images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1),
         ])
-            ->whereIn('status', self::VISIBLE)
-            ->when(Schema::hasColumn('products', 'visibility_status'), fn ($q) => $q->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
+            ->published()
             ->where('id', '!=', $product->id)
             ->when($product->category_id, fn ($q) => $q->where('category_id', $product->category_id))
             ->limit(6)
@@ -187,9 +182,8 @@ class ProductPageController extends Controller
 
     public function storeReview(Request $request, string $slug): RedirectResponse
     {
-        $product = Product::where('slug', $slug)
-            ->whereIn('status', self::VISIBLE)
-            ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('visibility_status', ['public', 'marketplace_only', 'quote_only']))
+        $product = Product::published()
+            ->where('slug', $slug)
             ->firstOrFail();
 
         if (! Schema::hasTable('product_reviews')) {
@@ -347,6 +341,7 @@ class ProductPageController extends Controller
         return DB::table('product_related_items as r')
             ->leftJoin('products as p', 'p.id', '=', 'r.related_product_id')
             ->where('r.product_id', $productId)
+            ->whereIn('r.related_product_id', Product::query()->published()->select('products.id'))
             ->select('r.*', 'p.name', 'p.slug', 'p.sku', 'p.mpn')
             ->limit(8)
             ->get();

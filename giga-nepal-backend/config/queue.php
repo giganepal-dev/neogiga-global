@@ -48,7 +48,7 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_IMPORT_QUEUE', 'imports'),
-            'retry_after' => (int) env('DB_IMPORT_QUEUE_RETRY_AFTER', 1860),
+            'retry_after' => (int) env('DB_IMPORT_QUEUE_RETRY_AFTER', 7260),
             'after_commit' => false,
         ],
 

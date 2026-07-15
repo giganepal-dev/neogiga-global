@@ -20,6 +20,8 @@ class ProductReviewController extends Controller
 {
     public function index(int $product): JsonResponse
     {
+        abort_unless(Product::published()->whereKey($product)->exists(), 404);
+
         if (! Schema::hasTable('product_reviews')) {
             return response()->json(['data' => ['reviews' => [], 'count' => 0, 'avg_rating' => 0]]);
         }

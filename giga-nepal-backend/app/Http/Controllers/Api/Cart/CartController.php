@@ -19,7 +19,7 @@ class CartController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        return $this->success($this->activeCart($request)->load(['items.product', 'items.variant']));
+        return $this->success($this->publicCart($this->activeCart($request)));
     }
 
     public function addItem(Request $request): JsonResponse
@@ -33,7 +33,7 @@ class CartController extends Controller
 
         $product = Product::query()->published()->find($validated['product_id']);
 
-        if (!$product) {
+        if (! $product) {
             return $this->error('Product is not available for purchase.', 422);
         }
 
@@ -54,7 +54,7 @@ class CartController extends Controller
                 ->first();
 
             $newQuantity = ($existing?->quantity ?? 0) + $validated['quantity'];
-            if (!$this->hasStock($validated['product_id'], $marketplaceId, $newQuantity, $variantId)) {
+            if (! $this->hasStock($validated['product_id'], $marketplaceId, $newQuantity, $variantId)) {
                 return $this->error('Requested quantity is not available in regional inventory.', 422);
             }
 
@@ -79,7 +79,7 @@ class CartController extends Controller
 
             $cart->calculateTotal();
 
-            return $this->success($cart->fresh()->load(['items.product', 'items.variant']), 201);
+            return $this->success($this->publicCart($cart->fresh()), 201);
         });
     }
 
@@ -97,18 +97,22 @@ class CartController extends Controller
         $cart = $this->activeCart($request);
         $cartItem = $cart->items()->whereKey($item)->first();
 
-        if (!$cartItem) {
+        if (! $cartItem) {
             return $this->error('Cart item not found.', 404);
         }
 
-        if (!$this->hasStock($cartItem->product_id, $cart->marketplace_id, $validated['quantity'], $cartItem->variant_id)) {
+        if (! Product::published()->whereKey($cartItem->product_id)->exists()) {
+            return $this->error('Cart product is no longer publicly available.', 422);
+        }
+
+        if (! $this->hasStock($cartItem->product_id, $cart->marketplace_id, $validated['quantity'], $cartItem->variant_id)) {
             return $this->error('Requested quantity is not available in regional inventory.', 422);
         }
 
         $cartItem->forceFill(['quantity' => $validated['quantity']])->save();
         $cart->calculateTotal();
 
-        return $this->success($cart->fresh()->load(['items.product', 'items.variant']));
+        return $this->success($this->publicCart($cart->fresh()));
     }
 
     public function removeItem(Request $request, int $item): JsonResponse
@@ -116,13 +120,13 @@ class CartController extends Controller
         $cart = $this->activeCart($request);
         $deleted = $cart->items()->whereKey($item)->delete();
 
-        if (!$deleted) {
+        if (! $deleted) {
             return $this->error('Cart item not found.', 404);
         }
 
         $cart->calculateTotal();
 
-        return $this->success($cart->fresh()->load(['items.product', 'items.variant']));
+        return $this->success($this->publicCart($cart->fresh()));
     }
 
     private function activeCart(Request $request, ?int $marketplaceId = null, ?string $currencyCode = null): Cart
@@ -141,6 +145,18 @@ class CartController extends Controller
                 'expires_at' => now()->addDays(30),
             ],
         );
+    }
+
+    private function publicCart(Cart $cart): Cart
+    {
+        $cart->calculateTotal();
+        $cart->refresh()->load([
+            'items.product' => fn ($products) => $products->published(),
+            'items.variant',
+        ]);
+        $cart->setRelation('items', $cart->items->filter(fn ($item) => $item->product !== null)->values());
+
+        return $cart;
     }
 
     private function defaultMarketplaceId(): ?int

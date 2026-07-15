@@ -16,7 +16,7 @@ use RuntimeException;
 
 class CatalogSeoTemplateService
 {
-    public const TEMPLATE_VERSION = 'approved-marketplace-patterns-2026-07-v1';
+    public const TEMPLATE_VERSION = 'approved-marketplace-patterns-2026-07-v2';
 
     public const DISCLAIMER = 'Advisory only';
 
@@ -36,9 +36,9 @@ class CatalogSeoTemplateService
         $title = "Buy {$name} on NeoGiga {$context['name']} | {$context['site_suffix']}";
 
         if ($context['kind'] === 'global') {
-            $description = "Buy {$name} on NeoGiga Engineering Marketplace. Low MOQ, Quality Products, B2B Sourcing from Regional Warehouse.";
+            $description = "Explore {$name} technical data and MPN details on NeoGiga Global. Request RFQ sourcing and quote-only supplier availability estimates.";
         } else {
-            $description = "Buy {$name} on NeoGiga {$context['name']} Engineering Marketplace. Low MOQ, Quality Products, B2B Sourcing from {$context['fulfilment']}.";
+            $description = "Explore {$name} technical data and MPN details on NeoGiga {$context['name']}. Request RFQ sourcing and quote-only supplier availability estimates.";
         }
 
         $indexability = $this->productIndexability($product, $marketplace);
@@ -60,9 +60,9 @@ class CatalogSeoTemplateService
         $title = "Buy {$name} on NeoGiga {$context['name']} | {$context['site_suffix']}";
 
         if ($context['kind'] === 'global') {
-            $description = "Buy {$name} on NeoGiga Engineering Marketplace. Explore Quality Products, Low MOQ and B2B Sourcing from Regional Warehouse.";
+            $description = "Browse {$name} technical products and MPNs on NeoGiga Global. Request RFQ sourcing and quote-only supplier availability estimates.";
         } else {
-            $description = "Buy {$name} on NeoGiga {$context['name']} Engineering Marketplace. Explore Quality Products, Low MOQ and B2B Sourcing from {$context['fulfilment']}.";
+            $description = "Browse {$name} technical products and MPNs on NeoGiga {$context['name']}. Request RFQ sourcing and quote-only supplier availability estimates.";
         }
 
         $indexability = $this->categoryIndexability($category, $marketplace);
@@ -82,7 +82,7 @@ class CatalogSeoTemplateService
         $name = $this->clean($brand->name ?? 'Brand');
         $context = $this->context($marketplace);
         $title = "Buy {$name} Products on NeoGiga {$context['name']} | {$context['site_suffix']}";
-        $description = "Buy {$name} products on NeoGiga {$context['name']} Engineering Marketplace. Explore technical products, Low MOQ, RFQ and B2B sourcing from {$context['fulfilment']}.";
+        $description = "Browse {$name} products, technical data and MPNs on NeoGiga {$context['name']}. Request RFQ sourcing and quote-only supplier availability estimates.";
         $indexability = $this->brandIndexability($brand, $marketplace);
 
         return $this->payload(
@@ -100,7 +100,7 @@ class CatalogSeoTemplateService
         $name = $this->clean($manufacturer->name ?? 'Manufacturer');
         $context = $this->context($marketplace);
         $title = "Buy {$name} Parts on NeoGiga {$context['name']} | {$context['site_suffix']}";
-        $description = "Find {$name} manufacturer parts on NeoGiga {$context['name']} Engineering Marketplace with MPN search, RFQ, technical references and B2B sourcing from {$context['fulfilment']}.";
+        $description = "Find {$name} parts, technical data and MPNs on NeoGiga {$context['name']}. Request RFQ sourcing and quote-only supplier availability estimates.";
         $active = (bool) ($manufacturer->is_active ?? true);
         $indexability = $this->marketplaceBlocked($marketplace)
             ?: ($active

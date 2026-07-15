@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\Bom;
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Bom\BomBuildCustomRequest;
-use App\Models\Bom\BomProject;
 use App\Services\Bom\BomAvailabilityService;
 use App\Services\Bom\BomBuilderService;
 use App\Services\Bom\BomCartService;
@@ -48,7 +47,7 @@ class BomProjectController extends Controller
 
         return $this->success([
             'project' => $project->only(['id', 'title', 'slug']),
-            'items' => $project->items()->orderBy('priority')->get(),
+            'items' => $project->items()->publiclyAvailable()->orderBy('priority')->get(),
             'availability' => $availability->forProject($project),
         ]);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog;
 
+use App\Services\Product\ProductPublicationGate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +10,6 @@ use Illuminate\Support\Facades\Schema;
 
 class CatalogSearchService
 {
-    private const PUBLIC_STATUSES = ['active', 'approved', 'published'];
     private const INDEXED_SOURCE = 'jlcpcb_parts_database';
 
     public function applyPublicFilters(Builder $query, array $filters): Builder
@@ -71,20 +71,21 @@ class CatalogSearchService
 
         $q = trim((string) ($filters['q'] ?? ''));
 
-        return DB::table('product_facet_values as pfv')
+        $query = DB::table('product_facet_values as pfv')
             ->join('product_search_documents as psd', function ($join) {
                 $join->on('psd.product_id', '=', 'pfv.product_id')
                     ->whereColumn('psd.source_code', 'pfv.source_code');
             })
             ->join('products as p', 'p.id', '=', 'pfv.product_id')
             ->where('pfv.source_code', self::INDEXED_SOURCE)
-            ->whereIn('p.status', self::PUBLIC_STATUSES)
-            ->when(Schema::hasColumn('products', 'visibility_status'), fn ($query) => $query->whereIn('p.visibility_status', ['public', 'marketplace_only', 'quote_only']))
             ->whereIn('pfv.facet_name', ['manufacturer', 'category', 'stock', 'package', 'quality_band'])
             ->when($q !== '', function ($query) use ($q) {
                 $like = $this->likeTerm($q);
                 $query->where('psd.searchable_text', $this->likeOperator(), $like);
-            })
+            });
+        app(ProductPublicationGate::class)->apply($query, 'p');
+
+        return $query
             ->select('pfv.facet_name', 'pfv.facet_value', DB::raw('count(distinct pfv.product_id) as product_count'))
             ->groupBy('pfv.facet_name', 'pfv.facet_value')
             ->orderBy('pfv.facet_name')
@@ -100,16 +101,24 @@ class CatalogSearchService
             return ['documents' => 0, 'facets' => 0, 'approved_documents' => 0];
         }
 
+        $documents = DB::table('product_search_documents as psd')
+            ->join('products as p', 'p.id', '=', 'psd.product_id');
+        app(ProductPublicationGate::class)->apply($documents, 'p');
+
+        $facets = DB::table('product_facet_values as pfv')
+            ->join('products as p', 'p.id', '=', 'pfv.product_id');
+        app(ProductPublicationGate::class)->apply($facets, 'p');
+
         return [
-            'documents' => DB::table('product_search_documents')->count(),
-            'facets' => DB::table('product_facet_values')->count(),
-            'searchable_documents' => DB::table('product_search_documents')
-                ->where('source_code', self::INDEXED_SOURCE)
-                ->count(),
-            'approved_documents' => DB::table('product_search_documents')
-                ->where('source_code', self::INDEXED_SOURCE)
-                ->where('review_status', 'approved')
-                ->count(),
+            'documents' => (clone $documents)->count('psd.id'),
+            'facets' => (clone $facets)->count('pfv.id'),
+            'searchable_documents' => (clone $documents)
+                ->where('psd.source_code', self::INDEXED_SOURCE)
+                ->count('psd.id'),
+            'approved_documents' => (clone $documents)
+                ->where('psd.source_code', self::INDEXED_SOURCE)
+                ->where('psd.review_status', 'approved')
+                ->count('psd.id'),
         ];
     }
 

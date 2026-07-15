@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api\Inventory;
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\InventoryStock;
+use App\Models\Marketplace\Product;
 use App\Services\Inventory\ReservationService;
+use App\Services\Product\ProductVisibilityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,8 +15,10 @@ class InventoryController extends Controller
 {
     use ApiResponses;
 
-    public function byProduct(int $product): JsonResponse
+    public function byProduct(int $product, ProductVisibilityService $visibility): JsonResponse
     {
+        abort_unless($visibility->resolve($product), 404);
+
         $stocks = InventoryStock::query()
             ->where('product_id', $product)
             ->with('warehouse:id,name,code')
@@ -27,24 +31,26 @@ class InventoryController extends Controller
         ]);
     }
 
-    public function byMarketplace(Request $request, int $marketplace): JsonResponse
+    public function byMarketplace(Request $request, int $marketplace, ProductVisibilityService $visibility): JsonResponse
     {
         $validated = $request->validate(['per_page' => ['sometimes', 'integer', 'min:1', 'max:100']]);
 
         $stocks = InventoryStock::query()
             ->where('marketplace_id', $marketplace)
+            ->whereIn('product_id', $visibility->publicProducts()->select('id'))
             ->with('warehouse:id,name,code')
             ->paginate($validated['per_page'] ?? 50, ['id', 'product_id', 'variant_id', 'warehouse_id', 'marketplace_id', 'quantity_available', 'quantity_reserved']);
 
         return $this->success($stocks);
     }
 
-    public function byWarehouse(Request $request, int $warehouse): JsonResponse
+    public function byWarehouse(Request $request, int $warehouse, ProductVisibilityService $visibility): JsonResponse
     {
         $validated = $request->validate(['per_page' => ['sometimes', 'integer', 'min:1', 'max:100']]);
 
         $stocks = InventoryStock::query()
             ->where('warehouse_id', $warehouse)
+            ->whereIn('product_id', $visibility->publicProducts()->select('id'))
             ->paginate($validated['per_page'] ?? 50, ['id', 'product_id', 'variant_id', 'warehouse_id', 'quantity_available', 'quantity_reserved']);
 
         return $this->success($stocks);
@@ -63,6 +69,10 @@ class InventoryController extends Controller
             'idempotency_key' => ['nullable', 'string', 'max:190'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
+
+        if (! Product::published()->whereKey($data['product_id'])->exists()) {
+            return $this->error('Product is not publicly approved for reservation.', 422);
+        }
 
         try {
             return $this->success($reservations->reserve($data), 201);

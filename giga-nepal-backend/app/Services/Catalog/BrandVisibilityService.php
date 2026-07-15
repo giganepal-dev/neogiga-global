@@ -10,13 +10,15 @@ use Illuminate\Support\Facades\Schema;
 
 class BrandVisibilityService
 {
+    private const CACHE_VERSION = 'v2';
+
     /** @return Collection<int, ProductBrand> */
     public function visibleFor(?Marketplace $marketplace, bool $menuOnly = false, ?string $locale = null, ?string $host = null): Collection
     {
         $locale ??= app()->getLocale() ?: 'en';
         $host ??= request()->getHost();
         $version = (string) Cache::get('catalog:brand-version', '1');
-        $identity = sha1(implode('|', [$host, $locale, $marketplace?->id ?: 'global', $menuOnly ? 'menu' : 'directory', $this->dataFingerprint()]));
+        $identity = sha1(implode('|', [self::CACHE_VERSION, $host, $locale, $marketplace?->id ?: 'global', $menuOnly ? 'menu' : 'directory', $this->dataFingerprint()]));
 
         return Cache::remember("catalog:brands:{$version}:{$identity}", now()->addMinutes(10), function () use ($marketplace, $menuOnly) {
             return ProductBrand::query()
@@ -47,7 +49,7 @@ class BrandVisibilityService
         $locale ??= app()->getLocale() ?: 'en';
         $host ??= request()->getHost();
         $version = (string) Cache::get('catalog:brand-version', '1');
-        $key = 'catalog:brand:'.$version.':'.sha1(implode('|', [$host, $locale, $marketplace?->id ?: 'global', strtolower($slug), $this->dataFingerprint()]));
+        $key = 'catalog:brand:'.$version.':'.sha1(implode('|', [self::CACHE_VERSION, $host, $locale, $marketplace?->id ?: 'global', strtolower($slug), $this->dataFingerprint()]));
 
         return Cache::remember($key, now()->addMinutes(10), fn () => $this->visibleFor($marketplace, false, $locale, $host)->firstWhere('slug', $slug));
     }

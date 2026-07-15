@@ -12,6 +12,7 @@ use App\Services\MarketplaceResolverService;
 use App\Services\Product\ProductVisibilityService;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -28,7 +29,7 @@ class SitemapController extends Controller
 {
     private const CHUNK_SIZE = 10000;
 
-    private const CACHE_VERSION = 'v2';
+    private const CACHE_VERSION = 'v3';
 
     public function __invoke(): Response
     {
@@ -145,32 +146,16 @@ class SitemapController extends Controller
         }
 
         if ($section === 'manufacturers') {
-            $manufacturers = Schema::hasTable('manufacturers')
-                ? DB::table('manufacturers')
-                    ->where('is_active', true)
-                    ->whereNotNull('slug')
-                    ->where('slug', '!=', '')
-                    ->orderBy('id')
-                    ->forPage($page, self::CHUNK_SIZE)
-                    ->get(['slug', 'updated_at'])
-                : app(ProductVisibilityService::class)
-                    ->publicProducts()
-                    ->whereNotNull('manufacturer_name')
-                    ->where('manufacturer_name', '!=', '')
-                    ->select('manufacturer_name')
-                    ->distinct()
-                    ->orderBy('manufacturer_name')
-                    ->forPage($page, self::CHUNK_SIZE)
-                    ->get();
-
-            return $manufacturers->map(fn (object $manufacturer) => [
-                'loc' => $this->canonicalUrl(
-                    $marketplace,
-                    '/en/manufacturer/'.($manufacturer->slug ?? Str::slug($manufacturer->manufacturer_name))
-                ),
-                'lastmod' => $this->lastmod($manufacturer->updated_at ?? null),
-                'priority' => '0.7',
-            ])->all();
+            return $this->manufacturerIdentities()
+                ->forPage($page, self::CHUNK_SIZE)
+                ->map(fn (object $manufacturer) => [
+                    'loc' => $this->canonicalUrl(
+                        $marketplace,
+                        '/en/manufacturer/'.$manufacturer->slug
+                    ),
+                    'lastmod' => $this->lastmod($manufacturer->updated_at),
+                    'priority' => '0.7',
+                ])->values()->all();
         }
 
         return app(ProductVisibilityService::class)
@@ -239,23 +224,86 @@ class SitemapController extends Controller
                 $state['products_count'] = (clone $products)->count();
                 $state['products_lastmod'] = $this->lastmod((clone $products)->max('updated_at'));
 
-                if (Schema::hasTable('manufacturers')) {
-                    $manufacturers = DB::table('manufacturers')->where('is_active', true)->whereNotNull('slug')->where('slug', '!=', '');
-                    $state['manufacturers_count'] = (clone $manufacturers)->count();
-                    $state['manufacturers_lastmod'] = $this->lastmod((clone $manufacturers)->max('updated_at'));
-                } else {
-                    $manufacturerProducts = app(ProductVisibilityService::class)->publicProducts()
-                        ->whereNotNull('manufacturer_name')
-                        ->where('manufacturer_name', '!=', '');
-                    $state['manufacturers_count'] = (clone $manufacturerProducts)->distinct()->count('manufacturer_name');
-                    $state['manufacturers_lastmod'] = $this->lastmod((clone $manufacturerProducts)->max('updated_at'));
-                }
+                $manufacturers = $this->manufacturerIdentities();
+                $state['manufacturers_count'] = $manufacturers->count();
+                $state['manufacturers_lastmod'] = $this->lastmod($manufacturers->max('updated_at'));
             }
         } catch (Throwable) {
             // The pages sitemap remains available before database provisioning.
         }
 
         return $state;
+    }
+
+    /**
+     * Merge persisted manufacturer identities with source-backed virtual
+     * identities from public products. Every product query passes through the
+     * shared publication gate; inactive persisted identities continue to win
+     * identity ownership so a product name cannot silently republish one.
+     *
+     * @return Collection<int, object{slug:string,updated_at:mixed}>
+     */
+    private function manufacturerIdentities(): Collection
+    {
+        $identities = collect();
+        $knownNames = [];
+        $knownSlugs = [];
+
+        if (Schema::hasTable('manufacturers')) {
+            $persisted = DB::table('manufacturers')
+                ->whereNotNull('name')
+                ->where('name', '!=', '')
+                ->orderBy('id')
+                ->get(['name', 'slug', 'is_active', 'updated_at']);
+
+            foreach ($persisted as $manufacturer) {
+                $knownNames[$this->manufacturerIdentityKey($manufacturer->name)] = true;
+                $slug = strtolower(trim((string) $manufacturer->slug));
+                if ($slug !== '') {
+                    $knownSlugs[$slug] = true;
+                }
+                if (! (bool) $manufacturer->is_active || $slug === '') {
+                    continue;
+                }
+
+                $identities->put($slug, (object) [
+                    'slug' => $slug,
+                    'updated_at' => $manufacturer->updated_at,
+                ]);
+            }
+        }
+
+        $virtual = app(ProductVisibilityService::class)
+            ->publicProducts()
+            ->whereNotNull('products.manufacturer_name')
+            ->where('products.manufacturer_name', '!=', '')
+            ->select('products.manufacturer_name', DB::raw('max(products.updated_at) as updated_at'))
+            ->groupBy('products.manufacturer_name')
+            ->orderBy('products.manufacturer_name')
+            ->get();
+
+        foreach ($virtual as $manufacturer) {
+            $name = trim((string) $manufacturer->manufacturer_name);
+            $slug = strtolower(Str::slug($name));
+            if ($name === '' || $slug === ''
+                || isset($knownNames[$this->manufacturerIdentityKey($name)])
+                || isset($knownSlugs[$slug])
+                || $identities->has($slug)) {
+                continue;
+            }
+
+            $identities->put($slug, (object) [
+                'slug' => $slug,
+                'updated_at' => $manufacturer->updated_at,
+            ]);
+        }
+
+        return $identities->sortKeys()->values();
+    }
+
+    private function manufacturerIdentityKey(mixed $name): string
+    {
+        return Str::lower(trim(preg_replace('/\s+/u', ' ', (string) $name) ?? ''));
     }
 
     private function marketplace(): ?Marketplace
