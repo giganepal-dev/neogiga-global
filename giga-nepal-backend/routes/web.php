@@ -33,7 +33,6 @@ use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\SsoController;
 use App\Services\CommerceAi\CommerceAiService;
 use App\Services\Lms\CourseCatalogService;
-use App\Http\Middleware\EnsurePcbDomain;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
@@ -49,7 +48,7 @@ Route::domain('admin.neogiga.com')->get('/', fn () => redirect('/admin'));
 
 // PCB Platform — pcb.neogiga.com
 if (config('pcb.enabled', true)) {
-            Route::middleware(EnsurePcbDomain::class)->group(function () {
+            Route::domain(config('pcb.domain', 'pcb.neogiga.com'))->group(function () {
         Route::get('/', fn () => redirect('/en'))->name('pcb.root');
         Route::get('/en', [PcbPortalController::class, 'landing'])->name('pcb.home');
         Route::get('/en/login', [PcbPortalAuthController::class, 'login'])->name('pcb.login');

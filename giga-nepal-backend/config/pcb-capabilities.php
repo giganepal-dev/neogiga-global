@@ -107,6 +107,45 @@ return [
         'quality_rate' => '99%+ (target)',
     ],
 
+    'pcba' => [
+        'assembly_types' => [
+            ['key' => 'smt_top', 'label' => 'SMT — Top side only', 'description' => 'Surface mount on top side. Standard for single-sided designs.'],
+            ['key' => 'smt_bottom', 'label' => 'SMT — Bottom side only', 'description' => 'Surface mount on bottom side.'],
+            ['key' => 'smt_both', 'label' => 'SMT — Both sides', 'description' => 'Surface mount on both top and bottom. Requires two-pass reflow.'],
+            ['key' => 'through_hole', 'label' => 'Through-hole only', 'description' => 'Manual or wave soldered through-hole components.'],
+            ['key' => 'mixed', 'label' => 'Mixed SMT + Through-hole', 'description' => 'Combined SMT and through-hole assembly. Most common for production.'],
+        ],
+        'component_sourcing' => [
+            ['key' => 'customer_supplied', 'label' => 'Customer supplied', 'description' => 'You provide all components. We assemble.'],
+            ['key' => 'neogiga_sourced', 'label' => 'NeoGiga sourced', 'description' => 'We source all components from the NeoGiga catalog and global distributors.'],
+            ['key' => 'mixed', 'label' => 'Mixed', 'description' => 'You provide critical/rare parts. We source the rest.'],
+        ],
+        'stencil_options' => [
+            ['key' => 'framed', 'label' => 'Framed stencil', 'description' => 'Laser-cut 304 HTA steel, 0.10-0.20mm thickness. For production runs.'],
+            ['key' => 'frameless', 'label' => 'Frameless stencil', 'description' => 'Prototype-grade, same precision. Cost-effective for small batches.'],
+            ['key' => 'nano', 'label' => 'Nano stencil', 'description' => 'Ultra-fine pitch, 0201 and micro-BGA capable. ±0.003mm precision.'],
+        ],
+        'testing_options' => [
+            ['key' => 'visual', 'label' => 'Visual inspection', 'description' => 'Standard visual check. Included free.', 'default' => true],
+            ['key' => 'aoi', 'label' => 'AOI', 'description' => 'Automated Optical Inspection. Checks solder joints, placement, polarity.', 'default' => false],
+            ['key' => 'xray', 'label' => 'X-Ray', 'description' => 'BGA and QFN joint inspection. Required for hidden joints.', 'default' => false],
+            ['key' => 'functional', 'label' => 'Functional test', 'description' => 'Custom test jig and powered testing. By engineering review.', 'default' => false],
+        ],
+        'component_limits' => [
+            'min_size' => '0201 (imperial)',
+            'max_bga_pitch' => '0.4mm',
+            'max_qfp_pitch' => '0.4mm',
+            'max_connectors' => '200 pins',
+            'bga_supported' => true,
+            'lead_free' => true,
+            'note' => 'Customer-supplied components must be in original packaging with moisture protection.',
+        ],
+        'turnaround' => [
+            'standard' => '3-5 days after PCB fabrication',
+            'express' => '24-48 hours after PCB fabrication',
+        ],
+    ],
+
     'lead_times' => [
         'standard' => ['min_days' => 5, 'max_days' => 15, 'description' => 'Standard fabrication'],
         'fast' => ['min_days' => 3, 'max_days' => 10, 'description' => 'Accelerated processing'],

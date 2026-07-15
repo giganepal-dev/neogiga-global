@@ -43,13 +43,13 @@
     <div class="wrap">
         <div class="hero-grid">
             <div class="hero-copy">
-                <div class="eyebrow">PCB Fabrication & Assembly Platform</div>
-                <h1 id="pcb-hero-title">From Gerber to<br>production.</h1>
-                <p>Instant pricing for PCB fabrication. Secure private file storage. Engineering-reviewed quotes. Production tracking. Part of the NeoGiga global engineering marketplace.</p>
+                <div class="eyebrow">PCB Fabrication & PCBA Assembly Platform</div>
+                <h1 id="pcb-hero-title">From Gerber to<br>assembled boards.</h1>
+                <p>Instant pricing for PCB fabrication and SMT assembly. Secure private file storage. Engineering-reviewed quotes. Component sourcing. Production tracking. Part of the NeoGiga global engineering marketplace.</p>
                 <div class="hero-stats">
-                    <div class="hero-stat"><b>1-64</b><span>Layer count</span></div>
-                    <div class="hero-stat"><b>24h</b><span>Fastest turnaround</span></div>
-                    <div class="hero-stat"><b>&lt;24h</b><span>Engineering review</span></div>
+                    <div class="hero-stat"><b>1-64</b><span>PCB layers</span></div>
+                    <div class="hero-stat"><b>SMT+TH</b><span>Assembly</span></div>
+                    <div class="hero-stat"><b>24h</b><span>Fastest turn</span></div>
                 </div>
                 <div class="hero-actions">
                     <a class="btn btn-primary" href="/en/register">Start PCB project</a>
@@ -80,6 +80,20 @@
                         <label class="check" style="flex:1"><input type="checkbox" id="q_impedance" onchange="calculateQuote()"> Controlled impedance</label>
                         <label class="check" style="flex:1"><input type="checkbox" id="q_etest" onchange="calculateQuote()"> Electrical test</label>
                     </div>
+                    <details style="margin-bottom:12px"><summary style="color:var(--cyan);font-size:.82rem;font-weight:700;cursor:pointer">+ PCBA Assembly options</summary>
+                        <div style="margin-top:10px;display:grid;gap:10px">
+                            <div class="quote-row">
+                                <div class="field"><label>Assembly</label><select class="control" id="q_assembly" onchange="calculateQuote()"><option value="none">PCB only</option><option value="smt_top">SMT top side</option><option value="smt_both">SMT both sides</option><option value="mixed">Mixed SMT+TH</option></select></div>
+                                <div class="field"><label>SMT pads</label><input class="control" id="q_smt_pads" type="number" value="50" min="0" max="10000" onchange="calculateQuote()"></div>
+                                <div class="field"><label>TH joints</label><input class="control" id="q_th_joints" type="number" value="0" min="0" max="5000" onchange="calculateQuote()"></div>
+                            </div>
+                            <div style="display:flex;gap:16px;font-size:.78rem;color:var(--muted);flex-wrap:wrap">
+                                <label class="check"><input type="checkbox" id="q_stencil" onchange="calculateQuote()" checked> Stencil</label>
+                                <label class="check"><input type="checkbox" id="q_bga" onchange="calculateQuote()"> BGA assembly</label>
+                                <label class="check"><input type="checkbox" id="q_coating" onchange="calculateQuote()"> Conformal coating</label>
+                            </div>
+                        </div>
+                    </details>
                 </form>
                 <div id="quote-result" style="display:none">
                     <table class="table" style="margin-bottom:12px"><tbody>
@@ -89,6 +103,8 @@
                         <tr><td style="color:var(--faint)">Fabrication total</td><td id="qr_fab" style="text-align:right;font-weight:600">—</td></tr>
                         <tr><td style="color:var(--faint)">Setup</td><td id="qr_setup" style="text-align:right">—</td></tr>
                         <tr><td style="color:var(--faint)">Engineering</td><td id="qr_eng" style="text-align:right">—</td></tr>
+                        <tr style="display:none" id="qr_assembly_row"><td style="color:var(--cyan)">Assembly (PCBA)</td><td id="qr_assembly" style="text-align:right;color:var(--cyan);font-weight:600">—</td></tr>
+                        <tr style="display:none" id="qr_stencil_row"><td style="color:var(--faint)">Stencil</td><td id="qr_stencil" style="text-align:right">—</td></tr>
                     </tbody></table>
                     <div class="quote-result">
                         <div><small>Estimated total (USD)</small><div class="price" id="quote-price">—</div></div>
@@ -126,6 +142,12 @@
                     production_speed: els('q_speed').value,
                     impedance_control: els('q_impedance').checked,
                     electrical_test: els('q_etest').checked,
+                    assembly_service: els('q_assembly').value,
+                    smt_pads_per_board: parseInt(els('q_smt_pads').value) || 0,
+                    through_hole_joints_per_board: parseInt(els('q_th_joints').value) || 0,
+                    stencil_service: els('q_stencil').checked,
+                    bga_assembly: els('q_bga').checked,
+                    conformal_coating: els('q_coating').checked,
                 })
             });
 
@@ -138,6 +160,13 @@
                     setText('qr_fab', '$' + d.fabrication_total.toFixed(2));
                     setText('qr_setup', '$' + d.setup_fee.toFixed(2));
                     setText('qr_eng', '$' + (d.engineering_fee || 0).toFixed(2));
+                    // Assembly
+                    const asmRow = els('qr_assembly_row'), stnRow = els('qr_stencil_row');
+                    if (d.assembly_cost > 0) {
+                        asmRow.style.display = ''; setText('qr_assembly', '$' + d.assembly_cost.toFixed(2));
+                        if (d.stencil_cost > 0) { stnRow.style.display = ''; setText('qr_stencil', '$' + d.stencil_cost.toFixed(2)); }
+                        else stnRow.style.display = 'none';
+                    } else { asmRow.style.display = 'none'; stnRow.style.display = 'none'; }
                     setText('quote-price', '$' + d.estimated_total.toFixed(2));
                     setText('quote-lead', d.lead_time_days + ' days');
                     return;
@@ -156,9 +185,9 @@
         <div class="section-head"><div><div class="eyebrow">Manufacturing</div><h2 id="capabilities-title">PCB fabrication capabilities</h2><p>Board types, materials, finishes and specifications confirmed during engineering review.</p></div><a class="btn btn-ghost" href="/en/capabilities">Full specs</a></div>
         <div class="grid cap-grid">
             <article class="cap-card"><div class="cap-icon">R</div><b>Rigid PCB</b><p>FR-4, 1-64 layers. Standard and high-Tg laminates. 0.4-5.0mm thickness.</p></article>
+            <article class="cap-card"><div class="cap-icon">A</div><b>SMT Assembly</b><p>Full SMT and through-hole PCBA. BGA, 0201, lead-free. 24h turnaround.</p></article>
             <article class="cap-card"><div class="cap-icon">F</div><b>Flex & Rigid-Flex</b><p>Polyimide flexible circuits. Rigid-flex multilayer with stiffeners.</p></article>
-            <article class="cap-card"><div class="cap-icon">M</div><b>Metal Core</b><p>Aluminum and copper-core PCBs for thermal management. Single-layer.</p></article>
-            <article class="cap-card"><div class="cap-icon">H</div><b>High-Frequency</b><p>Rogers, PTFE and ceramic substrates. Controlled impedance ±10%.</p></article>
+            <article class="cap-card"><div class="cap-icon">S</div><b>Component Sourcing</b><p>NeoGiga catalog + global distributor network. MPN matching. BOM management.</p></article>
         </div>
     </div>
 </section>

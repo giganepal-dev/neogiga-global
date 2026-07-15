@@ -45,6 +45,10 @@ class PcbQuoteConfiguration extends Model
         'currency', 'requires_engineering_quote', 'engineering_notes',
         'submitted_at', 'quoted_at', 'quote_valid_until',
         'customer_rejected_at', 'customer_notes',
+        'assembly_service', 'smt_pads_per_board',
+        'through_hole_joints_per_board', 'stencil_service', 'stencil_type',
+        'conformal_coating', 'bga_assembly', 'component_sourcing',
+        'assembly_testing', 'assembly_lead_time_days',
     ];
 
     protected $casts = [
@@ -72,6 +76,12 @@ class PcbQuoteConfiguration extends Model
         'quoted_at' => 'datetime',
         'quote_valid_until' => 'date',
         'customer_rejected_at' => 'datetime',
+        'smt_pads_per_board' => 'integer',
+        'through_hole_joints_per_board' => 'integer',
+        'stencil_service' => 'boolean',
+        'conformal_coating' => 'boolean',
+        'bga_assembly' => 'boolean',
+        'assembly_lead_time_days' => 'integer',
     ];
 
     public function project(): BelongsTo

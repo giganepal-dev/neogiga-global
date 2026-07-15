@@ -25,6 +25,14 @@ class PcbPublicQuoteController extends Controller
             'production_speed' => ['nullable', 'in:standard,fast,express'],
             'impedance_control' => ['nullable', 'boolean'],
             'electrical_test' => ['nullable', 'boolean'],
+            'assembly_service' => ['nullable', 'string'],
+            'smt_pads_per_board' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'through_hole_joints_per_board' => ['nullable', 'integer', 'min:0', 'max:5000'],
+            'stencil_service' => ['nullable', 'boolean'],
+            'bga_assembly' => ['nullable', 'boolean'],
+            'conformal_coating' => ['nullable', 'boolean'],
+            'component_sourcing' => ['nullable', 'string'],
+            'assembly_testing' => ['nullable', 'string'],
         ]);
 
         $result = $pricing->calculate($data);

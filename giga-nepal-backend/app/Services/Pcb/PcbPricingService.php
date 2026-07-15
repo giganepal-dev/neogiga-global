@@ -87,6 +87,18 @@ class PcbPricingService
 
         $estimatedTotal = round($fabricationTotal + $setupFee + $engineeringFee + $impedanceAdd + $testAdd, 2);
 
+        // PCBA (assembly) pricing
+        $assemblyCost = 0;
+        $stencilCost = 0;
+        $assemblyService = (string) ($specs['assembly_service'] ?? 'none');
+        if ($assemblyService !== 'none') {
+            $pcba = $this->calculateAssembly($specs, $quantity);
+            $assemblyCost = $pcba['assembly_total'];
+            $stencilCost = $pcba['stencil_cost'];
+            $estimatedTotal += $assemblyCost + $stencilCost;
+            $leadTimeDays += $pcba['assembly_lead_days'];
+        }
+
         return [
             'tier' => $tier->label,
             'board_area_cm2' => $areaCm2,
@@ -98,9 +110,12 @@ class PcbPricingService
             'engineering_fee' => $engineeringFee,
             'impedance_adder' => $impedanceAdd,
             'electrical_test_adder' => $testAdd,
+            'assembly_cost' => $assemblyCost,
+            'stencil_cost' => $stencilCost,
             'estimated_total' => $estimatedTotal,
             'lead_time_days' => $leadTimeDays,
             'currency' => 'USD',
+            'assembly_service' => $assemblyService,
             'surcharges_applied' => array_filter([
                 'surface_finish' => $finishMult !== 1.0 ? $finish : null,
                 'color' => $colorMult !== 1.0 ? $color : null,
@@ -151,6 +166,69 @@ class PcbPricingService
             'currency' => 'USD',
             'surcharges_applied' => [],
             'note' => 'Estimate only. Final price confirmed after engineering review of Gerber files.',
+        ];
+    }
+
+    private function calculateAssembly(array $specs, int $boardQty): array
+    {
+        $service = (string) ($specs['assembly_service'] ?? 'smt_top');
+        $smtPads = (int) ($specs['smt_pads_per_board'] ?? 50);
+        $thJoints = (int) ($specs['through_hole_joints_per_board'] ?? 0);
+        $stencil = (bool) ($specs['stencil_service'] ?? true);
+        $bga = (bool) ($specs['bga_assembly'] ?? false);
+        $coating = (bool) ($specs['conformal_coating'] ?? false);
+        $sourcing = (string) ($specs['component_sourcing'] ?? 'customer_supplied');
+        $testType = (string) ($specs['assembly_testing'] ?? 'visual');
+
+        // SMT cost: $0.005/joint for standard
+        $sides = match ($service) {
+            'smt_both' => 2, 'mixed' => 2,
+            'smt_top', 'smt_bottom', 'through_hole' => 1,
+            default => 0,
+        };
+        $smtCost = round($smtPads * 0.005 * $sides * $boardQty, 2);
+
+        // Through-hole cost: $0.03/joint
+        $thCost = round($thJoints * 0.03 * $boardQty, 2);
+
+        // Setup fee per side
+        $setupCost = $sides > 0 ? ($sides * 10.00) : 0;
+
+        // Stencil: $25 framed, $15 frameless
+        $stencilCost = $stencil ? 25.00 : 0;
+
+        // BGA adder: $0.01/pad surcharge
+        $bgaCost = $bga ? round($smtPads * 0.005 * $boardQty, 2) : 0;
+
+        // Conformal coating: $0.02/cm² estimate
+        $coatingCost = $coating ? round(($specs['width_mm'] ?? 100) * ($specs['height_mm'] ?? 100) / 100 * 0.02 * $boardQty, 2) : 0;
+
+        // Component sourcing: $3/part fee for NeoGiga-sourced
+        $sourcingCost = $sourcing === 'neogiga_sourced' ? round(($smtPads + $thJoints) * 0.50 * $boardQty, 2)
+            : ($sourcing === 'mixed' ? round(($smtPads + $thJoints) * 0.25 * $boardQty, 2) : 0);
+
+        // Testing
+        $testCost = match ($testType) {
+            'aoi' => 5.00, 'xray' => 25.00, 'functional' => 50.00,
+            default => 0, // visual = free
+        };
+
+        $assemblyTotal = round($smtCost + $thCost + $setupCost + $bgaCost + $coatingCost + $sourcingCost + $testCost, 2);
+        $leadDays = $service !== 'none' ? ($bga ? 5 : 3) : 0;
+
+        return [
+            'assembly_total' => $assemblyTotal,
+            'stencil_cost' => $stencilCost,
+            'assembly_lead_days' => $leadDays,
+            'breakdown' => [
+                'smt_placement' => $smtCost,
+                'through_hole' => $thCost,
+                'setup' => $setupCost,
+                'bga_adder' => $bgaCost,
+                'conformal_coating' => $coatingCost,
+                'component_sourcing' => $sourcingCost,
+                'testing' => $testCost,
+            ],
         ];
     }
 
