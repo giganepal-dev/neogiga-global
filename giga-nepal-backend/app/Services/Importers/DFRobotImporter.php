@@ -7,6 +7,36 @@ use Illuminate\Support\Str;
 
 class DFRobotImporter extends BaseImporter
 {
+    public function getSupplierSlug(): string
+    {
+        return 'dfrobot';
+    }
+
+    protected function getSupplierName(): string
+    {
+        return 'DFRobot';
+    }
+
+    protected function getSupplierTier(): string
+    {
+        return '1';
+    }
+
+    protected function getSupplierDescription(): ?string
+    {
+        return null;
+    }
+
+    protected function getSupplierWebsite(): ?string
+    {
+        return null;
+    }
+
+    protected function getSupplierCountry(): ?string
+    {
+        return null;
+    }
+
     protected string $supplierCode = 'dfrobot';
     protected string $supplierName = 'DFRobot';
     protected int $supplierTier = 1;
@@ -30,7 +60,7 @@ class DFRobotImporter extends BaseImporter
         return [['name' => 'DFRobot', 'slug' => 'dfrobot', 'description' => 'Robotics, education, industrial sensors']];
     }
 
-    public function fetchProducts(int $page = 1, int $perPage = 100): array
+    public function fetchProducts(array $options = []): \Generator
     {
         $products = [];
         $response = Http::timeout(60)->get("{$this->apiUrl}/products", ['page' => $page, 'per_page' => $perPage]);
@@ -39,10 +69,10 @@ class DFRobotImporter extends BaseImporter
                 $products[] = $this->normalizeProduct($product);
             }
         }
-        return $products;
+        yield from $products;
     }
 
-    protected function normalizeProduct(array $product): array
+    public function normalizeProduct(array $product): array
     {
         return [
             'external_id' => $product['id'],

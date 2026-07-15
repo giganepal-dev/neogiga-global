@@ -284,7 +284,8 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
             Route::get('/categories', fn (string $localePrefix) => app(CategoryController::class)->index())->name('localized.categories.index');
             Route::get('/categories/{slug}', fn (string $localePrefix, string $slug) => app(CategoryController::class)->show($slug))->where('slug', '[a-z0-9\-]+')->name('localized.categories.show');
             Route::get('/manufacturer/{slug}', fn (string $localePrefix, string $slug) => app(SeoLandingController::class)->manufacturer($slug))->where('slug', '[a-z0-9\-]+')->name('localized.manufacturer.show');
-            Route::get('/brands', fn (string $localePrefix) => redirect('/categories'))->name('localized.brands.index');
+            Route::get('/brands', fn (string $localePrefix) => app(\App\Http\Controllers\Web\BrandController::class)->index(app('request')))->name('localized.brands.index');
+            Route::get('/brands/{slug}', fn (string $localePrefix, string $slug) => app(\App\Http\Controllers\Web\BrandController::class)->show($slug))->where('slug', '[a-z0-9\-]+')->name('localized.brands.show');
             Route::get('/lms', fn (string $localePrefix) => app(LmsPageController::class)->index(app(\App\Services\Lms\CourseCatalogService::class)))->name('localized.lms.index');
             Route::get('/projects', fn (string $localePrefix) => redirect('/learn'))->name('localized.projects.index');
             Route::get('/rfq', fn (string $localePrefix, \Illuminate\Http\Request $request) => app(\App\Http\Controllers\Web\RfqPageController::class)->create($request))->name('localized.rfq.create');

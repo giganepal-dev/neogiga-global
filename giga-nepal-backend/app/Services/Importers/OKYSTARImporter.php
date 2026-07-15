@@ -7,6 +7,36 @@ use Illuminate\Support\Str;
 
 class OKYSTARImporter extends BaseImporter
 {
+    public function getSupplierSlug(): string
+    {
+        return 'okystar';
+    }
+
+    protected function getSupplierName(): string
+    {
+        return 'OKYSTAR';
+    }
+
+    protected function getSupplierTier(): string
+    {
+        return '1';
+    }
+
+    protected function getSupplierDescription(): ?string
+    {
+        return null;
+    }
+
+    protected function getSupplierWebsite(): ?string
+    {
+        return null;
+    }
+
+    protected function getSupplierCountry(): ?string
+    {
+        return null;
+    }
+
     protected string $supplierCode = 'okystar';
     protected string $supplierName = 'OKYSTAR';
     protected int $supplierTier = 1;
@@ -40,7 +70,7 @@ class OKYSTARImporter extends BaseImporter
         ];
     }
 
-    public function fetchProducts(int $page = 1, int $perPage = 100): array
+    public function fetchProducts(array $options = []): \Generator
     {
         $products = [];
         $response = Http::timeout(60)->get("{$this->apiUrl}/products", ['page' => $page, 'per_page' => $perPage]);
@@ -50,10 +80,10 @@ class OKYSTARImporter extends BaseImporter
                 $products[] = $this->normalizeProduct($product);
             }
         }
-        return $products;
+        yield from $products;
     }
 
-    protected function normalizeProduct(array $product): array
+    public function normalizeProduct(array $product): array
     {
         return [
             'external_id' => $product['id'],
