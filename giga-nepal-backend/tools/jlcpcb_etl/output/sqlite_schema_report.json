@@ -1,5 +1,5 @@
 {
-  "sqlite_path": "/private/var/folders/6_/ybcn7jfd6txbf9dbdbd6mhb40000gn/T/pytest-of-ashokdhamala/pytest-16/test_dry_run_does_not_write_ca0/parts.sqlite3",
+  "sqlite_path": "/private/var/folders/6_/ybcn7jfd6txbf9dbdbd6mhb40000gn/T/pytest-of-ashokdhamala/pytest-0/test_dry_run_does_not_write_ca0/parts.sqlite3",
   "tables": {
     "components": {
       "columns": [

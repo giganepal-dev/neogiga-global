@@ -8,6 +8,7 @@ use App\Models\Marketplace\ProductCategory;
 use App\Services\Catalog\BrandVisibilityService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\MarketplaceUrlGenerator;
+use App\Services\Product\ProductPublicationGate;
 use App\Services\Seo\CatalogSeoTemplateService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -96,6 +97,7 @@ class BrandPageController extends Controller
             ->where('stock.quantity_available', '>', 0)
             ->orderByDesc('available_quantity')
             ->limit(20);
+        app(ProductPublicationGate::class)->apply($query, 'product');
 
         if (Schema::hasTable('countries') && Schema::hasColumn('inventory_stocks', 'country_id')) {
             return $query
@@ -131,6 +133,7 @@ class BrandPageController extends Controller
             ->select('document.title', 'document.document_type', 'document.file_url', 'document.source_url', 'product.name as product_name', 'product.slug as product_slug')
             ->orderByDesc('document.id')
             ->limit(12);
+        app(ProductPublicationGate::class)->apply($query, 'product');
 
         if (Schema::hasColumn('product_documents', 'is_active')) {
             $query->where('document.is_active', true);

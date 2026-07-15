@@ -4,11 +4,41 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from .transformer import TransformedPart
+
+
+@dataclass
+class ValidationAccumulator:
+    """Streaming validation counters for imports too large to retain in memory."""
+
+    total_rows_processed: int = 0
+    total_offers: int = 0
+    records_without_category: int = 0
+    records_without_datasheet: int = 0
+    records_without_package: int = 0
+    category_counts: Counter[str] = field(default_factory=Counter)
+    manufacturer_counts: Counter[str] = field(default_factory=Counter)
+
+    def add(self, part: TransformedPart) -> None:
+        self.total_rows_processed += 1
+        self.total_offers += int(bool(part.offer))
+        self.records_without_category += int(part.category.is_unknown)
+        self.records_without_datasheet += int(not part.datasheet_url)
+        self.records_without_package += int(not part.package)
+        self.category_counts[part.category.path] += 1
+        self.manufacturer_counts[part.manufacturer.normalized_name] += 1
+
+    @classmethod
+    def from_parts(cls, parts: list[TransformedPart]) -> "ValidationAccumulator":
+        accumulator = cls()
+        for part in parts:
+            accumulator.add(part)
+        return accumulator
 
 
 def build_validation_report(
@@ -19,9 +49,11 @@ def build_validation_report(
     processed: list[TransformedPart],
     skipped: Counter[str],
     started_at: str,
+    accumulator: ValidationAccumulator | None = None,
 ) -> dict[str, Any]:
-    category_counts = Counter(part.category.path for part in processed)
-    manufacturer_counts = Counter(part.manufacturer.normalized_name for part in processed)
+    metrics = accumulator or ValidationAccumulator.from_parts(processed)
+    category_counts = metrics.category_counts
+    manufacturer_counts = metrics.manufacturer_counts
     detected_mapping = (schema_report or {}).get("detected_mapping") or {}
     source_table = detected_mapping.get("parts_table")
     source_table_count = (
@@ -42,19 +74,19 @@ def build_validation_report(
         "total_source_rows": source_table_count
         if source_table_count is not None
         else sum(t.get("row_count", 0) for t in (schema_report or {}).get("tables", {}).values()),
-        "total_rows_processed": len(processed),
+        "total_rows_processed": metrics.total_rows_processed,
         "total_manufacturers_created_or_matched": len(manufacturer_counts),
         "total_categories_created_or_matched": len(category_counts),
         "total_parts_inserted": 0,
         "total_parts_updated": 0,
-        "total_offers_inserted_or_updated": sum(1 for part in processed if part.offer),
+        "total_offers_inserted_or_updated": metrics.total_offers,
         "total_skipped": sum(skipped.values()),
         "skipped_grouped_by_reason": dict(skipped),
         "parts_per_category": dict(category_counts),
         "parts_per_manufacturer": dict(manufacturer_counts),
-        "records_without_category": sum(1 for part in processed if part.category.is_unknown),
-        "records_without_datasheet": sum(1 for part in processed if not part.datasheet_url),
-        "records_without_package": sum(1 for part in processed if not part.package),
+        "records_without_category": metrics.records_without_category,
+        "records_without_datasheet": metrics.records_without_datasheet,
+        "records_without_package": metrics.records_without_package,
         "attribute_normalization_success_count": 0,
         "attribute_normalization_failure_count": 0,
         "duplicate_mpn_conflicts": 0,

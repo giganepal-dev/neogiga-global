@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Product;
 
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
+use App\Models\Marketplace\Product;
 use App\Services\Inventory\RegionStockService;
 use App\Services\Product\GenericProductSuggestionService;
 use App\Services\Product\ProductVisibilityService;
@@ -22,24 +23,28 @@ class ProductCommerceController extends Controller
         if (is_string($attributes)) {
             $attributes = json_decode($attributes, true) ?: [];
         }
+
         return $this->success($attributes);
     }
 
     public function specs(string|int $product, ProductVisibilityService $visibility): JsonResponse
     {
         $record = $this->productOrFail($product, $visibility);
+
         return $this->success(Schema::hasTable('product_specs') ? DB::table('product_specs')->where('product_id', $record->id)->orderBy('sort_order')->get() : []);
     }
 
     public function variants(string|int $product, ProductVisibilityService $visibility): JsonResponse
     {
         $record = $this->productOrFail($product, $visibility);
+
         return $this->success(Schema::hasTable('product_variants') ? DB::table('product_variants')->where('product_id', $record->id)->where('is_active', true)->orderBy('sort_order')->get() : []);
     }
 
     public function datasheets(string|int $product, ProductVisibilityService $visibility): JsonResponse
     {
         $record = $this->productOrFail($product, $visibility);
+
         return $this->success($this->documents($record->id, 'product_datasheets'));
     }
 
@@ -65,15 +70,23 @@ class ProductCommerceController extends Controller
     public function genericSuggestions(string|int $product, ProductVisibilityService $visibility, GenericProductSuggestionService $suggestions): JsonResponse
     {
         $record = $this->productOrFail($product, $visibility);
+
         return $this->success($suggestions->forProduct($record->id));
     }
 
     public function compatible(string|int $product, ProductVisibilityService $visibility): JsonResponse
     {
         $record = $this->productOrFail($product, $visibility);
+
         return $this->success(
             Schema::hasTable('product_compatibility') && Schema::hasColumn('product_compatibility', 'product_id')
-                ? DB::table('product_compatibility')->where('product_id', $record->id)->get()
+                ? DB::table('product_compatibility')
+                    ->where('product_id', $record->id)
+                    ->when(
+                        Schema::hasColumn('product_compatibility', 'compatible_product_id'),
+                        fn ($query) => $query->whereIn('compatible_product_id', Product::query()->published()->select('products.id'))
+                    )
+                    ->get()
                 : []
         );
     }
@@ -81,30 +94,35 @@ class ProductCommerceController extends Controller
     public function related(string|int $product, ProductVisibilityService $visibility, GenericProductSuggestionService $suggestions): JsonResponse
     {
         $record = $this->productOrFail($product, $visibility);
+
         return $this->success($suggestions->forProduct($record->id, 'related'));
     }
 
     public function accessories(string|int $product, ProductVisibilityService $visibility, GenericProductSuggestionService $suggestions): JsonResponse
     {
         $record = $this->productOrFail($product, $visibility);
+
         return $this->success($suggestions->forProduct($record->id, 'accessory'));
     }
 
     public function stock(string|int $product, ProductVisibilityService $visibility, RegionStockService $stock): JsonResponse
     {
         $record = $this->productOrFail($product, $visibility);
+
         return $this->success($stock->publicStock($record->id));
     }
 
     public function stockMarketplace(string|int $product, int $marketplace, ProductVisibilityService $visibility, RegionStockService $stock): JsonResponse
     {
         $record = $this->productOrFail($product, $visibility);
+
         return $this->success($stock->publicStock($record->id, ['marketplace_id' => $marketplace]));
     }
 
     public function stockRegion(string|int $product, int $region, ProductVisibilityService $visibility, RegionStockService $stock): JsonResponse
     {
         $record = $this->productOrFail($product, $visibility);
+
         return $this->success($stock->publicStock($record->id, ['region_id' => $region]));
     }
 
@@ -121,6 +139,7 @@ class ProductCommerceController extends Controller
     {
         $record = $visibility->resolve($product);
         abort_if(! $record, 404);
+
         return $record;
     }
 }

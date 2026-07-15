@@ -3,6 +3,7 @@
 namespace App\Services\Bom;
 
 use App\Models\Bom\BomProject;
+use App\Models\Marketplace\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -10,7 +11,7 @@ class BomPricingService
 {
     public function estimate(BomProject $project, array $overrides = []): array
     {
-        $items = $project->items()->orderBy('priority')->get();
+        $items = $project->items()->publiclyAvailable()->orderBy('priority')->get();
         $lines = [];
         $total = 0.0;
 
@@ -42,7 +43,7 @@ class BomPricingService
 
     private function unitPrice(int $productId): float
     {
-        if ($productId <= 0) {
+        if ($productId <= 0 || ! Product::published()->whereKey($productId)->exists()) {
             return 0.0;
         }
 

@@ -6,9 +6,11 @@ use App\Jobs\RebuildApprovedImportSearchIndexJob;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Catalog\CatalogSearchRebuildService;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -33,7 +35,7 @@ class JlcpcbSearchRebuildQueueTest extends TestCase
         $this->assertSame('queued', $rebuild->status);
         $this->assertSame($admin->id, (int) $rebuild->queued_by);
         $this->assertGreaterThan(
-            1800,
+            7200,
             config('queue.connections.'.RebuildApprovedImportSearchIndexJob::CONNECTION.'.retry_after')
         );
 
@@ -42,9 +44,9 @@ class JlcpcbSearchRebuildQueueTest extends TestCase
             RebuildApprovedImportSearchIndexJob::class,
             function (RebuildApprovedImportSearchIndexJob $job) use ($rebuild): bool {
                 return $job->jobId === (int) $rebuild->id
-                    && $job->connection === RebuildApprovedImportSearchIndexJob::CONNECTION
-                    && $job->timeout === 1800
-                    && $job->failOnTimeout;
+                && $job->connection === RebuildApprovedImportSearchIndexJob::CONNECTION
+                && $job->timeout === 7200
+                && $job->failOnTimeout;
             }
         );
     }
@@ -70,6 +72,64 @@ class JlcpcbSearchRebuildQueueTest extends TestCase
         $this->assertSame('Catalog rebuild worker timed out after 1800 seconds.', $rebuild->error);
         $this->assertNotNull($rebuild->completed_at);
         $this->assertNotNull($rebuild->started_at);
+    }
+
+    public function test_rebuild_uses_bounded_chunks_and_bulk_replaces_search_documents_and_facets(): void
+    {
+        if (! Schema::hasColumn('products', 'visibility_status')) {
+            Schema::table('products', function (Blueprint $table): void {
+                $table->string('visibility_status', 40)->nullable();
+            });
+        }
+        $sourceId = DB::table('catalog_sources')->insertGetId([
+            'code' => 'jlcpcb_parts_database',
+            'name' => 'JLCPCB scale-test source',
+            'active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $now = now();
+        $products = [];
+        for ($index = 1; $index <= 505; $index++) {
+            $products[] = [
+                'name' => "Scale component {$index}",
+                'slug' => "scale-component-{$index}",
+                'sku' => "NG-SCALE-{$index}",
+                'mpn' => "MPN-{$index}",
+                'status' => 'approved',
+                'visibility_status' => 'marketplace_only',
+                'attributes' => json_encode(['package' => ['normalized_value' => 'SMD']]),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+        DB::table('products')->insert($products);
+        $productIds = DB::table('products')->where('sku', 'like', 'NG-SCALE-%')->orderBy('id')->pluck('id');
+        DB::table('catalog_product_sources')->insert($productIds->map(fn (int $id, int $offset): array => [
+            'product_id' => $id,
+            'source_id' => $sourceId,
+            'source_part_id' => 'C-SCALE-'.($offset + 1),
+            'source_payload_hash' => hash('sha256', (string) $id),
+            'data_quality_score' => '0.95',
+            'review_status' => 'approved',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->all());
+
+        $service = app(CatalogSearchRebuildService::class);
+        $jobId = $service->createJob(null, 'jlcpcb_parts_database');
+        $result = $service->rebuildApprovedImports($jobId, 'jlcpcb_parts_database');
+
+        $this->assertSame(505, $result['product_count']);
+        $this->assertSame(505, $result['indexed_count']);
+        $this->assertDatabaseCount('product_search_documents', 505);
+        $this->assertSame(505, DB::table('product_facet_values')->where('facet_name', 'package')->count());
+        $job = DB::table('catalog_index_rebuild_jobs')->find($jobId);
+        $this->assertSame('completed', $job->status);
+        $this->assertSame(505, (int) $job->product_count);
+        $metadata = json_decode((string) $job->metadata, true);
+        $this->assertSame('bounded_keyset_bulk_upsert', $metadata['write_strategy']);
+        $this->assertSame(500, $metadata['chunk_size']);
     }
 
     private function superAdmin(): User

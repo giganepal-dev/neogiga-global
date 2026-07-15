@@ -8,10 +8,10 @@ use App\Models\Marketplace\MarketplaceProductPrice;
 use App\Models\Marketplace\Product;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\Marketing\OrderNotificationService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\RegionalCommerceService;
 use App\Services\Payments\PaymentMethodPolicyService;
-use App\Services\Marketing\OrderNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -123,16 +123,15 @@ class CartPageController extends Controller
             'confirm' => ['accepted'],
         ]);
 
-        $cart = $this->activeCart($request)->load(['items.product']);
+        $cart = app(RegionalCommerceService::class)->applyCartEstimates($this->activeCart($request));
         if ($cart->items->isEmpty()) {
-            return redirect('/cart')->with('error', 'Cart is empty.');
+            return redirect('/cart')->with('error', 'Cart has no publicly approved products.');
         }
 
         app(PaymentMethodPolicyService::class)->assertAllowed($data['payment_method'], $cart->marketplace_id, $cart->currency_code);
 
         $order = DB::transaction(function () use ($cart, $data) {
-            app(RegionalCommerceService::class)->applyCartEstimates($cart, (int) ($data['country_id'] ?? 0));
-            $cart->refresh()->load(['items.product']);
+            $cart = app(RegionalCommerceService::class)->applyCartEstimates($cart, (int) ($data['country_id'] ?? 0));
 
             $order = Order::create([
                 'order_number' => 'NG-WEB-'.now()->format('YmdHis').'-'.Str::upper(Str::random(5)),

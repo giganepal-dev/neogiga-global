@@ -3,6 +3,7 @@
 namespace App\Services\Bom;
 
 use App\Models\Bom\BomProject;
+use App\Models\Marketplace\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -10,7 +11,7 @@ class BomAvailabilityService
 {
     public function forProject(BomProject $project): array
     {
-        return $project->items()->orderBy('priority')->get()->map(function ($item) {
+        return $project->items()->publiclyAvailable()->orderBy('priority')->get()->map(function ($item) {
             return [
                 'bom_project_item_id' => $item->id,
                 'product_id' => $item->product_id,
@@ -24,7 +25,9 @@ class BomAvailabilityService
 
     private function availableQuantity(int $productId): float
     {
-        if ($productId <= 0 || ! Schema::hasTable('inventory_stocks')) {
+        if ($productId <= 0
+            || ! Product::published()->whereKey($productId)->exists()
+            || ! Schema::hasTable('inventory_stocks')) {
             return 0.0;
         }
 

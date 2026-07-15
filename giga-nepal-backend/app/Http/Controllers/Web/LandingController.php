@@ -48,7 +48,7 @@ class LandingController extends Controller
         $brands = $this->brands();
         $stats = [
             'marketplaces' => $this->safeCount(Marketplace::class),
-            'products' => $this->safeCount(Product::class),
+            'products' => $this->safePublishedProductCount(),
             'categories' => $this->safeCount(ProductCategory::class),
             'brands' => $this->safeCount(ProductBrand::class),
         ];
@@ -217,6 +217,15 @@ class LandingController extends Controller
     {
         try {
             return (int) $model::query()->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function safePublishedProductCount(): int
+    {
+        try {
+            return (int) Product::query()->published()->count();
         } catch (\Throwable) {
             return 0;
         }

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -66,6 +67,33 @@ class SitemapSeoTest extends TestCase
             ->assertSee('/en/categories/semiconductors</loc>', false);
         $this->get('/sitemaps/brands-1.xml')->assertOk()->assertSee('/en/brand/acme</loc>', false);
         $this->get('/sitemaps/manufacturers-1.xml')->assertOk()->assertSee('/en/manufacturer/acme-components</loc>', false);
+    }
+
+    public function test_manufacturer_sitemap_merges_public_product_identities_without_duplicate_urls(): void
+    {
+        DB::table('manufacturers')->insert([
+            'name' => 'Acme Components', 'slug' => 'acme-components', 'is_active' => true,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('products')->insert([
+            [
+                'name' => 'Acme Existing Identity Part', 'slug' => 'acme-existing-identity-part', 'sku' => 'NG-ACME-IDENTITY',
+                'manufacturer_name' => 'Acme Components', 'status' => 'approved', 'visibility_status' => 'public',
+                'created_at' => now(), 'updated_at' => now(),
+            ],
+            [
+                'name' => 'Virtual Devices Part', 'slug' => 'virtual-devices-part', 'sku' => 'NG-VIRTUAL-DEVICES',
+                'manufacturer_name' => 'Virtual Devices', 'status' => 'approved', 'visibility_status' => 'public',
+                'created_at' => now(), 'updated_at' => now(),
+            ],
+        ]);
+        Cache::flush();
+
+        $response = $this->get('/sitemaps/manufacturers-1.xml')->assertOk();
+        $response->assertSee('/en/manufacturer/acme-components</loc>', false)
+            ->assertSee('/en/manufacturer/virtual-devices</loc>', false);
+        $this->assertSame(1, substr_count($response->getContent(), '/en/manufacturer/acme-components</loc>'));
+        $this->assertSame(1, substr_count($response->getContent(), '/en/manufacturer/virtual-devices</loc>'));
     }
 
     public function test_new_neogiga_icon_and_placeholder_assets_exist(): void

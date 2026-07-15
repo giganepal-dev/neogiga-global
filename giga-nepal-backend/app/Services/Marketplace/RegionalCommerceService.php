@@ -11,7 +11,8 @@ class RegionalCommerceService
 {
     public function applyCartEstimates(Cart $cart, ?int $countryId = null, ?int $regionId = null): Cart
     {
-        $cart->loadMissing('items.product');
+        $cart->load(['items.product' => fn ($products) => $products->published()]);
+        $publicItems = $cart->items->filter(fn ($item) => $item->product !== null)->values();
 
         $marketplaceId = $cart->marketplace_id;
         $countryId = $countryId ?: (int) data_get($cart->metadata, 'country_id');
@@ -21,7 +22,7 @@ class RegionalCommerceService
         $taxTotal = 0.0;
         $discountTotal = 0.0;
 
-        foreach ($cart->items as $item) {
+        foreach ($publicItems as $item) {
             $lineSubtotal = (float) $item->unit_price * (int) $item->quantity;
             $taxAmount = $this->lineTax($lineSubtotal, $taxZone);
             $discount = (float) $item->discount_amount;
@@ -54,7 +55,7 @@ class RegionalCommerceService
             'discount_total' => $discountTotal,
             'shipping_total' => $shipping,
             'grand_total' => $subtotal + $taxTotal + $shipping - $discountTotal,
-            'item_count' => $cart->items->sum(fn ($item) => (int) $item->quantity),
+            'item_count' => $publicItems->sum(fn ($item) => (int) $item->quantity),
             'metadata' => array_merge((array) $cart->metadata, [
                 'tax_zone_id' => $taxZone?->id,
                 'tax_zone_code' => $taxZone?->code,
@@ -69,14 +70,17 @@ class RegionalCommerceService
             ]),
         ])->save();
 
-        return $cart->refresh();
+        $cart->refresh()->load(['items.product' => fn ($products) => $products->published()]);
+        $cart->setRelation('items', $cart->items->filter(fn ($item) => $item->product !== null)->values());
+
+        return $cart;
     }
 
     public function cartRoutes(Cart $cart): Collection
     {
-        $cart->loadMissing('items.product');
+        $cart->load(['items.product' => fn ($products) => $products->published()]);
 
-        return $cart->items->map(function ($item) {
+        return $cart->items->filter(fn ($item) => $item->product !== null)->map(function ($item) {
             $route = (array) data_get($item->metadata, 'warehouse_route', []);
 
             return [

@@ -24,7 +24,7 @@ class RfqPageController extends Controller
     {
         $product = null;
         if ($slug = (string) $request->query('product', '')) {
-            $product = Product::with('brand')->where('slug', $slug)->first();
+            $product = Product::with('brand')->published()->where('slug', $slug)->first();
         }
 
         return view('frontend.rfq.create', ['product' => $product]);
@@ -48,7 +48,7 @@ class RfqPageController extends Controller
         ]);
 
         $product = ! empty($data['product_slug'])
-            ? Product::where('slug', $data['product_slug'])->first()
+            ? Product::published()->where('slug', $data['product_slug'])->first()
             : null;
 
         $rfq = $rfqs->create([
@@ -63,14 +63,14 @@ class RfqPageController extends Controller
                 'name' => $data['item_name'],
                 'quantity' => (float) $data['quantity'],
                 'target_price' => isset($data['target_price']) ? (float) $data['target_price'] : null,
-                'notes' => ! empty($data['mpn']) ? 'MPN: ' . $data['mpn'] : null,
+                'notes' => ! empty($data['mpn']) ? 'MPN: '.$data['mpn'] : null,
             ]],
         ]);
 
         $rfq->update(['meta' => [
             'country' => $data['country'] ?? null,
             'required_date' => $data['required_date'] ?? null,
-            'source_product_page' => $product ? '/products/' . $product->slug : null,
+            'source_product_page' => $product ? '/products/'.$product->slug : null,
             'channel' => 'web_product_page',
         ]]);
 

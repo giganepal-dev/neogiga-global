@@ -4,8 +4,8 @@ namespace App\Models\Marketplace;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cart extends Model
 {
@@ -59,7 +59,8 @@ class Cart extends Model
      */
     public function calculateTotal(): void
     {
-        $this->loadMissing('items');
+        $this->load(['items.product' => fn ($products) => $products->published()]);
+        $publicItems = $this->items->filter(fn ($item) => $item->product !== null)->values();
 
         $subtotalTotal = 0.0;
         $taxTotal = 0.0;
@@ -67,7 +68,7 @@ class Cart extends Model
         $grandTotal = 0.0;
         $itemCount = 0;
 
-        foreach ($this->items as $item) {
+        foreach ($publicItems as $item) {
             $subtotal = (float) $item->unit_price * (int) $item->quantity;
             $tax = (float) $item->tax_amount;
             $discount = (float) $item->discount_amount;
@@ -92,6 +93,8 @@ class Cart extends Model
             'grand_total' => $grandTotal + (float) $this->shipping_total,
             'item_count' => $itemCount,
         ])->save();
+
+        $this->setRelation('items', $publicItems);
     }
 
     public function scopeActive($query)

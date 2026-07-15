@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Manufacturer;
 use App\Models\Marketplace\Country;
 use App\Models\Marketplace\Currency;
 use App\Models\Marketplace\Marketplace;
@@ -144,19 +145,44 @@ class ProductMediaBrandSeoUpgradeTest extends TestCase
 
         $globalProduct = $templates->product($product, $global);
         $this->assertSame('Buy Precision Sensor on NeoGiga Global | NeoGiga Engineering Marketplace', $globalProduct['title']);
-        $this->assertSame('Buy Precision Sensor on NeoGiga Engineering Marketplace. Low MOQ, Quality Products, B2B Sourcing from Regional Warehouse.', $globalProduct['description']);
+        $this->assertSame('Explore Precision Sensor technical data and MPN details on NeoGiga Global. Request RFQ sourcing and quote-only supplier availability estimates.', $globalProduct['description']);
         $this->assertSame('https://neogiga.com/en/products/precision-sensor', $globalProduct['canonical']);
         $this->assertSame('index,follow', $globalProduct['robots']);
 
         $nepalProduct = $templates->product($product, $nepal);
         $this->assertSame('Buy Precision Sensor on NeoGiga Nepal | NeoGiga Engineering Marketplace', $nepalProduct['title']);
-        $this->assertStringContainsString('B2B Sourcing from Nepal Warehouse.', $nepalProduct['description']);
+        $this->assertStringContainsString('on NeoGiga Nepal', $nepalProduct['description']);
+        $this->assertStringContainsString('quote-only supplier availability estimates', $nepalProduct['description']);
         $this->assertSame('https://np.neogiga.com/en/products/precision-sensor', $nepalProduct['canonical']);
 
         $regionalCategory = $templates->category($category, $regional);
         $this->assertSame('Buy Engineering Sensors on NeoGiga Bangladesh | NeoGiga Engineering Marketplace', $regionalCategory['title']);
-        $this->assertStringContainsString('Dhaka Fulfilment Hub.', $regionalCategory['description']);
+        $this->assertStringContainsString('on NeoGiga Bangladesh', $regionalCategory['description']);
+        $this->assertStringContainsString('quote-only supplier availability estimates', $regionalCategory['description']);
         $this->assertSame('https://neogiga.com/bd/en/categories/engineering-sensors', $regionalCategory['canonical']);
+
+        $brandDescription = $templates->brand(new ProductBrand([
+            'name' => 'Precision Components',
+            'slug' => 'precision-components',
+            'is_active' => true,
+            'landing_page_enabled' => true,
+        ]), $nepal)['description'];
+        $manufacturerDescription = $templates->manufacturer(new Manufacturer([
+            'name' => 'Precision Devices',
+            'slug' => 'precision-devices',
+            'is_active' => true,
+        ]), $regional)['description'];
+
+        foreach ([$globalProduct['description'], $nepalProduct['description'], $regionalCategory['description'], $brandDescription, $manufacturerDescription] as $description) {
+            $this->assertStringContainsString('quote-only supplier availability estimates', $description);
+            $normalizedDescription = strtolower($description);
+            $this->assertStringNotContainsString('low moq', $normalizedDescription);
+            $this->assertStringNotContainsString('quality products', $normalizedDescription);
+            $this->assertStringNotContainsString('stock', $normalizedDescription);
+            $this->assertStringNotContainsString('warehouse', $normalizedDescription);
+            $this->assertStringNotContainsString('fulfilment hub', $normalizedDescription);
+            $this->assertStringNotContainsString('dispatch', $normalizedDescription);
+        }
 
         $manual = ProductSeoMeta::create([
             'product_id' => $product->id,

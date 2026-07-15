@@ -3,21 +3,23 @@
 namespace App\Services\POS;
 
 use App\Services\Inventory\StockMovementService;
+use App\Services\Product\ProductPublicationGate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 class PosService
 {
-    public function __construct(private StockMovementService $stockMovements)
-    {
-    }
+    public function __construct(
+        private StockMovementService $stockMovements,
+        private ProductPublicationGate $publicationGate,
+    ) {}
 
     public function openSession(array $data): array
     {
         return DB::transaction(function () use ($data) {
             $terminalId = $data['pos_terminal_id'] ?? null;
-            if (!$terminalId) {
+            if (! $terminalId) {
                 $terminalId = $this->defaultTerminal($data);
             }
 
@@ -53,7 +55,7 @@ class PosService
     public function closeSession(int $sessionId, array $data = []): array
     {
         $session = DB::table('pos_sessions')->where('id', $sessionId)->first();
-        if (!$session || $session->status !== 'open') {
+        if (! $session || $session->status !== 'open') {
             return ['closed' => false, 'reason' => 'Session not open.'];
         }
 
@@ -70,13 +72,16 @@ class PosService
 
     public function searchProducts(array $filters)
     {
-        return DB::table('products as p')
+        $query = DB::table('products as p')
             ->leftJoin('inventory_stocks as s', 's.product_id', '=', 'p.id')
             ->selectRaw('p.id, p.name, p.slug, p.sku, p.base_price, p.sale_price, coalesce(sum(s.quantity_available),0) as quantity_available')
             ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(function ($inner) use ($term) {
                 $inner->where('p.name', 'like', "%{$term}%")->orWhere('p.sku', 'like', "%{$term}%");
             }))
-            ->groupBy('p.id', 'p.name', 'p.slug', 'p.sku', 'p.base_price', 'p.sale_price')
+            ->groupBy('p.id', 'p.name', 'p.slug', 'p.sku', 'p.base_price', 'p.sale_price');
+        $this->publicationGate->apply($query, 'p');
+
+        return $query
             ->orderBy('p.name')
             ->limit((int) ($filters['limit'] ?? 25))
             ->get();
@@ -86,16 +91,18 @@ class PosService
     {
         return DB::transaction(function () use ($data) {
             $session = DB::table('pos_sessions')->where('id', $data['pos_session_id'])->lockForUpdate()->first();
-            if (!$session || $session->status !== 'open') {
+            if (! $session || $session->status !== 'open') {
                 throw new RuntimeException('POS session is not open.');
             }
 
             $items = [];
             $subtotal = 0;
             foreach ($data['items'] as $item) {
-                $product = DB::table('products')->where('id', $item['product_id'])->first();
-                if (!$product) {
-                    throw new RuntimeException('Product not found.');
+                $productQuery = DB::table('products')->where('id', $item['product_id']);
+                $this->publicationGate->apply($productQuery);
+                $product = $productQuery->first();
+                if (! $product) {
+                    throw new RuntimeException('Product is not publicly approved for sale.');
                 }
                 $qty = (int) ($item['quantity'] ?? 1);
                 $price = (float) ($item['unit_price'] ?? $product->sale_price ?? $product->base_price ?? 0);
@@ -170,7 +177,7 @@ class PosService
     {
         return DB::transaction(function () use ($saleId, $data) {
             $sale = DB::table('pos_sales')->where('id', $saleId)->lockForUpdate()->first();
-            if (!$sale) {
+            if (! $sale) {
                 throw new RuntimeException('Sale not found.');
             }
 
@@ -199,7 +206,7 @@ class PosService
     public function sale(int $saleId): ?object
     {
         $sale = DB::table('pos_sales')->where('id', $saleId)->first();
-        if (!$sale) {
+        if (! $sale) {
             return null;
         }
         $sale->items = DB::table('pos_sale_items')->where('pos_sale_id', $saleId)->get();
