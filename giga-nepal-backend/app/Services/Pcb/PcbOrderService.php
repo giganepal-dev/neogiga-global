@@ -23,6 +23,8 @@ class PcbOrderService
                 'currency' => $quote->currency ?? 'USD',
                 'total_amount' => $total,
                 'customer_notes' => $customerNotes,
+                'milestones' => PcbOrder::defaultMilestones(),
+                'estimated_ship_date' => now()->addDays((int) ($quote->lead_time_days ?? 7)),
             ]);
 
             $quote->update(['status' => 'approved']);

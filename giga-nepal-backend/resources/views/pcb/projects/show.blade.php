@@ -68,6 +68,9 @@
                     @include('pcb.partials.gerber-analysis', ['run' => $run])
                 @endforeach
 
+                <!-- Component Sourcing -->
+                @include('pcb.partials.component-matches')
+
                 <!-- Quote -->
                 <div class="card">
                     <div class="card-head"><div><h2>Engineering quote</h2><div class="muted" style="font-size:.78rem">Board configuration and commercial approval</div></div>@if($quote)<span class="badge {{ $statusColors[$quote->status] ?? 'b-muted' }}">{{ $quote->status }}</span>@endif</div>
@@ -147,6 +150,11 @@
 
             <!-- Sidebar -->
             <aside class="stack">
+                @php $activeOrder = $quote && $quote->status === 'approved' ? $quote->order : null; @endphp
+                @if($activeOrder)
+                    @include('pcb.partials.order-tracking', ['order' => $activeOrder])
+                @endif
+
                 <div class="card"><div class="card-head"><h2>Project summary</h2></div><div class="card-body"><div class="spec-list">
                     <div><small>Type</small><span>{{ ucfirst($project->project_type) }}</span></div>
                     <div><small>Quantity</small><span>{{ number_format($project->target_quantity) }}</span></div>
