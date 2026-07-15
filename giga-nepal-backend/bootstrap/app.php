@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.web.permission' => EnsureAdminWebPermission::class,
             'api.token' => AuthenticateApiToken::class,
             'permission' => EnsurePermission::class,
+            'pcb.auth' => \App\Http\Middleware\EnsurePcbWebAuth::class,
         ]);
 
         // Default API rate limit (limiter defined in AppServiceProvider).

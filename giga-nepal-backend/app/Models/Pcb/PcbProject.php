@@ -139,6 +139,24 @@ class PcbProject extends Model
         return $this->members()->where('user_id', $user->id)->exists();
     }
 
+    public function canBeEditedBy($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        // Owner can always edit
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        // Check explicit project membership with editor/admin/owner role
+        return $this->members()
+            ->where('user_id', $user->id)
+            ->whereIn('role', ['owner', 'admin', 'editor'])
+            ->exists();
+    }
+
     public function getStatusBadgeAttribute(): string
     {
         $colors = [

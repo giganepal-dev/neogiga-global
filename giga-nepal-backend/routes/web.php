@@ -20,6 +20,9 @@ use App\Http\Controllers\Web\LmsPageController;
 use App\Http\Controllers\Web\MarketplaceLandingController;
 use App\Http\Controllers\Web\MarketplacePreferenceController;
 use App\Http\Controllers\Web\PasswordResetController;
+use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
+use App\Http\Controllers\Web\PcbPortalAuthController;
+use App\Http\Controllers\Web\PcbPortalController;
 use App\Http\Controllers\Web\ProductPageController;
 use App\Http\Controllers\Web\RedesignController;
 use App\Http\Controllers\Web\RfqPageController;
@@ -41,6 +44,28 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 | landing route so the admin host resolves to the console, not the landing.
 */
 Route::domain('admin.neogiga.com')->get('/', fn () => redirect('/admin'));
+
+// PCB Platform — pcb.neogiga.com
+if (config('pcb.enabled', true)) {
+    Route::domain(config('pcb.domain', 'pcb.neogiga.com'))->group(function () {
+        Route::get('/', fn () => redirect('/en'))->name('pcb.root');
+        Route::get('/en', [PcbPortalController::class, 'landing'])->name('pcb.home');
+        Route::get('/en/login', [PcbPortalAuthController::class, 'login'])->name('pcb.login');
+        Route::post('/en/login', [PcbPortalAuthController::class, 'authenticate'])->middleware('throttle:6,1')->name('pcb.login.store');
+        Route::get('/en/register', [PcbPortalAuthController::class, 'register'])->name('pcb.register');
+        Route::post('/en/register', [PcbPortalAuthController::class, 'store'])->middleware('throttle:6,1')->name('pcb.register.store');
+        Route::middleware('pcb.auth')->group(function () {
+            Route::post('/en/logout', [PcbPortalAuthController::class, 'logout'])->name('pcb.logout');
+            Route::get('/en/projects', [PcbPortalController::class, 'index'])->name('pcb.projects.index');
+            Route::get('/en/projects/create', [PcbPortalController::class, 'create'])->name('pcb.projects.create');
+            Route::post('/en/projects', [PcbPortalController::class, 'store'])->middleware('throttle:10,1')->name('pcb.projects.store');
+            Route::get('/en/projects/{project}', [PcbPortalController::class, 'show'])->name('pcb.projects.show');
+            Route::post('/en/projects/{project}/files', [PcbPortalController::class, 'upload'])->middleware('throttle:10,1')->name('pcb.files.store');
+            Route::get('/en/projects/{project}/files/{file}/download', [PcbPortalController::class, 'download'])->middleware('signed')->name('pcb.files.download');
+            Route::post('/en/projects/{project}/quotes', [PcbPortalController::class, 'submitQuote'])->middleware('throttle:10,1')->name('pcb.quotes.store');
+        });
+    });
+}
 
 Route::get('/health', HealthController::class)->withoutMiddleware([
     StartSession::class,
@@ -65,6 +90,12 @@ Route::prefix('admin')->group(function () {
     Route::middleware('admin.web')->group(function () {
         Route::get('/', [AdminDash::class, 'index']);
         Route::get('system-health', [AdminDash::class, 'systemHealth']);
+        // PCB Admin
+        Route::get('pcb', [AdminPcb::class, 'index'])->name('admin.pcb.index');
+        Route::get('pcb/projects/{project}', [AdminPcb::class, 'show'])->name('admin.pcb.show');
+        Route::post('pcb/projects/{project}/status', [AdminPcb::class, 'status'])->middleware('throttle:20,1')->name('admin.pcb.status');
+        Route::post('pcb/projects/{project}/quotes/{quote}', [AdminPcb::class, 'quote'])->middleware('throttle:20,1')->name('admin.pcb.quote');
+        Route::get('pcb/projects/{project}/files/{file}/download', [AdminPcb::class, 'download'])->name('admin.pcb.files.download');
         Route::get('categories', [AdminDash::class, 'categories']);
         Route::get('categories/{id}', [AdminDash::class, 'category'])->whereNumber('id');
         Route::get('products', [AdminDash::class, 'products']);
