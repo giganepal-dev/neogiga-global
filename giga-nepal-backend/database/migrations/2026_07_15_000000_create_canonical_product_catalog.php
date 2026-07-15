@@ -522,10 +522,10 @@ return new class extends Migration
         if (! Schema::hasTable('product_view_logs')) {
             Schema::create('product_view_logs', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('canonical_product_id')->constrained('canonical_products')->cascadeOnDelete();
-                $table->foreignId('variation_id')->nullable()->constrained('product_variations')->nullOnDelete();
+                $table->foreignId('canonical_product_id');
+                $table->unsignedBigInteger('variation_id')->nullable();
                 $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-                $table->foreignId('session_id')->nullable()->constrained('sessions')->nullOnDelete();
+                $table->string('session_id', 255)->nullable(); // varchar to match sessions.id
                 $table->foreignId('marketplace_id')->nullable()->constrained('marketplaces')->nullOnDelete();
                 $table->foreignId('country_id')->nullable()->constrained('countries')->nullOnDelete();
                 $table->string('referrer', 500)->nullable();

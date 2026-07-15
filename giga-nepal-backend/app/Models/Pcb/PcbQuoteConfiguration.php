@@ -5,6 +5,7 @@ namespace App\Models\Pcb;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PcbQuoteConfiguration extends Model
 {
@@ -42,6 +43,8 @@ class PcbQuoteConfiguration extends Model
         'setup_charge', 'engineering_charge',
         'fabrication_unit_price', 'total_fabrication_price',
         'currency', 'requires_engineering_quote', 'engineering_notes',
+        'submitted_at', 'quoted_at', 'quote_valid_until',
+        'customer_rejected_at', 'customer_notes',
     ];
 
     protected $casts = [
@@ -65,6 +68,10 @@ class PcbQuoteConfiguration extends Model
         'fabrication_unit_price' => 'decimal:2',
         'total_fabrication_price' => 'decimal:2',
         'requires_engineering_quote' => 'boolean',
+        'submitted_at' => 'datetime',
+        'quoted_at' => 'datetime',
+        'quote_valid_until' => 'date',
+        'customer_rejected_at' => 'datetime',
     ];
 
     public function project(): BelongsTo
@@ -85,6 +92,11 @@ class PcbQuoteConfiguration extends Model
     public function lineItems(): HasMany
     {
         return $this->hasMany(PcbQuoteLineItem::class);
+    }
+
+    public function order(): HasOne
+    {
+        return $this->hasOne(PcbOrder::class, 'quote_id');
     }
 
     public function getTotalPriceAttribute(): ?float

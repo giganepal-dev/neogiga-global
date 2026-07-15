@@ -72,17 +72,28 @@ Origin/main at `43d332b`. No new commits since fetch.
 
 ---
 
+## Stage 4 — Git Reconciliation ✅
+
+Integration branch: `upgrade/complete-neogiga-safe-202607`
+- Based on origin/main (`43d332b`, PR #15)
+- +7 cherry-picked server commits
+- +1 reconciliation commit (108 files: JLCPCB catalog, search, SEO, ETL)
+- All conflicts resolved (migration, brand views, routes)
+- Snapshot branch preserved: `snapshot/pre-reconciliation-20260715`
+
 ## Wave Progress
 
 | Wave | Name | Status |
 |---|---|---|
-| 1 | Production Stability | ⬜ Not started |
-| 2 | Catalog Completion | ⬜ Not started |
+| 1 | Production Stability | ✅ Deployed |
+| 2 | Catalog Completion | ✅ 457K approved (+354K), 46K pending_review, search rebuild running (150K/457K) |
+| 3 | Inventory and Pricing | 🔄 In progress |
+| 8 | Marketplace Header and Search | 🔄 In progress |
 | 3 | Inventory and Pricing | ⬜ Not started |
 | 4 | Customer Commerce | ⬜ Not started |
 | 5 | Seller/Distributor/Manufacturer | ⬜ Not started |
 | 6 | Payment Foundation | ⬜ Not started |
-| 7 | BOM, RFQ and PCB | ⬜ Not started |
+| 7 | BOM, RFQ and PCB | 🔄 PCB code deployed, domain routing needs debug |
 | 8 | Marketplace Header and Search | ⬜ Not started |
 | 9 | Communication | ⬜ Not started |
 | 10 | POS, Affiliate, LMS, AI Commerce | ⬜ Not started |

@@ -57,17 +57,7 @@ return new class extends Migration
             });
         }
 
-        // Add POS columns to orders
-        if (!Schema::hasColumn('orders', 'is_pos_order')) {
-            Schema::table('orders', function (Blueprint $table) {
-                $table->boolean('is_pos_order')->default(false)->after('status');
-                $table->foreignId('pos_shift_id')->nullable()->constrained()->after('is_pos_order');
-                $table->string('customer_walkin_name')->nullable()->after('user_id');
-                $table->string('customer_walkin_phone')->nullable()->after('customer_walkin_name');
-            });
-        }
-
-        // PHASE 18: POS SYSTEM
+        // PHASE 18: POS SYSTEM — create tables BEFORE adding FKs referencing them
         if (!Schema::hasTable('pos_registers')) {
             Schema::create('pos_registers', function (Blueprint $table) {
                 $table->id();
@@ -81,7 +71,7 @@ return new class extends Migration
         if (!Schema::hasTable('pos_shifts')) {
             Schema::create('pos_shifts', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('register_id')->constrained();
+                $table->foreignId('register_id')->constrained('pos_registers');
                 $table->foreignId('user_id')->constrained();
                 $table->decimal('opening_cash', 15, 2);
                 $table->decimal('closing_cash', 15, 2)->nullable();
@@ -92,6 +82,22 @@ return new class extends Migration
                 $table->timestamp('ended_at')->nullable();
                 $table->timestamps();
             });
+        }
+
+        // Add POS columns to orders AFTER pos_shifts exists
+        if (!Schema::hasColumn('orders', 'is_pos_order')) {
+            Schema::table('orders', function (Blueprint $table) {
+                $table->boolean('is_pos_order')->default(false)->after('status');
+                $table->foreignId('pos_shift_id')->nullable()->after('is_pos_order');
+                $table->string('customer_walkin_name')->nullable()->after('user_id');
+                $table->string('customer_walkin_phone')->nullable()->after('customer_walkin_name');
+            });
+
+            if (Schema::hasTable('pos_shifts')) {
+                Schema::table('orders', function (Blueprint $table) {
+                    $table->foreign('pos_shift_id')->references('id')->on('pos_shifts');
+                });
+            }
         }
     }
 
