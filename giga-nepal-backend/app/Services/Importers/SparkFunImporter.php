@@ -13,6 +13,36 @@ class SparkFunImporter extends BaseImporter
     protected string $baseUrl = 'https://www.sparkfun.com';
     protected string $apiUrl = 'https://api.sparkfun.com';
 
+    public function getSupplierSlug(): string
+    {
+        return $this->supplierCode;
+    }
+
+    protected function getSupplierName(): string
+    {
+        return $this->supplierName;
+    }
+
+    protected function getSupplierTier(): string
+    {
+        return (string) $this->supplierTier;
+    }
+
+    protected function getSupplierDescription(): ?string
+    {
+        return 'Sensors, development boards, education';
+    }
+
+    protected function getSupplierWebsite(): ?string
+    {
+        return $this->baseUrl;
+    }
+
+    protected function getSupplierCountry(): ?string
+    {
+        return 'US';
+    }
+
     public function fetchCategories(): array
     {
         $categories = [];
@@ -30,19 +60,29 @@ class SparkFunImporter extends BaseImporter
         return [['name' => 'SparkFun', 'slug' => 'sparkfun', 'description' => 'Sensors, development boards, education']];
     }
 
-    public function fetchProducts(int $page = 1, int $perPage = 100): array
+    public function fetchProducts(array $options = []): \Generator
     {
-        $products = [];
-        $response = Http::timeout(60)->get("{$this->apiUrl}/products", ['page' => $page, 'per_page' => $perPage]);
-        if ($response->successful()) {
-            foreach ($response->json()['products'] ?? [] as $product) {
-                $products[] = $this->normalizeProduct($product);
+        $page = $options['page'] ?? 1;
+        $perPage = $options['per_page'] ?? 100;
+        
+        do {
+            $products = [];
+            $response = Http::timeout(60)->get("{$this->apiUrl}/products", ['page' => $page, 'per_page' => $perPage]);
+            if ($response->successful()) {
+                $data = $response->json()['products'] ?? [];
+                foreach ($data as $product) {
+                    $products[] = $this->normalizeProduct($product);
+                }
+                yield from $products;
+                $page++;
+                $hasMore = count($data) === $perPage;
+            } else {
+                $hasMore = false;
             }
-        }
-        return $products;
+        } while ($hasMore);
     }
 
-    protected function normalizeProduct(array $product): array
+    public function normalizeProduct(array $product): array
     {
         return [
             'external_id' => $product['id'],
