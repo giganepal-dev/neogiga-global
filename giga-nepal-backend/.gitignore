@@ -27,3 +27,4 @@ yarn-error.log
 /tools/jlcpcb_etl/output/*.sqlite3-*
 /tools/jlcpcb_etl/output/*.jsonl
 !/tools/jlcpcb_etl/.env.example
+__pycache__/
