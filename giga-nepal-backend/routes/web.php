@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\MarketplaceLandingController;
 use App\Http\Controllers\Web\MarketplacePreferenceController;
 use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
+use App\Http\Controllers\Pcb\PcbPublicQuoteController;
 use App\Http\Controllers\Web\PcbPortalAuthController;
 use App\Http\Controllers\Web\PcbPortalController;
 use App\Http\Controllers\Web\ProductPageController;
@@ -54,6 +55,8 @@ if (config('pcb.enabled', true)) {
         Route::post('/en/login', [PcbPortalAuthController::class, 'authenticate'])->middleware('throttle:6,1')->name('pcb.login.store');
         Route::get('/en/register', [PcbPortalAuthController::class, 'register'])->name('pcb.register');
         Route::post('/en/register', [PcbPortalAuthController::class, 'store'])->middleware('throttle:6,1')->name('pcb.register.store');
+        Route::get('/en/capabilities', [PcbPublicQuoteController::class, 'capabilities'])->name('pcb.capabilities');
+        Route::get('/en/design-rules', [PcbPublicQuoteController::class, 'designRules'])->name('pcb.design-rules');
         Route::middleware('pcb.auth')->group(function () {
             Route::post('/en/logout', [PcbPortalAuthController::class, 'logout'])->name('pcb.logout');
             Route::get('/en/projects', [PcbPortalController::class, 'index'])->name('pcb.projects.index');

@@ -911,7 +911,15 @@ Route::prefix('v1/pcb')->middleware('api.token')->group(function () {
 });
 
 // Public PCB endpoints (no auth required for initial quote)
+// Public PCB routes — no auth required, rate-limited
+Route::prefix('v1')->group(function () {
+    Route::post('quote/calculate', [\App\Http\Controllers\Pcb\PcbPublicQuoteController::class, 'calculate'])
+        ->middleware('throttle:60,1')
+        ->name('api.pcb.quote.calculate');
+});
+
 Route::prefix('v1/pcb/public')->group(function () {
-    // Route::post('quote/calculate', [PcbPublicQuoteController::class, 'calculate']);
-    // Route::get('capabilities', [PcbCapabilitiesController::class, 'index']);
+    Route::post('quote/calculate', [\App\Http\Controllers\Pcb\PcbPublicQuoteController::class, 'calculate'])
+        ->middleware('throttle:60,1');
+    Route::get('capabilities', [\App\Http\Controllers\Pcb\PcbCapabilitiesController::class, 'index']);
 });

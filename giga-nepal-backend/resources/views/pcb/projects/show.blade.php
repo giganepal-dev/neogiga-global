@@ -3,50 +3,46 @@
 @section('title', $project->name.' — NeoGiga PCB')
 @section('robots', 'noindex,nofollow,noarchive')
 
-@push('styles')
-<style>
-    .status-track{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.status-step{border-top:4px solid #dbe4ec;padding-top:8px;color:var(--muted);font-size:.72rem;font-weight:800}.status-step.done{border-color:var(--cyan);color:#0e7490}.status-step.current{border-color:var(--gold);color:#7c4a03}.quote-total{display:flex;align-items:end;justify-content:space-between;gap:18px;padding:16px;background:#f8fafc;border:1px solid var(--line);border-radius:7px}.quote-total strong{font-size:1.8rem}.security-note{display:grid;grid-template-columns:30px 1fr;gap:10px;background:#edf9fb;border:1px solid #c7edf3;padding:12px;border-radius:7px}.security-note b{color:#0e7490}.security-icon{width:30px;height:30px;border-radius:7px;background:var(--cyan);color:#04202a;display:grid;place-items:center;font-weight:900}.spec-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.spec-list div{border-bottom:1px solid var(--line);padding-bottom:8px}.spec-list small{display:block;color:var(--muted);text-transform:uppercase;font-weight:800}.spec-list b{display:block;margin-top:2px}.danger-zone{border-color:#fecaca}.danger-zone .card-head{background:#fff7f7}
-    @media(max-width:600px){.status-track{grid-template-columns:1fr}.status-step{border-top:0;border-left:4px solid #dbe4ec;padding:6px 0 6px 10px}.spec-list{grid-template-columns:1fr}.quote-total{display:block}.quote-total .actions{margin-top:12px}}
-</style>
-@endpush
-
-@section('content')
 @php
     $quote = $project->quoteConfigurations->first();
     $statusOrder = ['draft','files_ready','quote_pending','quoted','ordered','manufacturing','inspection','shipped','completed'];
     $statusIndex = array_search($project->status, $statusOrder, true);
     $statusIndex = $statusIndex === false ? 0 : $statusIndex;
-    $stages = [0 => 'Requirements', 1 => 'Files ready', 2 => 'Engineering review', 3 => 'Quote', 4 => 'Order / production'];
+    $stages = [0 => 'Requirements', 1 => 'Files ready', 2 => 'Eng. review', 3 => 'Quote', 4 => 'Production'];
+    $statusColors = ['draft'=>'b-muted','cancelled'=>'b-danger','on_hold'=>'b-danger','quote_pending'=>'b-warn','requirements_pending'=>'b-warn','files_ready'=>'b-warn','quoted'=>'b-info','awaiting_approval'=>'b-info','ordered'=>'b-info','manufacturing'=>'b-info','inspection'=>'b-warn','shipped'=>'b-ok','completed'=>'b-ok','design_approved'=>'b-ok','design_review'=>'b-warn','design_in_progress'=>'b-info','approved'=>'b-ok','submitted'=>'b-info','rejected'=>'b-danger'];
 @endphp
-<section class="page">
+
+@section('content')
+<section style="padding:28px 0 64px">
     <div class="wrap">
         <nav class="crumbs"><a href="/en/projects">Projects</a><span>/</span><span>{{ $project->code }}</span></nav>
         @if(session('status'))<div class="notice">{{ session('status') }}</div>@endif
         @if($errors->any())<div class="errors"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 
-        <header class="page-head">
-            <div><div class="eyebrow">{{ $project->code }}</div><h1 class="page-title">{{ $project->name }}</h1><p class="lead">{{ $project->description ?: 'PCB fabrication project workspace' }}</p></div>
-            <div class="actions"><span class="badge badge-{{ $project->status }}">{{ str_replace('_',' ',$project->status) }}</span></div>
+        <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:20px;flex-wrap:wrap">
+            <div><div class="eyebrow">{{ $project->code }}</div><h1 class="page-title" style="margin:5px 0 6px">{{ $project->name }}</h1><p class="muted" style="max-width:72ch;margin:0">{{ $project->description ?: 'PCB fabrication project workspace' }}</p></div>
+            <span class="badge {{ $statusColors[$project->status] ?? 'b-muted' }}">{{ str_replace('_',' ',$project->status) }}</span>
         </header>
 
-        <div class="card" style="margin-bottom:16px"><div class="card-body"><div class="status-track">
+        <div class="card" style="margin-bottom:20px"><div class="card-body"><div class="status-track">
             @foreach($stages as $index => $label)
-                @php $mapped = $index === 4 ? 4 : $index; @endphp
-                <div class="status-step {{ $statusIndex > $mapped ? 'done' : ($statusIndex === $mapped ? 'current' : '') }}">{{ $label }}</div>
+                <div class="status-step {{ $statusIndex > $index ? 'done' : ($statusIndex === $index ? 'current' : '') }}">{{ $label }}</div>
             @endforeach
         </div></div></div>
 
         <div class="grid split">
+            <!-- Main column -->
             <div class="stack">
-                <section class="card" aria-labelledby="files-title">
-                    <div class="card-head"><div><h2 id="files-title">Project files</h2><div class="muted">Private storage · authorized downloads only</div></div></div>
+                <!-- Files -->
+                <div class="card">
+                    <div class="card-head"><div><h2>Project files</h2><div class="muted" style="font-size:.78rem">Private storage · authorized downloads only</div></div></div>
                     <div class="card-body">
-                        <div class="security-note"><span class="security-icon">S</span><div><b>Private by default</b><div class="muted">Downloads use short-lived signed links and are recorded in the project access log. ZIP files are checked for unsafe paths, expansion size and compression ratio before storage.</div></div></div>
+                        <div class="security-note"><span class="security-icon">S</span><div><b style="color:var(--cyan)">Private by default</b><div class="muted" style="font-size:.82rem">Downloads use short-lived signed links and are recorded in the project access log. ZIP files are checked for unsafe paths, expansion size and compression ratio before storage.</div></div></div>
                         <form method="post" action="/en/projects/{{ $project->id }}/files" enctype="multipart/form-data" style="margin-top:16px">
                             @csrf
                             <div class="form-grid">
                                 <div class="field"><label for="file_type">Document type</label><select class="control" id="file_type" name="file_type" required><option value="gerber">Gerber ZIP</option><option value="bom">Bill of materials</option><option value="cpl">Component placement list</option><option value="schematic">Schematic</option><option value="pcb_source">PCB source</option><option value="assembly_drawing">Assembly drawing</option><option value="step">STEP model</option><option value="other">Other document</option></select></div>
-                                <div class="field"><label for="file">Choose file</label><input class="control" id="file" type="file" name="file" required></div>
+                                <div class="field"><label for="file">Choose file</label><input class="control" id="file" type="file" name="file" required style="padding:8px"></div>
                             </div>
                             <div class="form-actions"><button class="btn btn-primary" type="submit">Upload private file</button></div>
                         </form>
@@ -56,19 +52,20 @@
                         @foreach($project->files as $file)
                             @php $scan = $file->scanResults->first(); @endphp
                             <tr>
-                                <td><div class="file-name">{{ $file->filename_original }}</div><div class="muted">{{ number_format($file->file_size / 1024, 1) }} KB</div></td>
-                                <td><span class="badge badge-draft">{{ str_replace('_',' ',$file->file_type) }}</span></td>
-                                <td><div class="file-security"><span class="badge badge-completed">Structure checked</span>@if($file->malware_scanned)<span class="badge badge-completed">Malware scanned</span>@else<span class="badge badge-review">Malware scan pending</span>@endif</div></td>
-                                <td>{{ $file->created_at->format('M j, Y H:i') }}</td>
-                                <td><a class="btn btn-light" href="{{ $downloadUrls[$file->id] }}">Download</a></td>
+                                <td><span style="font-weight:700;word-break:break-word">{{ $file->filename_original }}</span><div class="muted" style="font-size:.78rem">{{ number_format($file->file_size / 1024, 1) }} KB</div></td>
+                                <td><span class="badge b-muted">{{ str_replace('_',' ',$file->file_type) }}</span></td>
+                                <td><div style="display:flex;gap:5px;flex-wrap:wrap"><span class="badge b-ok">Structure checked</span>@if($file->malware_scanned)<span class="badge b-ok">Malware scanned</span>@else<span class="badge b-warn">Scan pending</span>@endif</div></td>
+                                <td style="font-size:.82rem;color:var(--muted)">{{ $file->created_at->format('M j, Y H:i') }}</td>
+                                <td><a class="btn btn-ghost" href="{{ $downloadUrls[$file->id] }}">Download</a></td>
                             </tr>
                         @endforeach
                         </tbody></table></div>
                     @endif
-                </section>
+                </div>
 
-                <section class="card" aria-labelledby="quote-title">
-                    <div class="card-head"><div><h2 id="quote-title">Engineering quote</h2><div class="muted">Board configuration and commercial approval</div></div>@if($quote)<span class="badge badge-{{ $quote->status }}">{{ $quote->status }}</span>@endif</div>
+                <!-- Quote -->
+                <div class="card">
+                    <div class="card-head"><div><h2>Engineering quote</h2><div class="muted" style="font-size:.78rem">Board configuration and commercial approval</div></div>@if($quote)<span class="badge {{ $statusColors[$quote->status] ?? 'b-muted' }}">{{ $quote->status }}</span>@endif</div>
                     <div class="card-body">
                         @if(!$project->files->where('file_type','gerber')->count())
                             <div class="notice">Upload a Gerber ZIP to unlock the engineering quote request.</div>
@@ -92,7 +89,7 @@
                                     <div class="field"><label for="panelization_type">Panelization</label><select class="control" id="panelization_type" name="panelization_type"><option value="none">None</option><option value="v_score">V-score</option><option value="routing">Routing</option><option value="tab_route">Tab route</option></select></div>
                                     <div class="field"><label for="production_speed">Production speed</label><select class="control" id="production_speed" name="production_speed"><option value="standard">Standard</option><option value="fast">Fast</option><option value="express">Express review</option></select></div>
                                 </div>
-                                <details class="advanced" style="margin-top:14px"><summary>Testing and advanced fabrication</summary><div class="check-grid">
+                                <details class="advanced" style="margin-top:14px"><summary>Testing and advanced fabrication</summary><div class="check-grid" style="padding-top:8px">
                                     @foreach(['aoi_testing'=>'AOI testing','electrical_test'=>'Electrical test','impedance_control'=>'Controlled impedance','blind_buried_vias'=>'Blind / buried vias','hdi'=>'HDI process','edge_plating'=>'Edge plating','castellated_holes'=>'Castellated holes'] as $name=>$label)
                                         <label class="check"><input type="checkbox" name="{{ $name }}" value="1" @checked(in_array($name,['aoi_testing','electrical_test'],true) || old($name) || $quote?->{$name})> {{ $label }}</label>
                                     @endforeach
@@ -100,41 +97,62 @@
                                 <div class="form-actions"><button class="btn btn-primary" type="submit">Request engineering quote</button></div>
                             </form>
                         @elseif($quote->status === 'submitted')
-                            <div class="notice"><b>Engineering review in progress.</b> The board configuration and private files are waiting for manual review. No automatic pricing or manufacturing commitment has been made.</div>
+                            <div class="notice"><b style="color:var(--cyan)">Engineering review in progress.</b> The board configuration and private files are waiting for manual review. No automatic pricing or manufacturing commitment has been made.</div>
                             <div class="spec-list">
-                                <div><small>Board</small><b>{{ str_replace('_',' ',$quote->board_type) }} · {{ $quote->layer_count }} layers</b></div>
-                                <div><small>Size</small><b>{{ $quote->length_mm }} × {{ $quote->width_mm }} mm</b></div>
-                                <div><small>Quantity</small><b>{{ number_format($quote->quantity) }}</b></div>
-                                <div><small>Finish</small><b>{{ str_replace('_',' ',$quote->surface_finish) }}</b></div>
+                                <div><small>Board</small><span>{{ str_replace('_',' ',$quote->board_type) }} · {{ $quote->layer_count }} layers</span></div>
+                                <div><small>Size</small><span>{{ $quote->length_mm }} × {{ $quote->width_mm }} mm</span></div>
+                                <div><small>Quantity</small><span>{{ number_format($quote->quantity) }}</span></div>
+                                <div><small>Finish</small><span>{{ str_replace('_',' ',$quote->surface_finish) }}</span></div>
                             </div>
                         @elseif($quote->status === 'quoted')
                             <div class="spec-list" style="margin-bottom:16px">
-                                <div><small>Board</small><b>{{ str_replace('_',' ',$quote->board_type) }} · {{ $quote->layer_count }} layers</b></div>
-                                <div><small>Quantity</small><b>{{ number_format($quote->quantity) }}</b></div>
-                                <div><small>Lead time</small><b>{{ $quote->lead_time_days }} days after approval</b></div>
-                                <div><small>Valid until</small><b>{{ $quote->quote_valid_until?->format('M j, Y') ?: 'Confirm with engineering' }}</b></div>
+                                <div><small>Board</small><span>{{ str_replace('_',' ',$quote->board_type) }} · {{ $quote->layer_count }} layers</span></div>
+                                <div><small>Quantity</small><span>{{ number_format($quote->quantity) }}</span></div>
+                                <div><small>Lead time</small><span>{{ $quote->lead_time_days }} days after approval</span></div>
+                                <div><small>Valid until</small><span>{{ $quote->quote_valid_until ? \Carbon\Carbon::parse($quote->quote_valid_until)->format('M j, Y') : 'Confirm with engineering' }}</span></div>
                             </div>
-                            @if($quote->engineering_notes)<p>{{ $quote->engineering_notes }}</p>@endif
-                            <table class="table"><tbody><tr><td>Fabrication</td><td class="price">{{ $quote->currency }} {{ number_format($quote->total_fabrication_price,2) }}</td></tr><tr><td>Setup</td><td class="price">{{ $quote->currency }} {{ number_format($quote->setup_charge,2) }}</td></tr><tr><td>Engineering</td><td class="price">{{ $quote->currency }} {{ number_format($quote->engineering_charge,2) }}</td></tr>@foreach($quote->lineItems as $item)<tr><td>{{ $item->description }}</td><td class="price">{{ $item->currency }} {{ number_format($item->total_price,2) }}</td></tr>@endforeach</tbody></table>
-                            <div class="quote-total"><div><span class="muted">Commercial total</span><strong>{{ $quote->currency }} {{ number_format($quote->total_price,2) }}</strong></div><div class="actions"><details class="advanced"><summary class="btn btn-primary">Approve quote</summary><div><form method="post" action="/en/projects/{{ $project->id }}/quotes/{{ $quote->id }}/approve">@csrf<div class="field"><label for="customer_notes">Order note</label><textarea class="control" id="customer_notes" name="customer_notes"></textarea></div><div class="form-actions"><button class="btn btn-primary" type="submit">Approve and create order</button></div></form></div></details></div></div>
-                            <details class="advanced" style="margin-top:14px"><summary>Request quote changes</summary><div><form method="post" action="/en/projects/{{ $project->id }}/quotes/{{ $quote->id }}/reject">@csrf<div class="field"><label for="change_notes">Required changes</label><textarea class="control" id="change_notes" name="customer_notes" required></textarea></div><div class="form-actions"><button class="btn btn-danger" type="submit">Send change request</button></div></form></div></details>
+                            @if($quote->engineering_notes)<p style="color:var(--muted)">{{ $quote->engineering_notes }}</p>@endif
+                            <table class="table"><tbody>
+                                <tr><td>Fabrication</td><td style="font-weight:700;text-align:right">{{ $quote->currency }} {{ number_format($quote->total_fabrication_price,2) }}</td></tr>
+                                <tr><td>Setup</td><td style="font-weight:700;text-align:right">{{ $quote->currency }} {{ number_format($quote->setup_charge,2) }}</td></tr>
+                                <tr><td>Engineering</td><td style="font-weight:700;text-align:right">{{ $quote->currency }} {{ number_format($quote->engineering_charge,2) }}</td></tr>
+                                @foreach($quote->lineItems as $item)<tr><td>{{ $item->description }}</td><td style="font-weight:700;text-align:right">{{ $item->currency }} {{ number_format($item->total_price,2) }}</td></tr>@endforeach
+                            </tbody></table>
+                            <div class="quote-total"><div><span class="muted" style="font-size:.78rem">Commercial total</span><strong>{{ $quote->currency }} {{ number_format($quote->total_price,2) }}</strong></div><div style="display:flex;gap:8px">
+                                <details class="advanced"><summary class="btn btn-primary">Approve quote</summary><div style="padding-top:12px"><form method="post" action="/en/projects/{{ $project->id }}/quotes/{{ $quote->id }}/approve">@csrf<div class="field"><label for="customer_notes">Order note</label><textarea class="control" id="customer_notes" name="customer_notes"></textarea></div><div class="form-actions"><button class="btn btn-primary" type="submit">Approve and create order</button></div></form></div></details>
+                            </div></div>
+                            <details class="advanced" style="margin-top:14px"><summary>Request quote changes</summary><div style="padding-top:12px"><form method="post" action="/en/projects/{{ $project->id }}/quotes/{{ $quote->id }}/reject">@csrf<div class="field"><label for="change_notes">Required changes</label><textarea class="control" id="change_notes" name="customer_notes" required></textarea></div><div class="form-actions"><button class="btn btn-danger" type="submit">Send change request</button></div></form></div></details>
                         @elseif($quote->status === 'approved')
-                            <div class="notice"><b>Quote approved.</b> Order {{ $quote->order?->order_number }} is now in the shared NeoGiga order workflow. Payment and production start remain subject to manual confirmation.</div>
-                            <div class="spec-list"><div><small>Order</small><b>{{ $quote->order?->order_number }}</b></div><div><small>Order status</small><b>{{ $quote->order?->status }}</b></div><div><small>Total</small><b>{{ $quote->currency }} {{ number_format($quote->total_price,2) }}</b></div><div><small>Payment</small><b>{{ $quote->order?->payment_status }}</b></div></div>
+                            <div class="notice"><b style="color:var(--cyan)">Quote approved.</b> Order {{ $quote->order?->order_number }} is now in the shared NeoGiga order workflow. Payment and production start remain subject to manual confirmation.</div>
+                            <div class="spec-list"><div><small>Order</small><span>{{ $quote->order?->order_number }}</span></div><div><small>Order status</small><span>{{ $quote->order?->status }}</span></div><div><small>Total</small><span>{{ $quote->currency }} {{ number_format($quote->total_price,2) }}</span></div><div><small>Payment</small><span>{{ $quote->order?->payment_status }}</span></div></div>
                         @endif
                     </div>
-                </section>
+                </div>
 
-                <section class="card" aria-labelledby="activity-title"><div class="card-head"><h2 id="activity-title">Project activity</h2></div><div class="card-body"><div class="timeline">@forelse($project->activityLogs as $event)<div class="timeline-item"><span class="timeline-dot"></span><div><p>{{ $event->description ?: str_replace('_',' ',$event->action) }}</p><time>{{ $event->created_at->format('M j, Y H:i') }}</time></div></div>@empty<p class="muted">No activity recorded.</p>@endforelse</div></div></section>
+                <!-- Activity -->
+                <div class="card">
+                    <div class="card-head"><h2>Project activity</h2></div>
+                    <div class="card-body"><div class="timeline">
+                        @forelse($project->activityLogs as $event)
+                            <div class="timeline-item"><span class="timeline-dot"></span><div><p>{{ $event->description ?: str_replace('_',' ',$event->action) }}</p><time>{{ $event->created_at->format('M j, Y H:i') }}</time></div></div>
+                        @empty<p class="muted">No activity recorded.</p>@endforelse
+                    </div></div>
+                </div>
             </div>
 
+            <!-- Sidebar -->
             <aside class="stack">
-                <section class="card"><div class="card-head"><h2>Project summary</h2></div><div class="card-body"><div class="spec-list">
-                    <div><small>Type</small><b>{{ ucfirst($project->project_type) }}</b></div><div><small>Quantity</small><b>{{ number_format($project->target_quantity) }}</b></div><div><small>Destination</small><b>{{ $project->destination_country }}</b></div><div><small>Required date</small><b>{{ $project->required_date?->format('M j, Y') ?: 'Flexible' }}</b></div><div><small>Confidentiality</small><b>{{ str_replace('_',' ',$project->confidentiality) }}</b></div><div><small>Currency</small><b>{{ $project->currency }}</b></div>
-                </div></div></section>
+                <div class="card"><div class="card-head"><h2>Project summary</h2></div><div class="card-body"><div class="spec-list">
+                    <div><small>Type</small><span>{{ ucfirst($project->project_type) }}</span></div>
+                    <div><small>Quantity</small><span>{{ number_format($project->target_quantity) }}</span></div>
+                    <div><small>Destination</small><span>{{ $project->destination_country }}</span></div>
+                    <div><small>Required date</small><span>{{ $project->required_date?->format('M j, Y') ?: 'Flexible' }}</span></div>
+                    <div><small>Confidentiality</small><span>{{ str_replace('_',' ',$project->confidentiality) }}</span></div>
+                    <div><small>Currency</small><span>{{ $project->currency }}</span></div>
+                </div></div></div>
 
                 @if(in_array($project->status,['draft','requirements_pending','files_ready','quote_pending'],true))
-                <details class="advanced"><summary>Edit project requirements</summary><div><form method="post" action="/en/projects/{{ $project->id }}">@csrf @method('PATCH')<div class="form-grid">
+                <details class="advanced"><summary>Edit project requirements</summary><div style="padding-top:12px"><form method="post" action="/en/projects/{{ $project->id }}">@csrf @method('PATCH')<div class="form-grid">
                     <div class="field full"><label for="edit_name">Project name</label><input class="control" id="edit_name" name="name" value="{{ old('name',$project->name) }}" required></div>
                     <div class="field full"><label for="edit_description">Brief</label><textarea class="control" id="edit_description" name="description">{{ old('description',$project->description) }}</textarea></div>
                     <div class="field"><label for="edit_application">Application</label><input class="control" id="edit_application" name="application_type" value="{{ old('application_type',$project->application_type) }}"></div>
@@ -147,10 +165,10 @@
                 </div><div class="form-actions"><button class="btn btn-primary" type="submit">Save requirements</button></div></form></div></details>
                 @endif
 
-                <section class="card"><div class="card-head"><h2>Engineering support</h2></div><div class="card-body"><p class="muted">Reference project code <b>{{ $project->code }}</b> when contacting the PCB engineering desk.</p><a class="btn btn-light" href="mailto:pcb@neogiga.com?subject={{ urlencode($project->code.' '.$project->name) }}">Contact engineering</a></div></section>
+                <div class="card"><div class="card-head"><h2>Engineering support</h2></div><div class="card-body"><p class="muted" style="font-size:.86rem">Reference project code <b style="color:var(--on)">{{ $project->code }}</b> when contacting the PCB engineering desk.</p><a class="btn btn-ghost" href="mailto:pcb@neogiga.com?subject={{ urlencode($project->code.' '.$project->name) }}">Contact engineering</a></div></div>
 
                 @if(in_array($project->status,['draft','requirements_pending','files_ready','quote_pending','quoted'],true))
-                <section class="card danger-zone"><div class="card-head"><h2>Cancel project</h2></div><div class="card-body"><p class="muted">Cancelling stops the active workflow. Files remain retained for audit and recovery.</p><form method="post" action="/en/projects/{{ $project->id }}/cancel">@csrf<button class="btn btn-danger" type="submit">Cancel project</button></form></div></section>
+                <div class="card danger-zone"><div class="card-head"><h2>Cancel project</h2></div><div class="card-body"><p class="muted" style="font-size:.84rem">Cancelling stops the active workflow. Files remain retained for audit and recovery.</p><form method="post" action="/en/projects/{{ $project->id }}/cancel">@csrf<button class="btn btn-danger" type="submit">Cancel project</button></form></div></div>
                 @endif
             </aside>
         </div>

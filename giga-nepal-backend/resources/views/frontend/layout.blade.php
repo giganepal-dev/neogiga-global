@@ -144,12 +144,12 @@
                 <summary>☰ Categories</summary>
                 <div class="mega-panel">
                     <div class="mega-col"><h3>Featured Categories</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=electronic-components">Electronic Components</a><a href="{{ $publicBase }}/products?category=iot-wireless">IoT & Wireless</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/products?category=battery-technology">Battery Technology</a></div>
-                    <div class="mega-col"><h3>Build</h3><a href="{{ $publicBase }}/ai-commerce">AI Project Builder</a><a href="{{ $publicBase }}/lms">Learning Hub</a><a href="{{ $publicBase }}/rfq">Bulk RFQ</a><a href="{{ $publicBase }}/sell-on-neogiga">Become a Seller</a></div>
+                    <div class="mega-col"><h3>Build</h3><a href="{{ $publicBase }}/ai-commerce">AI Project Builder</a><a href="https://pcb.neogiga.com/en">PCB Fabrication</a><a href="{{ $publicBase }}/lms">Learning Hub</a><a href="{{ $publicBase }}/rfq">Bulk RFQ</a><a href="{{ $publicBase }}/sell-on-neogiga">Become a Seller</a></div>
                     <div class="mega-col"><h3>Popular searches</h3><a href="{{ $publicBase }}/products?q=ESP32">ESP32</a><a href="{{ $publicBase }}/products?q=LiFePO4">LiFePO4</a><a href="{{ $publicBase }}/products?q=PLC">PLC</a><a href="{{ $publicBase }}/products?q=robot">Robot kits</a></div>
                 </div>
             </details>
             <nav class="primary-nav" aria-label="Primary navigation">
-                <a href="{{ $publicBase }}/products">Products</a><a href="{{ $publicBase }}/categories">Categories</a><a href="{{ $publicBase }}/brands">Brands</a><a href="{{ $publicBase }}/ai-commerce">AI Builder</a><a href="{{ $publicBase }}/rfq">RFQ</a><a href="{{ $publicBase }}/lms">LMS</a><a href="{{ $publicBase }}/distributors">Warehouses</a>
+                <a href="{{ $publicBase }}/products">Products</a><a href="{{ $publicBase }}/categories">Categories</a><a href="{{ $publicBase }}/brands">Brands</a><a href="https://pcb.neogiga.com/en">PCB</a><a href="{{ $publicBase }}/ai-commerce">AI Builder</a><a href="{{ $publicBase }}/rfq">RFQ</a><a href="{{ $publicBase }}/lms">LMS</a><a href="{{ $publicBase }}/distributors">Warehouses</a>
             </nav>
         </div>
     </div>
