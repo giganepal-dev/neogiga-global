@@ -116,6 +116,7 @@ class PcbPortalController extends Controller
             'gerberAnalysisRuns.warnings',
             'quoteConfigurations' => fn ($query) => $query->with(['lineItems', 'order'])->latest(),
             'activityLogs' => fn ($query) => $query->latest()->limit(30),
+            'componentMatches' => fn ($query) => $query->latest()->limit(50),
         ]);
 
         $downloadUrls = $project->files->mapWithKeys(fn (PcbFile $file) => [
