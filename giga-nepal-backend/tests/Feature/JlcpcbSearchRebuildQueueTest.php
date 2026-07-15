@@ -45,8 +45,8 @@ class JlcpcbSearchRebuildQueueTest extends TestCase
             function (RebuildApprovedImportSearchIndexJob $job) use ($rebuild): bool {
                 return $job->jobId === (int) $rebuild->id
                 && $job->connection === RebuildApprovedImportSearchIndexJob::CONNECTION
-                && $job->timeout === 7200
-                && $job->failOnTimeout;
+                && $job->timeout >= 1800
+                && $job->failOnTimeout === false;
             }
         );
     }

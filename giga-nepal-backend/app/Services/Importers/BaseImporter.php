@@ -20,7 +20,7 @@ abstract class BaseImporter
     protected ?\Illuminate\Console\Command $command = null;
 
     abstract public function fetchCategories(): array;
-    abstract public function fetchProducts(int $page = 1, int $perPage = 100): array;
+    abstract public function fetchProducts(array $options = []): \Generator;
     abstract protected function normalizeProduct(array $rawProduct): array;
 
     public function getSupplierSlug(): string

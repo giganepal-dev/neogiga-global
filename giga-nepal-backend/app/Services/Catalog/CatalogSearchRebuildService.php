@@ -140,7 +140,9 @@ class CatalogSearchRebuildService
                 'p.visibility_status',
                 'p.short_description',
                 'p.description',
-                DB::raw('p.attributes::text as attributes'),
+                DB::connection()->getDriverName() === 'pgsql'
+                    ? DB::raw('p.attributes::text as attributes')
+                    : DB::raw('p.attributes as attributes'),
                 'p.search_keywords',
                 'b.name as brand_name',
                 'c.name as category_name',
