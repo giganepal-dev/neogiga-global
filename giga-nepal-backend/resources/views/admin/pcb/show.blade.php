@@ -36,9 +36,19 @@
 
         @foreach($project->gerberAnalysisRuns as $run)
         <section class="card">
-            <div class="card-h"><div><h2>Gerber structure review</h2><div class="sub">{{ $run->parser_version }} · {{ $run->confidence_level }} confidence · engineering review required</div></div><span class="badge {{ $run->warnings->count() ? 'b-warn':'b-ok' }}">{{ $run->status }}</span></div>
-            <div class="scroll-x"><table class="tbl"><thead><tr><th>Archive entry</th><th>Detected layer</th><th>Matched</th></tr></thead><tbody>@forelse($run->detectedLayers as $layer)<tr><td>{{ $layer->filename }}</td><td>{{ str_replace('_',' ',$layer->detected_type) }}</td><td>{{ $layer->is_matched ? 'Yes':'Review' }}</td></tr>@empty<tr><td colspan="3">No standard layer names detected.</td></tr>@endforelse</tbody></table></div>
-            @if($run->warnings->count())<div class="modal-b">@foreach($run->warnings as $warning)<div class="note"><strong>{{ $warning->warning_code }}</strong> {{ $warning->message }}</div>@endforeach</div>@endif
+            <div class="card-h"><div><h2>Gerber structure review</h2><div class="sub">{{ $run->parser_version }} · {{ $run->confidence_level }} confidence · {{ $run->created_at->diffForHumans() }}</div></div><span class="badge {{ $run->status === 'completed' ? 'b-ok' : ($run->status === 'failed' ? 'b-danger' : 'b-warn') }}">{{ $run->status }}</span></div>
+            <div class="modal-b">
+                @if($run->detected_width_mm || $run->detected_hole_count)
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+                        @if($run->detected_width_mm)<div><small style="color:var(--faint);text-transform:uppercase;font-size:.68rem">Board size</small><div style="font-weight:700">{{ $run->detected_width_mm }} × {{ $run->detected_height_mm }} mm</div></div>@endif
+                        @if($run->detected_layer_count)<div><small style="color:var(--faint);text-transform:uppercase;font-size:.68rem">Copper layers</small><div style="font-weight:700">{{ $run->detected_layer_count }}</div></div>@endif
+                        @if($run->detected_hole_count)<div><small style="color:var(--faint);text-transform:uppercase;font-size:.68rem">Drill holes</small><div style="font-weight:700">{{ $run->detected_hole_count }}</div></div>@endif
+                        @if($run->detected_board_area_cm2)<div><small style="color:var(--faint);text-transform:uppercase;font-size:.68rem">Board area</small><div style="font-weight:700">{{ $run->detected_board_area_cm2 }} cm²</div></div>@endif
+                    </div>
+                @endif
+            </div>
+            <div class="scroll-x"><table class="tbl"><thead><tr><th>Archive entry</th><th>Detected layer</th><th>Matched</th></tr></thead><tbody>@forelse($run->detectedLayers as $layer)<tr><td><strong>{{ $layer->filename }}</strong></td><td>{{ str_replace('_',' ',$layer->detected_type) }}</td><td>@if($layer->is_matched)<span class="badge b-ok">Yes</span>@else<span class="badge b-warn">Review</span>@endif</td></tr>@empty<tr><td colspan="3">No standard layer names detected.</td></tr>@endforelse</tbody></table></div>
+            @if($run->warnings->count())<div class="modal-b">@foreach($run->warnings as $warning)<div class="note" style="background:{{ $warning->severity === 'blocking' ? 'rgba(239,68,68,.08)' : ($warning->severity === 'warning' ? 'rgba(249,189,44,.08)' : 'rgba(40,216,251,.05)') }};border-color:{{ $warning->severity === 'blocking' ? 'rgba(239,68,68,.25)' : ($warning->severity === 'warning' ? 'rgba(249,189,44,.25)' : 'rgba(40,216,251,.15)') }}"><strong>[{{ $warning->warning_code }}]</strong> {{ $warning->message }}</div>@endforeach</div>@endif
         </section>
         @endforeach
 

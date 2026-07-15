@@ -63,6 +63,11 @@
                     @endif
                 </div>
 
+                <!-- Gerber Analysis -->
+                @foreach($project->gerberAnalysisRuns as $run)
+                    @include('pcb.partials.gerber-analysis', ['run' => $run])
+                @endforeach
+
                 <!-- Quote -->
                 <div class="card">
                     <div class="card-head"><div><h2>Engineering quote</h2><div class="muted" style="font-size:.78rem">Board configuration and commercial approval</div></div>@if($quote)<span class="badge {{ $statusColors[$quote->status] ?? 'b-muted' }}">{{ $quote->status }}</span>@endif</div>
