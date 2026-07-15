@@ -1,73 +1,198 @@
 @extends('pcb.layout')
 
-@section('title', 'NeoGiga PCB — Secure PCB Fabrication Projects and Engineering Quotes')
-@section('description', 'Create a secure PCB project, upload Gerber, BOM and CPL files, submit board specifications, receive an engineering-reviewed quote and track production.')
+@section('title', 'NeoGiga PCB — Instant PCB Quote, Fabrication & Assembly')
+@section('description', 'Get an instant PCB fabrication quote. Upload Gerber files, review layers online, check DFM, and track production. PCB engineering platform from NeoGiga.')
 
 @push('styles')
 <style>
-    .pcb-hero{position:relative;min-height:min(680px,calc(100vh - 77px));display:flex;align-items:center;background:#081626;color:#fff;overflow:hidden}.pcb-hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}.pcb-hero::after{content:"";position:absolute;inset:0;background:rgba(3,14,26,.22)}.hero-copy{position:relative;z-index:1;width:min(650px,100%);padding:64px 0}.hero-copy .eyebrow{color:var(--gold)}.hero-copy h1{font-size:clamp(2.7rem,7vw,5.8rem);line-height:.93;margin:12px 0 20px;max-width:10ch}.hero-copy p{font-size:1.08rem;color:#d5e1ed;max-width:57ch}.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.trust-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:32px;color:#c1cedb;font-size:.8rem;font-weight:750}.trust-row span{display:flex;align-items:center;gap:7px}.trust-row i{width:7px;height:7px;border-radius:50%;background:var(--cyan)}
-    .band{padding:58px 0}.band.white{background:#fff}.section-head{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:24px}.section-head h2{font-size:clamp(1.7rem,4vw,2.7rem);line-height:1.05;margin:0}.section-head p{margin:0;color:var(--muted);max-width:58ch}.capabilities{grid-template-columns:repeat(4,minmax(0,1fr))}.capability{padding:20px;border-left:3px solid var(--cyan);background:#fff}.capability:nth-child(2n){border-left-color:var(--gold)}.capability b{display:block;font-size:1.05rem;margin-bottom:6px}.capability p{margin:0;color:var(--muted);font-size:.88rem}.workflow{grid-template-columns:repeat(4,minmax(0,1fr));counter-reset:step}.step{position:relative;padding:18px 18px 18px 54px;border-top:1px solid var(--line);counter-increment:step}.step::before{content:counter(step);position:absolute;left:0;top:14px;width:38px;height:38px;display:grid;place-items:center;background:var(--navy);color:var(--cyan);border-radius:7px;font-weight:900}.step b{display:block;margin-bottom:5px}.step p{margin:0;color:var(--muted);font-size:.86rem}.cta-band{background:#0d2741;color:#fff}.cta-row{display:flex;align-items:center;justify-content:space-between;gap:28px}.cta-row h2{font-size:clamp(1.8rem,4vw,3rem);margin:0 0 8px}.cta-row p{margin:0;color:#c8d5e2}.cta-row .actions{flex:none}
-    @media(max-width:900px){.capabilities,.workflow{grid-template-columns:repeat(2,1fr)}.pcb-hero>img{object-position:62% center}.pcb-hero::after{background:rgba(3,14,26,.5)}}
-    @media(max-width:600px){.pcb-hero{min-height:620px}.pcb-hero>img{object-position:68% center}.pcb-hero::after{background:rgba(3,14,26,.68)}.hero-copy{padding:48px 0}.hero-actions{display:grid}.trust-row{display:grid;gap:9px}.capabilities,.workflow{grid-template-columns:1fr}.section-head,.cta-row{display:block}.section-head p{margin-top:10px}.cta-row .actions{margin-top:20px}}
+    .pcb-hero{position:relative;min-height:min(680px,calc(100vh - 77px));display:flex;align-items:center;background:linear-gradient(135deg,#0b1220 0%,#101417 50%,#0b0f11 100%);overflow:hidden;border-bottom:1px solid var(--line)}
+    .pcb-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 30%,rgba(40,216,251,.12),transparent 50rem),radial-gradient(circle at 80% 20%,rgba(249,189,44,.08),transparent 40rem)}
+    .hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;position:relative;z-index:1;padding:64px 0}
+    .hero-copy h1{font-size:clamp(2.5rem,5.5vw,4.2rem);line-height:.95;margin:12px 0 20px;text-shadow:0 0 44px rgba(40,216,251,.18)}.hero-copy p{color:var(--muted);font-size:1.08rem;max-width:58ch;margin-bottom:0}
+    .hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px;padding-top:24px;border-top:1px solid var(--line)}
+    .hero-stat b{display:block;font-size:1.5rem;color:var(--cyan);font-weight:800}.hero-stat span{color:var(--faint);font-size:.78rem}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+
+    .quote-panel{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);padding:24px;backdrop-filter:blur(14px)}
+    .quote-panel h3{font-size:1.1rem;margin:0 0 16px;display:flex;align-items:center;gap:8px}
+    .quote-panel h3 .icon{width:32px;height:32px;border-radius:8px;background:rgba(40,216,251,.16);display:grid;place-items:center;color:var(--cyan)}
+    .quote-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+    .quote-row .field{margin-bottom:0}.quote-result{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);border-radius:10px;margin-top:16px}.quote-result .price{font-size:1.8rem;font-weight:800;color:#34d399}.quote-result small{color:var(--faint);font-size:.72rem}
+
+    .section{padding:72px 0}.section-alt{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:36px}.section-head h2{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:700;letter-spacing:-.015em;line-height:1.1;margin:0}.section-head p{color:var(--muted);margin:0;max-width:56ch}
+
+    .cap-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.cap-card{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);padding:24px;backdrop-filter:blur(12px);transition:border-color .2s,transform .2s}.cap-card:hover{border-color:rgba(40,216,251,.5);transform:translateY(-2px)}.cap-card .cap-icon{width:44px;height:44px;border-radius:12px;background:rgba(40,216,251,.12);color:var(--cyan);display:grid;place-items:center;font-weight:800;margin-bottom:16px}.cap-card b{display:block;font-size:1.02rem;margin-bottom:8px}.cap-card p{color:var(--muted);font-size:.86rem;margin:0}
+
+    .work-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.work-step{position:relative;padding:20px 20px 20px 56px;border:1px solid var(--line);border-radius:var(--r);background:var(--glass)}.work-step .step-num{position:absolute;left:14px;top:18px;width:30px;height:30px;display:grid;place-items:center;background:var(--cyan);color:#003640;border-radius:8px;font-weight:900;font-size:.82rem}.work-step b{display:block;margin-bottom:6px}.work-step p{color:var(--muted);font-size:.84rem;margin:0}
+
+    .trust-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.trust-card{text-align:center;padding:28px 18px;background:var(--glass);border:1px solid var(--line);border-radius:var(--r)}.trust-card .trust-icon{width:48px;height:48px;border-radius:14px;background:rgba(40,216,251,.12);color:var(--cyan);display:grid;place-items:center;font-size:1.3rem;font-weight:800;margin:0 auto 14px}.trust-card b{display:block;font-size:.95rem;margin-bottom:6px}.trust-card p{color:var(--muted);font-size:.82rem;margin:0}
+
+    .cta{background:linear-gradient(135deg,rgba(40,216,251,.08),rgba(249,189,44,.06));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.cta .wrap{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:52px 0}.cta h2{font-size:clamp(1.8rem,3vw,2.5rem);margin:0 0 8px}.cta p{margin:0;color:var(--muted)}
+
+    @media(max-width:1000px){.hero-grid{grid-template-columns:1fr;gap:28px}.quote-panel{max-width:520px}.cap-grid,.work-grid{grid-template-columns:repeat(2,1fr)}.trust-grid{grid-template-columns:1fr}}
+    @media(max-width:620px){.pcb-hero{min-height:auto}.hero-grid{padding:48px 0}.hero-copy h1{font-size:2.2rem}.hero-stats{grid-template-columns:repeat(2,1fr)}.hero-actions{display:grid}.quote-row{grid-template-columns:1fr}.cap-grid,.work-grid{grid-template-columns:1fr}.cta .wrap{display:block}.cta .wrap .btn{margin-top:16px}.section{padding:52px 0}}
 </style>
 @endpush
 
 @section('content')
 @if(session('status'))<div class="wrap" style="padding-top:16px"><div class="notice">{{ session('status') }}</div></div>@endif
-<section class="pcb-hero" aria-labelledby="pcb-title">
-    <img src="/images/pcb/pcb-workbench-hero.webp" width="1672" height="941" alt="Detailed multilayer PCB assembly on a precision electronics workbench" fetchpriority="high">
+
+<!-- Hero -->
+<section class="pcb-hero" aria-labelledby="pcb-hero-title">
     <div class="wrap">
-        <div class="hero-copy">
-            <div class="eyebrow">From Gerber to production</div>
-            <h1 id="pcb-title">Build your next board.</h1>
-            <p>One secure workspace for PCB fabrication requirements, private design files, BOM and CPL review, engineering quotes, approvals and production tracking.</p>
-            <div class="hero-actions">
-                <a class="btn btn-primary" href="/en/register">Create PCB project</a>
-                <a class="btn btn-light" href="/en/login">Open workspace</a>
+        <div class="hero-grid">
+            <div class="hero-copy">
+                <div class="eyebrow">PCB Fabrication & Assembly Platform</div>
+                <h1 id="pcb-hero-title">From Gerber to<br>production.</h1>
+                <p>Instant pricing for PCB fabrication. Secure private file storage. Engineering-reviewed quotes. Production tracking. Part of the NeoGiga global engineering marketplace.</p>
+                <div class="hero-stats">
+                    <div class="hero-stat"><b>1-64</b><span>Layer count</span></div>
+                    <div class="hero-stat"><b>24h</b><span>Fastest turnaround</span></div>
+                    <div class="hero-stat"><b>&lt;24h</b><span>Engineering review</span></div>
+                </div>
+                <div class="hero-actions">
+                    <a class="btn btn-primary" href="/en/register">Start PCB project</a>
+                    <a class="btn btn-ghost" href="/en/login">Open workspace</a>
+                </div>
             </div>
-            <div class="trust-row" aria-label="Security and workflow highlights">
-                <span><i></i>Private file storage</span>
-                <span><i></i>Signed downloads</span>
-                <span><i></i>Engineering-reviewed quotes</span>
+            <div class="quote-panel" id="quote">
+                <h3><span class="icon">⚡</span> Instant PCB quote</h3>
+                <p class="muted" style="font-size:.82rem;margin:0 0 14px">Get an estimated price. Final quote confirmed after engineering file review.</p>
+                <form id="instant-quote" onsubmit="return false">
+                    @csrf
+                    <div class="quote-row">
+                        <div class="field"><label>Layers</label><select class="control" id="q_layers" onchange="calculateQuote()"><option value="1">1 layer</option><option value="2" selected>2 layers</option><option value="4">4 layers</option><option value="6">6 layers</option><option value="8">8 layers</option></select></div>
+                        <div class="field"><label>Width (mm)</label><input class="control" id="q_width" type="number" value="100" min="5" max="500" step="1" onchange="calculateQuote()"></div>
+                        <div class="field"><label>Height (mm)</label><input class="control" id="q_height" type="number" value="100" min="5" max="500" step="1" onchange="calculateQuote()"></div>
+                    </div>
+                    <div class="quote-row">
+                        <div class="field"><label>Quantity</label><select class="control" id="q_quantity" onchange="calculateQuote()"><option value="5">5</option><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="250">250</option><option value="500">500</option><option value="1000">1000</option></select></div>
+                        <div class="field"><label>Finish</label><select class="control" id="q_finish" onchange="calculateQuote()"><option value="HASL_Lead_Free">Lead-free HASL</option><option value="ENIG">ENIG</option><option value="HASL">HASL</option></select></div>
+                        <div class="field"><label>Speed</label><select class="control" id="q_speed" onchange="calculateQuote()"><option value="standard">Standard</option><option value="fast">Fast</option><option value="express">Express</option></select></div>
+                    </div>
+                    <div class="quote-row">
+                        <div class="field"><label>Color</label><select class="control" id="q_color" onchange="calculateQuote()"><option value="green">Green</option><option value="blue">Blue</option><option value="black">Black</option><option value="red">Red</option><option value="white">White</option></select></div>
+                        <div class="field"><label>Copper</label><select class="control" id="q_copper" onchange="calculateQuote()"><option value="1">1 oz</option><option value="2">2 oz</option><option value="3">3 oz</option></select></div>
+                        <div class="field"><label>Material</label><select class="control" id="q_material" onchange="calculateQuote()"><option value="FR-4">FR-4</option><option value="Flex">Flex</option><option value="Aluminum">Aluminum</option></select></div>
+                    </div>
+                    <div style="display:flex;gap:16px;margin-bottom:12px;font-size:.82rem;color:var(--muted)">
+                        <label class="check" style="flex:1"><input type="checkbox" id="q_impedance" onchange="calculateQuote()"> Controlled impedance</label>
+                        <label class="check" style="flex:1"><input type="checkbox" id="q_etest" onchange="calculateQuote()"> Electrical test</label>
+                    </div>
+                </form>
+                <div id="quote-result" style="display:none">
+                    <table class="table" style="margin-bottom:12px"><tbody>
+                        <tr><td style="color:var(--faint)">Tier</td><td id="qr_tier" style="text-align:right;font-weight:600">—</td></tr>
+                        <tr><td style="color:var(--faint)">Board area</td><td id="qr_area" style="text-align:right">—</td></tr>
+                        <tr><td style="color:var(--faint)">Fab unit price</td><td id="qr_unit" style="text-align:right;font-weight:600">—</td></tr>
+                        <tr><td style="color:var(--faint)">Fabrication total</td><td id="qr_fab" style="text-align:right;font-weight:600">—</td></tr>
+                        <tr><td style="color:var(--faint)">Setup</td><td id="qr_setup" style="text-align:right">—</td></tr>
+                        <tr><td style="color:var(--faint)">Engineering</td><td id="qr_eng" style="text-align:right">—</td></tr>
+                    </tbody></table>
+                    <div class="quote-result">
+                        <div><small>Estimated total (USD)</small><div class="price" id="quote-price">—</div></div>
+                        <div style="text-align:right"><small>Lead time</small><div style="font-weight:700" id="quote-lead">—</div></div>
+                    </div>
+                </div>
+                <p style="font-size:.72rem;color:var(--faint);margin:12px 0 0">Pricing is an estimate. Final quote requires Gerber file upload and engineering review. No automatic charge.</p>
             </div>
         </div>
     </div>
 </section>
 
-<section class="band white" id="capabilities" aria-labelledby="capabilities-title">
+<script>
+    async function calculateQuote() {
+        const els = (id) => document.getElementById(id);
+        const result = els('quote-result');
+        const setText = (id, v) => { const e = els(id); if(e) e.textContent = v; };
+
+        result.style.display = 'block';
+        ['qr_tier','qr_area','qr_unit','qr_fab','qr_setup','qr_eng','quote-price','quote-lead'].forEach(id => setText(id, '...'));
+
+        try {
+            const resp = await fetch('/api/v1/quote/calculate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+                body: JSON.stringify({
+                    layers: parseInt(els('q_layers').value),
+                    width_mm: parseFloat(els('q_width').value),
+                    height_mm: parseFloat(els('q_height').value),
+                    quantity: parseInt(els('q_quantity').value),
+                    surface_finish: els('q_finish').value,
+                    solder_mask_color: els('q_color').value,
+                    outer_copper_oz: els('q_copper').value,
+                    board_material: els('q_material').value,
+                    production_speed: els('q_speed').value,
+                    impedance_control: els('q_impedance').checked,
+                    electrical_test: els('q_etest').checked,
+                })
+            });
+
+            if (resp.ok) {
+                const d = (await resp.json()).data;
+                if (d) {
+                    setText('qr_tier', d.tier || 'Standard');
+                    setText('qr_area', d.board_area_cm2 + ' cm²');
+                    setText('qr_unit', '$' + d.fabrication_unit_price.toFixed(2) + ' / board');
+                    setText('qr_fab', '$' + d.fabrication_total.toFixed(2));
+                    setText('qr_setup', '$' + d.setup_fee.toFixed(2));
+                    setText('qr_eng', '$' + (d.engineering_fee || 0).toFixed(2));
+                    setText('quote-price', '$' + d.estimated_total.toFixed(2));
+                    setText('quote-lead', d.lead_time_days + ' days');
+                    return;
+                }
+            }
+        } catch (e) {}
+
+        ['qr_tier','qr_area','qr_unit','qr_fab','qr_setup','qr_eng','quote-price','quote-lead'].forEach(id => setText(id, '—'));
+    }
+    document.addEventListener('DOMContentLoaded', () => calculateQuote());
+</script>
+
+<!-- Capabilities -->
+<section class="section" aria-labelledby="capabilities-title">
     <div class="wrap">
-        <div class="section-head">
-            <h2 id="capabilities-title">One controlled engineering workspace</h2>
-            <p>Manufacturing capability and commercial terms are confirmed by a NeoGiga engineer after file and specification review.</p>
-        </div>
-        <div class="grid capabilities">
-            <article class="capability"><b>PCB fabrication</b><p>Rigid, multilayer, flex, rigid-flex, aluminum and engineering-review board types.</p></article>
-            <article class="capability"><b>Assembly preparation</b><p>Gerber, BOM, CPL, schematic, fabrication drawing and STEP file organization.</p></article>
-            <article class="capability"><b>Quality controls</b><p>Electrical test, AOI, finish, copper, stack-up and advanced-process requirements.</p></article>
-            <article class="capability"><b>Regional delivery</b><p>Destination, quantity, required date and currency remain attached to the project.</p></article>
+        <div class="section-head"><div><div class="eyebrow">Manufacturing</div><h2 id="capabilities-title">PCB fabrication capabilities</h2><p>Board types, materials, finishes and specifications confirmed during engineering review.</p></div><a class="btn btn-ghost" href="/en/capabilities">Full specs</a></div>
+        <div class="grid cap-grid">
+            <article class="cap-card"><div class="cap-icon">R</div><b>Rigid PCB</b><p>FR-4, 1-64 layers. Standard and high-Tg laminates. 0.4-5.0mm thickness.</p></article>
+            <article class="cap-card"><div class="cap-icon">F</div><b>Flex & Rigid-Flex</b><p>Polyimide flexible circuits. Rigid-flex multilayer with stiffeners.</p></article>
+            <article class="cap-card"><div class="cap-icon">M</div><b>Metal Core</b><p>Aluminum and copper-core PCBs for thermal management. Single-layer.</p></article>
+            <article class="cap-card"><div class="cap-icon">H</div><b>High-Frequency</b><p>Rogers, PTFE and ceramic substrates. Controlled impedance ±10%.</p></article>
         </div>
     </div>
 </section>
 
-<section class="band" id="workflow" aria-labelledby="workflow-title">
+<!-- Workflow -->
+<section class="section-alt section" aria-labelledby="workflow-title">
     <div class="wrap">
-        <div class="section-head">
-            <h2 id="workflow-title">A traceable path to production</h2>
-            <p>Every upload, review, quote and approval is recorded against the project.</p>
-        </div>
-        <div class="grid workflow">
-            <article class="step"><b>Create project</b><p>Set quantity, delivery destination, confidentiality and target date.</p></article>
-            <article class="step"><b>Upload files</b><p>Add private Gerber ZIP, BOM, CPL and supporting engineering documents.</p></article>
-            <article class="step"><b>Review quote</b><p>Receive pricing and lead time only after engineering review.</p></article>
-            <article class="step"><b>Track order</b><p>Approve the quote and continue through the shared NeoGiga order workflow.</p></article>
+        <div class="section-head"><div><div class="eyebrow">Workflow</div><h2 id="workflow-title">Secure path to production</h2><p>Every upload, review, quote and approval is recorded against the project.</p></div><a class="btn btn-ghost" href="/en/register">Start now</a></div>
+        <div class="grid work-grid">
+            <article class="work-step"><span class="step-num">1</span><b>Create project</b><p>Set quantity, delivery destination, confidentiality and target date.</p></article>
+            <article class="work-step"><span class="step-num">2</span><b>Upload design files</b><p>Private Gerber ZIP, BOM, CPL and engineering documents.</p></article>
+            <article class="work-step"><span class="step-num">3</span><b>Review quote</b><p>Receive pricing and lead time only after engineering file review.</p></article>
+            <article class="work-step"><span class="step-num">4</span><b>Track production</b><p>Approve the quote and track through the manufacturing workflow.</p></article>
         </div>
     </div>
 </section>
 
-<section class="band cta-band">
-    <div class="wrap cta-row">
-        <div><h2>Start with your design requirements.</h2><p>No public file links. No automatic charge. Commercial approval remains explicit.</p></div>
-        <div class="actions"><a class="btn btn-gold" href="/en/register">Start secure project</a></div>
+<!-- Trust -->
+<section class="section" aria-labelledby="trust-title">
+    <div class="wrap">
+        <div class="section-head"><div><div class="eyebrow">Platform</div><h2 id="trust-title">Private, secure, reviewed</h2><p>No public file links. No automatic charge. Commercial approval remains explicit.</p></div></div>
+        <div class="grid trust-grid">
+            <div class="trust-card"><div class="trust-icon">🔒</div><b>Private file storage</b><p>Design files stored in private buckets. Signed download links expire after 15 minutes.</p></div>
+            <div class="trust-card"><div class="trust-icon">⚙️</div><b>Engineering-reviewed</b><p>Every quote requires manual engineering review before pricing is issued.</p></div>
+            <div class="trust-card"><div class="trust-icon">📋</div><b>Full audit trail</b><p>File access, quote changes, status transitions — all recorded in the project log.</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+    <div class="wrap">
+        <div><h2>Start with your board requirements.</h2><p>Instant pricing estimate, secure file upload, engineering-reviewed quote.</p></div>
+        <a class="btn btn-gold" href="/en/register">Create secure PCB project</a>
     </div>
 </section>
 @endsection
