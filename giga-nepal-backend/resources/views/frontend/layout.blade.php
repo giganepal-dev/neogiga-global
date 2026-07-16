@@ -41,15 +41,15 @@
     @stack('head')
     <style>
         /* NeoGiga "Precision Engineering" design system (dark, platform-wide) */
-        :root{--bg:#101417;--bg2:#0b0f11;--s1:#181c1f;--s2:#1d2023;--s3:#272a2d;--blue:#123a6b;--cyan:#28d8fb;--gold:#f9bd2c;--white:#fff;--soft:#d7e2ef;--on:#e0e3e6;--muted:#c5c6cd;--faint:#8f9097;--ink:#e0e3e6;--line:rgba(255,255,255,.08);--glass:rgba(255,255,255,.03);--success:#10b981;--max:1280px;--r:14px}
+        :root{--bg:#0a1210;--bg2:#060c0a;--s1:#101c18;--s2:#15241f;--s3:#1d2d27;--blue:#123a6b;--cyan:#28d8fb;--gold:#f9bd2c;--white:#fff;--soft:#d7e2ef;--on:#dde4e0;--muted:#b0bdb6;--faint:#718078;--ink:#dde4e0;--line:rgba(40,216,251,.1);--glass:rgba(40,216,251,.03);--success:#10b981;--max:1280px;--r:14px}
         *{box-sizing:border-box}html{scroll-behavior:smooth}
-        body{margin:0;background:radial-gradient(circle at 16% -2%,rgba(40,216,251,.09),transparent 44rem),radial-gradient(circle at 86% 0%,rgba(249,189,44,.05),transparent 38rem),var(--bg);color:var(--on);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55;letter-spacing:0;-webkit-font-smoothing:antialiased}
+        body{margin:0;background-color:var(--bg);background-image:radial-gradient(circle,rgba(40,216,251,.06) 1px,transparent 1px),radial-gradient(circle at 20% 30%,rgba(249,189,44,.04),transparent 50rem),radial-gradient(circle at 80% 10%,rgba(40,216,251,.07),transparent 40rem),linear-gradient(135deg,rgba(40,216,251,.03) 25%,transparent 25%),linear-gradient(225deg,rgba(249,189,44,.02) 25%,transparent 25%),linear-gradient(45deg,transparent 48%,rgba(40,216,251,.04) 48%,rgba(40,216,251,.04) 52%,transparent 52%);background-size:18px 18px,100% 100%,100% 100%,60px 60px,60px 60px,120px 120px;background-position:0 0,0 0,0 0,0 0,0 0,0 0;color:var(--on);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55;letter-spacing:0;-webkit-font-smoothing:antialiased}
         a{color:inherit;text-decoration:none}img,svg{max-width:100%;display:block}button,input,select,textarea{font:inherit}button{cursor:pointer}
         .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;letter-spacing:.02em}
         .wrap{width:min(var(--max),calc(100% - 40px));margin-inline:auto}.skip{position:absolute;left:-999px;top:8px;background:#fff;color:#000;padding:8px 10px;border-radius:6px;z-index:100}.skip:focus{left:8px}
         .top-strip{background:var(--bg2);color:var(--muted);font-size:.78rem;border-bottom:1px solid var(--line)}.top-strip .wrap{min-height:34px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.edition-links{display:flex;gap:12px;flex-wrap:wrap}.edition-links a,.edition-links button{color:var(--muted);background:none;border:0;padding:0;font:inherit;cursor:pointer;transition:color .18s}.edition-links a:hover,.edition-links button:hover{color:var(--cyan)}
         .site-head{position:sticky;top:0;z-index:60;background:rgba(16,20,23,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.head-main{min-height:76px;display:grid;grid-template-columns:auto minmax(280px,1fr) auto;gap:18px;align-items:center}.brand{display:flex;align-items:center;gap:11px;color:#fff;font-weight:800;letter-spacing:-.01em}.mark{width:40px;height:40px;border:1px solid rgba(40,216,251,.4);border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(40,216,251,.16),rgba(249,189,44,.06))}.brand small{display:block;color:var(--gold);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;margin-top:-2px}
-        .search{display:grid;grid-template-columns:150px 1fr auto;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--s1)}.search select,.search input{border:0;min-height:46px;padding:0 14px;color:var(--on);background:transparent}.search input::placeholder{color:rgba(197,198,205,.5)}.search select{background:rgba(255,255,255,.04);border-right:1px solid var(--line);color:var(--muted)}.search button{border:0;background:var(--cyan);color:#003640;font-weight:700;padding:0 20px;transition:filter .15s}.search button:hover{filter:brightness(1.1)}.head-actions{display:flex;align-items:center;gap:8px}.switcher-form{display:flex;gap:6px;align-items:center}.select-lite,.icon-btn,.switch-btn{min-height:40px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.05);color:#fff;padding:0 12px;transition:.15s}.select-lite:hover,.icon-btn:hover,.switch-btn:hover{border-color:rgba(40,216,251,.5)}.switch-btn{font-weight:700;background:var(--cyan);color:#003640;border-color:transparent}.icon-btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.86rem}.icon-btn.gold{border-color:rgba(249,189,44,.45);color:var(--gold)}
+        .search-wrap{position:relative}.search{display:grid;grid-template-columns:150px 1fr auto;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--s1)}.search select,.search input{border:0;min-height:46px;padding:0 14px;color:var(--on);background:transparent}.search input::placeholder{color:rgba(197,198,205,.5)}.search select{background:rgba(255,255,255,.04);border-right:1px solid var(--line);color:var(--muted)}.search button{border:0;background:var(--cyan);color:#003640;font-weight:700;padding:0 20px;transition:filter .15s}.search button:hover{filter:brightness(1.1)}.search-panel{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--s2);border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);z-index:100;max-height:420px;overflow-y:auto;padding:6px}.search-panel:empty,.search-panel[hidden]{display:none}.search-item{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .12s}.search-item:hover,.search-item.active{background:rgba(40,216,251,.1)}.search-item img{width:44px;height:33px;object-fit:contain;border-radius:4px;background:#081527}.search-item .si-name{color:var(--on);font-weight:600;font-size:.88rem;line-height:1.2}.search-item .si-meta{color:var(--faint);font-size:.74rem;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}.search-item .si-badge{font-size:.68rem;padding:2px 8px;border-radius:999px;background:rgba(40,216,251,.12);color:var(--cyan);white-space:nowrap}.search-panel .sp-empty{padding:20px;text-align:center;color:var(--faint);font-size:.84rem}.head-actions{display:flex;align-items:center;gap:8px}.switcher-form{display:flex;gap:6px;align-items:center}.select-lite,.icon-btn,.switch-btn{min-height:40px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.05);color:#fff;padding:0 12px;transition:.15s}.select-lite:hover,.icon-btn:hover,.switch-btn:hover{border-color:rgba(40,216,251,.5)}.switch-btn{font-weight:700;background:var(--cyan);color:#003640;border-color:transparent}.icon-btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.86rem}.icon-btn.gold{border-color:rgba(249,189,44,.45);color:var(--gold)}
         .nav-row{border-top:1px solid var(--line)}.nav-row .wrap{display:flex;align-items:center;gap:18px;min-height:46px}.mega{position:relative}.mega summary{list-style:none;display:flex;align-items:center;gap:8px;color:#fff;font-weight:700;font-size:.9rem}.mega summary::-webkit-details-marker{display:none}.mega-panel{position:absolute;top:40px;left:0;width:min(920px,calc(100vw - 32px));background:var(--s1);color:var(--on);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 80px rgba(0,0,0,.5);padding:20px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:18px;backdrop-filter:blur(14px)}.mega-col{display:grid;gap:6px}.mega-col h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:0 0 4px}.mega-col a{padding:8px 10px;border-radius:8px;color:var(--muted);transition:.15s}.mega-col a:hover{background:rgba(40,216,251,.1);color:var(--cyan)}.primary-nav{display:flex;gap:18px;color:var(--muted);font-size:.9rem;font-weight:600;flex-wrap:wrap}.primary-nav a{transition:color .15s}.primary-nav a:hover{color:var(--cyan)}
         main{min-height:60vh}.hero{background:radial-gradient(circle at 18% 20%,rgba(40,216,251,.16),transparent 34rem),radial-gradient(circle at 80% 6%,rgba(249,189,44,.1),transparent 28rem),linear-gradient(135deg,#0b1220,#101417 60%,#0b0f11);color:#fff;border-bottom:1px solid var(--line)}.hero-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:34px;align-items:center;padding:64px 0 52px}.eyebrow{color:var(--cyan);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem}.hero h1,.page-title{font-size:clamp(2.35rem,6vw,4.6rem);font-weight:800;line-height:1.02;letter-spacing:-.02em;margin:12px 0 18px;text-shadow:0 0 44px rgba(40,216,251,.18)}.hero p,.lead{color:var(--muted);font-size:1.08rem;max-width:72ch}.hero-search{margin:26px 0 12px;max-width:760px}.ai-bar{display:flex;gap:10px;align-items:center;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:12px}.ai-bar input{flex:1;border:0;background:transparent;color:var(--on);border-radius:6px;min-height:44px;padding:0 12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
         .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:10px;padding:0 18px;font-weight:600;font-size:.9rem;border:1px solid transparent;transition:.15s}.btn:hover{transform:translateY(-1px)}.btn-primary{background:var(--cyan);color:#003640}.btn-primary:hover{filter:brightness(1.1)}.btn-gold{background:var(--gold);color:#261900}.btn-ghost{border-color:var(--line);background:transparent;color:var(--on)}.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}.btn-dark{border-color:var(--line);color:#fff;background:rgba(255,255,255,.05)}
@@ -120,11 +120,14 @@
             <span class="mark"><img src="{{ url('/images/brand/neogiga-icon-192.png') }}" alt="" width="30" height="30" aria-hidden="true"></span>
             <span>NeoGiga<small>Engineering Marketplace</small></span>
         </a>
-        <form class="search" method="get" action="{{ $publicBase }}/products" role="search">
-            <select name="category" aria-label="Category"><option value="">All categories</option><option value="semiconductors">Semiconductors</option><option value="robotics">Robotics</option><option value="battery-technology">Battery</option><option value="industrial-automation">Automation</option></select>
-            <input name="q" type="search" value="{{ request('q') }}" placeholder="Search products, MPN, SKU, category..." aria-label="Search NeoGiga">
-            <button type="submit"><x-icon name="search" size="18"/> Search</button>
-        </form>
+        <div class="search-wrap">
+            <form class="search" method="get" action="{{ $publicBase }}/products" role="search" autocomplete="off">
+                <select name="category" aria-label="Category"><option value="">All categories</option><option value="semiconductors">Semiconductors</option><option value="robotics">Robotics</option><option value="battery-technology">Battery</option><option value="industrial-automation">Automation</option></select>
+                <input id="search-input" name="q" type="search" value="{{ request('q') }}" placeholder="Search products, MPN, SKU, category..." aria-label="Search NeoGiga" autocomplete="off">
+                <button type="submit"><x-icon name="search" size="18"/> Search</button>
+            </form>
+            <div id="search-panel" class="search-panel" hidden></div>
+        </div>
         <div class="head-actions">
             <select class="select-lite" aria-label="Language"><option>EN</option><option>HI</option><option>NE</option></select>
             <a class="icon-btn" href="/cart"><x-icon name="cart" size="18"/> Cart</a>
@@ -167,5 +170,40 @@
     <a href="{{ $publicBase }}/ai-commerce"><x-icon name="ai-search" size="20"/><span>AI</span></a>
 </nav>
 @stack('foot')
+<script>
+(function(){
+var input=document.getElementById('search-input'),panel=document.getElementById('search-panel'),active=-1,timer,abort;
+if(!input||!panel)return;
+var base=input.closest('form')? input.closest('form').getAttribute('action')+'/suggest' : '/en/products/suggest';
+input.addEventListener('input',function(){clearTimeout(timer);var q=input.value.trim();if(q.length<2){panel.hidden=true;return}
+timer=setTimeout(function(){
+if(abort)abort();
+var ctrl=new AbortController();abort=function(){ctrl.abort()};
+fetch(base+'?q='+encodeURIComponent(q),{signal:ctrl.signal,headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}})
+.then(function(r){return r.json()}).then(function(data){render(data.data||data)}).catch(function(){})
+},180)});
+input.addEventListener('keydown',function(e){
+var items=panel.querySelectorAll('.search-item');
+if(e.key==='ArrowDown'){e.preventDefault();active=Math.min(active+1,items.length-1);highlight(items)}
+else if(e.key==='ArrowUp'){e.preventDefault();active=Math.max(active-1,-1);highlight(items)}
+else if(e.key==='Enter'&&active>=0&&items[active]){e.preventDefault();items[active].querySelector('a').click()}
+else if(e.key==='Escape'){panel.hidden=true;active=-1}
+});
+document.addEventListener('click',function(e){if(!input.contains(e.target)&&!panel.contains(e.target)){panel.hidden=true;active=-1}});
+input.addEventListener('focus',function(){if(panel.children.length&&!panel.hidden)panel.hidden=false});
+function highlight(items){items.forEach(function(el,i){el.classList.toggle('active',i===active)})}
+function render(results){
+active=-1;panel.innerHTML='';
+if(!results||!results.length){panel.innerHTML='<div class=sp-empty>No matches found. Try a different keyword or <a href=/en/products> browse all.</a></div>';panel.hidden=false;return}
+results.forEach(function(p,i){
+var div=document.createElement('div');div.className='search-item';
+var img=p.image||'';
+div.innerHTML='<a href='+(p.url||'/en/products/'+p.slug)+' style=display:contents><img src='+img+' alt=\"\" width=44 height=33 loading=lazy onerror=this.remove()><span><span class=si-name>'+esc(p.name)+'</span><br><span class=si-meta>'+(p.mpn||p.sku||'')+'</span></span><span class=si-badge>'+(p.category||'')+'</span></a>';
+div.addEventListener('mouseenter',function(){active=i;highlight(panel.querySelectorAll('.search-item'))});
+panel.appendChild(div)
+});panel.hidden=false}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+})();
+</script>
 </body>
 </html>
