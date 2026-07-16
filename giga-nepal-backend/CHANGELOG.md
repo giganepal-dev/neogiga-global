@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added `product-images:discover-source-candidates`, a controlled official-source media discovery command. It records MPN-linked image candidates with provenance, source checksums, and mandatory rights review while keeping all candidate assets inactive and unfetched.
 - Added a production-safe TI parametric catalog importer for official supplied CSV exports. It uses manufacturer plus normalized MPN as the canonical identity, preserves curated existing products, assigns NeoGiga `NG-TI-*` SKUs, creates structured specifications, and generates editable NeoGiga SEO records.
 - TI imports are quote-only by default: supplied source prices, generated inventory, and product images are not published without separate commercial, stock, and media-rights verification.
 
