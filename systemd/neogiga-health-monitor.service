@@ -1,0 +1,29 @@
+[Unit]
+Description=NeoGiga Production Health Monitor
+Documentation=https://neogiga.com
+After=network.target
+
+[Service]
+Type=simple
+User=neogiga
+Group=neogiga
+WorkingDirectory=/home/neogiga/laravel/current
+
+# Run health checks every 5 minutes
+ExecStart=/bin/bash -c 'while true; do /home/neogiga/laravel/current/artisan neogiga:health-check >> /home/neogiga/laravel/shared/storage/logs/health-monitor.log 2>&1; sleep 300; done'
+
+# Restart policy
+Restart=always
+RestartSec=10s
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=neogiga-health-monitor
+
+[Install]
+WantedBy=multi-user.target
