@@ -5,6 +5,7 @@
 - Replaced exact per-request public product-list totals with simple pagination and an optional cached headline count, preventing every storefront listing request from scanning the complete global catalog solely to render pagination metadata.
 - Added non-blocking PostgreSQL indexes for the source-review publication gate and importer duplicate lookup. The indexes are additive, created concurrently outside a migration transaction, and have reversible down migrations.
 - Added a partial public-listing order index for the catalog's default featured/name sort, allowing the storefront to stop after the first page instead of sorting the entire publishable catalog.
+- Cached marketplace-specific homepage product cards for ten minutes, extended the read-only published-count cache to six hours, and added a matching featured/updated homepage index to keep public landing requests bounded under catalog-scale traffic.
 
 ## 2026-07-16 - PCB Workspace Upgrade and Branch Audit
 

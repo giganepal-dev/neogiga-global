@@ -164,32 +164,34 @@ class LandingController extends Controller
                 return collect();
             }
 
-            $globalMarketplaceId = (int) Marketplace::query()->where('code', 'GLOBAL')->value('id');
-            $priceMarketplaceIds = array_values(array_unique(array_filter([$marketplaceId, $globalMarketplaceId])));
+            return Cache::remember('catalog:landing-products:v1:'.$marketplaceId, now()->addMinutes(10), function () use ($marketplaceId): Collection {
+                $globalMarketplaceId = (int) Marketplace::query()->where('code', 'GLOBAL')->value('id');
+                $priceMarketplaceIds = array_values(array_unique(array_filter([$marketplaceId, $globalMarketplaceId])));
 
-            return Product::query()
-                ->published()
-                ->with([
-                    'brand:id,name,slug',
-                    'images' => fn ($query) => $query
-                        ->where('is_active', true)
-                        ->orderByDesc('is_primary')
-                        ->orderBy('sort_order')
-                        ->limit(1),
-                    'marketplacePrices' => fn ($query) => $query
-                        ->where('is_active', true)
-                        ->when($priceMarketplaceIds !== [], fn ($priceQuery) => $priceQuery->whereIn('marketplace_id', $priceMarketplaceIds))
-                        ->when($priceMarketplaceIds === [], fn ($priceQuery) => $priceQuery->whereRaw('1 = 0'))
-                        ->when($marketplaceId > 0, fn ($priceQuery) => $priceQuery->orderByRaw('CASE WHEN marketplace_id = ? THEN 0 ELSE 1 END', [$marketplaceId]))
-                        ->orderBy('id')
-                        ->limit(1),
-                ])
-                ->whereNotNull('slug')
-                ->where('slug', '!=', '')
-                ->orderByDesc('is_featured')
-                ->orderByDesc('updated_at')
-                ->limit(6)
-                ->get();
+                return Product::query()
+                    ->published()
+                    ->with([
+                        'brand:id,name,slug',
+                        'images' => fn ($query) => $query
+                            ->where('is_active', true)
+                            ->orderByDesc('is_primary')
+                            ->orderBy('sort_order')
+                            ->limit(1),
+                        'marketplacePrices' => fn ($query) => $query
+                            ->where('is_active', true)
+                            ->when($priceMarketplaceIds !== [], fn ($priceQuery) => $priceQuery->whereIn('marketplace_id', $priceMarketplaceIds))
+                            ->when($priceMarketplaceIds === [], fn ($priceQuery) => $priceQuery->whereRaw('1 = 0'))
+                            ->when($marketplaceId > 0, fn ($priceQuery) => $priceQuery->orderByRaw('CASE WHEN marketplace_id = ? THEN 0 ELSE 1 END', [$marketplaceId]))
+                            ->orderBy('id')
+                            ->limit(1),
+                    ])
+                    ->whereNotNull('slug')
+                    ->where('slug', '!=', '')
+                    ->orderByDesc('is_featured')
+                    ->orderByDesc('updated_at')
+                    ->limit(6)
+                    ->get();
+            });
         } catch (\Throwable) {
             return collect();
         }
@@ -225,7 +227,7 @@ class LandingController extends Controller
 
     private function safePublishedProductCount(): int
     {
-        return Cache::remember('catalog:published-product-count:v1', now()->addMinutes(5), function (): int {
+        return Cache::remember('catalog:published-product-count:v1', now()->addHours(6), function (): int {
             try {
                 return (int) Product::query()->published()->count();
             } catch (\Throwable) {
