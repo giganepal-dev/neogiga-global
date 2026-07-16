@@ -202,8 +202,9 @@ class SourceImageCandidateDiscovery
             ]);
             $add($src, 'img', false, $context);
         }
-        foreach ($xpath->query('//script[@type="application/ld+json"]') ?: [] as $node) {
-            $script = (string) $node->textContent;
+        preg_match_all('#<script\\b[^>]*\\btype\\s*=\\s*(["\\\'])application/ld\\+json\\1[^>]*>(.*?)</script\\s*>#is', $html, $structuredDataBlocks);
+        foreach ($structuredDataBlocks[2] ?? [] as $script) {
+            $script = html_entity_decode((string) $script, ENT_QUOTES | ENT_HTML5, 'UTF-8');
             $decoded = json_decode($script, true);
             if (is_array($decoded)) {
                 $this->collectJsonImages($decoded, $mpnNeedle, $add);
