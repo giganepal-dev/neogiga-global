@@ -1,45 +1,15 @@
 ```
-# Laravel-specific ignores
-bootstrap/cache/
-storage/logs/
-storage/framework/
-vendor/
-
-# PHP compiled files
-*.php~
-*.php.bak
-
 # Environment
-.env
 .env.local
 .env.*
 
 # Dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+vendor/
 
 # Logs
 *.log
 
-# Runtime data
-.svn/
+# OS generated files
 .DS_Store
 Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Database
-database/seeds/
-database/factories/
-
-# Build artifacts
-public/build/
-public/css/
-public/js/
 ```

@@ -2,26 +2,27 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ManufacturerAlias extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'manufacturer_id',
-        'alias',
-        'normalized_alias',
-        'source_name',
-        'source_url',
-        'confidence_score',
+        'brand_id',
+        'alias_name',
+        'source',
+        'is_verified',
     ];
 
     protected $casts = [
-        'confidence_score' => 'integer',
+        'is_verified' => 'boolean',
     ];
 
-    public function manufacturer(): BelongsTo
+    public function brand(): BelongsTo
     {
-        return $this->belongsTo(Manufacturer::class);
+        return $this->belongsTo(Brand::class);
     }
 }

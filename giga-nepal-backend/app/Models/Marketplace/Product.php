@@ -177,6 +177,36 @@ class Product extends Model
         return $this->hasOne(ProductSeoMeta::class);
     }
 
+    public function features(): HasMany
+    {
+        return $this->hasMany(ProductFeature::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function applications(): HasMany
+    {
+        return $this->hasMany(ProductApplication::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function priceBreaks(): HasMany
+    {
+        return $this->hasMany(ProductPriceBreak::class)->active();
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(ProductQuestion::class)->questionsOnly();
+    }
+
+    public function resources(): HasMany
+    {
+        return $this->hasMany(ProductResource::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(\App\Models\Marketplace\ProductDocument::class)->orderByDesc('id');
+    }
+
     public function scopePublished($query)
     {
         return app(ProductPublicationGate::class)->apply($query);
