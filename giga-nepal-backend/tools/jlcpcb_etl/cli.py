@@ -66,6 +66,11 @@ def build_parser() -> argparse.ArgumentParser:
     cursor.add_argument("--offset", type=int, default=None, help="Legacy row offset for inspection only; NeoGiga writes require keyset cursors")
     parser.add_argument("--batch-size", type=int, default=5000, help="Load batch size")
     parser.add_argument("--resume", action="store_true", help="Resume only if source checksum matches checkpoint")
+    parser.add_argument(
+        "--missing-only",
+        action="store_true",
+        help="For NeoGiga writes, scan a keyset range and import only source IDs not already linked",
+    )
     parser.add_argument("--reset-checkpoint", action="store_true", help="Delete checkpoint before running")
     parser.add_argument("--sqlite-file", type=Path, default=None, help="Use an already downloaded SQLite file")
     parser.add_argument("--download-only", action="store_true", help="Download database and exit")
@@ -147,6 +152,8 @@ def _write_adapter_report(report: dict[str, Any], output_dir: Path) -> None:
         f"- Committed batches: {len(report['import_batch_ids'])}",
         f"- Last import batch: {report.get('import_batch_id')}",
         f"- Rows read: {report['rows_read']}",
+        f"- Source rows scanned: {report['source_rows_scanned']}",
+        f"- Source rows already linked: {report['source_rows_already_linked']}",
         f"- Products inserted: {report['products_inserted']}",
         f"- Products updated: {report['products_updated']}",
         f"- Brands inserted: {report['brands_inserted']}",
@@ -244,6 +251,8 @@ def _new_adapter_run_report(
         "committed_batches": [],
         "errors": [],
         "failure": None,
+        "source_rows_scanned": 0,
+        "source_rows_already_linked": 0,
     }
     report.update({field: 0 for field in ADAPTER_COUNTER_FIELDS})
     return report
@@ -283,6 +292,8 @@ def run(argv: list[str] | None = None) -> int:
         raise RuntimeError("--resume and --reset-checkpoint cannot be used together")
     if args.resume and args.offset is not None:
         raise RuntimeError("--resume requires a keyset checkpoint, not --offset")
+    if args.missing_only and args.target != "neogiga":
+        raise RuntimeError("--missing-only is supported only for the NeoGiga canonical target")
     settings = Settings.from_env(batch_size=args.batch_size)
     settings.ensure_dirs()
     logger = configure_logging(args.log_level, settings.output_dir / "jlcpcb_etl.jsonl")
@@ -400,6 +411,8 @@ def run(argv: list[str] | None = None) -> int:
     if args.target == "neogiga" and is_write:
         if args.offset is not None:
             raise RuntimeError("NeoGiga writes require --after-source-id or --resume; --offset is inspection-only")
+        if args.missing_only and after_source_id is None:
+            raise RuntimeError("--missing-only requires an explicit --after-source-id or --resume cursor")
         if not args.publish or not args.pilot or not args.yes:
             raise RuntimeError("Refusing NeoGiga canonical writes without --publish --pilot --yes")
         max_neogiga_rows = max(1000, args.scale_import_max) if args.scale_import else 1000
@@ -516,21 +529,28 @@ def run(argv: list[str] | None = None) -> int:
             chunk_rows_read = 0
             chunk_last_source_id = None
 
-        try:
-            for record in stream_source_rows(
-                result.path,
-                mapping,
-                limit=args.limit,
-                after_source_id=after_source_id,
-            ):
+        def process_records(records: list[dict[str, object]]) -> None:
+            nonlocal source_rows_read, last_source_id, previous_source_id
+            nonlocal chunk_rows_read, chunk_last_source_id
+
+            existing_source_ids = (
+                adapter.existing_source_part_ids(_source_key(record, mapping) for record in records)
+                if args.missing_only
+                else set()
+            )
+            for record in records:
                 source_id = _source_key(record, mapping)
                 if previous_source_id is not None and source_id == previous_source_id:
                     raise RuntimeError(f"Duplicate ordered source ID {source_id}; refusing an unsafe keyset checkpoint")
                 previous_source_id = source_id
                 source_rows_read += 1
-                chunk_rows_read += 1
                 chunk_last_source_id = source_id
                 last_source_id = source_id
+                adapter_report["source_rows_scanned"] += 1
+                if source_id in existing_source_ids:
+                    adapter_report["source_rows_already_linked"] += 1
+                    continue
+                chunk_rows_read += 1
                 try:
                     part = transform_record(record, mapping, category_mapper)
                     chunk_parts.append(part)
@@ -547,6 +567,24 @@ def run(argv: list[str] | None = None) -> int:
                     )
                 if chunk_rows_read >= commit_row_limit:
                     commit_chunk()
+
+        try:
+            scan_buffer: list[dict[str, object]] = []
+            for record in stream_source_rows(
+                result.path,
+                mapping,
+                limit=args.limit,
+                after_source_id=after_source_id,
+            ):
+                if not args.missing_only:
+                    process_records([record])
+                    continue
+                scan_buffer.append(record)
+                if len(scan_buffer) >= commit_row_limit:
+                    process_records(scan_buffer)
+                    scan_buffer = []
+            if scan_buffer:
+                process_records(scan_buffer)
             commit_chunk()
             adapter_report["status"] = "completed"
             adapter_report["finished_at"] = datetime.now(timezone.utc).isoformat()
@@ -660,6 +698,8 @@ def run(argv: list[str] | None = None) -> int:
         report["canonical_aliases_created"] = adapter_report["source_aliases_created"]
         report["canonical_aliases_updated"] = adapter_report["source_aliases_updated"]
         report["import_batch_ids"] = adapter_report["import_batch_ids"]
+        report["source_rows_scanned"] = adapter_report["source_rows_scanned"]
+        report["source_rows_already_linked"] = adapter_report["source_rows_already_linked"]
     report["total_runtime_seconds"] = round(perf_counter() - timer, 3)
     if report["total_runtime_seconds"]:
         report["rows_per_second"] = round(source_rows_read / report["total_runtime_seconds"], 2)
