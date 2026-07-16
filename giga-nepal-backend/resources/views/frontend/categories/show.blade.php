@@ -62,7 +62,7 @@
         @if ($i === count($breadcrumb)-1)
             <strong style="color:var(--soft)">{{ $b['name'] }}</strong>
         @else
-            <a href="{{ $b['url'] }}">{{ $b['name'] }}</a><span>/</span>
+            <a href="{{ $b['url'] }}">{{ $b['name'] }}</a><span><x-icon name="chevron-right" size="12"/></span>
         @endif
     @endforeach
 </nav>
@@ -78,7 +78,7 @@
         @foreach ($children as $child)
             <a href="{{ $publicBase }}/categories/{{ $child->slug }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(13,34,64,.5);border:1px solid var(--line);border-radius:10px;padding:14px 16px">
                 <span>{{ $child->name }}</span>
-                <span aria-hidden="true" style="color:var(--cyan)">→</span>
+                <span aria-hidden="true" style="color:var(--cyan)"><x-icon name="chevron-right" size="16"/></span>
             </a>
         @endforeach
     </div>
@@ -87,7 +87,7 @@
 <h2 style="font-size:1.05rem;margin:8px 0 12px;color:var(--soft)">Products in {{ $category->name }}</h2>
 @if ($products->isEmpty())
     <div style="background:rgba(13,34,64,.5);border:1px solid var(--line);border-radius:var(--r);padding:40px 22px;text-align:center;color:var(--muted)">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="none" style="opacity:.6;margin-bottom:8px"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8" stroke="#5b7a99" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <x-icon name="products" size="40" style="opacity:.6;margin-bottom:8px;color:#5b7a99"/>
         <h3 style="color:var(--soft);margin:0 0 4px">Catalog coming soon</h3>
         <p style="margin:0 auto;max-width:44ch">Products for this category are being onboarded. Meanwhile, try the <a href="{{ $publicBase }}/#ai" style="color:var(--cyan)">AI BOM Builder</a> or <a href="{{ $publicBase }}/#vendors" style="color:var(--cyan)">list your products</a> as a vendor.</p>
     </div>

@@ -4,8 +4,8 @@
 @section('content')
 <section class="hero" style="padding:34px 0">
     <div class="wrap">
-        <nav class="crumbs"><a href="/">Home</a><span>/</span><strong>Cart</strong></nav>
-        <p class="eyebrow">Engineering cart</p>
+        <nav class="crumbs"><a href="/">Home</a><span><x-icon name="chevron-right" size="12"/></span><strong>Cart</strong></nav>
+        <p class="eyebrow"><x-icon name="cart" size="14"/> Engineering cart</p>
         <h1 class="page-title" style="font-size:clamp(2rem,5vw,4rem)">Review your parts</h1>
         <p>Cart checkout is manual-confirmation only. For B2B pricing or unavailable prices, use RFQ.</p>
     </div>
@@ -29,7 +29,7 @@
                     <strong>{{ $cart->currency_code }} {{ number_format((float)$item->total,2) }}</strong>
                 </div>
             @empty
-                <div style="text-align:center;padding:48px"><h2>Your cart is empty</h2><p class="sub">Browse products, ask AI to build a BOM, or submit a sourcing RFQ.</p><a class="btn btn-primary" href="/products">Browse Products</a></div>
+                <div style="text-align:center;padding:48px"><x-icon name="cart" size="48" style="opacity:.3;margin-bottom:12px"/><h2>Your cart is empty</h2><p class="sub">Browse products, ask AI to build a BOM, or submit a sourcing RFQ.</p><a class="btn btn-primary" href="/products"><x-icon name="products" size="16"/> Browse Products</a></div>
             @endforelse
         </div>
         <aside class="panel" style="padding:18px">
@@ -42,9 +42,9 @@
                 <p class="sub">Routing appears after products are added.</p>
             @endforelse
             <div class="grid" style="margin-top:14px">
-                <a class="btn btn-primary" href="/checkout">Proceed to Checkout</a>
-                <a class="btn btn-ghost" href="/rfq">Request Bulk RFQ</a>
-                <a class="btn btn-gold" href="/ai-commerce">Ask AI Engineer</a>
+                <a class="btn btn-primary" href="/checkout"><x-icon name="cart" size="16"/> Proceed to Checkout</a>
+                <a class="btn btn-ghost" href="/rfq"><x-icon name="rfq" size="16"/> Request Bulk RFQ</a>
+                <a class="btn btn-gold" href="/ai-commerce"><x-icon name="ai-search" size="16"/> Ask AI Engineer</a>
             </div>
             <p class="sub">Advisory only. Staff confirms taxes, shipping, stock, quote-only items and payment instructions.</p>
         </aside>

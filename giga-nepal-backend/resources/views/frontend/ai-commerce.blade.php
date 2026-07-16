@@ -10,8 +10,8 @@
 @endpush
 @section('content')
 <section class="page-hero">
-    <p class="eyebrow">Local Rule Engine Demo</p>
-    <h1>AI Commerce for Engineers and Makers</h1>
+    <p class="eyebrow"><x-icon name="ai-search" size="14"/> Local Rule Engine Demo</p>
+    <h1><x-icon name="ai-engineer" size="28"/> AI Commerce for Engineers and Makers</h1>
     <p class="lead">From idea to component list, quote, cart, and learning guide.</p>
     <p class="muted">NeoGiga's AI commerce layer is designed to help users describe a project and instantly receive suggested components, compatible alternatives, datasheets, tutorials, sample code, stock status, and buying options.</p>
 </section>
@@ -26,8 +26,8 @@
         <p class="muted">This demo uses NeoGiga local rules. It does not call a paid AI API and does not create orders or payments.</p>
         <div class="examples" id="ai-examples"></div>
         <textarea id="ai-prompt" placeholder="I want to build a 4WD robot car"></textarea>
-        <button class="btn btn-primary" id="ai-submit" type="button">Build BOM</button>
-        <a class="btn btn-ghost" href="/sell-on-neogiga" style="margin-left:8px">Request B2B BOM Quote</a>
+        <button class="btn btn-primary" id="ai-submit" type="button"><x-icon name="bom" size="16"/> Build BOM</button>
+        <a class="btn btn-ghost" href="/sell-on-neogiga" style="margin-left:8px"><x-icon name="rfq" size="16"/> Request B2B BOM Quote</a>
         <p class="notice" id="ai-notice"></p>
     </div>
     <div>

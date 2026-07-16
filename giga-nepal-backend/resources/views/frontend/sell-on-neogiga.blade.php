@@ -17,7 +17,7 @@ input,select,textarea{width:100%;border:1px solid rgba(255,255,255,.16);border-r
 
 @section('content')
 <section class="page-hero">
-    <p class="eyebrow">Seller Early Access</p>
+    <p class="eyebrow"><x-icon name="sellers" size="14"/> Seller Early Access</p>
     <h1>Sell on NeoGiga</h1>
     <p class="lead">Reach engineers, makers, schools, labs, workshops, resellers, and B2B buyers across South Asia.</p>
 </section>

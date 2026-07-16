@@ -15,7 +15,7 @@
 </style>
 <div class="wrap">
     <div class="auth-card">
-        <h1>Reset your password</h1>
+        <h1><x-icon name="password" size="22"/> Reset your password</h1>
         <p>Enter your account email and we'll send you a reset link.</p>
 
         @if (session('status'))
@@ -29,7 +29,7 @@
             @csrf
             <label for="email">Email address</label>
             <input id="email" type="email" name="email" required autocomplete="email" value="{{ old('email') }}" placeholder="you@example.com">
-            <button class="btn btn-primary" type="submit" style="width:100%">Send reset link</button>
+            <button class="btn btn-primary" type="submit" style="width:100%"><x-icon name="email" size="16"/> Send reset link</button>
         </form>
     </div>
 </div>

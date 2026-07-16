@@ -116,7 +116,7 @@
                 <option value="manufacturer" @selected($filters['sort'] === 'manufacturer')>Manufacturer</option>
                 <option value="price" @selected($filters['sort'] === 'price')>Price</option>
             </select>
-            <button class="btn btn-primary" type="submit">Search</button>
+            <button class="btn btn-primary" type="submit"><x-icon name="search" size="16"/> Search</button>
         </form>
     </div>
     <div class="pmeta">
@@ -151,7 +151,7 @@
                     @if($p->track_inventory)
                         <span class="pstock {{ $p->stock_quantity > 0 ? 'in' : 'out' }}">{{ $p->stock_quantity > 0 ? 'In stock' : 'Out of stock' }}</span>
                     @endif
-                    <div style="margin-top:auto"><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $p->slug }}">View specs &amp; RFQ</a></div>
+                    <div style="margin-top:auto"><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $p->slug }}"><x-icon name="view" size="16"/> View specs &amp; RFQ</a></div>
                 </div>
             @endforeach
         </div>
