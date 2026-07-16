@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         \App\Console\Commands\AuditCategoryHierarchyCommand::class,
+        \App\Console\Commands\AuditBrandLogosCommand::class,
         \App\Console\Commands\ImportTiParametricCatalog::class,
     ])
     ->withMiddleware(function (Middleware $middleware) {

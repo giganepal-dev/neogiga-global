@@ -9,7 +9,7 @@
     '@type' => 'Brand',
     'name' => $brand->name,
     'url' => $pageSeo['canonical'],
-    'logo' => $brand->logo_path,
+    'logo' => $brand->verifiedLogoUrl(),
     'description' => strip_tags($brand->description ?: $brand->short_description ?: $pageSeo['description']),
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
@@ -22,8 +22,8 @@
     <section class="panel" style="padding:28px;margin:20px 0 28px">
         @if($brand->banner_path)<img src="{{ $brand->banner_path }}" alt="{{ $brand->name }} engineering products" width="1200" height="320" style="width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin-bottom:20px">@endif
         <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
-            @if($brand->logo_path)<img src="{{ $brand->logo_path }}" alt="{{ $brand->name }} logo" width="180" height="90" style="max-width:180px;max-height:90px;object-fit:contain;background:#fff;border-radius:10px;padding:8px">@else<div class="cat-icon" style="width:72px;height:72px;font-size:1.5rem">{{ strtoupper(substr($brand->name, 0, 1)) }}</div>@endif
-            <div style="flex:1;min-width:240px"><p class="eyebrow">Brand catalog</p><h1 class="section-title">{{ $brand->name }}</h1><p class="sub">{{ $brand->description ?: $brand->short_description ?: $pageSeo['description'] }}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge b-info">{{ number_format($products->total()) }} public products</span>@if($brand->manufacturer)<a class="badge b-muted" href="{{ $publicBase }}/manufacturer/{{ $brand->manufacturer->slug }}">Manufacturer: {{ $brand->manufacturer->name }}</a>@endif</div></div>
+            @if($brand->verifiedLogoUrl())<img src="{{ $brand->verifiedLogoUrl() }}" alt="{{ $brand->logo_alt_text ?: $brand->name.' official logo' }}" width="180" height="90" style="max-width:180px;max-height:90px;object-fit:contain;background:#fff;border-radius:10px;padding:8px">@else<div class="cat-icon" aria-label="{{ $brand->name }}" style="width:72px;height:72px;font-size:1.5rem">{{ strtoupper(substr($brand->name, 0, 1)) }}</div>@endif
+            <div style="flex:1;min-width:240px"><p class="eyebrow">Brand catalog</p><h1 class="section-title">{{ $brand->name }}</h1><p class="sub">{{ $brand->description ?: $brand->short_description ?: $pageSeo['description'] }}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge b-info">{{ number_format($products->total()) }} public products</span>@if($brand->logo_verified)<span class="badge b-ok">Verified manufacturer logo</span>@endif @if($brand->manufacturer)<a class="badge b-muted" href="{{ $publicBase }}/manufacturer/{{ $brand->manufacturer->slug }}">Manufacturer: {{ $brand->manufacturer->name }}</a>@endif</div></div>
         </div>
     </section>
 

@@ -28,7 +28,7 @@
         <div class="category-grid grid">
             @foreach($brands as $brand)
                 <a class="category-card" href="{{ $publicBase }}/brand/{{ $brand->slug }}">
-                    @if($brand->logo_path)<img src="{{ $brand->logo_path }}" alt="{{ $brand->name }} logo" width="160" height="64" loading="lazy" style="height:52px;width:100%;object-fit:contain;object-position:left center;margin-bottom:12px">@else<div class="cat-icon">{{ strtoupper(substr($brand->name, 0, 1)) }}</div>@endif
+                    @if($brand->verifiedLogoUrl())<img src="{{ $brand->verifiedLogoUrl() }}" alt="{{ $brand->logo_alt_text ?: $brand->name.' official logo' }}" width="160" height="64" loading="lazy" style="height:52px;width:100%;object-fit:contain;object-position:left center;margin-bottom:12px">@else<div class="cat-icon" aria-label="{{ $brand->name }}">{{ strtoupper(substr($brand->name, 0, 1)) }}</div>@endif
                     <h2 style="font-size:1.1rem">{{ $brand->name }}</h2>
                     <p class="sub">{{ $brand->short_description ?: \Illuminate\Support\Str::limit(strip_tags($brand->description ?: 'Explore products, specifications and RFQ sourcing.'), 130) }}</p>
                     <span class="badge b-muted">{{ number_format($brand->public_products_count) }} products</span>

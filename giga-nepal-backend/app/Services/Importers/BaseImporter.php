@@ -13,6 +13,7 @@ use App\Models\Marketplace\ProductCategory;
 use App\Models\Supplier\Supplier;
 use App\Models\Supplier\ProductSupplier;
 use App\Services\Catalog\CategoryResolutionService;
+use App\Services\Catalog\BrandIdentityResolver;
 
 abstract class BaseImporter
 {
@@ -124,11 +125,10 @@ abstract class BaseImporter
     {
         $imported = 0;
         foreach ($brands as $brand) {
-            ProductBrand::firstOrCreate(['slug' => Str::slug($brand['name'])], [
-                'name' => $brand['name'],
-                'logo_path' => $brand['logo_url'] ?? null,
-                'description' => $brand['description'] ?? null,
-            ]);
+            $resolved = app(BrandIdentityResolver::class)->resolveOrCreate($brand['name'] ?? null);
+            if ($resolved['brand'] && ! $resolved['brand']->description && ! empty($brand['description'])) {
+                $resolved['brand']->update(['description' => $brand['description']]);
+            }
             $imported++;
         }
         return $imported;
@@ -240,9 +240,7 @@ abstract class BaseImporter
 
     protected function getOrCreateBrand(?string $brandName): ?int
     {
-        if (empty($brandName)) return null;
-        $brand = ProductBrand::firstOrCreate(['slug' => Str::slug($brandName)], ['name' => $brandName]);
-        return $brand->id;
+        return app(BrandIdentityResolver::class)->resolveOrCreate($brandName)['brand']?->id;
     }
 
     protected function getOrCreateCategory(?string $categoryName): ?int

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class ProductBrand extends Model
 {
@@ -42,6 +43,22 @@ class ProductBrand extends Model
         'hide_when_unavailable',
         'landing_page_enabled',
         'seo_meta',
+        'logo_original_url',
+        'logo_source_domain',
+        'logo_source_type',
+        'logo_verified',
+        'logo_verified_at',
+        'logo_verified_by',
+        'logo_alt_text',
+        'logo_width',
+        'logo_height',
+        'logo_mime_type',
+        'logo_sha256',
+        'logo_background_type',
+        'logo_status',
+        'logo_review_note',
+        'logo_confidence',
+        'logo_metadata',
     ];
 
     protected $casts = [
@@ -59,6 +76,10 @@ class ProductBrand extends Model
         'hide_when_unavailable' => 'boolean',
         'landing_page_enabled' => 'boolean',
         'seo_meta' => 'array',
+        'logo_verified' => 'boolean',
+        'logo_verified_at' => 'datetime',
+        'logo_confidence' => 'float',
+        'logo_metadata' => 'array',
     ];
 
     protected static function booted(): void
@@ -85,6 +106,34 @@ class ProductBrand extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'brand_id');
+    }
+
+    public function logoHistory(): HasMany
+    {
+        return $this->hasMany(BrandLogoHistory::class, 'brand_id')->latest();
+    }
+
+    public function aliases(): HasMany
+    {
+        return $this->hasMany(BrandAlias::class, 'brand_id');
+    }
+
+    public function verifiedLogoUrl(): ?string
+    {
+        if (! $this->logo_path || ! $this->logo_verified) {
+            return null;
+        }
+
+        if (str_starts_with($this->logo_path, 'http://') || str_starts_with($this->logo_path, 'https://')) {
+            return null;
+        }
+
+        $disk = Storage::disk((string) config('brand_logos.disk', 'public'));
+        if (! $disk->exists($this->logo_path)) {
+            return null;
+        }
+
+        return $disk->url($this->logo_path);
     }
 
     public function scopeActive($query)

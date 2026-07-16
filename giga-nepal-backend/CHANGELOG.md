@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-17 - Official brand logo governance
+
+- Added additive brand-logo provenance, verification, review-history and alias tables without changing existing brand, product, SEO, inventory, pricing, category or media records.
+- Added a conservative official-domain discovery and staging service with SSRF guards, MIME and size validation, unsafe-SVG rejection, content hashing, local storage, responsive WebP variants, confidence scoring, and a hard rule that lower-confidence candidates cannot replace a verified logo.
+- Added alias-aware importer brand resolution. Supplier logo URLs are no longer written directly to public brand records; new identities remain logo-pending until an official source is reviewed.
+- Added the existing-admin-layout Brand Logos workspace, staged upload/discovery, approval/rejection/removal audit history, resilient public initials fallback, verified-logo structured data, and queued discovery/verification/variant/broken-file jobs.
+- Added read-only `catalog:audit-brand-logos` output for `BRAND_LOGO_AUDIT.md` and `BRAND_LOGO_MAPPING_PLAN.csv`; no production logo candidates are applied until the mapping plan is reviewed.
+
 ## 2026-07-17 - Category hierarchy governance and import safety
 
 - Added a shared category resolution service for supplier, manufacturer, CSV/API, scheduled, TI, and ElecForest importer paths. It reuses exact names, slugs, approved synonyms and existing mappings; unresolved or composite categories are queued for manual review instead of creating a root.
