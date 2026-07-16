@@ -62,7 +62,7 @@ class PcbOrder extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(PcbProject::class);
+        return $this->belongsTo(PcbProject::class, 'project_id');
     }
 
     public function quote(): BelongsTo

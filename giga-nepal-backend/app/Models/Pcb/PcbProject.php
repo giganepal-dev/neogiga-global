@@ -81,37 +81,37 @@ class PcbProject extends Model
 
     public function versions(): HasMany
     {
-        return $this->hasMany(PcbProjectVersion::class);
+        return $this->hasMany(PcbProjectVersion::class, 'project_id');
     }
 
     public function files(): HasMany
     {
-        return $this->hasMany(PcbFile::class);
+        return $this->hasMany(PcbFile::class, 'project_id');
     }
 
     public function activityLogs(): HasMany
     {
-        return $this->hasMany(PcbProjectActivityLog::class);
+        return $this->hasMany(PcbProjectActivityLog::class, 'project_id');
     }
 
     public function gerberAnalysisRuns(): HasMany
     {
-        return $this->hasMany(PcbGerberAnalysisRun::class);
+        return $this->hasMany(PcbGerberAnalysisRun::class, 'project_id');
     }
 
     public function quoteConfigurations(): HasMany
     {
-        return $this->hasMany(PcbQuoteConfiguration::class);
+        return $this->hasMany(PcbQuoteConfiguration::class, 'project_id');
     }
 
     public function cplImports(): HasMany
     {
-        return $this->hasMany(PcbCplImport::class);
+        return $this->hasMany(PcbCplImport::class, 'project_id');
     }
 
     public function componentMatches(): HasMany
     {
-        return $this->hasMany(PcbComponentMatch::class);
+        return $this->hasMany(PcbComponentMatch::class, 'project_id');
     }
 
     public function currentVersion(): BelongsTo
