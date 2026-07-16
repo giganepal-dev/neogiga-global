@@ -93,7 +93,7 @@ class SourceImageCandidateDiscovery
                 $responses = Http::pool(function (Pool $pool) use ($eligible, $timeout) {
                     return $eligible->map(function ($product) use ($pool, $timeout) {
                         return $pool->as((string) $product->id)
-                            ->acceptHtml()
+                            ->accept('text/html,application/xhtml+xml')
                             ->withUserAgent('NeoGigaImageCandidateBot/1.0 (+https://neogiga.com)')
                             ->retry(1, 250)
                             ->timeout($timeout)
