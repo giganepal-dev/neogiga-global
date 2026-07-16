@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-16 - Catalog Listing Performance Safeguards
+
+- Replaced exact per-request public product-list totals with simple pagination and an optional cached headline count, preventing every storefront listing request from scanning the complete global catalog solely to render pagination metadata.
+- Added non-blocking PostgreSQL indexes for the source-review publication gate and importer duplicate lookup. The indexes are additive, created concurrently outside a migration transaction, and have reversible down migrations.
+
 ## 2026-07-16 - PCB Workspace Upgrade and Branch Audit
 
 - Audited remote branches against `origin/main`; retained the deployed production baseline and selected only safe PCB portal presentation and route-contract improvements from the branch inventory. The detailed disposition is in `docs/BRANCH_INTEGRATION_AUDIT_2026-07-16.md`.

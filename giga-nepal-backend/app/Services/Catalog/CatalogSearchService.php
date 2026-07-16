@@ -131,6 +131,13 @@ class CatalogSearchService
         });
     }
 
+    public function cachedPublicProductCount(): ?int
+    {
+        $count = Cache::get('catalog:published-product-count:v1');
+
+        return is_numeric($count) ? (int) $count : null;
+    }
+
     private function facetExistsQuery(string $name, string $value): \Closure
     {
         return function ($sub) use ($name, $value) {

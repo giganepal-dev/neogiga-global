@@ -19,7 +19,7 @@
     '@type' => 'ItemList',
     'name' => $category?->name ?? 'NeoGiga engineering products',
     'url' => $listingCanonical,
-    'numberOfItems' => $products->total(),
+    'numberOfItems' => $catalogTotal ?? $products->count(),
     'itemListElement' => $products->values()->map(fn ($product, $index) => [
         '@type' => 'ListItem',
         'position' => (($products->currentPage() - 1) * $products->perPage()) + $index + 1,
@@ -135,7 +135,13 @@
     @endif
 
     @if ($products->count())
-        <div class="pmeta">{{ number_format($products->total()) }} product(s)</div>
+        <div class="pmeta">
+            @if ($catalogTotal !== null)
+                {{ number_format($catalogTotal) }} product(s)
+            @else
+                Showing {{ $products->count() }} product(s)
+            @endif
+        </div>
         <div class="pgrid">
             @foreach ($products as $p)
                 @php($cardImage = $p->images->first())
