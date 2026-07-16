@@ -170,9 +170,9 @@ class SourceImageCandidateDiscovery
                 return;
             }
             $contextMatch = $mpnNeedle !== '' && str_contains($this->normalizedMpn($context.$resolved), $mpnNeedle);
-            $confidence = match ($selector) {
-                'json_ld' => 0.85,
-                'meta' => 0.75,
+            $confidence = match (true) {
+                str_starts_with($selector, 'json_ld') => 0.85,
+                $selector === 'meta' => 0.75,
                 default => 0.55,
             };
             if ($matchedMpn || $contextMatch) {
@@ -203,9 +203,20 @@ class SourceImageCandidateDiscovery
             $add($src, 'img', false, $context);
         }
         foreach ($xpath->query('//script[@type="application/ld+json"]') ?: [] as $node) {
-            $decoded = json_decode((string) $node->textContent, true);
+            $script = (string) $node->textContent;
+            $decoded = json_decode($script, true);
             if (is_array($decoded)) {
                 $this->collectJsonImages($decoded, $mpnNeedle, $add);
+
+                continue;
+            }
+
+            // Some official pages expose JSON-LD with unescaped control
+            // characters. Capture only the first product-image field from the
+            // source page rather than attempting to repair or retain the data.
+            if (preg_match('/"(?:distModalImage|imageUrl|image)"\\s*:\\s*"((?:\\\\.|[^"\\\\])+)"/i', $script, $matches)) {
+                $url = json_decode('"'.$matches[1].'"') ?: stripcslashes($matches[1]);
+                $add($url, 'json_ld_fallback', true, $mpn);
             }
         }
 

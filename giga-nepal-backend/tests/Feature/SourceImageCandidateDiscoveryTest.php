@@ -43,4 +43,24 @@ HTML;
 
         $this->assertSame([], $candidates);
     }
+
+    public function test_extracts_primary_image_from_malformed_official_json_ld(): void
+    {
+        $html = <<<'HTML'
+<html><head><script type="application/ld+json">
+{"@type":"Product","mpn":"INA950-SEP","description":"broken
+control","distModalImage":"/content/dam/ticom/images/products/package/p/pw0008a.png:singlesmall"}
+</script></head><body></body></html>
+HTML;
+
+        $candidates = app(SourceImageCandidateDiscovery::class)->extractCandidates(
+            $html,
+            'https://www.ti.com/product/INA950-SEP',
+            'INA950-SEP',
+        );
+
+        $this->assertCount(1, $candidates);
+        $this->assertSame('json_ld_fallback', $candidates[0]['selector']);
+        $this->assertTrue($candidates[0]['matched_mpn']);
+    }
 }
