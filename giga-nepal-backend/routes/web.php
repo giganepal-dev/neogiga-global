@@ -117,12 +117,12 @@ Route::prefix('admin')->group(function () {
         Route::post('imports/elecforest/download-images', [AdminElecforestImport::class, 'downloadImages'])->middleware('throttle:4,1');
         Route::post('imports/elecforest/publish-qualified', [AdminElecforestImport::class, 'publish'])->middleware('throttle:4,1');
         Route::post('imports/elecforest/map-category', [AdminElecforestImport::class, 'mapCategory'])->middleware('throttle:10,1');
-        Route::post('imports/jlcpcb/bulk-approve', [AdminCommerce::class, 'bulkApproveJlcpcbImports'])->middleware('throttle:10,1');
-        Route::post('imports/jlcpcb/bulk-publish', [AdminCommerce::class, 'bulkPublishJlcpcbImports'])->middleware('throttle:10,1');
-        Route::post('imports/jlcpcb/search-rebuild', [AdminCommerce::class, 'queueJlcpcbSearchRebuild'])->middleware('throttle:5,1');
-        Route::post('imports/jlcpcb/{source}/approve', [AdminCommerce::class, 'approveJlcpcbImport'])->whereNumber('source')->middleware('throttle:20,1');
-        Route::post('imports/jlcpcb/{source}/publish', [AdminCommerce::class, 'publishJlcpcbImport'])->whereNumber('source')->middleware('throttle:10,1');
-        Route::post('imports/jlcpcb/{source}/reject', [AdminCommerce::class, 'rejectJlcpcbImport'])->whereNumber('source')->middleware('throttle:20,1');
+        Route::post('imports/jlcpcb/bulk-approve', [AdminCommerce::class, 'bulkApproveJlcpcbImports'])->middleware(['admin.web.permission:catalog.manage', 'throttle:10,1']);
+        Route::post('imports/jlcpcb/bulk-publish', [AdminCommerce::class, 'bulkPublishJlcpcbImports'])->middleware(['admin.web.permission:catalog.manage', 'throttle:10,1']);
+        Route::post('imports/jlcpcb/search-rebuild', [AdminCommerce::class, 'queueJlcpcbSearchRebuild'])->middleware(['admin.web.permission:catalog.manage', 'throttle:5,1']);
+        Route::post('imports/jlcpcb/{source}/approve', [AdminCommerce::class, 'approveJlcpcbImport'])->whereNumber('source')->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
+        Route::post('imports/jlcpcb/{source}/publish', [AdminCommerce::class, 'publishJlcpcbImport'])->whereNumber('source')->middleware(['admin.web.permission:catalog.manage', 'throttle:10,1']);
+        Route::post('imports/jlcpcb/{source}/reject', [AdminCommerce::class, 'rejectJlcpcbImport'])->whereNumber('source')->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
         Route::get('marketplaces', [AdminMarketplaceConfig::class, 'index']);
         Route::post('marketplaces/bulk', [AdminMarketplaceConfig::class, 'bulk'])->middleware('throttle:20,1');
         // Marketplace domain/SEO/status configuration UI (codex §3, §11).

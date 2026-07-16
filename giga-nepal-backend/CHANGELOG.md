@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-16 - Phase 9D JLCPCB import authorization
+
+- Required the existing `catalog.manage` permission for every JLCPCB import mutation: approve, reject, publish, bulk actions, and search/facet rebuild queueing.
+- Added a feature test confirming catalog operators without that permission receive a forbidden response before any import workflow is reached.
+
 ## 2026-07-16 - Phase 9C catalog-audit remediation workspace
 
 - Added a read-only Catalog Quality checklist to product administration, with direct links to existing identity, content, media, document, and lifecycle controls.
