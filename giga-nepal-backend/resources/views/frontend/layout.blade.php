@@ -10,6 +10,7 @@
     $resolvedRobots = $robots ?? ($sensitivePage ? 'noindex,nofollow' : ($marketplaceSeo['robots'] ?? 'index,follow'));
     $resolvedCanonical = $canonical ?? ($marketplaceSeo['canonical'] ?? url()->current());
     $resolvedSocialImage = $ogImage ?? ($marketplaceSeo['og_image'] ?? null) ?: url('/images/og/neogiga-default-2026.png');
+    $flag = fn(string $code): string => mb_chr(0x1F1E6 + ord(strtoupper($code)[0]) - ord('A')) . mb_chr(0x1F1E6 + ord(strtoupper($code)[1]) - ord('A'));
 @endphp
 <head>
     <meta charset="utf-8">
@@ -98,14 +99,17 @@
 @endif
 <div class="top-strip">
     <div class="wrap">
-        <span>{{ $marketplaceContext['current']->name ?? 'NeoGiga Global' }} · {{ $marketplaceContext['currency_code'] ?? 'USD' }} pricing · single global MPN catalog.</span>
+        <span>
+            @php($cur = $marketplaceContext['current'])
+            @if($cur?->country_code){{ $flag($cur->country_code) }}@endif {{ $cur->name ?? 'NeoGiga Global' }} · {{ $marketplaceContext['currency_code'] ?? 'USD' }}
+        </span>
         <div class="edition-links" aria-label="Regional editions">
             @foreach(($marketplaceContext['editions'] ?? []) as $edition)
-                <form method="post" action="{{ route('marketplace.preference') }}">
+                <form method="post" action="{{ route('marketplace.preference') }}" title="{{ $edition['name'] }}">
                     @csrf
                     <input type="hidden" name="marketplace" value="{{ $edition['code'] }}">
                     <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
-                    <button type="submit">{{ $edition['name'] }}</button>
+                    <button type="submit">@if($edition['country_code']){{ $flag($edition['country_code']) }} @endif{{ $edition['name'] }}</button>
                 </form>
             @endforeach
         </div>
@@ -128,7 +132,7 @@
                 <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
                 <select class="select-lite" name="marketplace" aria-label="Marketplace">
                     @foreach(($marketplaceContext['editions'] ?? []) as $edition)
-                        <option value="{{ $edition['code'] }}" @selected(($marketplaceContext['current']->id ?? null) === $edition['id'])>{{ $edition['name'] }}</option>
+                        <option value="{{ $edition['code'] }}" @selected(($marketplaceContext['current']->id ?? null) === $edition['id'])>{{ $edition['country_code'] ? $flag($edition['country_code']).' ' : '' }}{{ $edition['name'] }}</option>
                     @endforeach
                 </select>
                 <button class="switch-btn" type="submit">Apply</button>
@@ -162,7 +166,7 @@
         <div><h3>Products</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=sensors">Sensors</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/brands">Brands</a></div>
         <div><h3>Company</h3><a href="{{ $publicBase }}/ai-commerce">AI commerce</a><a href="{{ $publicBase }}/lms">Learning hub</a><a href="{{ $publicBase }}/rfq">RFQ sourcing</a><a href="{{ $publicBase }}/distributors">Distributors</a></div>
         <div><h3>Seller</h3><a href="{{ $publicBase }}/sell-on-neogiga">Become a seller</a><a href="{{ $publicBase }}/seller-early-access">Early access</a><a href="/admin/login">Seller portal</a><a href="/admin/login">B2B login</a></div>
-        <div><h3>Regional editions</h3>@forelse(($marketplaceContext['editions'] ?? []) as $edition)<a href="{{ $edition['url'] }}">{{ $edition['name'] }}</a>@empty<a href="{{ $publicBase }}#regional-editions">Marketplace directory</a>@endforelse<a href="{{ $publicBase }}#regional-editions">Regional platform status</a></div>
+        <div><h3>Regional editions</h3>@forelse(($marketplaceContext['editions'] ?? []) as $edition)<a href="{{ $edition['url'] }}">@if($edition['country_code']){{ $flag($edition['country_code']) }} @endif{{ $edition['name'] }}</a>@empty<a href="{{ $publicBase }}#regional-editions">Marketplace directory</a>@endforelse<a href="{{ $publicBase }}#regional-editions">Regional platform status</a></div>
     </div>
 </footer>
 <a class="float-ai" href="{{ $publicBase }}/ai-commerce" aria-label="Open NeoGiga AI assistant">Ask AI</a>
