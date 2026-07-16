@@ -108,7 +108,7 @@
                     @csrf
                     <input type="hidden" name="marketplace" value="{{ $edition['code'] }}">
                     <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
-                    <button type="submit">@if($edition['country_code']){{ $flag($edition['country_code']) }} @endif{{ $edition['name'] }}</button>
+                    <button type="submit" title="{{ $edition['name'] }}">{{ $flag($edition['country_code']) }}</button>
                 </form>
             @endforeach
         </div>
@@ -126,16 +126,6 @@
             <button type="submit"><x-icon name="search" size="18"/> Search</button>
         </form>
         <div class="head-actions">
-            <form class="switcher-form" method="post" action="{{ route('marketplace.preference') }}">
-                @csrf
-                <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
-                <select class="select-lite" name="marketplace" aria-label="Marketplace">
-                    @foreach(($marketplaceContext['editions'] ?? []) as $edition)
-                        <option value="{{ $edition['code'] }}" @selected(($marketplaceContext['current']->id ?? null) === $edition['id'])>{{ $edition['country_code'] ? $flag($edition['country_code']).' ' : '' }}{{ $edition['name'] }}</option>
-                    @endforeach
-                </select>
-                <button class="switch-btn" type="submit">Apply</button>
-            </form>
             <select class="select-lite" aria-label="Language"><option>EN</option><option>HI</option><option>NE</option></select>
             <a class="icon-btn" href="/cart"><x-icon name="cart" size="18"/> Cart</a>
             <a class="icon-btn" href="/admin/login"><x-icon name="login" size="18"/> B2B Login</a>
