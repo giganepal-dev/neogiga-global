@@ -146,7 +146,7 @@ def _parts_database(path, count):
     conn.close()
 
 
-def _configure_fake_neogiga(tmp_path, monkeypatch, *, fail_on_call=None):
+def _configure_fake_neogiga(tmp_path, monkeypatch, *, fail_on_call=None, existing_source_ids=None):
     output_dir, checkpoint_dir = _configure_test_settings(tmp_path, monkeypatch)
     monkeypatch.setattr(
         cli,
@@ -164,6 +164,10 @@ def _configure_fake_neogiga(tmp_path, monkeypatch, *, fail_on_call=None):
 
         def validate_resume_checkpoint(self, *_args):
             return None
+
+        def existing_source_part_ids(self, source_part_ids):
+            known = {str(value) for value in (existing_source_ids or set())}
+            return {str(value) for value in source_part_ids if str(value) in known}
 
         def publish(self, parts, **kwargs):
             items = list(parts)
@@ -242,6 +246,51 @@ def test_neogiga_scale_import_uses_bounded_atomic_keyset_chunks(tmp_path, monkey
         "original_raw_value",
         "normalized_value",
     }
+
+
+def test_neogiga_missing_only_imports_only_unlinked_source_ids(tmp_path, monkeypatch):
+    sqlite_path = tmp_path / "parts.sqlite3"
+    _parts_database(sqlite_path, 5)
+    fake, output_dir, checkpoint_dir = _configure_fake_neogiga(
+        tmp_path,
+        monkeypatch,
+        existing_source_ids={"C00001", "C00003"},
+    )
+
+    result = cli.run(
+        [
+            "--target",
+            "neogiga",
+            "--publish",
+            "--pilot",
+            "--yes",
+            "--scale-import",
+            "--scale-import-max",
+            "5",
+            "--missing-only",
+            "--after-source-id",
+            "C00000",
+            "--limit",
+            "5",
+            "--sqlite-file",
+            str(sqlite_path),
+            "--log-level",
+            "ERROR",
+        ]
+    )
+
+    assert result == 0
+    assert len(fake.calls) == 1
+    imported, options = fake.calls[0]
+    assert [part.source_part_id for part in imported] == ["C00002", "C00004", "C00005"]
+    assert options["after_source_id"] == "C00000"
+    assert options["last_source_id"] == "C00005"
+    assert options["source_rows_read"] == 3
+    checkpoint = CheckpointStore(checkpoint_dir / "jlcpcb_import_checkpoint.json").read()
+    assert checkpoint.last_processed_key == "C00005"
+    report = json.loads((output_dir / "canonical_adapter_report.json").read_text())
+    assert report["source_rows_scanned"] == 5
+    assert report["source_rows_already_linked"] == 2
 
 
 def test_neogiga_write_requires_explicit_yes(tmp_path, monkeypatch):
