@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-16 - Phase 9B catalog lifecycle and audit workflow
+
+- Added audited lifecycle status controls to the existing product administration page.
+- Added product list filters and an operator-facing completeness queue for missing identity, content, price, media, datasheet, source-review, and source-quality data.
+- Added lifecycle vocabulary shared by the admin workflow and public status badges, including End of Life aliases.
+
 ## Unreleased
 
 - Added a reusable Phase 9A product-status badge component for lifecycle, verified inventory, valid discounts, RFQ pricing, and verified datasheet availability. Product detail, listing, and related-product surfaces now share compact, priority-limited status rendering and clickable category/document tags.

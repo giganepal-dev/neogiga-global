@@ -12,6 +12,8 @@
         'NOT_RECOMMENDED_FOR_NEW_DESIGNS' => ['Not Recommended for New Designs', 'warn'],
         'NRND' => ['Not Recommended for New Designs', 'warn'],
         'LAST_TIME_BUY' => ['Last Time Buy', 'danger'],
+        'END_OF_LIFE' => ['End of Life', 'danger'],
+        'EOL' => ['End of Life', 'danger'],
         'DISCONTINUED' => ['Discontinued', 'danger'],
         'OBSOLETE' => ['Obsolete', 'danger'],
         'NEEDS_VERIFICATION' => ['Status Unverified', 'muted'],

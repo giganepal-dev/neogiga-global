@@ -3,6 +3,7 @@
 @section('crumb','Catalog / Product Admin')
 @section('page_actions')
 <a class="btn btn-ghost" href="/admin/imports/jlcpcb">Import Review</a>
+<a class="btn btn-ghost" href="/admin/products?audit=missing_mpn">Catalog Audit</a>
 <details class="modal">
     <summary class="btn btn-primary">Add Product</summary>
     <div class="modal-panel">
@@ -29,6 +30,7 @@
     <div class="kpi"><div class="t">Active</div><div class="v tnum">{{ number_format($stats['active']) }}</div><div class="s">sellable</div></div>
     <div class="kpi"><div class="t">Draft</div><div class="v tnum">{{ number_format($stats['draft']) }}</div><div class="s">needs work</div></div>
     <div class="kpi"><div class="t">Low stock</div><div class="v tnum">{{ number_format($stats['lowStock']) }}</div><div class="s">review reorder</div></div>
+    <div class="kpi"><div class="t">Catalog Audit</div><div class="v tnum">{{ number_format($stats['auditAttention']) }}</div><div class="s"><a href="/admin/products?audit=missing_mpn">identity or content gaps</a></div></div>
     <div class="kpi"><div class="t">Import Review</div><div class="v tnum">{{ number_format($stats['importPending']) }}</div><div class="s"><a href="/admin/imports/jlcpcb">pending JLCPCB</a></div></div>
     <div class="kpi"><div class="t">Search Index</div><div class="v tnum">{{ number_format($stats['indexed']) }}</div><div class="s">{{ number_format($stats['indexFacets']) }} facet values</div></div>
 </div>
@@ -41,11 +43,13 @@
         <select class="control" name="brand_id"><option value="">All brands</option>@foreach($brands as $brand)<option value="{{ $brand->id }}" @selected($filters['brand_id']==$brand->id)>{{ $brand->name }}</option>@endforeach</select>
         <select class="control" name="vendor_id"><option value="">All sellers</option>@foreach($vendors as $vendor)<option value="{{ $vendor->id }}" @selected($filters['vendor_id']==$vendor->id)>{{ $vendor->name }}</option>@endforeach</select>
         <select class="control" name="status"><option value="">All status</option>@foreach(['draft','active','approved','inactive','archived'] as $s)<option value="{{ $s }}" @selected($filters['status']===$s)>{{ ucfirst($s) }}</option>@endforeach</select>
+        <select class="control" name="lifecycle_status"><option value="">All lifecycle states</option>@foreach($lifecycleOptions as $value => $label)<option value="{{ $value }}" @selected($filters['lifecycle_status']===$value)>{{ $label }}</option>@endforeach</select>
         <select class="control" name="stock"><option value="">All stock</option><option value="low" @selected($filters['stock']==='low')>Low stock</option><option value="out" @selected($filters['stock']==='out')>Out of stock</option></select>
+        <select class="control" name="audit"><option value="">All completeness</option>@foreach($auditOptions as $value => $label)<option value="{{ $value }}" @selected($filters['audit']===$value)>{{ $label }}</option>@endforeach</select>
         <button class="btn btn-ghost" type="submit">Filter</button>
     </form>
     <div class="scroll-x"><table class="tbl">
-        <thead><tr><th>Name</th><th>SKU/MPN</th><th>Category</th><th>Brand</th><th class="num">Price</th><th class="num">Stock</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Name</th><th>SKU/MPN</th><th>Category</th><th>Brand</th><th class="num">Price</th><th class="num">Stock</th><th>Status</th><th>Lifecycle / Audit</th><th>Actions</th></tr></thead>
         <tbody>
         @forelse ($products as $p)
             @php $s = $p->status ?? 'draft'; @endphp
@@ -57,6 +61,11 @@
                 <td class="num tnum">{{ $p->base_price !== null ? number_format($p->base_price, 2) : '—' }}</td>
                 <td class="num tnum">{{ number_format($p->stock_quantity ?? 0) }}</td>
                 <td><span class="badge {{ in_array($s,['active','approved','published'])?'b-ok':($s==='draft'?'b-muted':'b-warn') }}">{{ ucfirst($s) }}</span></td>
+                <td>
+                    @php $lifecycle = strtoupper((string) ($p->lifecycle_status ?? '')); $auditFlags = $productAuditFlags->get($p->id, []); @endphp
+                    <span class="badge {{ in_array($lifecycle, ['DISCONTINUED','OBSOLETE','END_OF_LIFE','EOL'], true) ? 'b-warn' : ($lifecycle === 'ACTIVE' ? 'b-ok' : 'b-muted') }}">{{ $lifecycleOptions[$lifecycle] ?? ($lifecycle ?: 'Unverified') }}</span>
+                    @if($auditFlags)<div class="sub">Needs: {{ implode(', ', array_slice($auditFlags, 0, 3)) }}@if(count($auditFlags) > 3) +{{ count($auditFlags) - 3 }}@endif</div>@endif
+                </td>
                 <td class="actions">
                     <details class="modal"><summary class="btn btn-ghost">View/Edit</summary><div class="modal-panel"><div class="modal-h"><h3>{{ $p->name }}</h3><span class="badge b-info">detail drawer</span></div><div class="modal-b form-stack">
                         <form class="form-stack" method="post" action="/admin/products">@csrf<input type="hidden" name="id" value="{{ $p->id }}"><div class="form-grid"><div class="field"><label>Name</label><input class="control" name="name" value="{{ $p->name }}" required></div><div class="field"><label>SKU</label><input class="control mono" name="sku" value="{{ $p->sku }}" required></div><div class="field"><label>MPN</label><input class="control" name="mpn" value="{{ $p->mpn }}"></div><div class="field"><label>Status</label><input class="control" name="status" value="{{ $p->status }}"></div></div><div class="form-grid"><div class="field"><label>Price</label><input class="control" type="number" step="0.01" name="base_price" value="{{ $p->base_price }}"></div><div class="field"><label>Sale</label><input class="control" type="number" step="0.01" name="sale_price" value="{{ $p->sale_price }}"></div><div class="field"><label>Stock</label><input class="control" type="number" name="stock_quantity" value="{{ $p->stock_quantity }}"></div><div class="field"><label>Low stock</label><input class="control" type="number" name="low_stock_threshold" value="{{ $p->low_stock_threshold }}"></div></div><div class="field"><label>Short description</label><textarea class="control" name="short_description">{{ $p->short_description }}</textarea></div><div class="field"><label>Description</label><textarea class="control" name="description">{{ $p->description }}</textarea></div><button class="btn btn-primary" type="submit">Save Product</button></form>
@@ -101,7 +110,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="8"><div class="empty"><h3>No products found</h3><p>Create a product from the Add Product action.</p></div></td></tr>
+            <tr><td colspan="9"><div class="empty"><h3>No products found</h3><p>Adjust the filters or create a product from the Add Product action.</p></div></td></tr>
         @endforelse
         </tbody>
     </table></div>

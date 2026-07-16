@@ -9,6 +9,7 @@
 
 @php
     $status = $p->status ?? 'draft';
+    $lifecycle = strtoupper((string) ($p->lifecycle_status ?? ''));
 @endphp
 
 <div class="grid kpis">
@@ -16,6 +17,7 @@
     <div class="kpi"><div class="t">Stock</div><div class="v tnum">{{ number_format($p->stock_quantity ?? 0) }}</div><div class="s">threshold {{ number_format($p->low_stock_threshold ?? 0) }}</div></div>
     <div class="kpi"><div class="t">Price</div><div class="v tnum">{{ number_format((float) $p->base_price, 2) }}</div><div class="s">sale {{ $p->sale_price ? number_format((float) $p->sale_price, 2) : '—' }}</div></div>
     <div class="kpi"><div class="t">MPN</div><div class="v" style="font-size:1.1rem">{{ $p->mpn ?: '—' }}</div><div class="s">{{ $p->manufacturer_name ?: 'manufacturer not set' }}</div></div>
+    <div class="kpi"><div class="t">Lifecycle</div><div class="v" style="font-size:1.1rem">{{ $lifecycleOptions[$lifecycle] ?? ($lifecycle ?: 'Unverified') }}</div><div class="s">manufacturer lifecycle</div></div>
 </div>
 
 <div class="grid dashboard-split">
@@ -106,6 +108,15 @@
             @endforelse
             </tbody>
         </table></div>
+    </div>
+
+    <div class="card">
+        <div class="card-h"><h2>Lifecycle Control</h2><span class="badge b-info">audited change</span></div>
+        <form class="form-stack" method="post" action="/admin/products/{{ $p->id }}/lifecycle" style="padding:16px">@csrf
+            <div class="field"><label>Manufacturer lifecycle</label><select class="control" name="lifecycle_status"><option value="">Not specified</option>@if($lifecycle !== '' && !array_key_exists($lifecycle, $lifecycleOptions))<option value="{{ $lifecycle }}" selected>Imported: {{ $lifecycle }}</option>@endif @foreach($lifecycleOptions as $value => $label)<option value="{{ $value }}" @selected($lifecycle === $value)>{{ $label }}</option>@endforeach</select></div>
+            <div class="sub">Changing this status creates an admin audit event. Imported source values are preserved until an operator selects a replacement.</div>
+            <button class="btn btn-primary" type="submit">Save lifecycle</button>
+        </form>
     </div>
 </div>
 

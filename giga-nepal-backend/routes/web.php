@@ -164,6 +164,7 @@ Route::prefix('admin')->group(function () {
         Route::post('products', [AdminCommerce::class, 'storeProduct'])->middleware('throttle:20,1');
         Route::post('products/{product}/duplicate', [AdminCommerce::class, 'duplicateProduct'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/toggle', [AdminCommerce::class, 'deactivateProduct'])->whereNumber('product')->middleware('throttle:20,1');
+        Route::post('products/{product}/lifecycle', [AdminCommerce::class, 'updateProductLifecycle'])->whereNumber('product')->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
         Route::post('products/{product}/stock', [AdminCommerce::class, 'adjustProductStock'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/regional-stock', [AdminCommerce::class, 'storeProductRegionalStock'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/specs', [AdminCommerce::class, 'storeProductSpec'])->whereNumber('product')->middleware('throttle:20,1');

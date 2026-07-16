@@ -17,6 +17,8 @@ use App\Models\User;
 use App\Services\Catalog\CatalogSearchService;
 use App\Services\Marketing\CampaignAnalyticsService;
 use App\Services\Marketing\EmailProviderConfigurationService;
+use App\Support\ProductLifecycle;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -237,6 +239,11 @@ class DashboardController extends Controller
     public function products(Request $request): View
     {
         $indexSummary = app(CatalogSearchService::class)->indexedSummary();
+        $auditOptions = $this->productAuditOptions();
+        $audit = (string) $request->query('audit', '');
+        if (! array_key_exists($audit, $auditOptions)) {
+            $audit = '';
+        }
         $products = Product::query()
             ->leftJoin('product_categories as c', 'c.id', '=', 'products.category_id')
             ->leftJoin('product_brands as b', 'b.id', '=', 'products.brand_id')
@@ -251,11 +258,15 @@ class DashboardController extends Controller
             ->when($request->query('brand_id'), fn ($q, $brand) => $q->where('products.brand_id', $brand))
             ->when($request->query('vendor_id'), fn ($q, $vendor) => $q->where('products.vendor_id', $vendor))
             ->when($request->query('status'), fn ($q, $status) => $q->where('products.status', $status))
+            ->when($request->query('lifecycle_status'), fn ($q, $lifecycle) => $q->where('products.lifecycle_status', strtoupper((string) $lifecycle)))
             ->when($request->query('stock') === 'low', fn ($q) => $q->whereColumn('products.stock_quantity', '<=', 'products.low_stock_threshold'))
             ->when($request->query('stock') === 'out', fn ($q) => $q->where('products.stock_quantity', '<=', 0))
+            ->when($audit !== '', fn (Builder $query) => $this->applyProductAuditFilter($query, $audit))
             ->orderByDesc('products.id')
             ->paginate(20)
             ->withQueryString();
+
+        $productAuditFlags = $this->productAuditFlags(collect($products->items()));
 
         return view('admin.products', [
             'products' => $products,
@@ -275,19 +286,35 @@ class DashboardController extends Controller
                 ->groupBy('product_id'),
             'productLmsLinks' => DB::table('product_lms_links')->whereIn('product_id', collect($products->items())->pluck('id'))->orderByDesc('id')->get()->groupBy('product_id'),
             'productSeo' => DB::table('product_seo_meta')->whereIn('product_id', collect($products->items())->pluck('id'))->get()->keyBy('product_id'),
+            'productAuditFlags' => $productAuditFlags,
+            'auditOptions' => $auditOptions,
+            'lifecycleOptions' => ProductLifecycle::options(),
             'filters' => [
                 'q' => (string) $request->query('q', ''),
                 'category_id' => (string) $request->query('category_id', ''),
                 'brand_id' => (string) $request->query('brand_id', ''),
                 'vendor_id' => (string) $request->query('vendor_id', ''),
                 'status' => (string) $request->query('status', ''),
+                'lifecycle_status' => (string) $request->query('lifecycle_status', ''),
                 'stock' => (string) $request->query('stock', ''),
+                'audit' => $audit,
             ],
             'stats' => [
                 'total' => Product::count(),
                 'active' => Product::whereIn('status', ['active', 'approved', 'published'])->count(),
                 'draft' => Product::where('status', 'draft')->count(),
                 'lowStock' => Product::whereColumn('stock_quantity', '<=', 'low_stock_threshold')->count(),
+                'auditAttention' => Product::query()
+                    ->where(function (Builder $query): void {
+                        $query->whereNull('mpn')
+                            ->orWhereRaw("TRIM(COALESCE(mpn, '')) = ''")
+                            ->orWhereNull('category_id')
+                            ->orWhere(function (Builder $description): void {
+                                $description->whereNull('description')
+                                    ->orWhereRaw("TRIM(COALESCE(description, '')) = ''");
+                            });
+                    })
+                    ->count(),
                 'importPending' => Schema::hasTable('catalog_product_sources')
                     ? DB::table('catalog_product_sources as cps')
                         ->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')
@@ -348,7 +375,193 @@ class DashboardController extends Controller
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
             'marketplaces' => DB::table('marketplaces')->where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get(),
             'currencies' => DB::table('currencies')->where('is_active', true)->orderByDesc('is_default')->orderBy('code')->get(),
+            'lifecycleOptions' => ProductLifecycle::options(),
         ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function productAuditOptions(): array
+    {
+        return [
+            'missing_mpn' => 'Missing MPN',
+            'missing_category' => 'Missing category',
+            'missing_description' => 'Missing description',
+            'missing_price' => 'Missing price',
+            'missing_image' => 'Missing active image',
+            'missing_datasheet' => 'Missing active datasheet',
+            'lifecycle_unverified' => 'Lifecycle unverified',
+            'source_pending_review' => 'Source pending review',
+            'low_source_quality' => 'Low source quality',
+        ];
+    }
+
+    private function applyProductAuditFilter(Builder $query, string $audit): void
+    {
+        switch ($audit) {
+            case 'missing_mpn':
+                $query->where(function (Builder $inner): void {
+                    $inner->whereNull('products.mpn')->orWhereRaw("TRIM(COALESCE(products.mpn, '')) = ''");
+                });
+                break;
+            case 'missing_category':
+                $query->whereNull('products.category_id');
+                break;
+            case 'missing_description':
+                $query->where(function (Builder $inner): void {
+                    $inner->where(function (Builder $description): void {
+                        $description->whereNull('products.description')->orWhereRaw("TRIM(COALESCE(products.description, '')) = ''");
+                    })->where(function (Builder $shortDescription): void {
+                        $shortDescription->whereNull('products.short_description')->orWhereRaw("TRIM(COALESCE(products.short_description, '')) = ''");
+                    });
+                });
+                break;
+            case 'missing_price':
+                $query->where(function (Builder $inner): void {
+                    $inner->whereNull('products.base_price')->orWhere('products.base_price', '<=', 0);
+                })->where(function (Builder $inner): void {
+                    $inner->whereNull('products.sale_price')->orWhere('products.sale_price', '<=', 0);
+                });
+                break;
+            case 'missing_image':
+                $this->applyMissingImageFilter($query);
+                break;
+            case 'missing_datasheet':
+                $this->applyMissingDatasheetFilter($query);
+                break;
+            case 'lifecycle_unverified':
+                $query->where(function (Builder $inner): void {
+                    $inner->whereNull('products.lifecycle_status')
+                        ->orWhereIn('products.lifecycle_status', ['UNKNOWN', 'NEEDS_VERIFICATION']);
+                });
+                break;
+            case 'source_pending_review':
+                $this->applySourceReviewFilter($query, false);
+                break;
+            case 'low_source_quality':
+                $this->applySourceReviewFilter($query, true);
+                break;
+        }
+    }
+
+    private function applyMissingImageFilter(Builder $query): void
+    {
+        if (! Schema::hasTable('product_images')) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereNotExists(function ($subQuery): void {
+            $subQuery->selectRaw('1')
+                ->from('product_images as audit_images')
+                ->whereColumn('audit_images.product_id', 'products.id')
+                ->where('audit_images.is_active', true);
+        });
+    }
+
+    private function applyMissingDatasheetFilter(Builder $query): void
+    {
+        if (! Schema::hasTable('product_documents')) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereNotExists(function ($subQuery): void {
+            $subQuery->selectRaw('1')
+                ->from('product_documents as audit_documents')
+                ->whereColumn('audit_documents.product_id', 'products.id')
+                ->where('audit_documents.document_type', 'datasheet')
+                ->where('audit_documents.is_active', true);
+        });
+    }
+
+    private function applySourceReviewFilter(Builder $query, bool $lowQuality): void
+    {
+        if (! Schema::hasTable('catalog_product_sources')) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereExists(function ($subQuery) use ($lowQuality): void {
+            $subQuery->selectRaw('1')
+                ->from('catalog_product_sources as audit_sources')
+                ->whereColumn('audit_sources.product_id', 'products.id');
+
+            if ($lowQuality) {
+                $subQuery->where('audit_sources.data_quality_score', '<', 0.85);
+            } else {
+                $subQuery->where(function ($review): void {
+                    $review->whereNull('audit_sources.review_status')
+                        ->orWhereNotIn('audit_sources.review_status', ['approved', 'rejected']);
+                });
+            }
+        });
+    }
+
+    /**
+     * @param  Collection<int, object>  $products
+     * @return Collection<int, array<int, string>>
+     */
+    private function productAuditFlags(Collection $products): Collection
+    {
+        $productIds = $products->pluck('id')->map(static fn ($id): int => (int) $id)->all();
+        if ($productIds === []) {
+            return collect();
+        }
+
+        $productsWithImages = Schema::hasTable('product_images')
+            ? DB::table('product_images')->whereIn('product_id', $productIds)->where('is_active', true)->distinct()->pluck('product_id')->flip()
+            : collect();
+        $productsWithDatasheets = Schema::hasTable('product_documents')
+            ? DB::table('product_documents')->whereIn('product_id', $productIds)->where('document_type', 'datasheet')->where('is_active', true)->distinct()->pluck('product_id')->flip()
+            : collect();
+        $sourceReviews = Schema::hasTable('catalog_product_sources')
+            ? DB::table('catalog_product_sources')
+                ->whereIn('product_id', $productIds)
+                ->select('product_id', DB::raw("MAX(CASE WHEN review_status IS NULL OR review_status NOT IN ('approved', 'rejected') THEN 1 ELSE 0 END) as has_pending_review"), DB::raw('MIN(data_quality_score) as minimum_quality'))
+                ->groupBy('product_id')
+                ->get()
+                ->keyBy('product_id')
+            : collect();
+
+        return $products->mapWithKeys(function (object $product) use ($productsWithImages, $productsWithDatasheets, $sourceReviews): array {
+            $flags = [];
+            if (blank($product->mpn ?? null)) {
+                $flags[] = 'MPN';
+            }
+            if (empty($product->category_id)) {
+                $flags[] = 'Category';
+            }
+            if (blank($product->description ?? null) && blank($product->short_description ?? null)) {
+                $flags[] = 'Description';
+            }
+            if ((float) ($product->base_price ?? 0) <= 0 && (float) ($product->sale_price ?? 0) <= 0) {
+                $flags[] = 'Price';
+            }
+            if (! $productsWithImages->has($product->id)) {
+                $flags[] = 'Image';
+            }
+            if (! $productsWithDatasheets->has($product->id)) {
+                $flags[] = 'Datasheet';
+            }
+            if (in_array($product->lifecycle_status ?? null, [null, 'UNKNOWN', 'NEEDS_VERIFICATION'], true)) {
+                $flags[] = 'Lifecycle';
+            }
+
+            $source = $sourceReviews->get($product->id);
+            if ($source && (bool) $source->has_pending_review) {
+                $flags[] = 'Source review';
+            }
+            if ($source && (float) $source->minimum_quality < 0.85) {
+                $flags[] = 'Source quality';
+            }
+
+            return [(int) $product->id => $flags];
+        });
     }
 
     public function jlcpcbImports(Request $request): View

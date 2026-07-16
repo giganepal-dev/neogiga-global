@@ -13,6 +13,7 @@ use App\Services\Catalog\CatalogSearchRebuildService;
 use App\Services\Product\ProductApprovalService;
 use App\Services\Marketing\OrderNotificationService;
 use App\Services\Seo\CatalogSeoTemplateService;
+use App\Support\ProductLifecycle;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -464,6 +465,7 @@ class CommerceOpsController extends Controller
             'manufacturer_name' => ['nullable', 'string', 'max:255'],
             'type' => ['nullable', 'string', 'max:60'],
             'status' => ['required', 'string', 'max:60'],
+            'lifecycle_status' => ['nullable', 'string', 'max:60'],
             'base_price' => ['nullable', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
@@ -506,7 +508,13 @@ class CommerceOpsController extends Controller
             'updated_at' => now(),
         ];
 
+        if (array_key_exists('lifecycle_status', $data)) {
+            $payload['lifecycle_status'] = ProductLifecycle::normalize($data['lifecycle_status']);
+        }
+
+        $existing = null;
         if (! empty($data['id'])) {
+            $existing = DB::table('products')->where('id', $data['id'])->first(['lifecycle_status']);
             DB::table('products')->where('id', $data['id'])->update($payload);
             $id = (int) $data['id'];
             $verb = 'updated';
@@ -517,7 +525,12 @@ class CommerceOpsController extends Controller
             $verb = 'created';
         }
 
-        $this->auditAdminAction($request, 'product_'.$verb, 'products', $id, ['sku' => $data['sku'], 'name' => $data['name']]);
+        $this->auditAdminAction($request, 'product_'.$verb, 'products', $id, [
+            'sku' => $data['sku'],
+            'name' => $data['name'],
+            'previous_lifecycle_status' => $existing->lifecycle_status ?? null,
+            'lifecycle_status' => $payload['lifecycle_status'] ?? ($existing->lifecycle_status ?? null),
+        ]);
 
         return back()->with('status', "Product {$verb}.");
     }
@@ -556,6 +569,41 @@ class CommerceOpsController extends Controller
         $this->auditAdminAction($request, 'product_status_updated', 'products', $product, ['status' => $next]);
 
         return back()->with('status', 'Product status updated.');
+    }
+
+    public function updateProductLifecycle(Request $request, int $product): RedirectResponse
+    {
+        if (! Schema::hasColumn('products', 'lifecycle_status')) {
+            return back()->with('error', 'Product lifecycle status is not available in this environment.');
+        }
+
+        $data = $request->validate([
+            'lifecycle_status' => ['nullable', 'string', 'max:60'],
+        ]);
+        $row = DB::table('products')->where('id', $product)->first(['id', 'lifecycle_status', 'sku', 'name']);
+
+        if (! $row) {
+            return back()->with('error', 'Product not found.');
+        }
+
+        $lifecycle = ProductLifecycle::normalize($data['lifecycle_status'] ?? null);
+        if ($lifecycle === $row->lifecycle_status) {
+            return back()->with('status', 'Product lifecycle status is unchanged.');
+        }
+
+        DB::table('products')->where('id', $product)->update([
+            'lifecycle_status' => $lifecycle,
+            'updated_at' => now(),
+        ]);
+
+        $this->auditAdminAction($request, 'product_lifecycle_updated', 'products', $product, [
+            'sku' => $row->sku,
+            'name' => $row->name,
+            'previous_lifecycle_status' => $row->lifecycle_status,
+            'lifecycle_status' => $lifecycle,
+        ]);
+
+        return back()->with('status', 'Product lifecycle status updated.');
     }
 
     public function adjustProductStock(Request $request, int $product): RedirectResponse
