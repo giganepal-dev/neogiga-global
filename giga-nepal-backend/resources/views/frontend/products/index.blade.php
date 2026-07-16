@@ -146,7 +146,7 @@
             @foreach ($products as $p)
                 @php($cardImage = $p->images->first())
                 <div class="pcard">
-                    <a class="pcard-media" href="{{ $publicBase }}/products/{{ $p->slug }}"><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy"></a>
+                    <a class="pcard-media product-img--badged" href="{{ $publicBase }}/products/{{ $p->slug }}">@include('components.product-status-badges', ['product' => $p, 'placement' => 'overlay'])<img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy"></a>
                     @if($p->brand)<span class="ptag">{{ $p->brand->name }}</span>@endif
                     <h2><a href="{{ $publicBase }}/products/{{ $p->slug }}">{{ $p->name }}</a></h2>
                     <div class="pmeta">
@@ -154,9 +154,6 @@
                         SKU: {{ $p->sku ?? '—' }}
                         @if($p->category) · {{ $p->category->name }}@endif
                     </div>
-                    @if($p->track_inventory)
-                        <span class="pstock {{ $p->stock_quantity > 0 ? 'in' : 'out' }}">{{ $p->stock_quantity > 0 ? 'In stock' : 'Out of stock' }}</span>
-                    @endif
                     <div style="margin-top:auto"><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $p->slug }}"><x-icon name="view" size="16"/> View specs &amp; RFQ</a></div>
                 </div>
             @endforeach

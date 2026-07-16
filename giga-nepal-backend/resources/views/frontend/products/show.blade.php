@@ -65,8 +65,8 @@
         ['name' => 'Home', 'item' => $canonicalOrigin.$publicBase],
         ['name' => 'Products', 'item' => $canonicalOrigin.$publicBase.'/products'],
     ];
-    if ($product->category) {
-        $schemaBreadcrumb[] = ['name' => $product->category->name, 'item' => $canonicalOrigin.$publicBase.'/categories/'.$product->category->slug];
+    foreach ($categoryTrail as $categoryItem) {
+        $schemaBreadcrumb[] = ['name' => $categoryItem->name, 'item' => $canonicalOrigin.$publicBase.'/categories/'.$categoryItem->slug];
     }
     $schemaBreadcrumb[] = ['name' => $product->name, 'item' => $productCanonical];
 @endphp
@@ -122,11 +122,12 @@
 @endphp
 <section class="section" style="padding-top:18px">
     <div class="wrap">
-        <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span><x-icon name="chevron-right" size="12"/></span><a href="{{ $publicBase }}/products">Products</a>@if($product->category)<span><x-icon name="chevron-right" size="12"/></span><a href="{{ $publicBase }}/categories/{{ $product->category->slug }}">{{ $product->category->name }}</a>@endif<span><x-icon name="chevron-right" size="12"/></span><strong>{{ $product->name }}</strong></nav>
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span><x-icon name="chevron-right" size="12"/></span><a href="{{ $publicBase }}/products">Products</a>@foreach($categoryTrail as $categoryItem)<span><x-icon name="chevron-right" size="12"/></span><a href="{{ $publicBase }}/categories/{{ $categoryItem->slug }}">{{ $categoryItem->name }}</a>@endforeach<span><x-icon name="chevron-right" size="12"/></span><strong>{{ $product->name }}</strong></nav>
         <div class="grid product-primary-grid" style="grid-template-columns:minmax(300px,.9fr) minmax(0,1.4fr) 340px;align-items:start">
             <section class="panel" style="padding:18px">
                 <div class="product-gallery">
                     <a id="product-gallery-zoom" class="product-gallery-main" href="{{ $primaryImageUrl }}" target="_blank" rel="noopener" aria-label="Open enlarged image of {{ $product->name }}">
+                        @include('components.product-status-badges', ['product' => $product, 'stockRows' => $stockRows, 'documents' => $documents, 'referencePrice' => $marketplacePrice?->base_price ?: $product->base_price, 'salePrice' => $displayPrice, 'placement' => 'overlay'])
                         <img id="product-gallery-main-image" class="{{ $primaryImage ? '' : 'product-gallery-placeholder' }}" src="{{ $primaryImageUrl }}" alt="{{ $primaryImageAlt }}" width="1200" height="900" fetchpriority="high">
                     </a>
                     <div class="product-gallery-thumbs" aria-label="Product image gallery">
@@ -141,7 +142,7 @@
                 </div>
             </section>
             <section class="panel" style="padding:22px">
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><span class="badge b-info">{{ $product->category->name ?? 'Engineering part' }}</span><span class="badge {{ ($product->stock_quantity ?? 0) > 0 ? 'b-ok' : 'b-warn' }}">{{ ($product->stock_quantity ?? 0) > 0 ? 'In stock' : 'RFQ only' }}</span></div>
+                <div class="product-status-badges--summary">@include('components.product-status-badges', ['product' => $product, 'stockRows' => $stockRows, 'documents' => $documents, 'referencePrice' => $marketplacePrice?->base_price ?: $product->base_price, 'salePrice' => $displayPrice])</div>
                 <h1 style="font-size:clamp(1.8rem,4vw,3.1rem);line-height:1.05;margin:0 0 10px">{{ $product->name }}</h1>
                 <p class="sub">{{ implode(' · ', $productMeta) }}</p>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 18px">
@@ -155,6 +156,9 @@
                         <a class="badge b-muted" href="/mpn/{{ urlencode($product->mpn) }}">MPN: {{ $product->mpn }}</a>
                     @endif
                 </div>
+                @if($categoryTrail->isNotEmpty())
+                    <div class="product-category-chips" aria-label="Product categories">@foreach($categoryTrail as $categoryItem)<a href="{{ $publicBase }}/categories/{{ $categoryItem->slug }}">{{ $categoryItem->name }}</a>@endforeach</div>
+                @endif
                 @if($product->short_description || $product->description)<p>{{ strip_tags($product->short_description ?: \Illuminate\Support\Str::limit(strip_tags($product->description), 540)) }}</p>@endif
                 <h2 style="font-size:1.2rem;margin-top:24px">Technical Specifications</h2>
                 <table class="spec-table">
@@ -239,7 +243,7 @@
 
 <section class="section product-detail-section">
     <div class="wrap grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
-        <div class="info-card"><h2><x-icon name="datasheet" size="18"/> Datasheets & Downloads</h2>@forelse($documents as $doc)<p><strong>{{ $doc->title ?? ucfirst($doc->document_type ?? 'Document') }}</strong><br><a href="{{ $doc->file_url ?: $doc->source_url }}" rel="nofollow"><x-icon name="download" size="14"/> Download {{ $doc->document_type ?? 'file' }}</a></p>@empty<p class="sub">Datasheet, CAD, firmware and compliance assets are being loaded.</p>@endforelse</div>
+        <div class="info-card"><h2><x-icon name="datasheet" size="18"/> Datasheets & Downloads</h2>@forelse($documents as $doc)<p><a class="product-document-tag" href="{{ $doc->file_url ?: $doc->source_url }}" rel="nofollow">{{ ucfirst(str_replace('_', ' ', $doc->document_type ?? 'Document')) }}</a><br><strong>{{ $doc->title ?? ucfirst($doc->document_type ?? 'Document') }}</strong><br><a href="{{ $doc->file_url ?: $doc->source_url }}" rel="nofollow"><x-icon name="download" size="14"/> Download</a></p>@empty<p class="sub">Datasheet, CAD, firmware and compliance assets are being loaded.</p>@endforelse</div>
         <div class="info-card"><h2><x-icon name="alternatives" size="18"/> Alternatives & Accessories</h2>@forelse($alternatives as $alt)<p><a href="{{ $alt->slug ? '/products/'.$alt->slug : '#' }}"><strong>{{ $alt->name ?? 'Related product' }}</strong></a><br><span class="sub">{{ $alt->relation_type }} · {{ $alt->mpn ?: $alt->sku }}</span></p>@empty<p class="sub">Alternative parts and accessories are being mapped.</p>@endforelse</div>
         <div class="info-card"><h2><x-icon name="tutorial" size="18"/> Related LMS Tutorials</h2>@forelse($lmsLinks as $link)<p><a href="{{ $link->url ?: '/learn' }}"><strong>{{ $link->title }}</strong></a><br><span class="sub">{{ $link->relation_type }}</span></p>@empty<p class="sub">Related tutorials, lab kits and project usage will appear here.</p>@endforelse<a class="btn btn-ghost" href="/learn"><x-icon name="lms" size="16"/> Open Learning Hub</a></div>
     </div>
@@ -281,7 +285,7 @@
         <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
             @forelse($related as $r)
                 @php($relatedImage = $r->images->first())
-                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
+                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img product-img--badged">@include('components.product-status-badges', ['product' => $r, 'placement' => 'overlay'])<img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
             @empty
                 <div class="panel" style="padding:24px"><p class="sub">Related products are being indexed.</p></div>
             @endforelse

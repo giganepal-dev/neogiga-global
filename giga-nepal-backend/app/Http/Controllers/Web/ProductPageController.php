@@ -9,8 +9,10 @@ use App\Services\Catalog\CatalogSearchService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\MarketplaceSeoRenderer;
 use App\Services\Seo\CatalogSeoTemplateService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -181,6 +183,7 @@ class ProductPageController extends Controller
             'robotsReason' => $pageSeo['robots_reason'],
             'ogImage' => $this->productImage($product),
             'productImages' => $product->images->values(),
+            'categoryTrail' => $this->categoryTrail($product->category),
         ]);
     }
 
@@ -257,19 +260,19 @@ class ProductPageController extends Controller
             ->get();
     }
 
-    public function suggest(Request $request): \Illuminate\Http\JsonResponse
+    public function suggest(Request $request): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
         if (strlen($q) < 2) {
             return response()->json(['data' => []]);
         }
 
-        $products = \App\Models\Marketplace\Product::query()
+        $products = Product::query()
             ->published()
             ->where(function ($w) use ($q) {
                 $w->where('name', 'ilike', "%{$q}%")
-                  ->orWhere('mpn', 'ilike', "%{$q}%")
-                  ->orWhere('sku', 'ilike', "%{$q}%");
+                    ->orWhere('mpn', 'ilike', "%{$q}%")
+                    ->orWhere('sku', 'ilike', "%{$q}%");
             })
             ->with(['category:id,name', 'images' => fn ($qImg) => $qImg->where('is_active', true)->where('is_primary', true)->limit(1)])
             ->limit(8)
@@ -355,7 +358,38 @@ class ProductPageController extends Controller
             return collect();
         }
 
-        return DB::table('product_documents')->where('product_id', $productId)->orderByDesc('id')->limit(12)->get();
+        $query = DB::table('product_documents')->where('product_id', $productId);
+        if (Schema::hasColumn('product_documents', 'is_active')) {
+            $query->where('is_active', true);
+        }
+        if (Schema::hasColumn('product_documents', 'is_public')) {
+            $query->where('is_public', true);
+        }
+        if (Schema::hasColumn('product_documents', 'status')) {
+            $query->whereIn('status', ['approved', 'verified', 'active', 'published']);
+        }
+
+        return $query->orderByDesc('id')->limit(12)->get();
+    }
+
+    private function categoryTrail(?ProductCategory $category): Collection
+    {
+        if (! $category) {
+            return collect();
+        }
+
+        $trail = collect([$category]);
+        $parentId = $category->parent_id;
+        for ($depth = 0; $parentId && $depth < 4; $depth++) {
+            $parent = ProductCategory::query()->select(['id', 'parent_id', 'name', 'slug', 'is_active'])->find($parentId);
+            if (! $parent || ! $parent->is_active) {
+                break;
+            }
+            $trail->prepend($parent);
+            $parentId = $parent->parent_id;
+        }
+
+        return $trail;
     }
 
     private function productLmsLinks(int $productId)
