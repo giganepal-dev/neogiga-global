@@ -76,7 +76,7 @@ class PcbProject extends Model
 
     public function members(): HasMany
     {
-        return $this->hasMany(PcbProjectMember::class);
+        return $this->hasMany(PcbProjectMember::class, 'project_id');
     }
 
     public function versions(): HasMany
