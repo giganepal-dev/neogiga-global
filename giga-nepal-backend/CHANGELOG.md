@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-16 - Phase 9G Legacy AI contract activation
+
+- Activated the authenticated legacy `/api/v1/ai/session`, `/message`, and `/build-bom` endpoints by delegating them to the existing bounded local Commerce AI service; no paid provider, order, payment, stock reservation, or POS invoice is created.
+- Preserved the additive legacy routes and standardized their validation, persisted BOM/audit data, source notes, confidence, timestamp, and advisory-only response fields with the public Commerce AI contract.
+- Added rate limiting to legacy AI writes and ownership validation for supplied session keys so one authenticated account cannot append messages or BOMs to another account's AI session.
+- Kept AI BOM-to-cart and AI POS invoice endpoints fail-closed until their existing commerce/POS authorization and transactional workflows are integrated.
+
 ## 2026-07-16 - Phase 9F BOM admin review workflow
 
 - Connected the existing BOM importer to the admin procurement queue with permission-gated rematching and per-line manual product assignment.

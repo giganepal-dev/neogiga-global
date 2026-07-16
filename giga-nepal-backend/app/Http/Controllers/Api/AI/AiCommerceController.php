@@ -4,35 +4,47 @@ namespace App\Http\Controllers\Api\AI;
 
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CommerceAi\CommerceAiPromptRequest;
+use App\Services\CommerceAi\CommerceAiService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * AI Commerce endpoints (Blueprint §13, §29).
  *
- * The tool layer is ready (App\Services\Ai\AiToolsContract +
- * DatabaseAiTools) — all price/stock/product facts come from the
- * database, never from a model. The conversational orchestrator
- * (LLM routing, guardrails, audit, handoff) is Phase 2; no paid AI
- * API is called until ANTHROPIC_API_KEY is configured AND the
- * orchestrator ships. Until then these endpoints return 501.
+ * The legacy contract delegates its advisory work to the bounded local
+ * Commerce AI service. It does not call a paid provider or create an order,
+ * payment, stock reservation, or POS invoice.
  */
 class AiCommerceController extends Controller
 {
     use ApiResponses;
 
-    public function createSession(): JsonResponse
+    public function createSession(Request $request, CommerceAiService $ai): JsonResponse
     {
-        return $this->notImplemented('AI session', 'Phase 2');
+        return $this->success($ai->createSession($request->user()?->id), 201);
     }
 
-    public function sendMessage(): JsonResponse
+    public function sendMessage(CommerceAiPromptRequest $request, CommerceAiService $ai): JsonResponse
     {
-        return $this->notImplemented('AI conversation', 'Phase 2');
+        $data = $request->validated();
+
+        return $this->success($ai->respond(
+            $data['prompt'],
+            $data['session_key'] ?? null,
+            $request->user()?->id,
+        ));
     }
 
-    public function buildBom(): JsonResponse
+    public function buildBom(CommerceAiPromptRequest $request, CommerceAiService $ai): JsonResponse
     {
-        return $this->notImplemented('AI BOM builder', 'Phase 2');
+        $data = $request->validated();
+
+        return $this->success($ai->buildBom(
+            $data['prompt'],
+            $data['session_key'] ?? null,
+            $request->user()?->id,
+        ), 201);
     }
 
     public function addBomToCart(): JsonResponse

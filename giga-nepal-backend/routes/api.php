@@ -268,8 +268,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/{order}/invoice', [OrderController::class, 'invoice'])->whereNumber('order');
     });
 
-    // AI Commerce (contract stable; protected while Phase 2 orchestrator is incomplete)
-    Route::prefix('ai')->middleware('api.token')->group(function () {
+    // Legacy AI Commerce aliases. Advisory conversation and BOM generation
+    // delegate to the bounded Commerce AI engine; commercial actions remain
+    // deliberately unavailable until their operational safeguards ship.
+    Route::prefix('ai')->middleware(['api.token', 'throttle:writes'])->group(function () {
         Route::post('/session', [AiCommerceController::class, 'createSession']);
         Route::post('/message', [AiCommerceController::class, 'sendMessage']);
         Route::post('/build-bom', [AiCommerceController::class, 'buildBom']);

@@ -10,6 +10,7 @@ use App\Models\CommerceAi\CommerceAiSession;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CommerceAiService
 {
@@ -52,11 +53,8 @@ class CommerceAiService
         $result = $this->buildBom($prompt, $sessionKey, $userId);
         $reply = 'I created a local-rule BOM suggestion. Review compatibility, stock, and seller terms before buying.';
 
-        if ($sessionKey && Schema::hasTable('commerce_ai_messages')) {
-            $session = CommerceAiSession::firstOrCreate(
-                ['session_key' => $sessionKey],
-                ['user_id' => $userId, 'status' => 'active', 'intent' => $result['intent'] ?? null]
-            );
+        if ($sessionKey && Schema::hasTable('commerce_ai_sessions') && Schema::hasTable('commerce_ai_messages')) {
+            $session = $this->sessionFor($sessionKey, $userId, $result['intent'] ?? null);
             CommerceAiMessage::create(['commerce_ai_session_id' => $session->id, 'role' => 'user', 'message' => $prompt]);
             CommerceAiMessage::create(['commerce_ai_session_id' => $session->id, 'role' => 'assistant', 'message' => $reply, 'metadata' => ['bom_title' => $result['title']]]);
         }
@@ -101,7 +99,7 @@ class CommerceAiService
         if (Schema::hasTable('commerce_ai_bom_requests')) {
             DB::transaction(function () use ($prompt, $intent, $payload, $items, $sessionKey, $userId) {
                 $session = $sessionKey && Schema::hasTable('commerce_ai_sessions')
-                    ? CommerceAiSession::firstOrCreate(['session_key' => $sessionKey], ['user_id' => $userId, 'status' => 'active', 'intent' => $intent])
+                    ? $this->sessionFor($sessionKey, $userId, $intent)
                     : null;
                 $request = CommerceAiBomRequest::create([
                     'commerce_ai_session_id' => $session?->id,
@@ -132,5 +130,21 @@ class CommerceAiService
         }
 
         return $payload;
+    }
+
+    private function sessionFor(string $sessionKey, ?int $userId, ?string $intent = null): CommerceAiSession
+    {
+        $session = CommerceAiSession::firstOrCreate(
+            ['session_key' => $sessionKey],
+            ['user_id' => $userId, 'status' => 'active', 'intent' => $intent]
+        );
+
+        if ($session->user_id !== null && $session->user_id !== $userId) {
+            throw ValidationException::withMessages([
+                'session_key' => 'This AI session belongs to another account.',
+            ]);
+        }
+
+        return $session;
     }
 }
