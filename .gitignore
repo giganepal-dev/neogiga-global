@@ -1,4 +1,4 @@
-```gitignore
+```
 # Compiled and build artifacts
 *.pyc
 __pycache__/
@@ -11,22 +11,15 @@ target/
 # Dependencies
 node_modules/
 vendor/
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.coverage
-coverage/
+composer.lock
+.env
+.env.local
+.env.*
 
 # Logs and temp files
 *.log
 *.tmp
 *.swp
-*.swo
-
-# Environment
-.env
-.env.local
-.env.*
 
 # Editors
 .vscode/
@@ -34,15 +27,21 @@ coverage/
 *.swp
 *.swo
 
-# OS
+# OS generated files
 .DS_Store
 Thumbs.db
 
-# Laravel specific
-/storage/logs/
-/storage/framework/cache/
-/storage/framework/sessions/
-/storage/framework/views/
-/public/hot
-/artisan
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Database migrations backup (if any)
+*.sql.bak
+*.dump
+
+# Cache directories
+.cache/
+.mypy_cache/
+.pytest_cache/
 ```
