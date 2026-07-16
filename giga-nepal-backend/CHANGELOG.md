@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added a production-safe TI parametric catalog importer for official supplied CSV exports. It uses manufacturer plus normalized MPN as the canonical identity, preserves curated existing products, assigns NeoGiga `NG-TI-*` SKUs, creates structured specifications, and generates editable NeoGiga SEO records.
+- TI imports are quote-only by default: supplied source prices, generated inventory, and product images are not published without separate commercial, stock, and media-rights verification.
+
 ## 2026-07-16 - Catalog Listing Performance Safeguards
 
 - Replaced exact per-request public product-list totals with simple pagination and an optional cached headline count, preventing every storefront listing request from scanning the complete global catalog solely to render pagination metadata.
