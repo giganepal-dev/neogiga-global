@@ -1,0 +1,38 @@
+[Unit]
+Description=NeoGiga Laravel Queue Worker
+Documentation=https://neogiga.com
+After=network.target postgresql.service redis.service
+
+[Service]
+Type=simple
+User=neogiga
+Group=neogiga
+WorkingDirectory=/home/neogiga/laravel/current
+
+# Production queue configuration for high-volume imports
+# Adjust based on your server capacity
+Environment="QUEUE_CONNECTION=redis"
+Environment="CACHE_DRIVER=redis"
+
+# Main queue worker for critical jobs (orders, payments, notifications)
+ExecStart=/usr/bin/php /home/neogiga/laravel/current/artisan queue:work redis --queue=critical,default --sleep=3 --tries=3 --timeout=600 --max-jobs=1000 --max-time=3600 --rest=5 --memory=512 --force
+
+# Restart policy
+Restart=always
+RestartSec=5s
+
+# Resource limits
+LimitNOFILE=65535
+Nice=-5
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=neogiga-queue-worker
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,37 @@
+[Unit]
+Description=NeoGiga Search Index Worker (High Memory)
+Documentation=https://neogiga.com
+After=network.target postgresql.service redis.service
+
+[Service]
+Type=simple
+User=neogiga
+Group=neogiga
+WorkingDirectory=/home/neogiga/laravel/current
+
+# Dedicated worker for search index rebuilding (memory intensive)
+Environment="QUEUE_CONNECTION=redis"
+Environment="CACHE_DRIVER=redis"
+
+# Separate queue for search indexing jobs
+ExecStart=/usr/bin/php /home/neogiga/laravel/current/artisan queue:work redis --queue=search-index --sleep=5 --tries=2 --timeout=900 --max-jobs=500 --max-time=7200 --rest=10 --memory=1024 --force
+
+# Restart policy
+Restart=always
+RestartSec=10s
+
+# Higher memory limit for search operations
+LimitNOFILE=65535
+LimitMEMLOCK=infinity
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=neogiga-search-worker
+
+[Install]
+WantedBy=multi-user.target
