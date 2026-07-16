@@ -22,8 +22,8 @@
 @section('content')
 @php($publicBase = '/'.($marketplaceContext['locale'] ?? 'en'))
 <div class="wrap section">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span>/</span><strong>Brands</strong></nav>
-    <div class="section-head"><div><p class="eyebrow">Manufacturers and brands</p><h1 class="section-title">Engineering brands in {{ $marketplaceContext['current']->name ?? 'NeoGiga Global' }}</h1><p class="sub">Browse published brand identities independently of local stock or pricing.</p></div><span class="badge b-info">{{ number_format($brands->total()) }} brands</span></div>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span><x-icon name="chevron-right" size="12"/></span><strong>Brands</strong></nav>
+    <div class="section-head"><div><p class="eyebrow"><x-icon name="brands" size="14"/> Manufacturers and brands</p><h1 class="section-title">Engineering brands in {{ $marketplaceContext['current']->name ?? 'NeoGiga Global' }}</h1><p class="sub">Browse published brand identities independently of local stock or pricing.</p></div><span class="badge b-info">{{ number_format($brands->total()) }} brands</span></div>
     @if($brands->count())
         <div class="category-grid grid">
             @foreach($brands as $brand)

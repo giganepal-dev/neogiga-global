@@ -14,7 +14,7 @@
 </style>
 <div class="wrap">
     <div class="auth-card">
-        <h1>Choose a new password</h1>
+        <h1><x-icon name="password" size="22"/> Choose a new password</h1>
         <p>Set a new password for your account. The link you followed expires after a short time.</p>
 
         @if (isset($errors) && $errors->any())
@@ -34,7 +34,7 @@
             <label for="password_confirmation">Confirm new password</label>
             <input id="password_confirmation" type="password" name="password_confirmation" required minlength="8" autocomplete="new-password">
 
-            <button class="btn btn-primary" type="submit" style="width:100%">Reset password</button>
+            <button class="btn btn-primary" type="submit" style="width:100%"><x-icon name="password" size="16"/> Reset password</button>
         </form>
     </div>
 </div>

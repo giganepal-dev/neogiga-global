@@ -37,9 +37,9 @@
 @endpush
 
 @section('content')
-<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span>/</span><strong style="color:var(--soft)">Categories</strong></nav>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span><x-icon name="chevron-right" size="12"/></span><strong style="color:var(--soft)">Categories</strong></nav>
 
-<h1>Browse by category</h1>
+<h1><x-icon name="categories" size="24"/> Browse by category</h1>
 <p class="lead">Explore {{ number_format($total) }} categories across the engineering supply chain — from silicon to finished robotics. Every branch links straight into the NeoGiga catalog.</p>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
@@ -50,7 +50,7 @@
                     <img src="{{ $root->image_path ?: url('/images/brand/neogiga-icon-512.png') }}" alt="{{ $root->name }} category" width="42" height="42" loading="lazy" style="width:42px;height:42px;object-fit:contain;border-radius:8px;background:#081527;flex:none">
                     <strong style="font-size:1.05rem">{{ $root->name }}</strong>
                 </span>
-                <span aria-hidden="true" style="color:var(--cyan)">→</span>
+                <span aria-hidden="true" style="color:var(--cyan)"><x-icon name="chevron-right" size="16"/></span>
             </a>
             @if ($root->children->isNotEmpty())
                 <ul style="list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px">

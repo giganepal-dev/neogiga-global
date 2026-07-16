@@ -122,7 +122,7 @@
 @endphp
 <section class="section" style="padding-top:18px">
     <div class="wrap">
-        <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span>/</span><a href="{{ $publicBase }}/products">Products</a>@if($product->category)<span>/</span><a href="{{ $publicBase }}/categories/{{ $product->category->slug }}">{{ $product->category->name }}</a>@endif<span>/</span><strong>{{ $product->name }}</strong></nav>
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span><x-icon name="chevron-right" size="12"/></span><a href="{{ $publicBase }}/products">Products</a>@if($product->category)<span><x-icon name="chevron-right" size="12"/></span><a href="{{ $publicBase }}/categories/{{ $product->category->slug }}">{{ $product->category->name }}</a>@endif<span><x-icon name="chevron-right" size="12"/></span><strong>{{ $product->name }}</strong></nav>
         <div class="grid product-primary-grid" style="grid-template-columns:minmax(300px,.9fr) minmax(0,1.4fr) 340px;align-items:start">
             <section class="panel" style="padding:18px">
                 <div class="product-gallery">
@@ -188,10 +188,10 @@
                     @endif
                 </div>
                 <div class="grid">
-                    <a class="btn btn-primary" href="/rfq?product={{ $product->slug }}">Request Bulk Quote</a>
-                    <a class="btn btn-gold" href="/ai-commerce?part={{ urlencode($product->mpn ?: $product->sku ?: $product->name) }}">Ask AI Engineer</a>
-                    <form method="post" action="/cart/items" style="display:grid;grid-template-columns:86px 1fr;gap:8px">@csrf<input type="hidden" name="product_id" value="{{ $product->id }}"><input class="control" type="number" name="quantity" min="1" max="500" value="1" aria-label="Quantity"><button class="btn btn-ghost" type="submit">Add to Cart</button></form>
-                    <a class="btn btn-ghost" href="/sell-on-neogiga">Chat with Seller Soon</a>
+                    <a class="btn btn-primary" href="/rfq?product={{ $product->slug }}"><x-icon name="rfq" size="18"/> Request Bulk Quote</a>
+                    <a class="btn btn-gold" href="/ai-commerce?part={{ urlencode($product->mpn ?: $product->sku ?: $product->name) }}"><x-icon name="ai-search" size="18"/> Ask AI Engineer</a>
+                    <form method="post" action="/cart/items" style="display:grid;grid-template-columns:86px 1fr;gap:8px">@csrf<input type="hidden" name="product_id" value="{{ $product->id }}"><input class="control" type="number" name="quantity" min="1" max="500" value="1" aria-label="Quantity"><button class="btn btn-ghost" type="submit"><x-icon name="cart" size="18"/> Add to Cart</button></form>
+                    <a class="btn btn-ghost" href="/sell-on-neogiga"><x-icon name="seller-chat" size="18"/> Chat with Seller Soon</a>
                 </div>
                 <p class="sub">B2B pricing, contract offers, regional warehouse stock and delivery dates are handled through RFQ until checkout is fully opened.</p>
                 <h3>Stock by warehouse</h3>
@@ -209,7 +209,7 @@
 
 <section class="section product-detail-section">
     <div class="wrap">
-        <div class="section-head"><div><p class="eyebrow">Seller offers</p><h2>Regional sourcing options</h2></div><a class="btn btn-ghost" href="/rfq?product={{ $product->slug }}">Request better quote</a></div>
+        <div class="section-head"><div><p class="eyebrow">Seller offers</p><h2>Regional sourcing options</h2></div><a class="btn btn-ghost" href="/rfq?product={{ $product->slug }}"><x-icon name="rfq" size="16"/> Request better quote</a></div>
         <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
             @forelse($sellerOffers as $offer)
                 @php
@@ -224,13 +224,13 @@
                     <p class="sub">{{ $offer->marketplace_name ?: ($marketplaceContext['current']?->name ?? 'Global marketplace') }}</p>
                     <p style="font-size:1.35rem;margin:8px 0"><strong>{{ $offerCurrency }} {{ number_format((float) $offer->selling_price, 2) }}</strong></p>
                     @if($offer->min_price)<p class="sub">Negotiated floor from {{ $offerCurrency }} {{ number_format((float) $offer->min_price, 2) }}</p>@endif
-                    <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-primary" href="/rfq?product={{ $product->slug }}&seller={{ $offer->vendor_slug }}">RFQ seller</a>@if($offer->vendor_slug)<span class="badge b-muted">{{ $offer->vendor_slug }}</span>@endif</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-primary" href="/rfq?product={{ $product->slug }}&seller={{ $offer->vendor_slug }}"><x-icon name="rfq" size="16"/> RFQ seller</a>@if($offer->vendor_slug)<span class="badge b-muted">{{ $offer->vendor_slug }}</span>@endif</div>
                 </article>
             @empty
                 <div class="panel" style="padding:24px">
                     <h3>No public seller offers yet</h3>
                     <p class="sub">NeoGiga can still source this part through RFQ. Seller-specific offers will appear here when vendor pricing is published.</p>
-                    <a class="btn btn-primary" href="/rfq?product={{ $product->slug }}">Start RFQ</a>
+                    <a class="btn btn-primary" href="/rfq?product={{ $product->slug }}"><x-icon name="rfq" size="16"/> Start RFQ</a>
                 </div>
             @endforelse
         </div>
@@ -239,19 +239,19 @@
 
 <section class="section product-detail-section">
     <div class="wrap grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
-        <div class="info-card"><h2>Datasheets & Downloads</h2>@forelse($documents as $doc)<p><strong>{{ $doc->title ?? ucfirst($doc->document_type ?? 'Document') }}</strong><br><a href="{{ $doc->file_url ?: $doc->source_url }}" rel="nofollow">Download {{ $doc->document_type ?? 'file' }}</a></p>@empty<p class="sub">Datasheet, CAD, firmware and compliance assets are being loaded.</p>@endforelse</div>
-        <div class="info-card"><h2>Alternatives & Accessories</h2>@forelse($alternatives as $alt)<p><a href="{{ $alt->slug ? '/products/'.$alt->slug : '#' }}"><strong>{{ $alt->name ?? 'Related product' }}</strong></a><br><span class="sub">{{ $alt->relation_type }} · {{ $alt->mpn ?: $alt->sku }}</span></p>@empty<p class="sub">Alternative parts and accessories are being mapped.</p>@endforelse</div>
-        <div class="info-card"><h2>Related LMS Tutorials</h2>@forelse($lmsLinks as $link)<p><a href="{{ $link->url ?: '/learn' }}"><strong>{{ $link->title }}</strong></a><br><span class="sub">{{ $link->relation_type }}</span></p>@empty<p class="sub">Related tutorials, lab kits and project usage will appear here.</p>@endforelse<a class="btn btn-ghost" href="/learn">Open Learning Hub</a></div>
+        <div class="info-card"><h2><x-icon name="datasheet" size="18"/> Datasheets & Downloads</h2>@forelse($documents as $doc)<p><strong>{{ $doc->title ?? ucfirst($doc->document_type ?? 'Document') }}</strong><br><a href="{{ $doc->file_url ?: $doc->source_url }}" rel="nofollow"><x-icon name="download" size="14"/> Download {{ $doc->document_type ?? 'file' }}</a></p>@empty<p class="sub">Datasheet, CAD, firmware and compliance assets are being loaded.</p>@endforelse</div>
+        <div class="info-card"><h2><x-icon name="alternatives" size="18"/> Alternatives & Accessories</h2>@forelse($alternatives as $alt)<p><a href="{{ $alt->slug ? '/products/'.$alt->slug : '#' }}"><strong>{{ $alt->name ?? 'Related product' }}</strong></a><br><span class="sub">{{ $alt->relation_type }} · {{ $alt->mpn ?: $alt->sku }}</span></p>@empty<p class="sub">Alternative parts and accessories are being mapped.</p>@endforelse</div>
+        <div class="info-card"><h2><x-icon name="tutorial" size="18"/> Related LMS Tutorials</h2>@forelse($lmsLinks as $link)<p><a href="{{ $link->url ?: '/learn' }}"><strong>{{ $link->title }}</strong></a><br><span class="sub">{{ $link->relation_type }}</span></p>@empty<p class="sub">Related tutorials, lab kits and project usage will appear here.</p>@endforelse<a class="btn btn-ghost" href="/learn"><x-icon name="lms" size="16"/> Open Learning Hub</a></div>
     </div>
 </section>
 
 <section class="section product-detail-section">
     <div class="wrap grid" style="grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);align-items:start">
         <div class="panel" style="padding:22px">
-            <div class="section-head" style="margin-bottom:12px"><div><p class="eyebrow">Reviews & Q&A</p><h2>Engineering feedback</h2></div><span class="badge b-info">{{ $reviewBadge }}</span></div>
+            <div class="section-head" style="margin-bottom:12px"><div><p class="eyebrow"><x-icon name="reviews" size="14"/> Reviews &amp; Q&A</p><h2>Engineering feedback</h2></div><span class="badge b-info"><x-icon name="star" size="14"/> {{ $reviewBadge }}</span></div>
             @forelse($reviews as $review)
                 <article class="product-review">
-                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><strong>{{ $review->title ?: 'Product review' }}</strong><span class="badge b-ok">{{ $review->rating }}/5</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><strong>{{ $review->title ?: 'Product review' }}</strong><span class="badge b-ok"><x-icon name="star" size="12"/> {{ $review->rating }}/5</span></div>
                     <p>{{ $review->body }}</p>
                     <p class="sub">{{ $review->reviewer_name ?: 'NeoGiga customer' }}{{ $review->use_case ? ' · Use case: '.$review->use_case : '' }}</p>
                 </article>
@@ -269,7 +269,7 @@
                 <input class="control" name="reviewer_name" maxlength="120" placeholder="Name">
                 <input class="control" type="email" name="reviewer_email" maxlength="190" placeholder="Email">
             @endif
-            <button class="btn btn-primary" type="submit">Submit for moderation</button>
+            <button class="btn btn-primary" type="submit"><x-icon name="send" size="16"/> Submit for moderation</button>
             <p class="sub" style="margin:0">Reviews are checked before publication.</p>
         </form>
     </div>
@@ -281,7 +281,7 @@
         <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
             @forelse($related as $r)
                 @php($relatedImage = $r->images->first())
-                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}">View</a></article>
+                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
             @empty
                 <div class="panel" style="padding:24px"><p class="sub">Related products are being indexed.</p></div>
             @endforelse

@@ -10,7 +10,7 @@
 @endpush
 @section('content')
 <section class="page-hero">
-    <p class="eyebrow">Distributor Network</p>
+    <p class="eyebrow"><x-icon name="warehouses" size="14"/> Distributor Network</p>
     <h1>Join NeoGiga Distributor Network</h1>
     <p class="lead">Build regional electronics, robotics, automation, solar, EV and maker supply with NeoGiga across Nepal, India and future South Asia marketplaces.</p>
 </section>

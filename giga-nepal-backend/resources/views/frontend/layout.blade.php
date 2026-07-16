@@ -36,6 +36,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url('/images/brand/neogiga-favicon-32.png') }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url('/images/brand/neogiga-icon-192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url('/images/brand/neogiga-apple-touch-icon-180.png') }}">
+    <x-icon-styles/>
     @stack('head')
     <style>
         /* NeoGiga "Precision Engineering" design system (dark, platform-wide) */
@@ -65,7 +66,7 @@
         .crumbs{display:flex;flex-wrap:wrap;gap:7px;align-items:center;color:var(--faint);font-size:.85rem;margin:18px 0}.crumbs a{color:var(--cyan)}
         .footer{background:var(--bg2);color:var(--muted);padding:56px 0 100px;border-top:1px solid var(--line)}.foot-grid{display:grid;grid-template-columns:1.5fr repeat(4,1fr);gap:24px}.footer h3{color:#fff;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em}.footer a{display:block;color:var(--muted);margin:8px 0;transition:color .15s}.footer a:hover{color:var(--cyan)}.newsletter{display:flex;gap:8px;flex-wrap:wrap}.newsletter input{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--s1);color:var(--on);padding:0 14px}
         .float-ai{position:fixed;right:18px;bottom:20px;z-index:50;background:var(--cyan);color:#003640;border-radius:999px;padding:12px 18px;font-weight:700;box-shadow:0 14px 40px rgba(40,216,251,.3);transition:transform .15s}.float-ai:hover{transform:translateY(-2px)}.mobile-bottom{display:none}
-        @media(max-width:980px){.head-main{grid-template-columns:1fr;gap:10px;padding:12px 0}.head-actions{overflow-x:auto}.search{grid-template-columns:1fr auto}.search select{display:none}.nav-row{display:none}.hero-grid,.layout-2,.product-primary-grid{grid-template-columns:1fr!important}.foot-grid{grid-template-columns:1fr 1fr}.filter{position:static}.mobile-bottom{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:55;background:rgba(11,15,17,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);justify-content:space-around;padding:8px 6px}.mobile-bottom a{color:var(--muted);font-size:.75rem;font-weight:600;text-align:center}.float-ai{bottom:64px}.hero h1{font-size:3rem}}
+        @media(max-width:980px){.head-main{grid-template-columns:1fr;gap:10px;padding:12px 0}.head-actions{overflow-x:auto}.search{grid-template-columns:1fr auto}.search select{display:none}.nav-row{display:none}.hero-grid,.layout-2,.product-primary-grid{grid-template-columns:1fr!important}.foot-grid{grid-template-columns:1fr 1fr}.filter{position:static}.mobile-bottom{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:55;background:rgba(11,15,17,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);justify-content:space-around;padding:8px 6px}.mobile-bottom a{color:var(--muted);font-size:.7rem;font-weight:600;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none}.float-ai{bottom:64px}.hero h1{font-size:3rem}}
         @media(max-width:620px){.wrap{width:min(var(--max),calc(100% - 24px))}.hero-grid{padding:44px 0}.hero h1{font-size:2.5rem}.section{padding:44px 0}.foot-grid{grid-template-columns:1fr 1fr}.ai-bar{display:grid}.category-grid{grid-template-columns:1fr 1fr}.section-head{display:block}.btn{width:100%}}
         @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.category-card:hover,.product-card:hover,.btn:hover,.float-ai:hover{transform:none}}
     </style>
@@ -119,7 +120,7 @@
         <form class="search" method="get" action="{{ $publicBase }}/products" role="search">
             <select name="category" aria-label="Category"><option value="">All categories</option><option value="semiconductors">Semiconductors</option><option value="robotics">Robotics</option><option value="battery-technology">Battery</option><option value="industrial-automation">Automation</option></select>
             <input name="q" type="search" value="{{ request('q') }}" placeholder="Search products, MPN, SKU, category..." aria-label="Search NeoGiga">
-            <button type="submit">Search</button>
+            <button type="submit"><x-icon name="search" size="18"/> Search</button>
         </form>
         <div class="head-actions">
             <form class="switcher-form" method="post" action="{{ route('marketplace.preference') }}">
@@ -133,23 +134,23 @@
                 <button class="switch-btn" type="submit">Apply</button>
             </form>
             <select class="select-lite" aria-label="Language"><option>EN</option><option>HI</option><option>NE</option></select>
-            <a class="icon-btn" href="/cart">Cart</a>
-            <a class="icon-btn" href="/admin/login">B2B Login</a>
-            <a class="icon-btn gold" href="{{ $publicBase }}/sell-on-neogiga">Seller</a>
+            <a class="icon-btn" href="/cart"><x-icon name="cart" size="18"/> Cart</a>
+            <a class="icon-btn" href="/admin/login"><x-icon name="login" size="18"/> B2B Login</a>
+            <a class="icon-btn gold" href="{{ $publicBase }}/sell-on-neogiga"><x-icon name="sellers" size="18"/> Seller</a>
         </div>
     </div>
     <div class="nav-row">
         <div class="wrap">
             <details class="mega">
-                <summary>☰ Categories</summary>
+                <summary><x-icon name="menu" size="18"/> Categories <x-icon name="expand" size="14"/></summary>
                 <div class="mega-panel">
-                    <div class="mega-col"><h3>Featured Categories</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=electronic-components">Electronic Components</a><a href="{{ $publicBase }}/products?category=iot-wireless">IoT & Wireless</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/products?category=battery-technology">Battery Technology</a></div>
-                    <div class="mega-col"><h3>Build</h3><a href="{{ $publicBase }}/ai-commerce">AI Project Builder</a><a href="https://pcb.neogiga.com/en">PCB Fabrication</a><a href="{{ $publicBase }}/lms">Learning Hub</a><a href="{{ $publicBase }}/rfq">Bulk RFQ</a><a href="{{ $publicBase }}/sell-on-neogiga">Become a Seller</a></div>
-                    <div class="mega-col"><h3>Popular searches</h3><a href="{{ $publicBase }}/products?q=ESP32">ESP32</a><a href="{{ $publicBase }}/products?q=LiFePO4">LiFePO4</a><a href="{{ $publicBase }}/products?q=PLC">PLC</a><a href="{{ $publicBase }}/products?q=robot">Robot kits</a></div>
+                    <div class="mega-col"><h3><x-icon name="categories" size="14"/> Featured Categories</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=electronic-components">Electronic Components</a><a href="{{ $publicBase }}/products?category=iot-wireless">IoT & Wireless</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/products?category=battery-technology">Battery Technology</a></div>
+                    <div class="mega-col"><h3><x-icon name="pcb" size="14"/> Build</h3><a href="{{ $publicBase }}/ai-commerce">AI Project Builder</a><a href="https://pcb.neogiga.com/en">PCB Fabrication</a><a href="{{ $publicBase }}/lms">Learning Hub</a><a href="{{ $publicBase }}/rfq">Bulk RFQ</a><a href="{{ $publicBase }}/sell-on-neogiga">Become a Seller</a></div>
+                    <div class="mega-col"><h3><x-icon name="search" size="14"/> Popular searches</h3><a href="{{ $publicBase }}/products?q=ESP32">ESP32</a><a href="{{ $publicBase }}/products?q=LiFePO4">LiFePO4</a><a href="{{ $publicBase }}/products?q=PLC">PLC</a><a href="{{ $publicBase }}/products?q=robot">Robot kits</a></div>
                 </div>
             </details>
             <nav class="primary-nav" aria-label="Primary navigation">
-                <a href="{{ $publicBase }}/products">Products</a><a href="{{ $publicBase }}/categories">Categories</a><a href="{{ $publicBase }}/brands">Brands</a><a href="https://pcb.neogiga.com/en">PCB</a><a href="{{ $publicBase }}/ai-commerce">AI Builder</a><a href="{{ $publicBase }}/rfq">RFQ</a><a href="{{ $publicBase }}/lms">LMS</a><a href="{{ $publicBase }}/distributors">Warehouses</a>
+                <a href="{{ $publicBase }}/products"><x-icon name="products" size="16"/> Products</a><a href="{{ $publicBase }}/categories"><x-icon name="categories" size="16"/> Categories</a><a href="{{ $publicBase }}/brands"><x-icon name="brands" size="16"/> Brands</a><a href="https://pcb.neogiga.com/en"><x-icon name="pcb" size="16"/> PCB</a><a href="{{ $publicBase }}/ai-commerce"><x-icon name="ai-search" size="16"/> AI Builder</a><a href="{{ $publicBase }}/rfq"><x-icon name="rfq" size="16"/> RFQ</a><a href="{{ $publicBase }}/lms"><x-icon name="lms" size="16"/> LMS</a><a href="{{ $publicBase }}/distributors"><x-icon name="warehouses" size="16"/> Warehouses</a>
             </nav>
         </div>
     </div>
@@ -157,7 +158,7 @@
 <main id="main">@yield('content')</main>
 <footer class="footer">
     <div class="wrap foot-grid">
-        <div><a class="brand" href="{{ $publicBase }}"><span class="mark"><img src="{{ url('/images/brand/neogiga-icon-192.png') }}" alt="" width="30" height="30" aria-hidden="true"></span><span>NeoGiga<small>Engineering the Future</small></span></a><p>Premium marketplace for semiconductors, IoT, robotics, automation, battery technology, power storage and industrial engineering tools.</p><form class="newsletter" method="post" action="/api/v1/newsletter/subscribe"><input type="email" name="email" placeholder="Engineering newsletter" aria-label="Email"><button class="btn btn-gold" type="submit">Subscribe</button></form></div>
+        <div><a class="brand" href="{{ $publicBase }}"><span class="mark"><img src="{{ url('/images/brand/neogiga-icon-192.png') }}" alt="" width="30" height="30" aria-hidden="true"></span><span>NeoGiga<small>Engineering the Future</small></span></a><p>Premium marketplace for semiconductors, IoT, robotics, automation, battery technology, power storage and industrial engineering tools.</p><form class="newsletter" method="post" action="/api/v1/newsletter/subscribe"><input type="email" name="email" placeholder="Engineering newsletter" aria-label="Email"><button class="btn btn-gold" type="submit"><x-icon name="email" size="16"/> Subscribe</button></form></div>
         <div><h3>Products</h3><a href="{{ $publicBase }}/products?category=semiconductors">Semiconductors</a><a href="{{ $publicBase }}/products?category=sensors">Sensors</a><a href="{{ $publicBase }}/products?category=robotics">Robotics</a><a href="{{ $publicBase }}/brands">Brands</a></div>
         <div><h3>Company</h3><a href="{{ $publicBase }}/ai-commerce">AI commerce</a><a href="{{ $publicBase }}/lms">Learning hub</a><a href="{{ $publicBase }}/rfq">RFQ sourcing</a><a href="{{ $publicBase }}/distributors">Distributors</a></div>
         <div><h3>Seller</h3><a href="{{ $publicBase }}/sell-on-neogiga">Become a seller</a><a href="{{ $publicBase }}/seller-early-access">Early access</a><a href="/admin/login">Seller portal</a><a href="/admin/login">B2B login</a></div>
@@ -165,7 +166,13 @@
     </div>
 </footer>
 <a class="float-ai" href="{{ $publicBase }}/ai-commerce" aria-label="Open NeoGiga AI assistant">Ask AI</a>
-<nav class="mobile-bottom" aria-label="Mobile shortcuts"><a href="{{ $publicBase }}">Home</a><a href="{{ $publicBase }}/products">Search</a><a href="{{ $publicBase }}/categories">Categories</a><a href="/cart">Cart</a><a href="{{ $publicBase }}/ai-commerce">AI</a></nav>
+<nav class="mobile-bottom" aria-label="Mobile shortcuts">
+    <a href="{{ $publicBase }}"><x-icon name="home" size="20"/><span>Home</span></a>
+    <a href="{{ $publicBase }}/products"><x-icon name="search" size="20"/><span>Search</span></a>
+    <a href="{{ $publicBase }}/categories"><x-icon name="categories" size="20"/><span>Categories</span></a>
+    <a href="/cart"><x-icon name="cart" size="20"/><span>Cart</span></a>
+    <a href="{{ $publicBase }}/ai-commerce"><x-icon name="ai-search" size="20"/><span>AI</span></a>
+</nav>
 @stack('foot')
 </body>
 </html>

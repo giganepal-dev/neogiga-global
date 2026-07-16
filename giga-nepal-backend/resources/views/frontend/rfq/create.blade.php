@@ -18,7 +18,7 @@
 </style>
 <div class="wrap">
     <div class="rfq-card">
-        <h1>Request a bulk quote</h1>
+        <h1><x-icon name="rfq" size="22"/> Request a bulk quote</h1>
         <p class="lead-sub">Tell us what you need — our sales team replies with a formal quotation (RFQ → QUO workflow).</p>
 
         @if (session('status'))<div class="rfq-msg ok">{{ session('status') }}</div>@endif
@@ -58,7 +58,7 @@
             <label for="message">Message</label>
             <textarea id="message" name="message" rows="4" maxlength="2000" placeholder="Specs, alternatives accepted, delivery location…">{{ old('message') }}</textarea>
 
-            <button class="btn btn-primary" type="submit" style="width:100%">Submit RFQ</button>
+            <button class="btn btn-primary" type="submit" style="width:100%"><x-icon name="send" size="16"/> Submit RFQ</button>
         </form>
     </div>
 </div>
