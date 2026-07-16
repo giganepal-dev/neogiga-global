@@ -5,15 +5,14 @@
 
 @push('styles')
 <style>
-    .pcb-hero{position:relative;min-height:min(680px,calc(100vh - 77px));display:flex;align-items:center;background:linear-gradient(135deg,#0b1220 0%,#101417 50%,#0b0f11 100%);overflow:hidden;border-bottom:1px solid var(--line)}
-    .pcb-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 30%,rgba(40,216,251,.12),transparent 50rem),radial-gradient(circle at 80% 20%,rgba(249,189,44,.08),transparent 40rem)}
-    .hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;position:relative;z-index:1;padding:64px 0}
-    .hero-copy h1{font-size:clamp(2.5rem,5.5vw,4.2rem);line-height:.95;margin:12px 0 20px;text-shadow:0 0 44px rgba(40,216,251,.18)}.hero-copy p{color:var(--muted);font-size:1.08rem;max-width:58ch;margin-bottom:0}
-    .hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px;padding-top:24px;border-top:1px solid var(--line)}
-    .hero-stat b{display:block;font-size:1.5rem;color:var(--cyan);font-weight:800}.hero-stat span{color:var(--faint);font-size:.78rem}
-    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+    .pcb-hero{position:relative;min-height:min(720px,calc(100vh - 77px));display:flex;align-items:center;background:#0c1215;overflow:hidden;border-bottom:1px solid var(--line)}
+    .hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(410px,.9fr);gap:40px;align-items:center;position:relative;padding:56px 0}
+    .hero-copy h1{font-size:clamp(2.4rem,5vw,4rem);line-height:1.02;margin:12px 0 16px}.hero-copy p{color:var(--muted);font-size:1.05rem;max-width:58ch;margin-bottom:0}
+    .hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:24px}.hero-stat{border:1px solid var(--line);background:rgba(255,255,255,.025);padding:13px}.hero-stat b{display:block;font-size:1.25rem;color:var(--cyan);font-weight:800}.hero-stat span{color:var(--faint);font-size:.76rem}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}.hero-actions .btn{width:auto}
+    .workflow-rail{display:grid;gap:0;margin-top:28px;border:1px solid var(--line);background:rgba(255,255,255,.02)}.workflow-rail div{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}.workflow-rail div:last-child{border-bottom:0}.workflow-rail b{font-size:.84rem}.workflow-rail span{color:var(--muted);font-size:.78rem}.workflow-rail em{font-style:normal;color:var(--cyan);font-size:.7rem;font-weight:700;text-transform:uppercase}.rail-number{color:var(--gold);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:800}
 
-    .quote-panel{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);padding:24px;backdrop-filter:blur(14px)}
+    .quote-panel{background:#151c20;border:1px solid rgba(40,216,251,.28);border-radius:var(--r);padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.24)}
     .quote-panel h3{font-size:1.1rem;margin:0 0 16px;display:flex;align-items:center;gap:8px}
     .quote-panel h3 .icon{width:32px;height:32px;border-radius:8px;background:rgba(40,216,251,.16);display:grid;place-items:center;color:var(--cyan)}
     .quote-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
@@ -28,10 +27,10 @@
 
     .trust-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.trust-card{text-align:center;padding:28px 18px;background:var(--glass);border:1px solid var(--line);border-radius:var(--r)}.trust-card .trust-icon{width:48px;height:48px;border-radius:14px;background:rgba(40,216,251,.12);color:var(--cyan);display:grid;place-items:center;font-size:1.3rem;font-weight:800;margin:0 auto 14px}.trust-card b{display:block;font-size:.95rem;margin-bottom:6px}.trust-card p{color:var(--muted);font-size:.82rem;margin:0}
 
-    .cta{background:linear-gradient(135deg,rgba(40,216,251,.08),rgba(249,189,44,.06));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.cta .wrap{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:52px 0}.cta h2{font-size:clamp(1.8rem,3vw,2.5rem);margin:0 0 8px}.cta p{margin:0;color:var(--muted)}
+    .cta{background:#12191d;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.cta .wrap{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:52px 0}.cta h2{font-size:clamp(1.8rem,3vw,2.5rem);margin:0 0 8px}.cta p{margin:0;color:var(--muted)}
 
-    @media(max-width:1000px){.hero-grid{grid-template-columns:1fr;gap:28px}.quote-panel{max-width:520px}.cap-grid,.work-grid{grid-template-columns:repeat(2,1fr)}.trust-grid{grid-template-columns:1fr}}
-    @media(max-width:620px){.pcb-hero{min-height:auto}.hero-grid{padding:48px 0}.hero-copy h1{font-size:2.2rem}.hero-stats{grid-template-columns:repeat(2,1fr)}.hero-actions{display:grid}.quote-row{grid-template-columns:1fr}.cap-grid,.work-grid{grid-template-columns:1fr}.cta .wrap{display:block}.cta .wrap .btn{margin-top:16px}.section{padding:52px 0}}
+    @media(max-width:1000px){.hero-grid{grid-template-columns:1fr;gap:28px}.quote-panel{max-width:640px}.cap-grid,.work-grid{grid-template-columns:repeat(2,1fr)}.trust-grid{grid-template-columns:1fr}}
+    @media(max-width:620px){.pcb-hero{min-height:auto}.hero-grid{padding:40px 0}.hero-copy h1{font-size:2.2rem}.hero-stats{grid-template-columns:1fr 1fr}.hero-actions{display:grid}.hero-actions .btn{width:100%}.workflow-rail div{grid-template-columns:34px 1fr}.workflow-rail em{display:none}.quote-row{grid-template-columns:1fr}.cap-grid,.work-grid{grid-template-columns:1fr}.cta .wrap{display:block}.cta .wrap .btn{margin-top:16px}.section{padding:52px 0}}
 </style>
 @endpush
 
@@ -43,22 +42,28 @@
     <div class="wrap">
         <div class="hero-grid">
             <div class="hero-copy">
-                <div class="eyebrow">PCB Fabrication & PCBA Assembly Platform</div>
-                <h1 id="pcb-hero-title">From Gerber to<br>assembled boards.</h1>
-                <p>Instant pricing for PCB fabrication and SMT assembly. Secure private file storage. Engineering-reviewed quotes. Component sourcing. Production tracking. Part of the NeoGiga global engineering marketplace.</p>
+                <div class="eyebrow">Online PCB quote workspace</div>
+                <h1 id="pcb-hero-title">Configure a build-ready board.</h1>
+                <p>Start with a transparent fabrication estimate, then move into a private project workspace for Gerber validation, BOM matching, engineering review and production tracking.</p>
                 <div class="hero-stats">
                     <div class="hero-stat"><b>1-64</b><span>PCB layers</span></div>
-                    <div class="hero-stat"><b>SMT+TH</b><span>Assembly</span></div>
-                    <div class="hero-stat"><b>24h</b><span>Fastest turn</span></div>
+                    <div class="hero-stat"><b>SMT + TH</b><span>Assembly paths</span></div>
+                    <div class="hero-stat"><b>15 min</b><span>Private link expiry</span></div>
                 </div>
                 <div class="hero-actions">
-                    <a class="btn btn-primary" href="/en/register">Start PCB project</a>
-                    <a class="btn btn-ghost" href="/en/login">Open workspace</a>
+                    <a class="btn btn-primary" href="#quote">Configure quote</a>
+                    <a class="btn btn-ghost" href="/en/register">Create private project</a>
+                </div>
+                <div class="workflow-rail" aria-label="PCB production workflow">
+                    <div><span class="rail-number">01</span><span><b>Configure</b><br>Fabrication and assembly inputs</span><em>Now</em></div>
+                    <div><span class="rail-number">02</span><span><b>Upload securely</b><br>Gerber, BOM, CPL and documents</span><em>Project</em></div>
+                    <div><span class="rail-number">03</span><span><b>Engineering review</b><br>DFM and commercial quote approval</span><em>Review</em></div>
+                    <div><span class="rail-number">04</span><span><b>Track production</b><br>Order milestones in one workspace</span><em>Production</em></div>
                 </div>
             </div>
             <div class="quote-panel" id="quote">
-                <h3><span class="icon">⚡</span> Instant PCB quote</h3>
-                <p class="muted" style="font-size:.82rem;margin:0 0 14px">Get an estimated price. Final quote confirmed after engineering file review.</p>
+                <h3><span class="icon">Q</span> Quote configuration</h3>
+                <p class="muted" style="font-size:.82rem;margin:0 0 14px">Estimate fabrication and PCBA cost. Engineering confirms specifications only after your private file review.</p>
                 <form id="instant-quote" onsubmit="return false">
                     @csrf
                     <div class="quote-row">

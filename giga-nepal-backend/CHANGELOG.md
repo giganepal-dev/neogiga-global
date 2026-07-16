@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-16 - PCB Workspace Upgrade and Branch Audit
+
+- Audited remote branches against `origin/main`; retained the deployed production baseline and selected only safe PCB portal presentation and route-contract improvements from the branch inventory. The detailed disposition is in `docs/BRANCH_INTEGRATION_AUDIT_2026-07-16.md`.
+- Reworked `pcb.neogiga.com/en` into an operational quote workspace with an interactive fabrication/PCBA estimator, explicit secure upload/review/production stages, and responsive behavior while preserving the existing quote API and project workflow.
+- Removed regional storefront names from the PCB header. Regional navigation remains available in the footer.
+- Restored the missing authenticated route registrations for existing project update, cancellation, quote approval, and quote-change actions. No PCB controller logic, table, migration, file, quote, order, or project data was changed.
+
 ## 2026-07-15 - Governed 100,000-Product JLCPCB Catalog Expansion
 
 - Preserved the verified JLCPCB SQLite snapshot at `/home/neogiga/backups/jlcpcb-source-20260714_192650/jlcpcb-components.sqlite3` with SHA-256 `9334f49b7d730b7ed7e5beb3c0360fe89a3a158605af3c4512a10f850c23c986` and recorded source/license provenance without downloading a replacement dataset.

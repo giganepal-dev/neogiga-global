@@ -63,9 +63,13 @@ if (config('pcb.enabled', true)) {
             Route::get('/en/projects/create', [PcbPortalController::class, 'create'])->name('pcb.projects.create');
             Route::post('/en/projects', [PcbPortalController::class, 'store'])->middleware('throttle:10,1')->name('pcb.projects.store');
             Route::get('/en/projects/{project}', [PcbPortalController::class, 'show'])->name('pcb.projects.show');
+            Route::patch('/en/projects/{project}', [PcbPortalController::class, 'update'])->middleware('throttle:10,1')->name('pcb.projects.update');
+            Route::post('/en/projects/{project}/cancel', [PcbPortalController::class, 'cancel'])->middleware('throttle:10,1')->name('pcb.projects.cancel');
             Route::post('/en/projects/{project}/files', [PcbPortalController::class, 'upload'])->middleware('throttle:10,1')->name('pcb.files.store');
             Route::get('/en/projects/{project}/files/{file}/download', [PcbPortalController::class, 'download'])->middleware('signed')->name('pcb.files.download');
             Route::post('/en/projects/{project}/quotes', [PcbPortalController::class, 'submitQuote'])->middleware('throttle:10,1')->name('pcb.quotes.store');
+            Route::post('/en/projects/{project}/quotes/{quote}/approve', [PcbPortalController::class, 'approveQuote'])->middleware('throttle:10,1')->name('pcb.quotes.approve');
+            Route::post('/en/projects/{project}/quotes/{quote}/reject', [PcbPortalController::class, 'rejectQuote'])->middleware('throttle:10,1')->name('pcb.quotes.reject');
         });
     });
 }

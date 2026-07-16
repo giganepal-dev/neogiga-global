@@ -18,8 +18,8 @@
         .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;letter-spacing:.02em}
         .wrap{width:min(var(--max),calc(100% - 40px));margin-inline:auto}.skip{position:absolute;left:-999px;top:8px;background:#fff;color:#000;padding:8px 10px;border-radius:6px;z-index:100}.skip:focus{left:8px}
 
-        /* Top strip — regional switcher */
-        .top-strip{background:var(--bg2);color:var(--muted);font-size:.78rem;border-bottom:1px solid var(--line)}.top-strip .wrap{min-height:34px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.edition-links{display:flex;gap:12px;flex-wrap:wrap}.edition-links a{color:var(--muted);transition:color .18s}.edition-links a:hover{color:var(--cyan)}
+        /* Operational status strip */
+        .top-strip{background:var(--bg2);color:var(--muted);font-size:.78rem;border-bottom:1px solid var(--line)}.top-strip .wrap{min-height:34px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.platform-status{display:flex;align-items:center;gap:8px}.status-light{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px rgba(16,185,129,.12)}
 
         /* Site header */
         .site-head{position:sticky;top:0;z-index:60;background:rgba(16,20,23,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.head-main{min-height:76px;display:grid;grid-template-columns:auto minmax(280px,1fr) auto;gap:18px;align-items:center}.brand{display:flex;align-items:center;gap:11px;color:#fff;font-weight:800;letter-spacing:-.01em}.mark{width:40px;height:40px;border:1px solid rgba(40,216,251,.4);border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(40,216,251,.16),rgba(249,189,44,.06));font-weight:900;color:var(--cyan);font-size:.9rem}.brand small{display:block;color:var(--gold);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;margin-top:-2px}
@@ -78,8 +78,8 @@
         .quote-total{display:flex;align-items:end;justify-content:space-between;gap:18px;padding:16px;background:rgba(40,216,251,.06);border:1px solid rgba(40,216,251,.15);border-radius:10px}.quote-total strong{font-size:1.8rem;font-weight:800;color:var(--on)}
 
         /* Responsive */
-        @media(max-width:980px){.head-main{grid-template-columns:1fr;gap:10px;padding:12px 0}.head-actions{overflow-x:auto}.nav-row{display:none}.split{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.foot-grid{grid-template-columns:1fr 1fr}}
-        @media(max-width:620px){.wrap{width:min(var(--max),calc(100% - 24px))}.kpis{grid-template-columns:1fr}.foot-grid{grid-template-columns:1fr 1fr}.form-grid,.spec-list,.check-grid{grid-template-columns:1fr}.status-track{grid-template-columns:1fr}.status-step{border-top:0;border-left:4px solid rgba(255,255,255,.08);padding:6px 0 6px 10px}.btn{width:100%}.form-actions{display:grid}.quote-total{display:block}.quote-total .btn{margin-top:12px}}
+        @media(max-width:980px){.head-main{grid-template-columns:1fr;gap:10px;padding:12px 0}.head-actions{overflow-x:auto}.nav-row .wrap{overflow-x:auto;white-space:nowrap}.mega-panel{position:fixed;top:112px}.split{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.foot-grid{grid-template-columns:1fr 1fr}}
+        @media(max-width:620px){.wrap{width:min(var(--max),calc(100% - 24px))}.top-strip .wrap{padding:7px 0}.platform-status:last-child{display:none}.kpis{grid-template-columns:1fr}.foot-grid{grid-template-columns:1fr 1fr}.form-grid,.spec-list,.check-grid{grid-template-columns:1fr}.status-track{grid-template-columns:1fr}.status-step{border-top:0;border-left:4px solid rgba(255,255,255,.08);padding:6px 0 6px 10px}.btn{width:100%}.form-actions{display:grid}.quote-total{display:block}.quote-total .btn{margin-top:12px}}
         @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.btn:hover{transform:none}}
     </style>
     @stack('styles')
@@ -87,17 +87,11 @@
 <body>
 <a class="skip" href="#main">Skip to content</a>
 
-<!-- Top strip — regional editions -->
+<!-- Operational platform status -->
 <div class="top-strip">
     <div class="wrap">
-        <span>NeoGiga global marketplace</span>
-        <nav class="edition-links" aria-label="Regional editions">
-            <a href="https://neogiga.com/en">Global (EN)</a>
-            <a href="https://neogiga.in/en">India</a>
-            <a href="https://np.neogiga.com/en">Nepal</a>
-            <a href="https://bd.neogiga.com/en">Bangladesh</a>
-            <a href="https://neogiga.com/en#regional-editions">26+ editions</a>
-        </nav>
+        <span class="platform-status"><i class="status-light" aria-hidden="true"></i>PCB fabrication and PCBA workbench</span>
+        <span class="platform-status">Private files · engineering review · production tracking</span>
     </div>
 </div>
 
@@ -109,11 +103,12 @@
             <span>NeoGiga<small>PCB & PCBA Platform</small></span>
         </a>
         <div style="display:flex;align-items:center;gap:8px;color:var(--cyan);font-weight:700;font-size:.9rem">
-            ⚡ PCB & PCBA Platform
+            PCB Production Desk
         </div>
         <div class="head-actions">
             @auth
                 <span style="color:var(--muted);font-size:.82rem;margin-right:8px">{{ auth()->user()->name }}</span>
+                <a class="icon-btn" href="/en/projects">My projects</a>
                 <form method="post" action="/en/logout">@csrf<button class="icon-btn" type="submit">Sign out</button></form>
             @else
                 <a class="icon-btn" href="/en/login">Sign in</a>
@@ -132,7 +127,7 @@
                 </div>
             </details>
             <nav class="primary-nav" aria-label="PCB platform navigation">
-                <a href="/en" @if(request()->is('en') && !request()->is('en/*')) class="active" @endif>Instant Quote</a>
+                <a href="/en" @if(request()->is('en') && !request()->is('en/*')) class="active" @endif>Quote workspace</a>
                 <a href="/en/capabilities">Capabilities</a>
                 <a href="/en/design-rules">Design Rules</a>
                 <a href="/en/projects" @if(request()->is('en/projects*')) class="active" @endif>Projects</a>
