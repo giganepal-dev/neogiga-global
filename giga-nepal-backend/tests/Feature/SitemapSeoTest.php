@@ -106,9 +106,18 @@ class SitemapSeoTest extends TestCase
 
     public function test_categories_without_media_use_the_global_neogiga_fallback(): void
     {
+        $rootId = DB::table('product_categories')->insertGetId([
+            'name' => 'Semiconductors',
+            'slug' => 'semiconductors',
+            'is_active' => true,
+            'image_path' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
         DB::table('product_categories')->insert([
             'name' => 'Fallback Category',
             'slug' => 'fallback-category',
+            'parent_id' => $rootId,
             'is_active' => true,
             'image_path' => null,
             'created_at' => now(),

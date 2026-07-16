@@ -6,8 +6,8 @@ use App\Models\Manufacturer;
 use App\Models\Marketplace\Marketplace;
 use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductBrand;
-use App\Models\Marketplace\ProductCategory;
 use App\Models\Marketplace\ProductSeoMeta;
+use App\Services\Catalog\CategoryResolutionService;
 use App\Services\Seo\CatalogSeoTemplateService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -38,7 +38,10 @@ class TiParametricCatalogImporter
         'source_name', 'source_file', 'source_export_date', 'stock_enabled', 'data_quality_note',
     ];
 
-    public function __construct(private readonly CatalogSeoTemplateService $seo) {}
+    public function __construct(
+        private readonly CatalogSeoTemplateService $seo,
+        private readonly CategoryResolutionService $categories,
+    ) {}
 
     /** @param array{dry_run?:bool,limit?:int,publish?:bool} $options */
     public function import(string $file, array $options = []): array
@@ -171,12 +174,12 @@ class TiParametricCatalogImporter
             'manufacturer_id' => $manufacturer->id,
             'manufacturer_name' => $manufacturer->name,
             'brand_id' => $brand->id,
-            'category_id' => $category->id,
+            'category_id' => $category['category_id'],
             'short_description' => $content['short_description'],
             'description' => $content['description'],
             'type' => 'simple',
-            'status' => $publish ? 'approved' : 'draft',
-            'approved_at' => $publish ? ($existing?->approved_at ?: $now) : null,
+            'status' => $publish && ! $category['requires_review'] ? 'approved' : 'draft',
+            'approved_at' => $publish && ! $category['requires_review'] ? ($existing?->approved_at ?: $now) : null,
             'base_price' => 0,
             'cost_price' => null,
             'sale_price' => null,
@@ -206,6 +209,7 @@ class TiParametricCatalogImporter
             ],
             'metadata' => [
                 'catalog_importer' => 'ti_parametric_catalog_v1',
+                'category_resolution' => $category,
                 'source_notes' => 'Product copy and structured specifications are derived from the supplied official TI parametric export. No TI imagery, seeded availability, or source price is published.',
                 'confidence_level' => 'official_manufacturer_parametric_export',
                 'last_updated' => $now->toIso8601String(),
@@ -213,7 +217,7 @@ class TiParametricCatalogImporter
             ],
         ];
         if (Schema::hasColumn('products', 'approval_status')) {
-            $values['approval_status'] = $publish ? 'approved' : 'pending_review';
+            $values['approval_status'] = $publish && ! $category['requires_review'] ? 'approved' : 'pending_review';
         }
         if (Schema::hasColumn('products', 'visibility_status')) {
             $values['visibility_status'] = 'quote_only';
@@ -267,26 +271,19 @@ class TiParametricCatalogImporter
     }
 
     /** @param array<string, string|null> $record */
-    private function category(array $record): ProductCategory
+    /** @return array{parent_category_id:?int,category_id:?int,confidence:float,matched_by:string,requires_review:bool,reasons:list<string>,category_name:?string,path:list<string>,source_key:string} */
+    private function category(array $record): array
     {
-        $root = ProductCategory::firstOrCreate(['slug' => 'semiconductors'], [
-            'name' => 'Semiconductors',
-            'description' => 'Semiconductors and integrated circuits for engineering applications.',
-            'is_active' => true,
-        ]);
-        $family = ProductCategory::firstOrCreate(['slug' => 'amplifiers'], [
-            'parent_id' => $root->id,
-            'name' => 'Amplifiers',
-            'description' => 'Amplifier integrated circuits and signal-conditioning components.',
-            'is_active' => true,
-        ]);
         $name = trim((string) ($record['subcategory'] ?: $record['category'] ?: 'Amplifiers'));
-        $slug = Str::slug($name);
 
-        return ProductCategory::firstOrCreate(['slug' => $slug], [
-            'name' => Str::limit($name, 180, ''),
-            'description' => Str::limit("{$name} technical products and manufacturer part numbers.", 500, ''),
-            'is_active' => true,
+        return $this->categories->resolve($name, [
+            'source_name' => self::SOURCE_NAME,
+            'source_category_name' => $name,
+            'source_category_path' => trim((string) ($record['category'] ?? '').' / '.$name, ' /'),
+            'manufacturer_name' => 'Texas Instruments',
+            'mpn' => $record['mpn'] ?? null,
+            'manufacturer_category' => $record['category'] ?? null,
+            'product_family' => $record['category'] ?? null,
         ]);
     }
 

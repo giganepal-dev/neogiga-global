@@ -37,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->loadMigrationsFrom(database_path('migrations'));
         // The marketplace schema lives in a subdirectory and is NOT picked up
         // by Laravel automatically (audit finding DB-01).
         $this->loadMigrationsFrom(database_path('migrations/marketplace'));

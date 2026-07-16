@@ -12,6 +12,7 @@ use App\Models\Marketplace\ProductBrand;
 use App\Models\Marketplace\ProductCategory;
 use App\Models\Supplier\Supplier;
 use App\Models\Supplier\ProductSupplier;
+use App\Services\Catalog\CategoryResolutionService;
 
 abstract class BaseImporter
 {
@@ -107,16 +108,16 @@ abstract class BaseImporter
 
     protected function importCategories(array $categories): int
     {
-        $imported = 0;
+        $resolved = 0;
         foreach ($categories as $category) {
-            ProductCategory::firstOrCreate(['slug' => Str::slug($category['name'])], [
-                'name' => $category['name'],
-                'parent_id' => $category['parent_id'] ?? null,
-                'description' => $category['description'] ?? null,
+            $result = app(CategoryResolutionService::class)->resolve($category['name'] ?? null, [
+                'source_name' => $this->getSupplierName(),
+                'source_category_name' => $category['name'] ?? null,
+                'source_category_path' => $category['path'] ?? ($category['name'] ?? null),
             ]);
-            $imported++;
+            $resolved += $result['category_id'] ? 1 : 0;
         }
-        return $imported;
+        return $resolved;
     }
 
     protected function importBrands(array $brands): int
@@ -246,9 +247,16 @@ abstract class BaseImporter
 
     protected function getOrCreateCategory(?string $categoryName): ?int
     {
-        if (empty($categoryName)) return null;
-        $category = ProductCategory::firstOrCreate(['slug' => Str::slug($categoryName)], ['name' => $categoryName]);
-        return $category->id;
+        if (empty($categoryName)) {
+            return null;
+        }
+
+        $result = app(CategoryResolutionService::class)->resolve($categoryName, [
+            'source_name' => $this->getSupplierName(),
+            'source_category_name' => $categoryName,
+        ]);
+
+        return $result['category_id'];
     }
 
     protected function importImages(Product $product, array $images): void

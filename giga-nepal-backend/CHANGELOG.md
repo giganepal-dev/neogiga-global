@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-17 - Category hierarchy governance and import safety
+
+- Added a shared category resolution service for supplier, manufacturer, CSV/API, scheduled, TI, and ElecForest importer paths. It reuses exact names, slugs, approved synonyms and existing mappings; unresolved or composite categories are queued for manual review instead of creating a root.
+- Added additive synonym, import-review and child-creation audit tables. Child creation is explicit-admin-only and always requires an existing parent; imports cannot create root categories.
+- Added a read-only `catalog:audit-category-hierarchy` command that writes the requested hierarchy, mapping-plan, duplicate, orphan and product-remap reports without changing category or product records.
+- Restricted public category navigation to curated root slugs while the existing misplaced records await reviewed remediation; the tree structure, existing routes, product associations and SEO records remain intact.
+- Added admin category move, non-destructive merge/deactivate, synonym, and importer-review endpoints and controls, with audit entries and catalog-manage permission checks.
+
 ## 2026-07-17 - Phase 9H Guarded Commerce AI BOM-to-cart
 
 - Activated both AI BOM cart aliases using the canonical Commerce AI BOM records and current cart implementation; the obsolete AI cart service remains untouched.

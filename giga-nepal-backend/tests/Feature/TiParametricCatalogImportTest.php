@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Marketplace\Product;
+use App\Models\Marketplace\ProductCategory;
 use App\Models\Marketplace\ProductImage;
 use App\Services\CatalogImport\Ti\TiParametricCatalogImporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,6 +16,10 @@ class TiParametricCatalogImportTest extends TestCase
 
     public function test_imports_ti_data_as_quote_only_canonical_products_without_unverified_commerce_data(): void
     {
+        $semiconductors = ProductCategory::create(['name' => 'Semiconductors', 'slug' => 'semiconductors', 'is_active' => true]);
+        $amplifiers = ProductCategory::create(['name' => 'Amplifiers', 'slug' => '191-amplifiers', 'parent_id' => $semiconductors->id, 'is_active' => true]);
+        ProductCategory::create(['name' => 'Current Sense Amplifiers', 'slug' => '266-current-sense-amplifiers', 'parent_id' => $amplifiers->id, 'is_active' => true]);
+
         $file = tempnam(sys_get_temp_dir(), 'ti-parametrics-');
         $stream = fopen($file, 'wb');
         fputcsv($stream, ['sku', 'mpn', 'name', 'brand', 'category', 'subcategory', 'short_description', 'description', 'specifications_json', 'rating', 'operating_temperature_range_c', 'package_type', 'pin_count', 'package_area_mm2', 'package_size_mm', 'manufacturer_price_usd', 'sale_price_usd', 'manufacturer_status', 'manufacturer_product_url', 'datasheet_pdf_url', 'datasheet_html_url', 'image_url', 'image_fetch_mode']);

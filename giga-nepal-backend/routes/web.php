@@ -155,8 +155,13 @@ Route::prefix('admin')->group(function () {
         Route::post('seo/pages', [AdminCommerce::class, 'storeSeoPage'])->middleware('throttle:20,1');
         Route::post('seo/redirects', [AdminCommerce::class, 'storeSeoRedirect'])->middleware('throttle:20,1');
         Route::delete('seo/redirects/{redirect}', [AdminCommerce::class, 'deleteSeoRedirect'])->whereNumber('redirect')->middleware('throttle:20,1');
-        Route::post('categories', [AdminCommerce::class, 'storeCategory'])->middleware('throttle:20,1');
+        Route::post('categories', [AdminCommerce::class, 'storeCategory'])->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
         Route::post('categories/{category}/toggle', [AdminCommerce::class, 'deactivateCategory'])->whereNumber('category')->middleware('throttle:20,1');
+        Route::post('categories/{category}/move', [AdminCommerce::class, 'moveCategory'])->whereNumber('category')->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
+        Route::post('categories/{category}/merge', [AdminCommerce::class, 'mergeCategory'])->whereNumber('category')->middleware(['admin.web.permission:catalog.manage', 'throttle:10,1']);
+        Route::post('categories/{category}/synonyms', [AdminCommerce::class, 'storeCategorySynonym'])->whereNumber('category')->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
+        Route::delete('categories/{category}/synonyms/{synonym}', [AdminCommerce::class, 'deleteCategorySynonym'])->whereNumber(['category', 'synonym'])->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
+        Route::post('category-import-reviews/{review}', [AdminCommerce::class, 'reviewCategoryImport'])->whereNumber('review')->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
         Route::post('categories/{category}/lms-links', [AdminCommerce::class, 'storeCategoryLmsLink'])->whereNumber('category')->middleware('throttle:20,1');
         Route::delete('categories/{category}/lms-links/{link}', [AdminCommerce::class, 'deleteCategoryLmsLink'])->whereNumber(['category', 'link'])->middleware('throttle:20,1');
         Route::post('categories/{category}/spec-templates', [AdminCommerce::class, 'storeCategorySpecTemplate'])->whereNumber('category')->middleware('throttle:20,1');

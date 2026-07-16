@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        \App\Console\Commands\AuditCategoryHierarchyCommand::class,
         \App\Console\Commands\ImportTiParametricCatalog::class,
     ])
     ->withMiddleware(function (Middleware $middleware) {

@@ -99,6 +99,11 @@
 
 <div class="note stack-gap">Create, edit, activate, filter, reorder by sort value, and manage category-linked specifications and learning content from the live admin workflows.</div>
 
+<section class="card stack-gap">
+    <div class="card-h"><div><h2>Import Category Review</h2><div class="sub">{{ number_format($categorySynonymCount) }} active synonyms. Unresolved imports never create root categories.</div></div><span class="badge b-info">{{ number_format($categoryImportReviews->count()) }} pending</span></div>
+    <div class="scroll-x"><table class="tbl"><thead><tr><th>Supplier category</th><th>Source</th><th>Confidence</th><th>Reason</th><th>Decision</th></tr></thead><tbody>@forelse($categoryImportReviews as $review)<tr><td>{{ $review->source_category_path ?: $review->source_category_name }}</td><td>{{ $review->source_name ?: 'Import' }}</td><td class="mono">{{ $review->confidence }}</td><td class="sub">{{ collect(json_decode($review->reasons ?: '[]', true))->implode(' ') }}</td><td><form class="filters" method="post" action="/admin/category-import-reviews/{{ $review->id }}">@csrf<select class="control" name="category_id"><option value="">Select canonical category</option>@foreach($allCategories as $cat)<option value="{{ $cat->id }}">{{ $cat->name }}</option>@endforeach</select><button class="btn btn-ghost" name="decision" value="approved" type="submit">Approve</button><button class="btn btn-ghost danger" name="decision" value="rejected" type="submit">Reject</button></form></td></tr>@empty<tr><td colspan="5"><div class="empty"><h3>No unresolved category mappings</h3></div></td></tr>@endforelse</tbody></table></div>
+</section>
+
 <script src="{{ url('/js/admin-categories.js') }}" defer></script>
 
 @endsection

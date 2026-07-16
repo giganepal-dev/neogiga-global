@@ -18,6 +18,7 @@ class CategoryController extends Controller
     {
         $roots = ProductCategory::query()
             ->whereNull('parent_id')
+            ->whereIn('slug', config('category_resolution.intended_root_slugs', []))
             ->where('is_active', true)
             ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')->orderBy('name')])
             ->orderBy('sort_order')

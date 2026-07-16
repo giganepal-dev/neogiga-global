@@ -245,13 +245,23 @@ class CommerceOpsController extends Controller
         ]);
 
         $slug = $data['slug'] ?: Str::slug($data['name']);
+        $parentId = isset($data['parent_id']) ? (int) $data['parent_id'] : null;
+        if (! empty($data['id']) && $parentId !== null) {
+            $cursor = $parentId;
+            while ($cursor > 0) {
+                if ($cursor === (int) $data['id']) {
+                    return back()->with('error', 'A category cannot be its own parent or descendant.');
+                }
+                $cursor = (int) (DB::table('product_categories')->where('id', $cursor)->value('parent_id') ?? 0);
+            }
+        }
         $mediaAsset = ! empty($data['media_asset_id'])
             ? DB::table('admin_media_assets')->where('id', $data['media_asset_id'])->first()
             : null;
         $mediaUrl = $mediaAsset ? Storage::disk($mediaAsset->disk ?: 'public')->url($mediaAsset->path) : null;
 
         $payload = [
-            'parent_id' => $data['parent_id'] ?? null,
+            'parent_id' => $parentId,
             'name' => $data['name'],
             'slug' => $slug,
             'description' => $data['description'] ?? null,
@@ -285,8 +295,16 @@ class CommerceOpsController extends Controller
             $payload['created_at'] = now();
             $id = DB::table('product_categories')->insertGetId($payload);
             $verb = 'created';
+            if ($parentId !== null && Schema::hasTable('category_creation_audits')) {
+                DB::table('category_creation_audits')->insert([
+                    'category_id' => $id, 'parent_category_id' => $parentId, 'source_name' => 'admin',
+                    'imported_at' => now(), 'confidence_level' => 'manual', 'original_raw_value' => $data['name'],
+                    'normalized_value' => $slug, 'created_by_type' => 'admin', 'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
         }
 
+        Cache::forget('categories:tree');
         $this->auditAdminAction($request, 'category_'.$verb, 'product_categories', $id, $payload + ['id' => $id]);
 
         return back()->with('status', "Category {$verb}.");
@@ -443,6 +461,107 @@ class CommerceOpsController extends Controller
         $this->auditAdminAction($request, 'category_status_toggled', 'product_categories', $category, ['is_active' => ! $row->is_active]);
 
         return back()->with('status', 'Category status updated.');
+    }
+
+    public function moveCategory(Request $request, int $category): RedirectResponse
+    {
+        $data = $request->validate(['parent_id' => ['required', 'integer', 'different:category', 'exists:product_categories,id']]);
+        $node = DB::table('product_categories')->where('id', $category)->first();
+        if (! $node) {
+            return back()->with('error', 'Category not found.');
+        }
+        $parentId = (int) $data['parent_id'];
+        $cursor = $parentId;
+        while ($cursor > 0) {
+            if ($cursor === $category) {
+                return back()->with('error', 'A category cannot be moved into its own descendant.');
+            }
+            $cursor = (int) (DB::table('product_categories')->where('id', $cursor)->value('parent_id') ?? 0);
+        }
+        DB::table('product_categories')->where('id', $category)->update(['parent_id' => $parentId, 'updated_at' => now()]);
+        Cache::forget('categories:tree');
+        $this->auditAdminAction($request, 'category_moved', 'product_categories', $category, ['old_parent_id' => $node->parent_id, 'parent_id' => $parentId]);
+
+        return back()->with('status', 'Category moved. Product associations and category ID were preserved.');
+    }
+
+    public function mergeCategory(Request $request, int $category): RedirectResponse
+    {
+        $data = $request->validate(['target_category_id' => ['required', 'integer', 'different:category', 'exists:product_categories,id']]);
+        $target = (int) $data['target_category_id'];
+        if ($target === $category) {
+            return back()->with('error', 'Choose a different canonical category to merge into.');
+        }
+        DB::transaction(function () use ($category, $target, $request): void {
+            $source = DB::table('product_categories')->lockForUpdate()->find($category);
+            $destination = DB::table('product_categories')->lockForUpdate()->find($target);
+            if (! $source || ! $destination) {
+                throw new \InvalidArgumentException('Category merge target was not found.');
+            }
+            DB::table('products')->where('category_id', $category)->update(['category_id' => $target, 'updated_at' => now()]);
+            DB::table('product_categories')->where('parent_id', $category)->update(['parent_id' => $target, 'updated_at' => now()]);
+            DB::table('product_categories')->where('id', $category)->update(['is_active' => false, 'updated_at' => now()]);
+            $this->auditAdminAction($request, 'category_merged', 'product_categories', $category, ['target_category_id' => $target]);
+        });
+        Cache::forget('categories:tree');
+
+        return back()->with('status', 'Category merged. Products were reassigned and the source category was retained inactive for audit.');
+    }
+
+    public function storeCategorySynonym(Request $request, int $category): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('category_synonyms'), 404);
+        $data = $request->validate(['synonym' => ['required', 'string', 'max:190'], 'confidence' => ['nullable', 'numeric', 'min:0', 'max:1']]);
+        $normalized = trim(preg_replace('/\s+/', ' ', strtolower((string) preg_replace('/[^a-z0-9]+/i', ' ', $data['synonym']))) ?? '');
+        if ($normalized === '') {
+            return back()->with('error', 'Synonym must contain letters or numbers.');
+        }
+        DB::table('category_synonyms')->updateOrInsert(['normalized_synonym' => $normalized], [
+            'category_id' => $category, 'synonym' => $data['synonym'], 'source' => 'admin',
+            'confidence' => $data['confidence'] ?? 1, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->auditAdminAction($request, 'category_synonym_saved', 'category_synonyms', null, ['category_id' => $category, 'normalized_synonym' => $normalized]);
+
+        return back()->with('status', 'Category synonym saved.');
+    }
+
+    public function deleteCategorySynonym(Request $request, int $category, int $synonym): RedirectResponse
+    {
+        DB::table('category_synonyms')->where('id', $synonym)->where('category_id', $category)->delete();
+        $this->auditAdminAction($request, 'category_synonym_deleted', 'category_synonyms', $synonym, ['category_id' => $category]);
+
+        return back()->with('status', 'Category synonym deleted.');
+    }
+
+    public function reviewCategoryImport(Request $request, int $review): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('category_import_reviews'), 404);
+        $data = $request->validate([
+            'decision' => ['required', 'in:approved,rejected'],
+            'category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
+        ]);
+        if ($data['decision'] === 'approved' && empty($data['category_id'])) {
+            return back()->with('error', 'Choose a canonical category before approving a mapping.');
+        }
+        $row = DB::table('category_import_reviews')->where('id', $review)->first();
+        if (! $row) {
+            return back()->with('error', 'Category import review not found.');
+        }
+        DB::transaction(function () use ($data, $row, $review): void {
+            DB::table('category_import_reviews')->where('id', $review)->update([
+                'proposed_category_id' => $data['category_id'] ?? null,
+                'status' => $data['decision'], 'reviewed_at' => now(), 'updated_at' => now(),
+            ]);
+            if ($data['decision'] === 'approved' && $row->catalog_source_id && $row->source_key) {
+                DB::table('supplier_category_mappings')->updateOrInsert(
+                    ['catalog_source_id' => $row->catalog_source_id, 'source_category_key' => $row->source_key],
+                    ['category_id' => $data['category_id'], 'confidence' => 1, 'mapping_status' => 'approved_manual', 'reviewed_at' => now(), 'created_at' => now(), 'updated_at' => now()],
+                );
+            }
+        });
+        $this->auditAdminAction($request, 'category_import_reviewed', 'category_import_reviews', $review, $data);
+
+        return back()->with('status', 'Category import review updated. Future imports will use approved mappings.');
     }
 
     private function jsonArrayFromTextarea(?string $value): ?string

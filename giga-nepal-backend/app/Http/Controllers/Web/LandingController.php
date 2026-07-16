@@ -123,6 +123,7 @@ class LandingController extends Controller
             if (Schema::hasTable('product_categories')) {
                 $categories = ProductCategory::query()
                     ->whereNull('parent_id')
+                    ->whereIn('slug', config('category_resolution.intended_root_slugs', []))
                     ->where('is_active', true)
                     ->withCount('children')
                     ->orderByDesc('is_featured')

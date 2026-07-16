@@ -165,6 +165,10 @@ class DashboardController extends Controller
             'roots' => $roots,
             'total' => $total,
             'allCategories' => ProductCategory::orderBy('name')->get(),
+            'categoryImportReviews' => Schema::hasTable('category_import_reviews')
+                ? DB::table('category_import_reviews')->where('status', 'pending_review')->orderByDesc('updated_at')->limit(25)->get()
+                : collect(),
+            'categorySynonymCount' => Schema::hasTable('category_synonyms') ? DB::table('category_synonyms')->count() : 0,
             'mediaAssets' => $this->safeMediaAssets(80),
             'filters' => [
                 'q' => (string) $request->query('q', ''),
@@ -193,6 +197,9 @@ class DashboardController extends Controller
             'projects' => $this->safeRows('lms_projects', 200),
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(),
             'mediaAssets' => $this->safeMediaAssets(120),
+            'categorySynonyms' => Schema::hasTable('category_synonyms')
+                ? DB::table('category_synonyms')->where('category_id', $id)->orderBy('synonym')->get()
+                : collect(),
         ]);
     }
 

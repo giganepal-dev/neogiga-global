@@ -74,6 +74,36 @@
 
 <div class="grid split stack-gap">
     <section class="card">
+        <div class="card-h"><h2>Hierarchy Controls</h2><span class="badge b-info">audited</span></div>
+        <div style="padding:16px">
+            <form class="form-stack" method="post" action="/admin/categories/{{ $category->id }}/move">@csrf
+                <div class="field"><label>Move under existing parent</label><select class="control" name="parent_id" required><option value="">Select parent</option>@foreach($allCategories as $cat)<option value="{{ $cat->id }}" @selected($category->parent_id===$cat->id)>{{ $cat->name }}</option>@endforeach</select></div>
+                <button class="btn" type="submit">Move Category</button>
+            </form>
+            <form class="form-stack" method="post" action="/admin/categories/{{ $category->id }}/merge" style="margin-top:16px">@csrf
+                <div class="field"><label>Merge duplicate into canonical category</label><select class="control" name="target_category_id" required><option value="">Select canonical category</option>@foreach($allCategories as $cat)<option value="{{ $cat->id }}">{{ $cat->name }}</option>@endforeach</select></div>
+                <button class="btn btn-ghost danger" type="submit">Merge and Deactivate Source</button>
+            </form>
+        </div>
+    </section>
+    <section class="card">
+        <div class="card-h"><h2>Synonyms</h2><span class="badge b-info">{{ number_format($categorySynonyms->count()) }}</span></div>
+        <div style="padding:16px">
+            @forelse($categorySynonyms as $synonym)
+                <div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><span>{{ $synonym->synonym }}<div class="sub mono">{{ $synonym->normalized_synonym }}</div></span><form method="post" action="/admin/categories/{{ $category->id }}/synonyms/{{ $synonym->id }}">@csrf @method('DELETE')<button class="btn btn-ghost danger" type="submit">Delete</button></form></div>
+            @empty
+                <div class="sub">No aliases configured.</div>
+            @endforelse
+            <form class="form-stack" method="post" action="/admin/categories/{{ $category->id }}/synonyms" style="margin-top:14px">@csrf
+                <div class="form-grid"><div class="field"><label>Synonym</label><input class="control" name="synonym" placeholder="op amp" required></div><div class="field"><label>Confidence</label><input class="control" type="number" name="confidence" min="0" max="1" step="0.01" value="1"></div></div>
+                <button class="btn" type="submit">Add Synonym</button>
+            </form>
+        </div>
+    </section>
+</div>
+
+<div class="grid split stack-gap">
+    <section class="card">
         <div class="card-h"><h2>Spec Templates</h2><span class="badge b-info">{{ number_format($specTemplates->count()) }}</span></div>
         <div style="padding:16px">
             @forelse($specTemplates as $template)

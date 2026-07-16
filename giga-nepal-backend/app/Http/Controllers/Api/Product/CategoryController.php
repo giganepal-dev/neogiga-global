@@ -43,6 +43,7 @@ class CategoryController extends Controller
         $tree = Cache::remember('categories:tree', 1800, function () {
             return ProductCategory::query()
                 ->whereNull('parent_id')
+                ->whereIn('slug', config('category_resolution.intended_root_slugs', []))
                 ->where('is_active', true)
                 ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
                 ->orderBy('sort_order')
