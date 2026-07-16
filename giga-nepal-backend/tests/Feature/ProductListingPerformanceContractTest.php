@@ -11,9 +11,12 @@ class ProductListingPerformanceContractTest extends TestCase
         $projectRoot = dirname(__DIR__, 2);
         $controller = file_get_contents($projectRoot.'/app/Http/Controllers/Web/ProductPageController.php');
         $template = file_get_contents($projectRoot.'/resources/views/frontend/products/index.blade.php');
+        $migration = file_get_contents($projectRoot.'/database/migrations/2026_07_16_124000_add_public_product_listing_order_index.php');
 
         $this->assertStringContainsString('->simplePaginate(24)', $controller);
         $this->assertStringContainsString("'catalogTotal'", $controller);
         $this->assertStringNotContainsString('$products->total()', $template);
+        $this->assertStringContainsString('CREATE INDEX CONCURRENTLY', $migration);
+        $this->assertStringContainsString('products_public_listing_order_idx', $migration);
     }
 }
