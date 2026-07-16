@@ -93,7 +93,7 @@
     <form id="bulkImportPublish" method="post" action="/admin/imports/jlcpcb/bulk-publish">@csrf</form>
         <div style="display:grid;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);background:#fff">
             <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
-                <div class="sub">Select up to 100 non-final rows, then approve. Public publishing is optional and off by default.</div>
+                <div class="sub">Select up to 100 non-final rows, then approve. Public publishing is optional and only qualified rows can become public.</div>
                 <div class="actions">
                     <label class="sub"><input form="bulkImportApprove" type="checkbox" name="publish_public" value="1"> Publish public</label>
                     <label class="sub"><input form="bulkImportApprove" type="checkbox" name="queue_rebuild" value="1" checked> Queue search rebuild</label>
@@ -102,7 +102,7 @@
                 </div>
             </div>
             <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
-                <div class="sub">Select approved hidden rows to publish publicly. This is deliberate and never automatic.</div>
+                <div class="sub">Select approved, qualified hidden rows to publish publicly. This is deliberate and never automatic.</div>
                 <div class="actions">
                     <label class="sub"><input form="bulkImportPublish" type="checkbox" name="queue_rebuild" value="1" checked> Queue search rebuild</label>
                     <input form="bulkImportPublish" class="control" name="note" placeholder="Publication note" style="min-width:220px">
@@ -119,12 +119,14 @@
                     $raw = is_string($row->raw_snapshot ?? null) ? json_decode($row->raw_snapshot, true) : (array) ($row->raw_snapshot ?? []);
                     $warnings = $raw['warnings'] ?? [];
                     $docs = $documents[$row->product_id] ?? collect();
+                    $qualification = $qualificationBySource[$row->id] ?? ['ready' => false, 'blockers' => ['qualification_unavailable']];
+                    $publicationReady = (bool) ($qualification['ready'] ?? false);
                 @endphp
                 <tr>
                     <td>
                         @if(! in_array($review, ['approved', 'rejected'], true))
                             <input form="bulkImportApprove" type="checkbox" name="source_ids[]" value="{{ $row->id }}">
-                        @elseif($review === 'approved' && ($row->visibility_status ?? '') !== 'public')
+                        @elseif($review === 'approved' && ($row->visibility_status ?? '') !== 'public' && $publicationReady)
                             <input form="bulkImportPublish" type="checkbox" name="source_ids[]" value="{{ $row->id }}">
                         @endif
                     </td>
@@ -143,6 +145,7 @@
                     <td>
                         <span class="badge {{ (float) $row->data_quality_score >= 0.85 ? 'b-ok' : 'b-warn' }}">{{ number_format((float) $row->data_quality_score, 2) }}</span>
                         @if($warnings)<div class="sub">{{ implode(', ', array_slice($warnings, 0, 2)) }}</div>@endif
+                        <div class="sub {{ $publicationReady ? '' : 'danger' }}">{{ $publicationReady ? 'Qualified for publication' : 'Hold: '.implode(', ', array_map(static fn ($blocker) => str_replace('_', ' ', $blocker), array_slice($qualification['blockers'] ?? [], 0, 2))) }}</div>
                     </td>
                     <td>
                         <div class="tnum">{{ number_format((float) ($row->offer_stock ?? 0)) }}</div>
@@ -160,7 +163,7 @@
                                 <input type="hidden" name="queue_rebuild" value="1">
                                 <button class="btn btn-ghost" type="submit">Approve</button>
                             </form>
-                            <details class="modal">
+                            @if($publicationReady)<details class="modal">
                                 <summary class="btn btn-ghost">Publish</summary>
                                 <div class="modal-panel">
                                     <div class="modal-h"><h3>Approve & Publish</h3><span class="badge b-warn">public</span></div>
@@ -171,9 +174,9 @@
                                         <button class="btn btn-primary" type="submit" onclick="return confirm('Approve and make this imported product public?')">Approve & Publish</button>
                                     </form>
                                 </div>
-                            </details>
+                            </details>@else<div class="sub">Publication held until qualification passes.</div>@endif
                         @endif
-                        @if($review === 'approved' && ($row->visibility_status ?? '') !== 'public')
+                        @if($review === 'approved' && ($row->visibility_status ?? '') !== 'public' && $publicationReady)
                             <details class="modal">
                                 <summary class="btn btn-ghost">Publish Public</summary>
                                 <div class="modal-panel">
@@ -186,6 +189,8 @@
                                     </form>
                                 </div>
                             </details>
+                        @elseif($review === 'approved' && ($row->visibility_status ?? '') !== 'public')
+                            <div class="sub">Public publication is held until qualification passes.</div>
                         @endif
                         @if($review !== 'rejected')
                             <details class="modal">

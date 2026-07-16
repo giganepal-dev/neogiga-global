@@ -79,6 +79,20 @@ class JlcpcbQualifiedPublicationTest extends TestCase
         $this->assertSame('pending_review', DB::table('catalog_product_sources')->where('product_id', $eligible)->value('review_status'));
     }
 
+    public function test_targeted_readiness_reuses_the_qualified_publication_blockers(): void
+    {
+        $eligible = $this->productFixture('targeted-ready');
+        $blocked = $this->productFixture('targeted-blocked', withLocalImage: false);
+        $service = app(JlcpcbQualifiedPublicationService::class);
+        $sourceLinks = DB::table('catalog_product_sources')->whereIn('product_id', [$eligible, $blocked])->pluck('id', 'product_id');
+
+        $readiness = $service->readinessForSourceLinks($sourceLinks->values()->map(static fn ($id): int => (int) $id)->all());
+
+        $this->assertTrue($readiness[(int) $sourceLinks[$eligible]]['ready']);
+        $this->assertFalse($readiness[(int) $sourceLinks[$blocked]]['ready']);
+        $this->assertContains('missing_active_local_image', $readiness[(int) $sourceLinks[$blocked]]['blockers']);
+    }
+
     public function test_apply_publishes_only_the_eligible_row_preserves_manual_visibility_and_replays_as_no_op(): void
     {
         $eligible = $this->productFixture('eligible');

@@ -48,6 +48,40 @@ class JlcpcbQualifiedPublicationService
         return $this->buildPlan($this->minimumQuality($minimumQuality), null, true);
     }
 
+    /**
+     * Read-only readiness for targeted admin review. This deliberately shares
+     * the exact qualification blockers used by the governed CLI workflow.
+     *
+     * @param  list<int>  $sourceLinkIds
+     * @return array<int, array{ready:bool,blockers:list<string>,minimum_data_quality_score:float}>
+     */
+    public function readinessForSourceLinks(array $sourceLinkIds, ?float $minimumQuality = null): array
+    {
+        $this->assertSchema();
+        $sourceLinkIds = array_values(array_unique(array_filter(
+            array_map('intval', $sourceLinkIds),
+            static fn (int $id): bool => $id > 0,
+        )));
+        if ($sourceLinkIds === []) {
+            return [];
+        }
+
+        $quality = $this->minimumQuality($minimumQuality);
+
+        return $this->candidateQuery($sourceLinkIds)
+            ->get()
+            ->mapWithKeys(function (object $row) use ($quality): array {
+                $blockers = $this->blockersFor($row, $quality);
+
+                return [(int) $row->source_link_id => [
+                    'ready' => $blockers === [],
+                    'blockers' => $blockers,
+                    'minimum_data_quality_score' => $quality,
+                ]];
+            })
+            ->all();
+    }
+
     /** @param array<string, mixed> $plan @return array<string, mixed> */
     public function forOutput(array $plan): array
     {

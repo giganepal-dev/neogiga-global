@@ -15,6 +15,7 @@ use App\Models\OrderStatusHistory;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Catalog\CatalogSearchService;
+use App\Services\Catalog\JlcpcbQualifiedPublicationService;
 use App\Services\Marketing\CampaignAnalyticsService;
 use App\Services\Marketing\EmailProviderConfigurationService;
 use App\Support\ProductLifecycle;
@@ -617,7 +618,7 @@ class DashboardController extends Controller
         });
     }
 
-    public function jlcpcbImports(Request $request): View
+    public function jlcpcbImports(Request $request, JlcpcbQualifiedPublicationService $qualifiedPublication): View
     {
         abort_unless(Schema::hasTable('catalog_product_sources'), 404);
 
@@ -682,9 +683,13 @@ class DashboardController extends Controller
 
         $imports = $query->orderByDesc('cps.imported_at')->orderByDesc('cps.id')->paginate(25)->withQueryString();
         $productIds = collect($imports->items())->pluck('product_id');
+        $qualificationBySource = $qualifiedPublication->readinessForSourceLinks(
+            collect($imports->items())->pluck('id')->map(static fn ($id): int => (int) $id)->all(),
+        );
 
         return view('admin.jlcpcb-imports', [
             'imports' => $imports,
+            'qualificationBySource' => $qualificationBySource,
             'documents' => DB::table('product_documents')
                 ->whereIn('product_id', $productIds)
                 ->orderByDesc('id')

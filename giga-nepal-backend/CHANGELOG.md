@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-16 - Phase 9E qualified JLCPCB publication gate
+
+- Reused the governed JLCPCB qualification checks in the admin import queue and exposed read-only per-row publication readiness.
+- Prevented unqualified JLCPCB rows from becoming public through individual, bulk, and approve-and-publish admin actions; non-public approval remains available.
+
 ## 2026-07-16 - Phase 9D JLCPCB import authorization
 
 - Required the existing `catalog.manage` permission for every JLCPCB import mutation: approve, reject, publish, bulk actions, and search/facet rebuild queueing.

@@ -10,6 +10,7 @@ use App\Models\Marketplace\ProductSeoMeta;
 use App\Services\Erp\DocumentNumberService;
 use App\Services\Inventory\TransferService;
 use App\Services\Catalog\CatalogSearchRebuildService;
+use App\Services\Catalog\JlcpcbQualifiedPublicationService;
 use App\Services\Product\ProductApprovalService;
 use App\Services\Marketing\OrderNotificationService;
 use App\Services\Seo\CatalogSeoTemplateService;
@@ -1337,7 +1338,7 @@ class CommerceOpsController extends Controller
         return back()->with('status', 'Seller product rejected.');
     }
 
-    public function approveJlcpcbImport(Request $request, int $source, CatalogSearchRebuildService $rebuilds): RedirectResponse
+    public function approveJlcpcbImport(Request $request, int $source, CatalogSearchRebuildService $rebuilds, JlcpcbQualifiedPublicationService $qualifiedPublication): RedirectResponse
     {
         $data = $request->validate([
             'publish_public' => ['nullable', 'boolean'],
@@ -1350,6 +1351,10 @@ class CommerceOpsController extends Controller
             return back()->with('error', 'Imported product source row not found.');
         }
 
+        if (! empty($data['publish_public']) && ! $this->jlcpcbPublicationReady($qualifiedPublication, (int) $row->id)) {
+            return back()->with('error', 'Public publication is held until the JLCPCB qualification checks pass. Approve without publishing remains available.');
+        }
+
         $this->approveImportedProduct($request, (int) $row->id, (int) $row->product_id, (bool) ($data['publish_public'] ?? false), $data['note'] ?? null);
         $jobId = ! empty($data['queue_rebuild']) ? $this->queueJlcpcbSearchRebuildJob($request, $rebuilds) : null;
 
@@ -1358,7 +1363,7 @@ class CommerceOpsController extends Controller
             : 'Imported product approved for catalog review.');
     }
 
-    public function bulkApproveJlcpcbImports(Request $request, CatalogSearchRebuildService $rebuilds): RedirectResponse
+    public function bulkApproveJlcpcbImports(Request $request, CatalogSearchRebuildService $rebuilds, JlcpcbQualifiedPublicationService $qualifiedPublication): RedirectResponse
     {
         $data = $request->validate([
             'source_ids' => ['required', 'array', 'min:1', 'max:100'],
@@ -1368,25 +1373,39 @@ class CommerceOpsController extends Controller
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $sourceIds = array_values(array_unique($data['source_ids']));
+        $readiness = ! empty($data['publish_public'])
+            ? $qualifiedPublication->readinessForSourceLinks($sourceIds)
+            : [];
         $approved = 0;
-        foreach (array_unique($data['source_ids']) as $sourceId) {
+        $publicationHeld = 0;
+        foreach ($sourceIds as $sourceId) {
             $row = $this->jlcpcbSourceRow((int) $sourceId);
             if (! $row) {
                 continue;
             }
-            $this->approveImportedProduct($request, (int) $row->id, (int) $row->product_id, (bool) ($data['publish_public'] ?? false), $data['note'] ?? null);
+            $publishPublic = ! empty($data['publish_public']) && (bool) ($readiness[(int) $row->id]['ready'] ?? false);
+            if (! empty($data['publish_public']) && ! $publishPublic) {
+                $publicationHeld++;
+            }
+            $this->approveImportedProduct($request, (int) $row->id, (int) $row->product_id, $publishPublic, $data['note'] ?? null);
             $approved++;
         }
         $jobId = ($approved > 0 && ! empty($data['queue_rebuild']))
             ? $this->queueJlcpcbSearchRebuildJob($request, $rebuilds)
             : null;
 
-        return back()->with('status', $jobId
+        $message = $jobId
             ? "{$approved} imported products approved and search/facet rebuild queued as job #{$jobId}."
-            : "{$approved} imported products approved.");
+            : "{$approved} imported products approved.";
+        if ($publicationHeld > 0) {
+            $message .= " {$publicationHeld} were approved but held hidden because they did not pass publication qualification.";
+        }
+
+        return back()->with('status', $message);
     }
 
-    public function bulkPublishJlcpcbImports(Request $request, CatalogSearchRebuildService $rebuilds): RedirectResponse
+    public function bulkPublishJlcpcbImports(Request $request, CatalogSearchRebuildService $rebuilds, JlcpcbQualifiedPublicationService $qualifiedPublication): RedirectResponse
     {
         $data = $request->validate([
             'source_ids' => ['required', 'array', 'min:1', 'max:100'],
@@ -1395,9 +1414,12 @@ class CommerceOpsController extends Controller
             'note' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $sourceIds = array_values(array_unique($data['source_ids']));
+        $readiness = $qualifiedPublication->readinessForSourceLinks($sourceIds);
         $published = 0;
         $skipped = 0;
-        foreach (array_unique($data['source_ids']) as $sourceId) {
+        $publicationHeld = 0;
+        foreach ($sourceIds as $sourceId) {
             $row = $this->jlcpcbSourceRow((int) $sourceId);
             if (! $row || $row->review_status !== 'approved') {
                 $skipped++;
@@ -1407,6 +1429,10 @@ class CommerceOpsController extends Controller
             $product = DB::table('products')->where('id', $row->product_id)->select('visibility_status')->first();
             if (($product->visibility_status ?? null) === 'public') {
                 $skipped++;
+                continue;
+            }
+            if (! (bool) ($readiness[(int) $row->id]['ready'] ?? false)) {
+                $publicationHeld++;
                 continue;
             }
 
@@ -1422,13 +1448,16 @@ class CommerceOpsController extends Controller
         if ($skipped > 0) {
             $message .= "; {$skipped} skipped because they were not approved or were already public";
         }
+        if ($publicationHeld > 0) {
+            $message .= "; {$publicationHeld} held because qualification checks did not pass";
+        }
 
         return back()->with('status', $jobId
             ? "{$message}. Search/facet rebuild queued as job #{$jobId}."
             : "{$message}.");
     }
 
-    public function publishJlcpcbImport(Request $request, int $source, CatalogSearchRebuildService $rebuilds): RedirectResponse
+    public function publishJlcpcbImport(Request $request, int $source, CatalogSearchRebuildService $rebuilds, JlcpcbQualifiedPublicationService $qualifiedPublication): RedirectResponse
     {
         $data = $request->validate([
             'queue_rebuild' => ['nullable', 'boolean'],
@@ -1441,6 +1470,9 @@ class CommerceOpsController extends Controller
         }
         if ($row->review_status !== 'approved') {
             return back()->with('error', 'Only approved imported products can be published.');
+        }
+        if (! $this->jlcpcbPublicationReady($qualifiedPublication, (int) $row->id)) {
+            return back()->with('error', 'Public publication is held until the JLCPCB qualification checks pass. Review the qualification blockers and complete the product first.');
         }
 
         $this->publishImportedProduct($request, (int) $row->id, (int) $row->product_id, $data['note'] ?? null);
@@ -1550,6 +1582,11 @@ class CommerceOpsController extends Controller
             ->where('cps.id', $sourceId)
             ->select('cps.*')
             ->first();
+    }
+
+    private function jlcpcbPublicationReady(JlcpcbQualifiedPublicationService $qualifiedPublication, int $sourceId): bool
+    {
+        return (bool) ($qualifiedPublication->readinessForSourceLinks([$sourceId])[$sourceId]['ready'] ?? false);
     }
 
     private function approveImportedProduct(Request $request, int $sourceId, int $productId, bool $publishPublic, ?string $note): void
