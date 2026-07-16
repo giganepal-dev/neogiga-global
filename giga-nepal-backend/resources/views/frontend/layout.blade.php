@@ -100,8 +100,7 @@
 <div class="top-strip">
     <div class="wrap">
         <span>
-            @php($cur = $marketplaceContext['current'])
-            @if($cur?->country_code){{ $flag($cur->country_code) }}@endif {{ $cur->name ?? 'NeoGiga Global' }} · {{ $marketplaceContext['currency_code'] ?? 'USD' }}
+            @if($marketplaceContext['country_code']){{ $flag($marketplaceContext['country_code']) }} @endif{{ $marketplaceContext['current']->name ?? 'NeoGiga Global' }} · {{ $marketplaceContext['currency_code'] ?? 'USD' }}
         </span>
         <div class="edition-links" aria-label="Regional editions">
             @foreach(($marketplaceContext['editions'] ?? []) as $edition)
