@@ -3,6 +3,7 @@
 namespace App\Services\Bom;
 
 use App\Models\Marketplace\Product;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Matches BOM lines to catalog products by manufacturer part number.
@@ -107,7 +108,7 @@ class BomComponentMatcher
             return [];
         }
 
-        $expr = "upper(regexp_replace(coalesce(products.mpn, ''), '\s+', '', 'g'))";
+        $expr = $this->normalizedMpnExpression();
         $placeholders = implode(',', array_fill(0, count($norms), '?'));
 
         $rows = Product::query()
@@ -135,5 +136,14 @@ class BomComponentMatcher
         }
 
         return $map;
+    }
+
+    private function normalizedMpnExpression(): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "upper(replace(replace(replace(replace(coalesce(products.mpn, ''), ' ', ''), char(9), ''), char(10), ''), char(13), ''))",
+            'mysql', 'mariadb' => "upper(regexp_replace(coalesce(products.mpn, ''), '[[:space:]]+', ''))",
+            default => "upper(regexp_replace(coalesce(products.mpn, ''), '\\s+', '', 'g'))",
+        };
     }
 }

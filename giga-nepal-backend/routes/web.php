@@ -140,6 +140,8 @@ Route::prefix('admin')->group(function () {
         Route::get('lms', [AdminDash::class, 'lms']);
         Route::get('lms/courses/{course}', [AdminDash::class, 'lmsCourse'])->whereNumber('course');
         Route::get('bom-imports', [AdminDash::class, 'bomImports']);
+        Route::post('bom-imports/{import}/rematch', [AdminCommerce::class, 'rematchBomImport'])->whereNumber('import')->middleware(['admin.web.permission:catalog.manage', 'throttle:20,1']);
+        Route::post('bom-imports/{import}/lines/{line}/match', [AdminCommerce::class, 'setBomImportLineMatch'])->whereNumber(['import', 'line'])->middleware(['admin.web.permission:catalog.manage', 'throttle:30,1']);
         Route::get('inventory', [AdminDash::class, 'inventory']);
         Route::get('pos', [AdminDash::class, 'pos']);
         Route::get('pos/sales/{sale}', [AdminDash::class, 'posSale'])->whereNumber('sale');

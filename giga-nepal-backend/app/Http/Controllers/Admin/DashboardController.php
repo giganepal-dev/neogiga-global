@@ -1686,10 +1686,32 @@ class DashboardController extends Controller
             ->orderBy('bil.line_no')
             ->get()
             ->groupBy('bom_import_id');
+        $candidateProductIds = $lines->flatten(1)
+            ->flatMap(function (object $line) {
+                $candidates = is_array($line->candidates)
+                    ? $line->candidates
+                    : json_decode((string) ($line->candidates ?? '[]'), true);
+
+                return collect(is_array($candidates) ? $candidates : [])
+                    ->pluck('product_id')
+                    ->map(static fn ($id): int => (int) $id)
+                    ->filter(static fn (int $id): bool => $id > 0);
+            })
+            ->unique()
+            ->values();
+        $candidateProducts = $candidateProductIds->isEmpty()
+            ? collect()
+            : Product::query()
+                ->published()
+                ->whereIn('id', $candidateProductIds->all())
+                ->orderBy('sku')
+                ->get(['id', 'name', 'sku', 'mpn'])
+                ->keyBy('id');
 
         return view('admin.bom-imports', [
             'imports' => $imports,
             'lines' => $lines,
+            'candidateProducts' => $candidateProducts,
             'statusFilter' => $status,
             'stats' => [
                 'total' => $this->safeCount('bom_imports'),

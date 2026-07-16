@@ -40,7 +40,7 @@
     </form>
 
     <div class="scroll-x"><table class="tbl">
-        <thead><tr><th>BOM</th><th>Customer</th><th class="num">Lines</th><th class="num">Matched</th><th>Status</th><th>RFQ</th><th>Created</th></tr></thead>
+        <thead><tr><th>BOM</th><th>Customer</th><th class="num">Lines</th><th class="num">Matched</th><th>Status</th><th>RFQ</th><th>Actions</th><th>Created</th></tr></thead>
         <tbody>
         @forelse($imports as $import)
             <tr>
@@ -59,13 +59,22 @@
                         <span class="badge b-muted">not converted</span>
                     @endif
                 </td>
+                <td>
+                    @if($import->status !== 'converted')
+                        <form method="post" action="/admin/bom-imports/{{ $import->id }}/rematch">@csrf
+                            <button class="btn btn-ghost" type="submit" onclick="return confirm('Re-run catalog matching for this BOM? Manual line decisions will be preserved.')">Rematch</button>
+                        </form>
+                    @else
+                        <span class="badge b-muted">RFQ history locked</span>
+                    @endif
+                </td>
                 <td class="sub">{{ \Illuminate\Support\Carbon::parse($import->created_at)->format('Y-m-d H:i') }}</td>
             </tr>
             <tr>
-                <td colspan="7" style="background:#fbfdff;padding:0">
+                <td colspan="8" style="background:#fbfdff;padding:0">
                     <div class="scroll-x">
                         <table class="tbl" style="font-size:.82rem">
-                            <thead><tr><th>Line</th><th>Ref</th><th>MPN</th><th>Manufacturer</th><th class="num">Qty</th><th>Match</th><th>Product</th></tr></thead>
+                            <thead><tr><th>Line</th><th>Ref</th><th>MPN</th><th>Manufacturer</th><th class="num">Qty</th><th>Match</th><th>Product</th><th>Review action</th></tr></thead>
                             <tbody>
                             @foreach(($lines[$import->id] ?? collect())->take(8) as $line)
                                 <tr>
@@ -83,10 +92,50 @@
                                             <span class="badge b-warn">supplier quote needed</span>
                                         @endif
                                     </td>
+                                    <td>
+                                        @if($import->status !== 'converted')
+                                            @php
+                                                $rawCandidates = is_array($line->candidates)
+                                                    ? $line->candidates
+                                                    : json_decode((string) ($line->candidates ?? '[]'), true);
+                                                $candidateIds = collect(is_array($rawCandidates) ? $rawCandidates : [])
+                                                    ->pluck('product_id')
+                                                    ->map(static fn ($id): int => (int) $id)
+                                                    ->filter(static fn (int $id): bool => $id > 0)
+                                                    ->values();
+                                            @endphp
+                                            <details class="modal">
+                                                <summary class="btn btn-ghost">Assign</summary>
+                                                <div class="modal-panel">
+                                                    <div class="modal-h"><h3>Set BOM Line Match</h3><span class="badge b-info">published catalog only</span></div>
+                                                    <form class="modal-b form-stack" method="post" action="/admin/bom-imports/{{ $import->id }}/lines/{{ $line->id }}/match">@csrf
+                                                        <label>Published product ID
+                                                            <input class="control" type="number" min="1" name="matched_product_id" value="{{ $line->matched_product_id }}" list="bom-candidates-{{ $line->id }}" placeholder="Leave blank for supplier RFQ">
+                                                        </label>
+                                                        <datalist id="bom-candidates-{{ $line->id }}">
+                                                            @foreach($candidateIds as $candidateId)
+                                                                @php($candidate = $candidateProducts->get($candidateId))
+                                                                @if($candidate)
+                                                                    <option value="{{ $candidate->id }}" label="{{ $candidate->sku }} · {{ $candidate->name }}"></option>
+                                                                @endif
+                                                            @endforeach
+                                                        </datalist>
+                                                        @if($candidateIds->isNotEmpty())
+                                                            <div class="sub">Candidates: @foreach($candidateIds as $candidateId) @php($candidate = $candidateProducts->get($candidateId)) @if($candidate)<a href="/admin/products/{{ $candidate->id }}">{{ $candidate->sku }}</a>@if(! $loop->last), @endif @endif @endforeach</div>
+                                                        @endif
+                                                        <div class="sub">Candidate options come from the original MPN match. The entered product is checked again against the current public catalog.</div>
+                                                        <button class="btn btn-primary" type="submit">Save Match</button>
+                                                    </form>
+                                                </div>
+                                            </details>
+                                        @else
+                                            <span class="sub">Converted to RFQ</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                             @if(($lines[$import->id] ?? collect())->count() > 8)
-                                <tr><td colspan="7" class="sub">Showing first 8 lines of {{ ($lines[$import->id] ?? collect())->count() }}.</td></tr>
+                                <tr><td colspan="8" class="sub">Showing first 8 lines of {{ ($lines[$import->id] ?? collect())->count() }}.</td></tr>
                             @endif
                             </tbody>
                         </table>
@@ -94,7 +143,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="7"><div class="empty"><h3>No BOM imports yet</h3><p>Customer BOM uploads through the authenticated BOM API will appear here.</p></div></td></tr>
+            <tr><td colspan="8"><div class="empty"><h3>No BOM imports yet</h3><p>Customer BOM uploads through the authenticated BOM API will appear here.</p></div></td></tr>
         @endforelse
         </tbody>
     </table></div>
@@ -103,6 +152,6 @@
     @endif
 </section>
 
-<div class="note" style="margin-top:16px">Admin visibility is live. Editing individual BOM line matches is currently handled through the authenticated API; the next phase is adding inline admin rematch and manual assignment controls here.</div>
+<div class="note" style="margin-top:16px">Manual assignment and rematching use the existing BOM importer. Only published catalog products can be assigned, and converted BOMs remain locked to preserve their RFQ history.</div>
 
 @endsection

@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\RebuildApprovedImportSearchIndexJob;
+use App\Models\Bom\BomImport;
+use App\Models\Bom\BomImportLine;
 use App\Models\Marketplace\VendorProduct;
 use App\Models\Marketplace\Product;
+use App\Services\Bom\BomImportService;
 use App\Models\Marketplace\ProductSeoMeta;
 use App\Services\Erp\DocumentNumberService;
 use App\Services\Inventory\TransferService;
@@ -1551,6 +1554,72 @@ class CommerceOpsController extends Controller
         $jobId = $this->queueJlcpcbSearchRebuildJob($request, $rebuilds);
 
         return back()->with('status', "Search/facet rebuild queued as job #{$jobId}.");
+    }
+
+    // ---- BOM procurement imports ------------------------------------------
+
+    /** Re-runs the existing matcher while retaining manual line decisions. */
+    public function rematchBomImport(Request $request, BomImport $import, BomImportService $imports): RedirectResponse
+    {
+        if ($import->status === 'converted') {
+            return back()->with('error', 'Converted BOM imports are immutable so their RFQ history remains accurate.');
+        }
+
+        $before = [
+            'matched_lines' => (int) $import->matched_lines,
+            'unmatched_lines' => (int) $import->unmatched_lines,
+        ];
+        $updated = $imports->rematch($import);
+
+        $this->auditAdminAction($request, 'bom_import_rematched', 'bom_imports', (int) $import->id, [
+            'name' => $import->name,
+            'before' => $before,
+            'after' => [
+                'matched_lines' => (int) $updated->matched_lines,
+                'unmatched_lines' => (int) $updated->unmatched_lines,
+            ],
+        ]);
+
+        return back()->with('status', "BOM #{$import->id} rematched. Manual line decisions were preserved.");
+    }
+
+    /** Sets or clears one line match through the existing BOM import service. */
+    public function setBomImportLineMatch(Request $request, BomImport $import, BomImportLine $line, BomImportService $imports): RedirectResponse
+    {
+        if ((int) $line->bom_import_id !== (int) $import->id) {
+            abort(404);
+        }
+        if ($import->status === 'converted') {
+            return back()->with('error', 'Converted BOM imports are immutable so their RFQ history remains accurate.');
+        }
+
+        $data = $request->validate([
+            'matched_product_id' => ['nullable', 'integer', 'exists:products,id'],
+        ]);
+        $before = [
+            'matched_product_id' => $line->matched_product_id,
+            'match_status' => $line->match_status,
+            'match_confidence' => $line->match_confidence,
+        ];
+
+        try {
+            $updated = $imports->setLineMatch($line, $data['matched_product_id'] ?? null);
+        } catch (\RuntimeException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        $this->auditAdminAction($request, 'bom_import_line_match_set', 'bom_import_lines', (int) $line->id, [
+            'bom_import_id' => (int) $import->id,
+            'line_no' => (int) $line->line_no,
+            'before' => $before,
+            'after' => [
+                'matched_product_id' => $updated->matched_product_id,
+                'match_status' => $updated->match_status,
+                'match_confidence' => $updated->match_confidence,
+            ],
+        ]);
+
+        return back()->with('status', "BOM line {$line->line_no} updated.");
     }
 
     private function queueJlcpcbSearchRebuildJob(Request $request, CatalogSearchRebuildService $rebuilds): int

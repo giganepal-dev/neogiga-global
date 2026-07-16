@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-16 - Phase 9F BOM admin review workflow
+
+- Connected the existing BOM importer to the admin procurement queue with permission-gated rematching and per-line manual product assignment.
+- Preserved customer manual decisions during rematch, verified every manual assignment against the current public catalog, recorded audit events, and locked converted BOMs to preserve RFQ history.
+- Corrected normalized-MPN matching for SQLite test environments while retaining PostgreSQL and MySQL/MariaDB normalization behavior.
+
 ## 2026-07-16 - Phase 9E qualified JLCPCB publication gate
 
 - Reused the governed JLCPCB qualification checks in the admin import queue and exposed read-only per-row publication readiness.
