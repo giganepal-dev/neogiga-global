@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\AI;
 
 use App\Http\Controllers\Concerns\ApiResponses;
+use App\Http\Controllers\Concerns\HandlesCommerceAiBomCart;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CommerceAi\CommerceAiPromptRequest;
+use App\Services\CommerceAi\CommerceAiBomCartService;
 use App\Services\CommerceAi\CommerceAiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +21,7 @@ use Illuminate\Http\Request;
 class AiCommerceController extends Controller
 {
     use ApiResponses;
+    use HandlesCommerceAiBomCart;
 
     public function createSession(Request $request, CommerceAiService $ai): JsonResponse
     {
@@ -47,9 +50,9 @@ class AiCommerceController extends Controller
         ), 201);
     }
 
-    public function addBomToCart(): JsonResponse
+    public function addBomToCart(Request $request, CommerceAiBomCartService $cart): JsonResponse
     {
-        return $this->notImplemented('AI BOM → cart', 'Phase 2');
+        return $this->addCommerceAiBomToCart($request, $cart);
     }
 
     public function createPosInvoice(): JsonResponse

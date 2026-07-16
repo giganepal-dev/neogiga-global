@@ -3,6 +3,7 @@
 namespace App\Models\CommerceAi;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CommerceAiBomResult extends Model
@@ -10,6 +11,11 @@ class CommerceAiBomResult extends Model
     protected $fillable = ['commerce_ai_bom_request_id', 'title', 'estimated_total', 'payload'];
 
     protected $casts = ['payload' => 'array'];
+
+    public function bomRequest(): BelongsTo
+    {
+        return $this->belongsTo(CommerceAiBomRequest::class, 'commerce_ai_bom_request_id');
+    }
 
     public function items(): HasMany
     {

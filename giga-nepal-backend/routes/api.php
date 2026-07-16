@@ -255,7 +255,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('cart')->middleware(['api.token', 'permission:cart.manage'])->group(function () {
         Route::get('/', [CartController::class, 'index']);
         Route::post('/items', [CartController::class, 'addItem']);
-        Route::post('/add-bom', [CartController::class, 'addBom']);
+        Route::post('/add-bom', [AiCommerceController::class, 'addBomToCart']);
         Route::patch('/items/{item}', [CartController::class, 'updateItem'])->whereNumber('item');
         Route::delete('/items/{item}', [CartController::class, 'removeItem'])->whereNumber('item');
     });
@@ -275,7 +275,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/session', [AiCommerceController::class, 'createSession']);
         Route::post('/message', [AiCommerceController::class, 'sendMessage']);
         Route::post('/build-bom', [AiCommerceController::class, 'buildBom']);
-        Route::post('/add-bom-to-cart', [AiCommerceController::class, 'addBomToCart']);
+        Route::post('/add-bom-to-cart', [AiCommerceController::class, 'addBomToCart'])->middleware('permission:cart.manage');
         Route::post('/create-pos-invoice', [AiCommerceController::class, 'createPosInvoice']);
     });
 

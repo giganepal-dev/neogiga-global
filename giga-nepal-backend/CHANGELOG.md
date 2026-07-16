@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-17 - Phase 9H Guarded Commerce AI BOM-to-cart
+
+- Activated both AI BOM cart aliases using the canonical Commerce AI BOM records and current cart implementation; the obsolete AI cart service remains untouched.
+- Added user ownership, controller and route-level cart permission, active-publication, server-side pricing, active regional inventory, quantity limit, marketplace-consistency, and replay-idempotency checks before a recommendation can mutate a cart.
+- Stored concise AI provenance in cart and line metadata, returned added/already-added/skipped decisions, and retained advisory-only output; the action creates no order, payment, or stock reservation.
+
 ## 2026-07-16 - Phase 9G Legacy AI contract activation
 
 - Activated the authenticated legacy `/api/v1/ai/session`, `/message`, and `/build-bom` endpoints by delegating them to the existing bounded local Commerce AI service; no paid provider, order, payment, stock reservation, or POS invoice is created.

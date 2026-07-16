@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api\Cart;
 
 use App\Http\Controllers\Concerns\ApiResponses;
+use App\Http\Controllers\Concerns\HandlesCommerceAiBomCart;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Cart;
 use App\Models\Marketplace\InventoryStock;
 use App\Models\Marketplace\Marketplace;
 use App\Models\Marketplace\MarketplaceProductPrice;
 use App\Models\Marketplace\Product;
+use App\Services\CommerceAi\CommerceAiBomCartService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 class CartController extends Controller
 {
     use ApiResponses;
+    use HandlesCommerceAiBomCart;
 
     public function index(Request $request): JsonResponse
     {
@@ -83,9 +86,9 @@ class CartController extends Controller
         });
     }
 
-    public function addBom(): JsonResponse
+    public function addBom(Request $request, CommerceAiBomCartService $cart): JsonResponse
     {
-        return $this->notImplemented('AI BOM to cart', 'Phase 2');
+        return $this->addCommerceAiBomToCart($request, $cart);
     }
 
     public function updateItem(Request $request, int $item): JsonResponse
