@@ -379,6 +379,7 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
         ->group(function () {
             Route::get('/', fn (string $localePrefix) => app(LandingController::class)())->name('localized.home');
             Route::get('/products', fn (string $localePrefix, Request $request) => app(ProductPageController::class)->index($request))->name('localized.products.index');
+            Route::get('/products/suggest', fn (string $localePrefix, Request $request) => app(ProductPageController::class)->suggest($request));
             Route::get('/products/{slug}', fn (string $localePrefix, string $slug) => app(ProductPageController::class)->show($slug))->where('slug', '[a-z0-9\-]+')->name('localized.products.show');
             Route::get('/categories', fn (string $localePrefix) => app(CategoryController::class)->index())->name('localized.categories.index');
             Route::get('/categories/{slug}', fn (string $localePrefix, string $slug) => app(CategoryController::class)->show($slug))->where('slug', '[a-z0-9\-]+')->name('localized.categories.show');

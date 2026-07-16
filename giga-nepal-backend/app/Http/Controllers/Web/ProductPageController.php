@@ -253,6 +253,37 @@ class ProductPageController extends Controller
             ->get();
     }
 
+    public function suggest(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+        if (strlen($q) < 2) {
+            return response()->json(['data' => []]);
+        }
+
+        $products = \App\Models\Marketplace\Product::query()
+            ->published()
+            ->where(function ($w) use ($q) {
+                $w->where('name', 'ilike', "%{$q}%")
+                  ->orWhere('mpn', 'ilike', "%{$q}%")
+                  ->orWhere('sku', 'ilike', "%{$q}%");
+            })
+            ->with(['category:id,name', 'images' => fn ($qImg) => $qImg->where('is_active', true)->where('is_primary', true)->limit(1)])
+            ->limit(8)
+            ->get();
+
+        $data = $products->map(fn ($p) => [
+            'name' => $p->name,
+            'slug' => $p->slug,
+            'mpn' => $p->mpn,
+            'sku' => $p->sku,
+            'category' => $p->category?->name,
+            'image' => ($img = $p->images->first()) ? $img->publicUrl() : null,
+            'url' => url('/'.$request->segment(1).'/products/'.$p->slug),
+        ])->values()->all();
+
+        return response()->json(['data' => $data]);
+    }
+
     private function stockRows(int $productId, int $countryId = 0)
     {
         if (! Schema::hasTable('inventory_stocks')) {
