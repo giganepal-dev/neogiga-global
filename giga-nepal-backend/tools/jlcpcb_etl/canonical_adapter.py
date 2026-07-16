@@ -154,6 +154,29 @@ class NeoGigaCanonicalAdapter:
                 cur.execute("SELECT 1")
                 return cur.fetchone()[0] == 1
 
+    def existing_source_part_ids(self, source_part_ids: Iterable[str]) -> set[str]:
+        """Return canonical source IDs that already exist without mutating catalog data."""
+
+        values = sorted({str(value).strip() for value in source_part_ids if str(value).strip()})
+        if not values:
+            return set()
+        with psycopg.connect(self.dsn, row_factory=dict_row) as conn:
+            source = conn.execute(
+                "SELECT id FROM catalog_sources WHERE code = %s LIMIT 1",
+                (SOURCE_CODE,),
+            ).fetchone()
+            if not source:
+                return set()
+            rows = conn.execute(
+                """
+                SELECT source_part_id
+                FROM catalog_product_sources
+                WHERE source_id = %s AND source_part_id = ANY(%s)
+                """,
+                (source["id"], values),
+            ).fetchall()
+        return {str(row["source_part_id"]) for row in rows}
+
     def publish(
         self,
         parts: Iterable[TransformedPart],
