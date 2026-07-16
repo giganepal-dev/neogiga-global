@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-16 - JLCPCB Missing-Only Continuation
+
+- Added a guarded JLCPCB ETL `--missing-only` mode for the existing canonical NeoGiga target. It scans an explicit keyset cursor range, reads existing source links in bounded batches, imports only absent source IDs, and preserves already linked products, prices, offers, specifications, media, SEO metadata, and review decisions.
+- Extended durable ETL evidence with scanned-row and already-linked-row counts. The mode requires the existing explicit NeoGiga write authorization, source checksum/provenance, a keyset cursor, and bounded transactions.
+- New JLCPCB rows retain the existing NeoGiga SEO metadata structure and stay hidden/noindex until the established qualified-publication and SEO-governance services approve them; no public SEO, sitemap, or frontend state is changed by the import itself.
+
 ## 2026-07-15 - Governed 100,000-Product JLCPCB Catalog Expansion
 
 - Preserved the verified JLCPCB SQLite snapshot at `/home/neogiga/backups/jlcpcb-source-20260714_192650/jlcpcb-components.sqlite3` with SHA-256 `9334f49b7d730b7ed7e5beb3c0360fe89a3a158605af3c4512a10f850c23c986` and recorded source/license provenance without downloading a replacement dataset.
