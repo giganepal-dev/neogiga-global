@@ -12,6 +12,7 @@ use App\Services\Marketplace\MarketplacePathResolver;
 use App\Services\Marketplace\MarketplaceSeoRenderer;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
 class LandingController extends Controller
@@ -224,10 +225,12 @@ class LandingController extends Controller
 
     private function safePublishedProductCount(): int
     {
-        try {
-            return (int) Product::query()->published()->count();
-        } catch (\Throwable) {
-            return 0;
-        }
+        return Cache::remember('catalog:published-product-count:v1', now()->addMinutes(5), function (): int {
+            try {
+                return (int) Product::query()->published()->count();
+            } catch (\Throwable) {
+                return 0;
+            }
+        });
     }
 }
