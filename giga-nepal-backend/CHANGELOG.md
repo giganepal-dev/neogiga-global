@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-17 - PCB project workspace schema repair
+
+- Corrected all direct PCB project Eloquent relations to use the existing `project_id` key defined by the production schema and original PCB migrations, eliminating inferred `pcb_project_id` queries after login.
+- Added a regression contract covering every direct project relation in both directions and verified an authenticated production render of `/en/projects` without altering project, file, quote, order, or membership data.
+- Preserved the production-only project-list presentation and repaired its malformed `IlluminateSupportStr` view reference in the deployed release; a timestamped copy is retained under `/home/neogiga/backups`.
+
 ## 2026-07-17 - Official brand logo governance
 
 - Added additive brand-logo provenance, verification, review-history and alias tables without changing existing brand, product, SEO, inventory, pricing, category or media records.
