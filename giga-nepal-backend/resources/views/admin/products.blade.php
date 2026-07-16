@@ -104,6 +104,7 @@
                             <button class="btn" type="submit">Save SEO</button>
                         </form>
                     </div></div></details>
+                    @if($auditFlags)<a class="btn btn-ghost" href="/admin/products/{{ $p->id }}#catalog-quality">Fix audit</a>@endif
                     <form method="post" action="/admin/products/{{ $p->id }}/duplicate">@csrf<button class="btn btn-ghost" type="submit">Duplicate</button></form>
                     <details class="modal"><summary class="btn btn-ghost">Stock</summary><div class="modal-panel"><div class="modal-h"><h3>Adjust Stock</h3></div><form class="modal-b form-stack" method="post" action="/admin/products/{{ $p->id }}/stock">@csrf<div class="field"><label>Stock quantity</label><input class="control" type="number" name="stock_quantity" value="{{ $p->stock_quantity ?? 0 }}" required></div><div class="field"><label>Low stock threshold</label><input class="control" type="number" name="low_stock_threshold" value="{{ $p->low_stock_threshold ?? 5 }}"></div><div class="field"><label>Note</label><textarea class="control" name="note"></textarea></div><button class="btn btn-primary" type="submit">Save Stock</button></form></div></details>
                     <form method="post" action="/admin/products/{{ $p->id }}/toggle" onsubmit="return confirm('Change product active status?')">@csrf<button class="btn btn-ghost danger" type="submit">{{ in_array($s,['inactive','archived']) ? 'Reactivate':'Deactivate' }}</button></form>

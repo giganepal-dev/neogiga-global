@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-16 - Phase 9C catalog-audit remediation workspace
+
+- Added a read-only Catalog Quality checklist to product administration, with direct links to existing identity, content, media, document, and lifecycle controls.
+- Added source provenance visibility on product detail, including quality score, review state, source reference, and a contextual JLCPCB Import Review link.
+- Added audit-queue "Fix audit" shortcuts without introducing bulk approval, publication, source mutation, or schema changes.
+
 ## 2026-07-16 - Phase 9B catalog lifecycle and audit workflow
 
 - Added audited lifecycle status controls to the existing product administration page.

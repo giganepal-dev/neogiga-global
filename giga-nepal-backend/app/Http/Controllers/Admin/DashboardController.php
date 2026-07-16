@@ -366,6 +366,8 @@ class DashboardController extends Controller
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->get(),
+            'catalogSources' => $this->catalogProductSources($id),
+            'catalogAuditFlags' => $this->productAuditFlags(collect([$product]))->get($id, []),
             'productReviews' => $this->safeProductReviews($id),
             'reviewSummary' => $this->safeProductReviewSummary($id),
             'marketplacePrices' => $this->safeMarketplacePrices($id),
@@ -500,6 +502,57 @@ class DashboardController extends Controller
                 });
             }
         });
+    }
+
+    /**
+     * Source provenance is deliberately read-only here. Source review and
+     * publication retain their existing guarded workflows in Import Review.
+     *
+     * @return Collection<int, object>
+     */
+    private function catalogProductSources(int $productId): Collection
+    {
+        if (! Schema::hasTable('catalog_product_sources') || ! Schema::hasTable('catalog_sources')) {
+            return collect();
+        }
+
+        return DB::table('catalog_product_sources as cps')
+            ->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')
+            ->where('cps.product_id', $productId)
+            ->select([
+                'cps.id',
+                'cps.source_part_id',
+                'cps.import_batch_id',
+                'cps.source_url as product_source_url',
+                'cps.source_payload_hash',
+                'cps.imported_at',
+                'cps.last_synced_at',
+                'cps.data_quality_score',
+                'cps.review_status',
+                'cs.code as source_code',
+                'cs.name as source_name',
+                'cs.source_url as catalog_source_url',
+                'cs.license_notes',
+            ])
+            ->orderByDesc('cps.last_synced_at')
+            ->orderByDesc('cps.id')
+            ->get()
+            ->map(function (object $source): object {
+                $source->reference_url = $this->safeExternalUrl($source->product_source_url)
+                    ?? $this->safeExternalUrl($source->catalog_source_url);
+
+                return $source;
+            });
+    }
+
+    private function safeExternalUrl(?string $url): ?string
+    {
+        $url = trim((string) $url);
+        if ($url === '' || ! filter_var($url, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+
+        return in_array(strtolower((string) parse_url($url, PHP_URL_SCHEME)), ['http', 'https'], true) ? $url : null;
     }
 
     /**

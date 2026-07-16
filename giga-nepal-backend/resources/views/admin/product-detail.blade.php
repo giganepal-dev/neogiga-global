@@ -10,6 +10,15 @@
 @php
     $status = $p->status ?? 'draft';
     $lifecycle = strtoupper((string) ($p->lifecycle_status ?? ''));
+    $qualityChecks = [
+        ['label' => 'MPN identity', 'complete' => filled($p->mpn), 'detail' => $p->mpn ?: 'Manufacturer part number is missing', 'target' => '#product-core', 'action' => 'Edit core product'],
+        ['label' => 'Category', 'complete' => ! empty($p->category_id), 'detail' => $p->category_name ?: 'Category is unassigned', 'target' => '#product-core', 'action' => 'Assign category'],
+        ['label' => 'Product content', 'complete' => filled($p->description) || filled($p->short_description), 'detail' => (filled($p->description) || filled($p->short_description)) ? 'Description present' : 'Short or full description is missing', 'target' => '#product-core', 'action' => 'Edit content'],
+        ['label' => 'Pricing', 'complete' => (float) ($p->base_price ?? 0) > 0 || (float) ($p->sale_price ?? 0) > 0, 'detail' => ((float) ($p->base_price ?? 0) > 0 || (float) ($p->sale_price ?? 0) > 0) ? 'At least one product price is set' : 'Base and sale price are missing', 'target' => '#product-core', 'action' => 'Set price'],
+        ['label' => 'Images', 'complete' => $productImages->where('is_active', true)->isNotEmpty(), 'detail' => $productImages->where('is_active', true)->count().' active image(s)', 'target' => '#product-media-heading', 'action' => 'Manage images'],
+        ['label' => 'Datasheet', 'complete' => $productDocuments->where('document_type', 'datasheet')->where('is_active', true)->isNotEmpty(), 'detail' => $productDocuments->where('document_type', 'datasheet')->where('is_active', true)->isNotEmpty() ? 'Active datasheet attached' : 'No active datasheet', 'target' => '#product-documents', 'action' => 'Attach document'],
+        ['label' => 'Lifecycle', 'complete' => ! in_array($lifecycle, ['', 'UNKNOWN', 'NEEDS_VERIFICATION'], true), 'detail' => $lifecycleOptions[$lifecycle] ?? ($lifecycle ?: 'Needs verification'), 'target' => '#lifecycle-control', 'action' => 'Set lifecycle'],
+    ];
 @endphp
 
 <div class="grid kpis">
@@ -21,7 +30,7 @@
 </div>
 
 <div class="grid dashboard-split">
-    <div class="card">
+    <div class="card" id="product-core">
         <div class="card-h"><h2>Core Product</h2><span class="badge {{ in_array($status,['active','approved','published']) ? 'b-ok' : 'b-muted' }}">{{ $status }}</span></div>
         <form class="form-stack" method="post" action="/admin/products" style="padding:16px">@csrf
             <input type="hidden" name="id" value="{{ $p->id }}">
@@ -110,7 +119,7 @@
         </table></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="lifecycle-control">
         <div class="card-h"><h2>Lifecycle Control</h2><span class="badge b-info">audited change</span></div>
         <form class="form-stack" method="post" action="/admin/products/{{ $p->id }}/lifecycle" style="padding:16px">@csrf
             <div class="field"><label>Manufacturer lifecycle</label><select class="control" name="lifecycle_status"><option value="">Not specified</option>@if($lifecycle !== '' && !array_key_exists($lifecycle, $lifecycleOptions))<option value="{{ $lifecycle }}" selected>Imported: {{ $lifecycle }}</option>@endif @foreach($lifecycleOptions as $value => $label)<option value="{{ $value }}" @selected($lifecycle === $value)>{{ $label }}</option>@endforeach</select></div>
@@ -119,6 +128,40 @@
         </form>
     </div>
 </div>
+
+<section class="card stack-gap" id="catalog-quality" aria-labelledby="catalog-quality-heading">
+    <div class="card-h"><div><h2 id="catalog-quality-heading">Catalog Quality</h2><div class="sub">Remediate product completeness before any separate source approval or public publication decision.</div></div><span class="badge {{ $catalogAuditFlags ? 'b-warn' : 'b-ok' }}">{{ $catalogAuditFlags ? count($catalogAuditFlags).' item(s) need attention' : 'Complete' }}</span></div>
+    <div class="scroll-x"><table class="tbl">
+        <thead><tr><th>Check</th><th>Status</th><th>Current state</th><th>Action</th></tr></thead>
+        <tbody>@foreach($qualityChecks as $check)
+            <tr>
+                <td><strong>{{ $check['label'] }}</strong></td>
+                <td><span class="badge {{ $check['complete'] ? 'b-ok' : 'b-warn' }}">{{ $check['complete'] ? 'Ready' : 'Needs work' }}</span></td>
+                <td class="sub">{{ $check['detail'] }}</td>
+                <td><a class="btn btn-ghost" href="{{ $check['target'] }}">{{ $check['action'] }}</a></td>
+            </tr>
+        @endforeach</tbody>
+    </table></div>
+    @if($catalogSources->isNotEmpty())
+        <div style="padding:0 16px 16px"><div class="card-h" style="padding:10px 0"><h3>Source Provenance</h3><span class="badge b-info">read only</span></div>
+            <div class="scroll-x"><table class="tbl">
+                <thead><tr><th>Source</th><th>Source part</th><th>Quality</th><th>Review</th><th>Last synced</th><th>Reference</th></tr></thead>
+                <tbody>@foreach($catalogSources as $source)
+                    @php $pendingReview = ! in_array($source->review_status, ['approved', 'rejected'], true); @endphp
+                    <tr>
+                        <td><strong>{{ $source->source_name }}</strong><div class="sub mono">{{ $source->source_code }}</div></td>
+                        <td class="mono">{{ $source->source_part_id }}</td>
+                        <td><span class="badge {{ (float) $source->data_quality_score >= 0.85 ? 'b-ok' : 'b-warn' }}">{{ number_format((float) $source->data_quality_score, 2) }}</span></td>
+                        <td><span class="badge {{ $pendingReview ? 'b-warn' : ($source->review_status === 'approved' ? 'b-ok' : 'b-muted') }}">{{ str_replace('_', ' ', $source->review_status ?: 'pending review') }}</span></td>
+                        <td class="sub">{{ $source->last_synced_at ?: $source->imported_at ?: 'not recorded' }}</td>
+                        <td class="actions">@if($source->source_code === 'jlcpcb_parts_database')<a class="btn btn-ghost" href="/admin/imports/jlcpcb?q={{ urlencode($p->sku) }}">Open import review</a>@endif @if($source->reference_url)<a class="btn btn-ghost" href="{{ $source->reference_url }}" target="_blank" rel="noopener">Source reference</a>@endif</td>
+                    </tr>
+                @endforeach</tbody>
+            </table></div>
+            <div class="sub" style="margin-top:10px">Source review and public publication remain separate, permission-checked actions in Import Review. Catalog source rows are not changed from this page.</div>
+        </div>
+    @endif
+</section>
 
 <section class="card stack-gap" aria-labelledby="product-media-heading">
     <div class="card-h"><div><h2 id="product-media-heading">Product Images</h2><div class="sub">Primary image, gallery order, source and regional visibility</div></div><span class="badge b-info">{{ $productImages->where('is_active', true)->count() }} active / {{ $productImages->count() }} total</span></div>
@@ -354,7 +397,7 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="product-documents">
         <div class="card-h"><h2>Documents</h2></div>
         <div style="padding:16px">
             @forelse($productDocuments as $doc)

@@ -72,6 +72,44 @@ class ProductLifecycleAuditWorkflowTest extends TestCase
             });
     }
 
+    public function test_product_detail_exposes_catalog_quality_and_source_provenance_without_writing(): void
+    {
+        $productId = $this->product('Provenance Part', 'NG-PROVENANCE-001');
+        $sourceId = DB::table('catalog_sources')->insertGetId([
+            'code' => 'jlcpcb_parts_database',
+            'name' => 'JLCPCB parts database',
+            'source_url' => 'https://example.test/catalog',
+            'active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('catalog_product_sources')->insert([
+            'product_id' => $productId,
+            'source_id' => $sourceId,
+            'source_part_id' => 'C-PROVENANCE-001',
+            'source_url' => 'https://example.test/parts/C-PROVENANCE-001',
+            'source_payload_hash' => hash('sha256', 'C-PROVENANCE-001'),
+            'data_quality_score' => 0.75,
+            'review_status' => 'pending_review',
+            'imported_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin())
+            ->get("/admin/products/{$productId}")
+            ->assertOk()
+            ->assertSee('Catalog Quality')
+            ->assertSee('Source Provenance')
+            ->assertViewHas('catalogSources', fn ($sources): bool => $sources->count() === 1)
+            ->assertViewHas('catalogAuditFlags', fn ($flags): bool => in_array('Source review', $flags, true));
+
+        $this->assertDatabaseHas('catalog_product_sources', [
+            'product_id' => $productId,
+            'review_status' => 'pending_review',
+        ]);
+    }
+
     private function product(string $name, string $sku): int
     {
         return DB::table('products')->insertGetId([
