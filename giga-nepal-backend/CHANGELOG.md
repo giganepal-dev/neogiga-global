@@ -6,6 +6,7 @@
 - Reworked `pcb.neogiga.com/en` into an operational quote workspace with an interactive fabrication/PCBA estimator, explicit secure upload/review/production stages, and responsive behavior while preserving the existing quote API and project workflow.
 - Removed regional storefront names from the PCB header. Regional navigation remains available in the footer.
 - Restored the missing authenticated route registrations for existing project update, cancellation, quote approval, and quote-change actions. No PCB controller logic, table, migration, file, quote, order, or project data was changed.
+- Added bounded cache protection for public catalog facet aggregation and indexed-summary counts. This prevents concurrent storefront requests from repeatedly scanning the full catalog; cache entries expire within two to ten minutes and do not change catalog data or publication gates.
 
 ## 2026-07-15 - Governed 100,000-Product JLCPCB Catalog Expansion
 
