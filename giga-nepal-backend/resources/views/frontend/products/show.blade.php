@@ -24,6 +24,7 @@
         'name' => $product->name,
         'sku' => $product->sku,
         'mpn' => $product->mpn,
+        'gtin' => $product->gtin ?? null,
         'image' => $productImages->isNotEmpty()
             ? collect($productImages->map(fn ($image) => $image->publicUrl())->all())->filter()->values()->all() ?: [$ogImage]
             : [$ogImage],
@@ -52,6 +53,32 @@
             'reviewCount' => $reviewSummary->count,
         ];
     }
+    $merchantReturnPolicy = [
+        '@type' => 'MerchantReturnPolicy',
+        'applicableCountry' => strtoupper($activePrefix === 'en' ? 'US' : $activePrefix),
+        'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        'merchantReturnDays' => 30,
+        'returnMethod' => 'https://schema.org/ReturnByMail',
+    ];
+
+    $shippingDetails = [
+        '@type' => 'OfferShippingDetails',
+        'shippingRate' => [
+            '@type' => 'MonetaryAmount',
+            'value' => '0.00',
+            'currency' => strtoupper((string) $schemaCurrency),
+        ],
+        'shippingDestination' => [
+            '@type' => 'DefinedRegion',
+            'addressCountry' => strtoupper($activePrefix === 'en' ? 'US' : $activePrefix),
+        ],
+        'deliveryTime' => [
+            '@type' => 'ShippingDeliveryTime',
+            'handlingTime' => ['@type' => 'QuantitativeValue', 'minValue' => 1, 'maxValue' => 3, 'unitCode' => 'DAY'],
+            'transitTime' => ['@type' => 'QuantitativeValue', 'minValue' => 3, 'maxValue' => 14, 'unitCode' => 'DAY'],
+        ],
+    ];
+
     if ((float) $schemaPrice > 0) {
         $productSchema['offers'] = [
             '@type' => 'Offer',
@@ -62,9 +89,10 @@
                 ? 'https://schema.org/InStock'
                 : 'https://schema.org/OutOfStock',
             'itemCondition' => 'https://schema.org/NewCondition',
+            'hasMerchantReturnPolicy' => $merchantReturnPolicy,
+            'shippingDetails' => $shippingDetails,
         ];
     } elseif (! $hasReviews) {
-        // Google requires offers, review, or aggregateRating for valid Product schema
         $productSchema['offers'] = [
             '@type' => 'Offer',
             'url' => $productCanonical,
@@ -72,6 +100,8 @@
             'price' => '0.00',
             'availability' => 'https://schema.org/InStock',
             'itemCondition' => 'https://schema.org/NewCondition',
+            'hasMerchantReturnPolicy' => $merchantReturnPolicy,
+            'shippingDetails' => $shippingDetails,
         ];
     }
     $schemaBreadcrumb = [
