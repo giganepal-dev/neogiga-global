@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureAdminWebPermission;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\ForceMarketplaceRecommendationRedirect;
+use App\Http\Middleware\CachePublicPages;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,7 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Baseline security headers on every response (SEC-07).
+        // Full-page cache FIRST — skip entire Laravel stack for cached pages.
+        $middleware->prepend(CachePublicPages::class);
+
         $middleware->append(SecurityHeaders::class);
         $middleware->append(ForceMarketplaceRecommendationRedirect::class);
 

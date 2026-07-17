@@ -5,6 +5,7 @@ namespace App\Services\Catalog;
 use App\Services\Product\ProductPublicationGate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -69,6 +70,14 @@ class CatalogSearchService
             return collect();
         }
 
+        return Cache::remember('catalog:facets:' . sha1(json_encode($filters)), 3600, function () use ($filters) {
+            return $this->computeFacetGroups($filters);
+        });
+    }
+
+    private function computeFacetGroups(array $filters): Collection
+    {
+
         $q = trim((string) ($filters['q'] ?? ''));
 
         $query = DB::table('product_facet_values as pfv')
@@ -100,6 +109,14 @@ class CatalogSearchService
         if (! $this->hasSearchTables()) {
             return ['documents' => 0, 'facets' => 0, 'approved_documents' => 0];
         }
+
+        return Cache::remember('catalog:search-summary', 3600, function () {
+            return $this->computeIndexedSummary();
+        });
+    }
+
+    private function computeIndexedSummary(): array
+    {
 
         $documents = DB::table('product_search_documents as psd')
             ->join('products as p', 'p.id', '=', 'psd.product_id');

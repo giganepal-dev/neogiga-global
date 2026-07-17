@@ -24,7 +24,9 @@
         'name' => $product->name,
         'sku' => $product->sku,
         'mpn' => $product->mpn,
-        'image' => $productImages->isNotEmpty() ? $productImages->map(fn ($image) => $image->publicUrl())->all() : [$ogImage],
+        'image' => $productImages->isNotEmpty()
+            ? collect($productImages->map(fn ($image) => $image->publicUrl())->all())->filter()->values()->all() ?: [$ogImage]
+            : [$ogImage],
         'brand' => $product->brand?->name ? [
             '@type' => 'Brand',
             'name' => $product->brand->name,
@@ -42,7 +44,8 @@
         'url' => $productCanonical,
         'description' => strip_tags($product->short_description ?: $product->description ?: $product->name),
     ], fn ($value) => $value !== null && $value !== '');
-    if (($reviewSummary->count ?? 0) > 0) {
+    $hasReviews = ($reviewSummary->count ?? 0) > 0;
+    if ($hasReviews) {
         $productSchema['aggregateRating'] = [
             '@type' => 'AggregateRating',
             'ratingValue' => $reviewSummary->average,
@@ -58,6 +61,16 @@
             'availability' => ($product->stock_quantity ?? 0) > 0
                 ? 'https://schema.org/InStock'
                 : 'https://schema.org/OutOfStock',
+            'itemCondition' => 'https://schema.org/NewCondition',
+        ];
+    } elseif (! $hasReviews) {
+        // Google requires offers, review, or aggregateRating for valid Product schema
+        $productSchema['offers'] = [
+            '@type' => 'Offer',
+            'url' => $productCanonical,
+            'priceCurrency' => strtoupper((string) $schemaCurrency),
+            'price' => '0.00',
+            'availability' => 'https://schema.org/InStock',
             'itemCondition' => 'https://schema.org/NewCondition',
         ];
     }

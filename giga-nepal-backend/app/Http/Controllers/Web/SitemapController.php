@@ -34,7 +34,7 @@ class SitemapController extends Controller
     public function __invoke(): Response
     {
         $marketplace = $this->marketplace();
-        $state = $this->catalogState($this->includeCatalog($marketplace));
+        $state = $this->cachedCatalogState($this->includeCatalog($marketplace));
         $version = (string) Cache::get('seo:sitemap-version', '1');
         $cacheKey = 'seo:sitemap-index:'.self::CACHE_VERSION.':'.$version.':'.request()->getHost().':'.sha1(json_encode($state));
 
@@ -78,7 +78,7 @@ class SitemapController extends Controller
         $includeCatalog = $this->includeCatalog($marketplace);
         abort_if($section !== 'pages' && ! $includeCatalog, 404);
 
-        $state = $this->catalogState($includeCatalog);
+        $state = $this->cachedCatalogState($includeCatalog);
         $count = $section === 'pages' ? count($this->staticPaths()) : (int) $state[$section.'_count'];
         abort_if($page > max(1, (int) ceil($count / self::CHUNK_SIZE)), 404);
 
@@ -175,17 +175,43 @@ class SitemapController extends Controller
     /** @return array<int, array{path:string,priority:string}> */
     private function staticPaths(): array
     {
-        return [
-            ['path' => '/en', 'priority' => '1.0'],
-            ['path' => '/en/products', 'priority' => '0.9'],
-            ['path' => '/en/categories', 'priority' => '0.8'],
-            ['path' => '/en/brands', 'priority' => '0.8'],
-            ['path' => '/en/lms', 'priority' => '0.7'],
-            ['path' => '/en/rfq', 'priority' => '0.6'],
-            ['path' => '/en/sell-on-neogiga', 'priority' => '0.6'],
-            ['path' => '/en/distributors', 'priority' => '0.6'],
-            ['path' => '/en/ai-commerce', 'priority' => '0.7'],
-        ];
+        $prefixes = array_keys(config('neogiga_global.prefixes', ['en' => []]));
+        $paths = [];
+
+        foreach ($prefixes as $prefix) {
+            $isGlobal = $prefix === 'en';
+
+            $paths[] = ['path' => "/{$prefix}", 'priority' => $isGlobal ? '1.0' : '0.8'];
+            $paths[] = ['path' => "/{$prefix}/products", 'priority' => $isGlobal ? '0.9' : '0.7'];
+            $paths[] = ['path' => "/{$prefix}/categories", 'priority' => '0.7'];
+            $paths[] = ['path' => "/{$prefix}/brands", 'priority' => '0.6'];
+
+            if ($isGlobal) {
+                $paths[] = ['path' => '/en/lms', 'priority' => '0.7'];
+                $paths[] = ['path' => '/en/rfq', 'priority' => '0.6'];
+                $paths[] = ['path' => '/en/sell-on-neogiga', 'priority' => '0.6'];
+                $paths[] = ['path' => '/en/distributors', 'priority' => '0.6'];
+                $paths[] = ['path' => '/en/ai-commerce', 'priority' => '0.7'];
+            }
+        }
+
+        return $paths;
+    }
+
+    /** @return array{categories_count:int,categories_lastmod:?string,brands_count:int,brands_lastmod:?string,manufacturers_count:int,manufacturers_lastmod:?string,products_count:int,products_lastmod:?string} */
+    private function cachedCatalogState(bool $includeCatalog): array
+    {
+        if (! $includeCatalog) {
+            return $this->catalogState(false);
+        }
+
+        $version = (string) Cache::get('seo:sitemap-version', '1');
+
+        return Cache::remember(
+            'seo:sitemap-state:'.self::CACHE_VERSION.':'.$version.':'.request()->getHost(),
+            3600,
+            fn () => $this->catalogState(true),
+        );
     }
 
     /** @return array{categories_count:int,categories_lastmod:?string,brands_count:int,brands_lastmod:?string,manufacturers_count:int,manufacturers_lastmod:?string,products_count:int,products_lastmod:?string} */

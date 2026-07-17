@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ProductImageController as AdminProductImage;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\AiCommercePageController;
 use App\Http\Controllers\Web\CartPageController;
+use App\Http\Controllers\Web\CustomerAuthController;
 use App\Http\Controllers\Web\BrandPageController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\EmailPreferenceController;
@@ -355,6 +356,13 @@ Route::get('/sitemap.xml', SitemapController::class);
 Route::get('/sitemaps/{section}-{page}.xml', [SitemapController::class, 'section'])
     ->whereIn('section', ['pages', 'categories', 'brands', 'manufacturers', 'products'])
     ->whereNumber('page');
+
+// Customer auth pages
+Route::get('/login', [CustomerAuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [CustomerAuthController::class, 'login'])->middleware('throttle:6,1');
+Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [CustomerAuthController::class, 'register'])->middleware('throttle:6,1');
+Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 
 // Password reset pages (the reset email links to the named password.reset route)
 Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequest'])->name('password.request');

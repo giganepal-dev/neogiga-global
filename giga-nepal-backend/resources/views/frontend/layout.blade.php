@@ -15,6 +15,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6LCPY27D9N"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-6LCPY27D9N');
+    </script>
     <title>@yield('title', $marketplaceSeo['title'] ?? 'NeoGiga - Global Engineering Marketplace')</title>
     <meta name="description" content="@yield('description', $marketplaceSeo['description'] ?? 'Global marketplace for semiconductors, IoT, robotics, automation, battery technology, power storage and engineering tools.')">
     <link rel="canonical" href="{{ $resolvedCanonical }}">
@@ -131,7 +139,16 @@
         <div class="head-actions">
             <select class="select-lite" aria-label="Language"><option>EN</option><option>HI</option><option>NE</option></select>
             <a class="icon-btn" href="/cart"><x-icon name="cart" size="18"/> Cart</a>
-            <a class="icon-btn" href="/admin/login"><x-icon name="login" size="18"/> B2B Login</a>
+            @auth
+                <a class="icon-btn" href="/en/account"><x-icon name="user" size="18"/> My Account</a>
+                <form method="post" action="{{ url('/logout') }}" style="display:contents">
+                    @csrf
+                    <button type="submit" class="icon-btn" style="background:transparent;border-color:var(--line);color:var(--muted)"><x-icon name="login" size="18"/> Sign out</button>
+                </form>
+            @else
+                <a class="icon-btn" href="/login"><x-icon name="login" size="18"/> Sign in</a>
+                <a class="icon-btn" href="/register"><x-icon name="register" size="18"/> Register</a>
+            @endauth
             <a class="icon-btn gold" href="{{ $publicBase }}/sell-on-neogiga"><x-icon name="sellers" size="18"/> Seller</a>
         </div>
     </div>

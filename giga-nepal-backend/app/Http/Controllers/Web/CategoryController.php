@@ -43,9 +43,16 @@ class CategoryController extends Controller
             ->orderBy('name')
             ->get();
 
+        $childIds = ProductCategory::where('parent_id', $category->id)->pluck('id');
+
         $products = Product::query()
             ->with(['images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1)])
-            ->where('category_id', $category->id)
+            ->where(function ($query) use ($category, $childIds) {
+                $query->where('category_id', $category->id);
+                if ($childIds->isNotEmpty()) {
+                    $query->orWhereIn('category_id', $childIds);
+                }
+            })
             ->published()
             ->latest('id')
             ->limit(24)
@@ -78,6 +85,9 @@ class CategoryController extends Controller
      */
     private function breadcrumb(ProductCategory $category): array
     {
+        // Eager-load full ancestor chain to avoid N+1 lazy loads (was up to 12 queries)
+        $category->loadMissing('parent.parent.parent.parent.parent.parent.parent.parent.parent.parent.parent.parent');
+
         $chain = [];
         $node = $category;
         $guard = 0;
