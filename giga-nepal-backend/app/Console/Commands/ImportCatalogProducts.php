@@ -44,7 +44,7 @@ class ImportCatalogProducts extends Command
         while (($row = fgetcsv($handle)) !== false) {
             $bar->advance();
             try {
-                $data = array_combine($headers, $row);
+                $data = array_combine($headers, array_slice($row, 0, count($headers)) + array_fill(0, count($headers), ""));
                 if (empty($data['name'] ?? '')) continue;
                 $this->importRow($data, $source, $dryRun, $downloadImages);
             } catch (\Throwable $e) {
