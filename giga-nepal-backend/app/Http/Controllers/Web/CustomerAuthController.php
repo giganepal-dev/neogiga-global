@@ -44,7 +44,9 @@ class CustomerAuthController extends Controller
 
         // Role-based dashboard redirect
         $dashboard = '/en';
-        if (DB::table('vendors')->where('user_id', $user->id)->exists()) {
+        if (DB::table('distributors')->where('user_id', $user->id)->exists()) {
+            $dashboard = '/distributor';
+        } elseif (DB::table('vendors')->where('user_id', $user->id)->exists()) {
             $dashboard = '/seller';
         } elseif ($user->is_admin ?? false) {
             $dashboard = '/admin';
