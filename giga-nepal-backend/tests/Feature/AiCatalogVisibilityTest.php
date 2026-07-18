@@ -76,6 +76,23 @@ class AiCatalogVisibilityTest extends TestCase
         $this->getJson('/api/v1/ai-catalog/products/'.$draft->slug)->assertNotFound();
     }
 
+    public function test_exact_mpn_uses_the_canonical_identity_path(): void
+    {
+        $product = $this->product([
+            'name' => 'Exact Identity Product',
+            'slug' => 'exact-identity-product',
+            'sku' => 'NG-EXACT-001',
+            'mpn' => 'MCU 123',
+            'normalized_mpn' => 'MCU123',
+            'status' => 'active',
+        ]);
+
+        $this->getJson('/api/v1/ai-catalog/products/search?q=MCU123')
+            ->assertOk()
+            ->assertJsonPath('data.products.0.slug', $product->slug)
+            ->assertJsonPath('data.pagination.total', 1);
+    }
+
     private function product(array $attributes): Product
     {
         return Product::create(array_merge([

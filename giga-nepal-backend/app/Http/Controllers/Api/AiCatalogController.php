@@ -91,6 +91,12 @@ class AiCatalogController extends Controller
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:25'],
         ]);
 
+        $exactProducts = $this->exactIdentityMatches($validated['q'], (int) ($validated['per_page'] ?? 12));
+
+        if ($exactProducts->isNotEmpty()) {
+            return $this->searchResponse($exactProducts, $validated['q'], $request, false);
+        }
+
         $products = $this->baseQuery()
             ->tap(fn (Builder $query) => $this->catalogSearch->applyPublicFilters($query, [
                 'q' => $validated['q'],
@@ -102,20 +108,10 @@ class AiCatalogController extends Controller
             ->orderBy('name')
             ->paginate($validated['per_page'] ?? 12);
 
-        return $this->success([
-            'products' => $products->getCollection()
-                ->map(fn (Product $product) => $this->productSummary($product, $request))
-                ->values(),
-            'pagination' => [
-                'current_page' => $products->currentPage(),
-                'per_page' => $products->perPage(),
-                'total' => $products->total(),
-                'has_more_pages' => $products->hasMorePages(),
-            ],
-        ], meta: [
-            'query' => $validated['q'],
-            'marketplace' => $this->marketplacePayload($request),
-            'advisory_only' => true,
+        return $this->searchResponse($products->getCollection(), $validated['q'], $request, $products->hasMorePages(), [
+            'current_page' => $products->currentPage(),
+            'per_page' => $products->perPage(),
+            'total' => $products->total(),
         ]);
     }
 
@@ -163,6 +159,50 @@ class AiCatalogController extends Controller
         return Product::query()
             ->published()
             ->with(['brand:id,name,slug', 'manufacturer:id,name,slug', 'category:id,name,slug']);
+    }
+
+    /**
+     * MPN and NeoGiga SKU searches are the common agent path. Resolve them by
+     * their indexed canonical identities before using the broader text search.
+     */
+    private function exactIdentityMatches(string $query, int $perPage)
+    {
+        $normalizedMpn = strtoupper((string) preg_replace('/\s+/', '', trim($query)));
+
+        return $this->baseQuery()
+            ->where(function (Builder $identity) use ($query, $normalizedMpn) {
+                $identity->where('products.sku', $query)
+                    ->orWhere('products.mpn', $query);
+
+                if ($normalizedMpn !== '') {
+                    $identity->orWhere('products.normalized_mpn', $normalizedMpn);
+                }
+            })
+            ->orderByDesc('is_featured')
+            ->orderBy('name')
+            ->limit($perPage)
+            ->get();
+    }
+
+    private function searchResponse($products, string $query, Request $request, bool $hasMorePages, array $pagination = []): JsonResponse
+    {
+        $total = $pagination['total'] ?? $products->count();
+
+        return $this->success([
+            'products' => $products
+                ->map(fn (Product $product) => $this->productSummary($product, $request))
+                ->values(),
+            'pagination' => [
+                'current_page' => $pagination['current_page'] ?? 1,
+                'per_page' => $pagination['per_page'] ?? $products->count(),
+                'total' => $total,
+                'has_more_pages' => $hasMorePages,
+            ],
+        ], meta: [
+            'query' => $query,
+            'marketplace' => $this->marketplacePayload($request),
+            'advisory_only' => true,
+        ]);
     }
 
     private function productSummary(Product $product, Request $request): array
