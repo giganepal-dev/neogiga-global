@@ -431,6 +431,8 @@ Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout'
 Route::get('/logout', fn () => redirect('/login'))->name('logout.get');
 
 // Password reset pages (the reset email links to the named password.reset route)
+Route::get('/track-order', [\App\Http\Controllers\Web\OrderTrackingController::class, 'index'])->name('track.order');
+Route::post('/track-order', [\App\Http\Controllers\Web\OrderTrackingController::class, 'lookup'])->name('track.order.lookup');
 Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequest'])->name('password.request');
 Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:6,1')->name('password.email');
 Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
@@ -483,3 +485,13 @@ Route::get('/{prefix}', [MarketplaceLandingController::class, 'show'])
     ->whereIn('prefix', ['in', 'np', 'bd', 'lk', 'pk', 'bt', 'mv', 'ae', 'sa', 'qa', 'om', 'kw', 'us', 'ca', 'uk', 'de', 'fr', 'it', 'es', 'nl', 'au', 'nz', 'br', 'za', 'ke'])
     ->middleware(\App\Http\Middleware\CanonicalizeRegionalMarketplacePath::class)
     ->name('marketplace.landing');
+
+// Footer information pages (config-driven; see config/neogiga_pages.php)
+Route::view('/terms', 'frontend.pages.terms')->name('pages.terms');
+Route::view('/privacy', 'frontend.pages.privacy')->name('pages.privacy');
+Route::get('/{pageSlug}', function (string $pageSlug) {
+    $page = config('neogiga_pages.'.$pageSlug);
+    abort_unless(is_array($page), 404);
+
+    return view('frontend.pages.static', ['page' => $page]);
+})->where('pageSlug', 'about|contact|quality-assurance|how-to-order|shipping|returns|payment-terms|faq|cookie-notice')->name('pages.static');
