@@ -110,8 +110,8 @@ class ProductPageController extends Controller
             'q' => $q,
             'category' => $category,
             'filters' => compact('brandId', 'manufacturer', 'stock', 'countryId', 'datasheet', 'package', 'quality', 'sort'),
-            'facetGroups' => $catalogSearch->publicFacetGroups(compact('q')),
-            'indexedSummary' => $catalogSearch->indexedSummary(),
+            'facetGroups' => $hasFilters ? $catalogSearch->publicFacetGroups(compact('q')) : collect(),
+            'indexedSummary' => $hasFilters ? $catalogSearch->indexedSummary() : ['documents'=>0,'facets'=>0,'approved_documents'=>0],
             'rootCategories' => ProductCategory::whereNull('parent_id')
                 ->orderBy('sort_order')->orderBy('name')->limit(80)->get(),
             'brands' => DB::table('product_brands')->orderBy('name')->limit(120)->get(['id', 'name']),
