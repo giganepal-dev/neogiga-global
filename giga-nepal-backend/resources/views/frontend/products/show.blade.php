@@ -262,7 +262,6 @@
                     <form method="post" action="/cart/items" style="display:grid;grid-template-columns:86px 1fr;gap:8px">@csrf<input type="hidden" name="product_id" value="{{ $product->id }}"><input class="control" type="number" name="quantity" min="1" max="500" value="1" aria-label="Quantity"><button class="btn btn-ghost" type="submit"><x-icon name="cart" size="18"/> Add to Cart</button></form><a href="/en/compare?p={{ $product->slug }}" class="btn btn-ghost" style="margin-top:6px">Compare</a>
                     <a href="/en/bom" class="btn btn-ghost" style="margin-top:6px">Add to BOM</a>
                     <button type="button" class="btn btn-ghost" style="margin-top:6px" onclick="document.getElementById('chat-modal-{{ $product->id }}').style.display='flex'">Chat with Seller</button>
-                    <a class="btn btn-ghost" href="/sell-on-neogiga"><x-icon name="seller-chat" size="18"/> Chat with Seller Soon</a>
                 </div>
                 <p class="sub">B2B pricing, contract offers, regional warehouse stock and delivery dates are handled through RFQ until checkout is fully opened.</p>
                 <h3>Stock by warehouse</h3>
