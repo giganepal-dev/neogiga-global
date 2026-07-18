@@ -108,7 +108,7 @@ function addRfqLine() {
     var container = document.getElementById('rfq-lines');
     var line = document.createElement('div');
     line.className = 'rfq-line';
-    line.innerHTML = '<div class="rfq-field"><label>Part name *</label><input name="item_name[]" required maxlength="190" placeholder="Part name or description"></div><div class="rfq-field"><label>Qty *</label><input type="number" name="quantity[]" min="1" value="1" required></div><div class="rfq-field"><label>Target price</label><input type="number" name="target_price[]" min="0" step="0.01" placeholder="Opt"></div><button type="button" class="btn-remove" onclick="this.closest(\'.rfq-line\').remove()" title="Remove">&times;</button>';
+    line.innerHTML = '<div class="rfq-field"><label>Part name *</label><input name="item_name[]" required maxlength="190" placeholder="Part name or description"></div><div class="rfq-field"><label>Qty *</label><input type="number" name="quantity[]" min="1" value="1" required></div><div class="rfq-field"><label>Target price</label><input type="number" name="target_price[]" min="0" step="0.01" placeholder="Opt"></div><button type="button" class="btn-remove" onclick="this.parentElement.remove()" title="Remove">&times;</button>';
     container.appendChild(line);
 }
 </script>
