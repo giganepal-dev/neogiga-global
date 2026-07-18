@@ -207,6 +207,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M8 11h6M11 8v6" stroke-linecap="round"/></svg>
                 SEO
             </a>
+            <a href="/admin/pcb" class="{{ str_starts_with($r,'admin/pcb') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4" stroke-linejoin="round"/></svg>
+                PCB
+            </a>
             <span class="lbl">Catalog</span>
             <a href="/admin/categories" class="{{ str_starts_with($r,'admin/categories') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h12" stroke-linecap="round"/></svg>
