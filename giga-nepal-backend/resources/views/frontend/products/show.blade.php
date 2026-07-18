@@ -261,6 +261,7 @@
                     <a class="btn btn-gold" href="/ai-commerce?part={{ urlencode($product->mpn ?: $product->sku ?: $product->name) }}"><x-icon name="ai-search" size="18"/> Ask AI Engineer</a>
                     <form method="post" action="/cart/items" style="display:grid;grid-template-columns:86px 1fr;gap:8px">@csrf<input type="hidden" name="product_id" value="{{ $product->id }}"><input class="control" type="number" name="quantity" min="1" max="500" value="1" aria-label="Quantity"><button class="btn btn-ghost" type="submit"><x-icon name="cart" size="18"/> Add to Cart</button></form><a href="/en/compare?p={{ $product->slug }}" class="btn btn-ghost" style="margin-top:6px">Compare</a>
                     <a href="/en/bom" class="btn btn-ghost" style="margin-top:6px">Add to BOM</a>
+                    <button type="button" class="btn btn-ghost" style="margin-top:6px" onclick="document.getElementById('chat-modal-{{ $product->id }}').style.display='flex'">Chat with Seller</button>
                     <a class="btn btn-ghost" href="/sell-on-neogiga"><x-icon name="seller-chat" size="18"/> Chat with Seller Soon</a>
                 </div>
                 <p class="sub">B2B pricing, contract offers, regional warehouse stock and delivery dates are handled through RFQ until checkout is fully opened.</p>
@@ -364,3 +365,4 @@
 (function(){var main=document.getElementById('product-gallery-main-image'),zoom=document.getElementById('product-gallery-zoom');if(!main||!zoom)return;document.querySelectorAll('[data-gallery-src]').forEach(function(button){button.addEventListener('click',function(){document.querySelectorAll('[data-gallery-src]').forEach(function(item){item.classList.remove('active')});button.classList.add('active');main.src=button.dataset.gallerySrc;main.alt=button.dataset.galleryAlt;zoom.href=button.dataset.gallerySrc;zoom.setAttribute('aria-label','Open enlarged image: '+button.dataset.galleryAlt)})})})();
 </script>
 @endsection
+@include('components.chat-seller-modal', ['product' => $product])
