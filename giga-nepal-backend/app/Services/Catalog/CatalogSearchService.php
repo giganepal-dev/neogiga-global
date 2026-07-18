@@ -78,25 +78,26 @@ class CatalogSearchService
         }
 
         // ponytail: cache lock prevents thundering herd on cold start.
-        // Only one process computes facets; others wait or fall through.
-        $lock = Cache::lock('catalog:facets:lock', 15);
-        if ($lock->get()) {
-            try {
-                return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
-            } finally {
-                $lock->release();
+        // LockTimeoutException is caught — never crash a page for facets.
+        try {
+            $lock = Cache::lock('catalog:facets:lock', 15);
+            if ($lock->get()) {
+                try {
+                    return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
+                } finally {
+                    $lock->release();
+                }
             }
-        }
-
-        if ($lock->block(5)) {
-            try {
-                return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
-            } finally {
-                $lock->release();
+            if ($lock->block(5)) {
+                try {
+                    return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
+                } finally {
+                    $lock->release();
+                }
             }
+        } catch (\Illuminate\Contracts\Cache\LockTimeoutException) {
+            // Lock contention — skip facets gracefully.
         }
-
-        // Lock timed out — compute anyway rather than return nothing.
         return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
     }
 

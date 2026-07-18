@@ -35,7 +35,7 @@
                 <tbody>
                     @foreach ($brands as $brand)
                         <tr>
-                            <td><strong>{{ $brand->name }}</strong></td>
+                            <td><a href="/admin/brands/{{ $brand->id }}" style="color:var(--cyan);font-weight:600">{{ $brand->name }}</a></td>
                             <td class="mono" style="font-size:.78rem;color:var(--muted)">{{ $brand->slug }}</td>
                             <td>
                                 @if ($brand->website_url)

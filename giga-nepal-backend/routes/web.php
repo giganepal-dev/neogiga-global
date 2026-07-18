@@ -118,6 +118,8 @@ Route::prefix('admin')->group(function () {
         Route::get('products', [AdminDash::class, 'products']);
         Route::get('products/{id}', [AdminDash::class, 'product'])->whereNumber('id');
         Route::get('brands', [AdminDash::class, 'brands'])->name('admin.brands');
+        Route::get('brands/{id}', [AdminDash::class, 'brand'])->whereNumber('id')->name('admin.brand.edit');
+        Route::post('brands/{id}', [AdminDash::class, 'updateBrand'])->whereNumber('id')->name('admin.brand.update');
         Route::get('brand-logos', [AdminDash::class, 'brandLogos'])->name('admin.brand-logos');
         Route::get('imports/jlcpcb', [AdminDash::class, 'jlcpcbImports']);
         Route::get('imports/elecforest', [AdminElecforestImport::class, 'index']);

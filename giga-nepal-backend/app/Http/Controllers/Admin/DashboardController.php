@@ -396,6 +396,53 @@ class DashboardController extends Controller
         return view('admin.brands', ['brands' => $brands, 'q' => $q]);
     }
 
+    public function brand(int $id): View
+    {
+        $brand = DB::table('product_brands')->where('id', $id)->first();
+        abort_if(! $brand, 404);
+
+        $seo = is_string($brand->seo_meta) ? json_decode($brand->seo_meta, true) : ($brand->seo_meta ?: []);
+        $productCount = DB::table('products')->where('brand_id', $id)->count();
+
+        return view('admin.brand-detail', [
+            'b' => $brand,
+            'seo' => $seo,
+            'productCount' => $productCount,
+        ]);
+    }
+
+    public function updateBrand(Request $request, int $id): RedirectResponse
+    {
+        $brand = DB::table('product_brands')->where('id', $id)->first();
+        abort_if(! $brand, 404);
+
+        $data = [
+            'name' => $request->input('name'),
+            'description' => $request->input('description'),
+            'website_url' => $request->input('website_url'),
+            'is_active' => $request->boolean('is_active'),
+            'is_featured' => $request->boolean('is_featured'),
+            'is_menu_visible' => $request->boolean('is_menu_visible'),
+            'seo_meta' => json_encode([
+                'title' => $request->input('seo_title', ''),
+                'description' => $request->input('seo_description', ''),
+                'keywords' => $request->input('seo_keywords', ''),
+            ]),
+            'updated_at' => now(),
+        ];
+
+        if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
+            $data['logo_path'] = $request->file('logo')->store('brands', 'public');
+        }
+
+        DB::table('product_brands')->where('id', $id)->update($data);
+        Cache::forget('catalog:brand-version');
+        Cache::forever('catalog:brand-version', (string) now()->getTimestampMs());
+
+        return redirect()->route('admin.brand.edit', ['id' => $id])
+            ->with('status', 'Brand updated.');
+    }
+
     public function jlcpcbImports(Request $request): View
     {
         abort_unless(Schema::hasTable('catalog_product_sources'), 404);
