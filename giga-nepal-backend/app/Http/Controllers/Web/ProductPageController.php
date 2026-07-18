@@ -109,6 +109,7 @@ class ProductPageController extends Controller
             'products' => $products,
             'q' => $q,
             'category' => $category,
+            'catalogTotal' => $hasFilters ? null : ($catalogSearch->cachedPublicProductCount() ?? 0),
             'filters' => compact('brandId', 'manufacturer', 'stock', 'countryId', 'datasheet', 'package', 'quality', 'sort'),
             'facetGroups' => $hasFilters ? $catalogSearch->publicFacetGroups(compact('q')) : collect(),
             'indexedSummary' => $hasFilters ? $catalogSearch->indexedSummary() : ['documents'=>0,'facets'=>0,'approved_documents'=>0],
