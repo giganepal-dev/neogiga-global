@@ -200,7 +200,7 @@
                         <a class="badge b-muted" href="{{ $manufacturerUrl }}">Manufacturer: {{ $manufacturerName }}</a>
                     @endif
                     @if($product->mpn)
-                        <a class="badge b-muted" href="{{ $mpnUrl }}">MPN: {{ $product->mpn }}</a>
+                        <a class="badge b-muted" href="/mpn/{{ urlencode($product->mpn) }}">MPN: {{ $product->mpn }}</a>
                     @endif
                 </div>
                 @if($product->short_description || $product->description)<p>{{ strip_tags($product->short_description ?: \Illuminate\Support\Str::limit(strip_tags($product->description), 540)) }}</p>@endif
@@ -353,7 +353,7 @@
                 @php
                     $relatedImage = $r->images->first();
                 @endphp
-                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><x-product-image-badges :product="$r" /><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($relatedImage?->srcset()) srcset="{{ $relatedImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw" @endif alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">@if($r->mpn)<a href="/mpn/{{ urlencode($r->mpn) }}">{{ $r->mpn }}</a>@else<a href="{{ $publicBase }}/products?q={{ urlencode($r->sku) }}">{{ $r->sku }}</a>@endif</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
+                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><x-product-image-badges :product="$r" /><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($relatedImage?->srcset()) srcset="{{ $relatedImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw" @endif alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;background:#f4f6f9"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">@if($r->mpn)<a href="/mpn/{{ urlencode($r->mpn) }}">{{ $r->mpn }}</a>@else<a href="{{ $publicBase }}/products?q={{ urlencode($r->sku) }}">{{ $r->sku }}</a>@endif</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
             @empty
                 <div class="panel" style="padding:24px"><p class="sub">Related products are being indexed.</p></div>
             @endforelse
