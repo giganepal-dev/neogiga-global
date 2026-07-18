@@ -34,9 +34,9 @@ class CatalogSearchService
                             ->from('product_search_documents as psd')
                             ->whereColumn('psd.product_id', 'products.id')
                             ->where('psd.source_code', self::INDEXED_SOURCE)
-                            ->where(function ($doc) use ($like) {
-                                $doc->where('psd.searchable_text', $this->likeOperator(), $like)
-                                    ->orWhere('psd.title', $this->likeOperator(), $like)
+                            ->where(function ($doc) use ($like, $q) {
+                                $this->tsQueryWheres($doc, 'psd.searchable_text', $q);
+                                $doc->orWhere('psd.title', $this->likeOperator(), $like)
                                     ->orWhere('psd.sku', $this->likeOperator(), $like)
                                     ->orWhere('psd.mpn', $this->likeOperator(), $like)
                                     ->orWhere('psd.manufacturer', $this->likeOperator(), $like);
@@ -89,8 +89,7 @@ class CatalogSearchService
             ->where('pfv.source_code', self::INDEXED_SOURCE)
             ->whereIn('pfv.facet_name', ['manufacturer', 'category', 'stock', 'package', 'quality_band'])
             ->when($q !== '', function ($query) use ($q) {
-                $like = $this->likeTerm($q);
-                $query->where('psd.searchable_text', $this->likeOperator(), $like);
+                $this->tsQueryWheres($query, 'psd.searchable_text', $q);
             });
         app(ProductPublicationGate::class)->apply($query, 'p');
 
@@ -168,5 +167,25 @@ class CatalogSearchService
     private function likeTerm(string $term): string
     {
         return '%'.addcslashes($term, '%_\\').'%';
+    }
+
+    /**
+     * Full-text search using PostgreSQL tsvector when available.
+     * Falls back to ILIKE for SQLite and pre-migration states.
+     * ponytail: plainto_tsquery is safe for arbitrary user input.
+     */
+    private function tsQueryWheres($query, string $column, string $term): void
+    {
+        $isPgsql = DB::connection()->getDriverName() === 'pgsql';
+        $hasTsVector = $isPgsql && Schema::hasColumn('product_search_documents', 'search_vector');
+
+        if ($hasTsVector) {
+            $query->whereRaw(
+                "{$column} @@ plainto_tsquery('english', ?)",
+                [$term]
+            );
+        } else {
+            $query->where($column, $this->likeOperator(), $this->likeTerm($term));
+        }
     }
 }
