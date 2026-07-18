@@ -411,7 +411,7 @@ class DashboardController extends Controller
             'seo' => $seo,
             'seoTitle' => $seoGlobal['title'] ?? '',
             'seoDescription' => $seoGlobal['description'] ?? '',
-            'seoKeywords' => $seoGlobal['keywords'] ?? (is_array($seoGlobal['keywords'] ?? null) ? implode(', ', $seoGlobal['keywords']) : ''),
+            'seoKeywords' => is_array($seoGlobal['keywords'] ?? null) ? implode(', ', $seoGlobal['keywords']) : ($seoGlobal['keywords'] ?? ''),
             'productCount' => $productCount,
         ]);
     }
