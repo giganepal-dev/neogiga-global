@@ -64,7 +64,7 @@
                     <div class="rfq-field"><label>Part name / description *</label><input name="item_name" required maxlength="190" value="{{ old('item_name', $product->name ?? '') }}" placeholder="e.g. STM32F103C8T6 microcontroller"></div>
                     <div class="rfq-field"><label>Qty *</label><input type="number" name="quantity" min="1" value="{{ old('quantity', 1) }}" required></div>
                     <div class="rfq-field"><label>Target price</label><input type="number" name="target_price" min="0" step="0.01" value="{{ old('target_price') }}" placeholder="Opt"></div>
-                    <button type="button" class="btn-remove" onclick="var l=this.parentElement;if(document.querySelectorAll(''.rfq-line'').length>1)l.remove()" title="Remove">×</button>
+<button type="button" class="btn-remove" onclick="(function(l){if(document.querySelectorAll(".rfq-line").length>1)l.remove()})(this.parentElement)" title="Remove">×</button>
                 </div>
             </div>
 
