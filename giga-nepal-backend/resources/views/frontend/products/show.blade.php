@@ -200,7 +200,7 @@
                         <a class="badge b-muted" href="{{ $manufacturerUrl }}">Manufacturer: {{ $manufacturerName }}</a>
                     @endif
                     @if($product->mpn)
-                        <a class="badge b-muted" href="/mpn/{{ urlencode($product->mpn) }}">MPN: {{ $product->mpn }}</a>
+                        @if($product->mpn)<a class="badge b-muted" href="/mpn/{{ urlencode($product->mpn) }}">MPN: {{ $product->mpn }}</a>@endif
                     @endif
                 </div>
                 @if($product->short_description || $product->description)<p>{{ strip_tags($product->short_description ?: \Illuminate\Support\Str::limit(strip_tags($product->description), 540)) }}</p>@endif
