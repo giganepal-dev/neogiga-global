@@ -1,0 +1,10 @@
+837def35a1bfdf1155cd52a20a6e26215b1767e395768e8113576bebaf10b049  .codex-backups/2026-07-14-regional-platform-catalog-release/CHANGELOG.md
+e2c43622fa6a30a0616862623dfe5324e71d858d0333433a97abdc140be7d784  .codex-backups/2026-07-14-regional-platform-catalog-release/app/Http/Controllers/Admin/DashboardController.php
+d2e53c436eb43b3927875be2f5816c475c4280123d98cb92c0b597a238330ef2  .codex-backups/2026-07-14-regional-platform-catalog-release/app/Http/Controllers/Api/Admin/AdminConsoleController.php
+dc1b39d956388b7e250ec28f6a04776e92571f9b57e76c0741776a6415a7e969  .codex-backups/2026-07-14-regional-platform-catalog-release/app/Http/Controllers/Web/LandingController.php
+51ce87d68e998430e55c1e8e4416f240dbc24da27bf7655f86265f779a01cb7f  .codex-backups/2026-07-14-regional-platform-catalog-release/app/Services/Marketplace/GlobalMarketplaceContextService.php
+29edd5a49322800b85117fd42a301686dc8754dc4d73a2060bb2da58cf4e03b5  .codex-backups/2026-07-14-regional-platform-catalog-release/resources/views/admin/dashboard.blade.php
+b4bd58ffa0df0ec7889880815b0f8c70b07e863335a1377d09a1ed64f303da95  .codex-backups/2026-07-14-regional-platform-catalog-release/resources/views/admin/layout.blade.php
+b2113ea4afc3f1faf4526faecf42c89b4e6cec6cdd956b3cc2e3509ca0b32482  .codex-backups/2026-07-14-regional-platform-catalog-release/resources/views/frontend/layout.blade.php
+1e64fa0d53b5cb85642d4157bb36726e83cf9f456403a624eade1e9b3627b895  .codex-backups/2026-07-14-regional-platform-catalog-release/resources/views/landing.blade.php
+bcc5e943cc5c2e60faa89966e529fb063f314575968c88ac3e0801b6edea577b  .codex-backups/2026-07-14-regional-platform-catalog-release/routes/web.php

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="title desc">
+  <title id="title">NeoGiga electronic component placeholder</title>
+  <desc id="desc">A NeoGiga branded placeholder image for catalog products awaiting reviewed media.</desc>
+  <rect width="1200" height="900" fill="#f5f7fb"/>
+  <rect x="72" y="72" width="1056" height="756" rx="28" fill="#ffffff" stroke="#d7e2ef" stroke-width="4"/>
+  <rect x="272" y="210" width="656" height="420" rx="38" fill="#081527"/>
+  <rect x="340" y="278" width="520" height="284" rx="22" fill="#0d2240" stroke="#19d3f5" stroke-width="8"/>
+  <g stroke="#f5b928" stroke-width="12" stroke-linecap="round">
+    <path d="M272 318H164M272 390H164M272 462H164M272 534H164"/>
+    <path d="M928 318h108M928 390h108M928 462h108M928 534h108"/>
+  </g>
+  <path d="M452 512V330l296 246V330" fill="none" stroke="#19d3f5" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="600" y="710" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="700" fill="#081527">NeoGiga</text>
+  <text x="600" y="760" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="26" fill="#60758f">Component image pending review</text>
+</svg>

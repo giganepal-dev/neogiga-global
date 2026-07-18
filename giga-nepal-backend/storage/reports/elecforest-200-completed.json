@@ -1,0 +1,51 @@
+{
+    "runs": [
+        {
+            "id": "f5349aaf-4aa4-46a1-ada9-77d506bd1b7d",
+            "catalog_source_id": 5,
+            "mode": "queue",
+            "status": "completed",
+            "started_at": "2026-07-14 04:36:34",
+            "completed_at": "2026-07-14 04:36:42",
+            "pages_discovered": 0,
+            "pages_fetched": 0,
+            "pages_skipped": 0,
+            "products_discovered": 200,
+            "products_created": 180,
+            "products_updated": 0,
+            "products_unchanged": 20,
+            "products_rejected": 0,
+            "products_queued_for_review": 180,
+            "images_downloaded": 0,
+            "documents_downloaded": 0,
+            "warnings": null,
+            "failures": null,
+            "command_options": "{\"file\":null,\"limit\":200,\"start_line\":2,\"chunk\":100,\"dry_run\":false,\"sync\":false,\"queue\":true,\"only_new\":false,\"update_existing\":true,\"rewrite_content\":true,\"generate_seo\":true,\"download_images\":true,\"skip_images\":false,\"skip_prices\":false,\"skip_inventory\":true,\"publish_qualified\":false,\"draft_all\":true,\"country\":null,\"currency\":null,\"force\":false,\"run_id\":null}",
+            "actor_id": null,
+            "created_at": "2026-07-14 04:36:34",
+            "updated_at": "2026-07-14 04:36:42",
+            "source_file": "/Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/storage/app/imports/elecforest-products.jsonl",
+            "file_checksum": "14a04e1001d9d02e787150c33ff3c6970677ed0332b0448475fce6f44b26409c",
+            "last_line": 201,
+            "failed_records": 0,
+            "skipped_records": 0
+        }
+    ],
+    "validation": {
+        "source_records": 200,
+        "linked_products": 200,
+        "unlinked_source_records": 0,
+        "draft_products": 200,
+        "public_products": 0,
+        "seo_records": 200,
+        "content_versions": 200,
+        "source_offers": 200,
+        "active_images": 0,
+        "pending_media_assets": 200,
+        "warehouse_stock_rows": 0,
+        "marketplace_price_rows": 0,
+        "vendor_price_rows": 0,
+        "country_price_rows": 0,
+        "isolation_passed": true
+    }
+}

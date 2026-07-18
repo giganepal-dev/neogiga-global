@@ -1,0 +1,42 @@
+{
+    "run_id": "a82c5692-e1e9-48b5-8e23-2f0ee294abad",
+    "mode": "sync",
+    "status": "completed",
+    "counters": {
+        "created": 20,
+        "updated": 0,
+        "unchanged": 0,
+        "rejected": 0,
+        "skipped": 0
+    },
+    "run": {
+        "id": "a82c5692-e1e9-48b5-8e23-2f0ee294abad",
+        "catalog_source_id": 5,
+        "mode": "sync",
+        "status": "completed",
+        "started_at": "2026-07-14 04:29:46",
+        "completed_at": "2026-07-14 04:30:31",
+        "pages_discovered": 0,
+        "pages_fetched": 0,
+        "pages_skipped": 0,
+        "products_discovered": 20,
+        "products_created": 20,
+        "products_updated": 0,
+        "products_unchanged": 0,
+        "products_rejected": 0,
+        "products_queued_for_review": 20,
+        "images_downloaded": 0,
+        "documents_downloaded": 0,
+        "warnings": null,
+        "failures": null,
+        "command_options": "{\"file\":null,\"limit\":20,\"start_line\":2,\"chunk\":100,\"dry_run\":false,\"sync\":true,\"queue\":false,\"only_new\":false,\"update_existing\":true,\"rewrite_content\":true,\"generate_seo\":true,\"download_images\":true,\"skip_images\":false,\"skip_prices\":false,\"skip_inventory\":true,\"publish_qualified\":false,\"draft_all\":true,\"country\":null,\"currency\":null,\"force\":false,\"run_id\":null}",
+        "actor_id": null,
+        "created_at": "2026-07-14 04:29:46",
+        "updated_at": "2026-07-14 04:30:31",
+        "source_file": "/Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/storage/app/imports/elecforest-products.jsonl",
+        "file_checksum": "14a04e1001d9d02e787150c33ff3c6970677ed0332b0448475fce6f44b26409c",
+        "last_line": 21,
+        "failed_records": 0,
+        "skipped_records": 0
+    }
+}
