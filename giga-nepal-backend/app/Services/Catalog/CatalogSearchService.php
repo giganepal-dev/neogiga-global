@@ -188,4 +188,17 @@ class CatalogSearchService
             $query->where($column, $this->likeOperator(), $this->likeTerm($term));
         }
     }
+
+    /**
+     * Cached public product count for the products listing page.
+     * ponytail: 5-min cache, busted by page-cache-version bump.
+     */
+    public function cachedPublicProductCount(): int
+    {
+        return Cache::remember('catalog:public-product-count', 300, function () {
+            $query = DB::table('products as p');
+            app(ProductPublicationGate::class)->apply($query, 'p');
+            return $query->count('p.id');
+        });
+    }
 }
