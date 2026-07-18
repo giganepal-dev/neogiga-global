@@ -233,7 +233,7 @@
                 <div class="grid">
                     <a class="btn btn-primary" href="/rfq?product={{ $product->slug }}"><x-icon name="rfq" size="18"/> Request Bulk Quote</a>
                     <a class="btn btn-gold" href="/ai-commerce?part={{ urlencode($product->mpn ?: $product->sku ?: $product->name) }}"><x-icon name="ai-search" size="18"/> Ask AI Engineer</a>
-                    <form method="post" action="/cart/items" style="display:grid;grid-template-columns:86px 1fr;gap:8px">@csrf<input type="hidden" name="product_id" value="{{ $product->id }}"><input class="control" type="number" name="quantity" min="1" max="500" value="1" aria-label="Quantity"><button class="btn btn-ghost" type="submit"><x-icon name="cart" size="18"/> Add to Cart</button></form>
+                    <form method="post" action="/cart/items" style="display:grid;grid-template-columns:86px 1fr;gap:8px">@csrf<input type="hidden" name="product_id" value="{{ $product->id }}"><input class="control" type="number" name="quantity" min="1" max="500" value="1" aria-label="Quantity"><button class="btn btn-ghost" type="submit"><x-icon name="cart" size="18"/> Add to Cart</button></form><a href="/en/bom" class="btn btn-ghost" style="margin-top:6px"><x-icon name="plus" size="16"/> Add to BOM</a>
                     <a class="btn btn-ghost" href="/sell-on-neogiga"><x-icon name="seller-chat" size="18"/> Chat with Seller Soon</a>
                 </div>
                 <p class="sub">B2B pricing, contract offers, regional warehouse stock and delivery dates are handled through RFQ until checkout is fully opened.</p>
