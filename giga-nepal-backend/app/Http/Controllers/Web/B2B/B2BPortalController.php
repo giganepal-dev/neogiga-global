@@ -2,8 +2,11 @@
 namespace App\Http\Controllers\Web\B2B;
 use App\Http\Controllers\Controller;
 use App\Services\B2B\B2BContextService;
-use Illuminate\Http\RedirectResponse; use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; use Illuminate\Support\Facades\DB; use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class B2BPortalController extends Controller
 {
@@ -18,15 +21,12 @@ class B2BPortalController extends Controller
         return redirect()->intended('/b2b');
     }
     public function logout(Request $r): RedirectResponse { Auth::logout(); $r->session()->invalidate(); $r->session()->regenerateToken(); return redirect('/b2b/login'); }
-    public function dashboard(Request $r): View { return view('b2b.dashboard',['account'=>$r->attributes->get('b2b_account')]); }
-    public function orders(Request $r): View {
+    public function dashboard(Request $r): View
+    {
         $a = $r->attributes->get('b2b_account');
-        $orders = DB::table('orders')->where('b2b_account_id',$a->id)->orderByDesc('created_at')->paginate(20);
-        return view('b2b.orders',compact('a','orders'));
+        $stats = ['order_count'=>DB::table('orders')->where('b2b_account_id',$a->id)->count(),'rfq_count'=>DB::table('rfq_requests')->where('b2b_account_id',$a->id)->count(),'user_count'=>DB::table('b2b_account_users')->where('b2b_account_id',$a->id)->where('is_active',true)->count()];
+        return view('b2b.dashboard',compact('a','stats'));
     }
-    public function rfqs(Request $r): View {
-        $a = $r->attributes->get('b2b_account');
-        $rfqs = DB::table('rfq_requests')->where('b2b_account_id',$a->id)->orderByDesc('created_at')->paginate(20);
-        return view('b2b.rfqs',compact('a','rfqs'));
-    }
+    public function orders(Request $r): View { $a=$r->attributes->get('b2b_account'); $o=DB::table('orders')->where('b2b_account_id',$a->id)->orderByDesc('created_at')->paginate(20); return view('b2b.orders',compact('a','o')); }
+    public function rfqs(Request $r): View { $a=$r->attributes->get('b2b_account'); $rfqs=DB::table('rfq_requests')->where('b2b_account_id',$a->id)->orderByDesc('created_at')->paginate(20); return view('b2b.rfqs',compact('a','rfqs')); }
 }
