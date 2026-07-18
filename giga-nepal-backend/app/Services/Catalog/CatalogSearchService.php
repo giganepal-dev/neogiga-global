@@ -70,9 +70,34 @@ class CatalogSearchService
             return collect();
         }
 
-        return Cache::remember('catalog:facets:' . sha1(json_encode($filters)), 3600, function () use ($filters) {
-            return $this->computeFacetGroups($filters);
-        });
+        $cacheKey = 'catalog:facets:' . sha1(json_encode($filters));
+
+        // Fast path: cached result
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
+        // ponytail: cache lock prevents thundering herd on cold start.
+        // Only one process computes facets; others wait or fall through.
+        $lock = Cache::lock('catalog:facets:lock', 15);
+        if ($lock->get()) {
+            try {
+                return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
+            } finally {
+                $lock->release();
+            }
+        }
+
+        if ($lock->block(5)) {
+            try {
+                return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
+            } finally {
+                $lock->release();
+            }
+        }
+
+        // Lock timed out — compute anyway rather than return nothing.
+        return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
     }
 
     private function computeFacetGroups(array $filters): Collection
