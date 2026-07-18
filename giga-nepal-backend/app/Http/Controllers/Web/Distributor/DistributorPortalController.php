@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers\Web\Distributor;
-
 use App\Http\Controllers\Controller;
 use App\Services\Distributor\DistributorContextService;
 use App\Services\Distributor\DistributorDashboardService;
@@ -13,84 +11,67 @@ use Illuminate\View\View;
 
 class DistributorPortalController extends Controller
 {
-    public function showLogin(DistributorContextService $context): View|RedirectResponse
+    public function showLogin(DistributorContextService $c): View|RedirectResponse
     {
-        if (Auth::check()) {
-            $distributor = $context->distributorFor(Auth::user());
-            if ($distributor) {
-                return redirect('/distributor');
-            }
-        }
-
+        if (Auth::check() && $c->distributorFor(Auth::user())) return redirect('/distributor');
         return view('distributor.login');
     }
 
-    public function login(Request $request, DistributorContextService $context): RedirectResponse
+    public function login(Request $r, DistributorContextService $c): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email:rfc', 'max:190'],
-            'password' => ['required', 'string', 'max:120'],
-        ]);
-
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
-        }
-
-        $request->session()->regenerate();
-
-        if (! $context->distributorFor(Auth::user())) {
-            Auth::logout();
-            return back()->withErrors(['email' => 'No distributor account is linked to this login.']);
-        }
-
+        $r->validate(['email'=>'required|email|max:190','password'=>'required|string|max:120']);
+        if (!Auth::attempt($r->only('email','password'),$r->boolean('remember')))
+            return back()->withErrors(['email'=>'Invalid credentials.'])->onlyInput('email');
+        $r->session()->regenerate();
+        if (!$c->distributorFor(Auth::user())) { Auth::logout(); return back()->withErrors(['email'=>'No distributor account linked.']); }
         return redirect()->intended('/distributor');
     }
 
-    public function logout(Request $request): RedirectResponse
-    {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+    public function logout(Request $r): RedirectResponse { Auth::logout(); $r->session()->invalidate(); $r->session()->regenerateToken(); return redirect('/distributor/login'); }
 
-        return redirect('/distributor/login');
+    public function dashboard(Request $r, DistributorDashboardService $dashboard): View
+    {
+        $d = $r->attributes->get('distributor');
+        $stats = [
+            'product_count' => DB::table('products')->where('distributor_id', $d->id)->count(),
+            'order_count' => DB::table('orders')->where('distributor_id', $d->id)->count(),
+            'revenue' => DB::table('orders')->where('distributor_id', $d->id)->whereIn('status',['completed','shipped','delivered'])->sum('total') ?? 0,
+        ];
+        return view('distributor.dashboard', compact('d', 'stats'));
     }
 
-    public function dashboard(Request $request, DistributorDashboardService $dashboard): View
+    public function profile(Request $r): View
     {
-        $distributor = $request->attributes->get('distributor');
-        $overview = $dashboard->overview($distributor);
-
-        return view('distributor.dashboard', [
-            'distributor' => $distributor,
-            'overview' => $overview,
-        ]);
+        return view('distributor.profile', ['d' => $r->attributes->get('distributor')]);
     }
 
-    public function products(Request $request): View
+    public function updateProfile(Request $r): RedirectResponse
     {
-        $distributor = $request->attributes->get('distributor');
-        $products = DB::table('products')
-            ->where('distributor_id', $distributor->id)
-            ->orderByDesc('id')
-            ->paginate(20);
-
-        return view('distributor.products', [
-            'distributor' => $distributor,
-            'products' => $products,
+        $d = $r->attributes->get('distributor');
+        $meta = json_decode($d->metadata ?? '{}', true) ?: [];
+        $meta['website'] = $r->input('website', $meta['website'] ?? '');
+        $meta['description'] = $r->input('description', $meta['description'] ?? '');
+        DB::table('distributors')->where('id', $d->id)->update([
+            'name' => $r->input('name'), 'phone' => $r->input('phone'),
+            'country_id' => $r->input('country_id') ?: null,
+            'metadata' => json_encode($meta), 'updated_at' => now(),
         ]);
+        return back()->with('status', 'Profile updated.');
     }
 
-    public function orders(Request $request): View
+    public function products(Request $r): View
     {
-        $distributor = $request->attributes->get('distributor');
-        $orders = DB::table('orders')
-            ->where('distributor_id', $distributor->id)
-            ->orderByDesc('created_at')
-            ->paginate(20);
+        $d = $r->attributes->get('distributor');
+        $products = DB::table('products')->leftJoin('product_categories as c','c.id','=','products.category_id')
+            ->select('products.*','c.name as category_name')->where('distributor_id',$d->id)
+            ->orderByDesc('id')->paginate(20);
+        return view('distributor.products', compact('d','products'));
+    }
 
-        return view('distributor.orders', [
-            'distributor' => $distributor,
-            'orders' => $orders,
-        ]);
+    public function orders(Request $r): View
+    {
+        $d = $r->attributes->get('distributor');
+        $orders = DB::table('orders')->where('distributor_id',$d->id)->orderByDesc('created_at')->paginate(20);
+        return view('distributor.orders', compact('d','orders'));
     }
 }
