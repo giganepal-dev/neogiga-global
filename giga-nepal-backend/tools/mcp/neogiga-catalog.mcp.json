@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "neogiga-catalog": {
+      "command": "python3",
+      "args": ["tools/mcp/neogiga_catalog_mcp.py"],
+      "env": {
+        "NEOGIGA_CATALOG_API_BASE": "https://neogiga.com/api/v1/ai-catalog"
+      }
+    }
+  }
+}

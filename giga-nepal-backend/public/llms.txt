@@ -14,6 +14,11 @@ Regional editions (never geo-redirected):
 - [Sitemap](/sitemap.xml)
 - Catalog API (public, read-only, JSON): /api/v1/categories, /api/v1/brands,
   /api/v1/products, /api/v1/products/search?q=
+- AI catalog API (published products only): /api/v1/ai-catalog/manifest,
+  /api/v1/ai-catalog/marketplaces, /api/v1/ai-catalog/products/search?q=,
+  /api/v1/ai-catalog/products/{slug}
+- [Agent skill](/agent-skill.md): bounded catalog usage, citation, regional
+  context, and commercial-data rules for AI assistants.
 
 ## Domains covered
 Semiconductors, electronic components, embedded systems, IoT & wireless,
@@ -28,4 +33,6 @@ engineering tools, and related learning content.
 - Datasheet, tutorial, project and LMS answers should cite source pages, product
   records, lesson records, project templates or document chunks where available.
 - Commercial endpoints (cart/checkout/orders/admin) are not for crawling.
+- The AI catalog API is read-only and advisory only. Confirm commercial facts
+  from the selected live regional storefront before stating them.
 - Contact: hello@neogiga.com · @NeoGigaGlobal

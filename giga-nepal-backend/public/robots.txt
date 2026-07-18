@@ -17,6 +17,7 @@ Disallow: /reset-password
 # AI answer engines: welcome on knowledge content.
 User-agent: GPTBot
 Allow: /
+Allow: /api/v1/ai-catalog/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /api/v1/admin/
@@ -25,6 +26,7 @@ Disallow: /checkout
 
 User-agent: ClaudeBot
 Allow: /
+Allow: /api/v1/ai-catalog/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /api/v1/admin/
@@ -33,6 +35,7 @@ Disallow: /checkout
 
 User-agent: PerplexityBot
 Allow: /
+Allow: /api/v1/ai-catalog/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /api/v1/admin/
