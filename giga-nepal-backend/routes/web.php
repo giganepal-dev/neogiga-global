@@ -94,7 +94,7 @@ Route::prefix('seller')->group(function () {
     Route::post('login', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'login'])->middleware('throttle:6,1');
     Route::post('logout', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'logout']);
 
-    Route::middleware('seller.web')->group(function () {
+    Route::middleware(\App\Http\Middleware\EnsureSellerWeb::class)->group(function () {
         Route::get('/', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'dashboard']);
         Route::get('products', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'products']);
         Route::get('orders', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'orders']);
