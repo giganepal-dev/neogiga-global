@@ -7,6 +7,7 @@ const PAGES = [
   { path: '/cart', title: 'Cart' },
   { path: '/checkout', title: 'Checkout' },
   { path: '/en/rfq', title: 'RFQ' },
+  { path: '/en/bom', title: 'BOM' },
   { path: '/en/categories/raspberry-pi', title: 'Raspberry Pi' },
   { path: '/en/products', title: 'Products', slow: true },
   { path: '/en/brands', title: 'Brands' },
