@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class CustomerAuthController extends Controller
@@ -38,9 +39,18 @@ class CustomerAuthController extends Controller
         }
 
         $request->session()->regenerate();
-        $request->user()->forceFill(['last_login_at' => now()])->save();
+        $user = $request->user();
+        $user->forceFill(['last_login_at' => now()])->save();
 
-        return redirect()->intended('/en');
+        // Role-based dashboard redirect
+        $dashboard = '/en';
+        if (DB::table('vendors')->where('user_id', $user->id)->exists()) {
+            $dashboard = '/seller';
+        } elseif ($user->is_admin ?? false) {
+            $dashboard = '/admin';
+        }
+
+        return redirect()->intended($dashboard);
     }
 
     public function register(Request $request): RedirectResponse
