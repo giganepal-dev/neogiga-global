@@ -44,6 +44,8 @@ class PcbFileService
             'user_agent' => request()->userAgent(),
         ]);
 
+        if ($fileType === 'gerber') { \App\Jobs\Pcb\RunGerberAnalysis::dispatch($pcbFile, $user->id); }
+
         return $pcbFile;
     }
 }
