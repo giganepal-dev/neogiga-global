@@ -26,6 +26,9 @@ class CategoryController extends Controller
 
         $categories = ProductCategory::query()
             ->where('is_active', true)
+            ->when(! isset($validated['parent_id']), fn ($q) => $q
+                ->where('sort_order', '>', 0)
+                ->where('slug', '!=', 'uncategorized'))
             ->when(isset($validated['featured']), fn ($q) => $q->where('is_featured', (bool) $validated['featured']))
             ->when(isset($validated['parent_id']), fn ($q) => $q->where('parent_id', $validated['parent_id']))
             ->orderBy('sort_order')
@@ -40,11 +43,17 @@ class CategoryController extends Controller
      */
     public function tree(): JsonResponse
     {
-        $tree = Cache::remember('categories:tree', 1800, function () {
+        $tree = Cache::remember('categories:tree:public-v2', 1800, function () {
             return ProductCategory::query()
                 ->whereNull('parent_id')
                 ->where('is_active', true)
-                ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+                ->where('sort_order', '>', 0)
+                ->where('slug', '!=', 'uncategorized')
+                ->with(['children' => fn ($q) => $q
+                    ->where('is_active', true)
+                    ->where('name', 'not like', '%|%')
+                    ->orderBy('sort_order')
+                    ->orderBy('name')])
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get();

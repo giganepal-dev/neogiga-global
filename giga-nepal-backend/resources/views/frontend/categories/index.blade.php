@@ -1,6 +1,6 @@
 @extends('frontend.layout')
 @section('title','All Categories — NeoGiga Engineering Marketplace')
-@section('description','Browse '.number_format($total).' engineering categories: semiconductors, electronics, IoT, robotics, batteries, power, automation and tools.')
+@section('description','Browse NeoGiga engineering product families: semiconductors, electronics, IoT, robotics, batteries, power, automation and tools.')
 @php
     $activePrefix = strtolower((string) request()->segment(1));
     $activePrefix = array_key_exists($activePrefix, config('neogiga_global.prefixes', []))
@@ -40,7 +40,7 @@
 <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span><x-icon name="chevron-right" size="12"/></span><strong style="color:var(--soft)">Categories</strong></nav>
 
 <h1><x-icon name="categories" size="24"/> Browse by category</h1>
-<p class="lead">Explore {{ number_format($total) }} categories across the engineering supply chain — from silicon to finished robotics. Every branch links straight into the NeoGiga catalog.</p>
+<p class="lead">Explore {{ number_format($total) }} curated product families across the engineering supply chain, from silicon to finished robotics. Every branch links straight into the NeoGiga catalog.</p>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
     @foreach ($roots as $root)

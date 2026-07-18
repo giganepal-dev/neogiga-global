@@ -34,12 +34,20 @@ class CategoryController extends Controller
         $roots = ProductCategory::query()
             ->whereNull('parent_id')
             ->where('is_active', true)
-            ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')->orderBy('name')])
+            // Imported supplier path labels are retained for audit, but are not
+            // storefront roots. NeoGiga taxonomy roots always have a display order.
+            ->where('sort_order', '>', 0)
+            ->where('slug', '!=', 'uncategorized')
+            ->with(['children' => fn ($q) => $q
+                ->where('is_active', true)
+                ->where('name', 'not like', '%|%')
+                ->orderBy('sort_order')
+                ->orderBy('name')])
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
-        $total = ProductCategory::where('is_active', true)->count();
+        $total = $roots->count();
 
         return view('frontend.categories.index', compact('roots', 'total'));
     }
