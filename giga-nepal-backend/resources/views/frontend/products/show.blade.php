@@ -162,6 +162,10 @@
     $primaryImage = $galleryImages->firstWhere('is_primary', true) ?: $galleryImages->first();
     $primaryImageUrl = $primaryImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png');
     $primaryImageAlt = $primaryImage?->alt_text ?: $product->name.' product image';
+    $skuSearchUrl = $publicBase.'/products?q='.urlencode((string) $product->sku);
+    $mpnUrl = $product->mpn ? '/mpn/'.urlencode($product->mpn) : null;
+    $categoryUrl = $product->category ? $publicBase.'/categories/'.$product->category->slug : null;
+    $shownSpecificationKeys = collect();
 @endphp
 <section class="section" style="padding-top:18px">
     <div class="wrap">
@@ -170,6 +174,7 @@
             <section class="panel" style="padding:18px">
                 <div class="product-gallery">
                     <a id="product-gallery-zoom" class="product-gallery-main" href="{{ $primaryImageUrl }}" target="_blank" rel="noopener" aria-label="Open enlarged image of {{ $product->name }}">
+                        <x-product-image-badges :product="$product" />
                         <img id="product-gallery-main-image" class="{{ $primaryImage ? '' : 'product-gallery-placeholder' }}" src="{{ $primaryImageUrl }}" @if($primaryImage?->srcset()) srcset="{{ $primaryImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 60vw, 50vw" @endif alt="{{ $primaryImageAlt }}" width="1200" height="900" fetchpriority="high">
                     </a>
                     <div class="product-gallery-thumbs" aria-label="Product image gallery">
@@ -195,27 +200,38 @@
                         <a class="badge b-muted" href="{{ $manufacturerUrl }}">Manufacturer: {{ $manufacturerName }}</a>
                     @endif
                     @if($product->mpn)
-                        <a class="badge b-muted" href="/mpn/{{ urlencode($product->mpn) }}">MPN: {{ $product->mpn }}</a>
+                        <a class="badge b-muted" href="{{ $mpnUrl }}">MPN: {{ $product->mpn }}</a>
                     @endif
                 </div>
                 @if($product->short_description || $product->description)<p>{{ strip_tags($product->short_description ?: \Illuminate\Support\Str::limit(strip_tags($product->description), 540)) }}</p>@endif
                 <h2 style="font-size:1.2rem;margin-top:24px">Technical Specifications</h2>
                 <table class="spec-table">
+                    <tr class="spec-group"><th colspan="2">Product Identity</th></tr>
+                    @if($product->mpn)<tr><th>Manufacturer Part Number</th><td><a class="mono" href="{{ $mpnUrl }}">{{ $product->mpn }}</a></td></tr>@endif
+                    @if($product->sku)<tr><th>NeoGiga SKU</th><td><a class="mono" href="{{ $skuSearchUrl }}">{{ $product->sku }}</a></td></tr>@endif
+                    @if($product->brand)<tr><th>Brand</th><td><a href="{{ $brandUrl }}">{{ $product->brand->name }}</a></td></tr>@endif
+                    @if($manufacturerName)<tr><th>Manufacturer</th><td><a href="{{ $manufacturerUrl }}">{{ $manufacturerName }}</a></td></tr>@endif
+                    @if($product->category)<tr><th>Category</th><td><a href="{{ $categoryUrl }}">{{ $product->category->name }}</a></td></tr>@endif
                     @foreach($advancedSpecs->groupBy(fn($s) => $s->group_name ?: ($s->template_name ?: 'Advanced Specifications')) as $groupName => $rows)
                         <tr class="spec-group"><th colspan="2">{{ $groupName }}</th></tr>
                         @foreach($rows as $s)
+                            @php($shownSpecificationKeys->push(strtolower(preg_replace('/[^a-z0-9]+/i', '', $s->field_label) ?? $s->field_label)))
                             <tr><th>{{ $s->field_label }}</th><td>{{ $s->value }}{{ $s->unit_override ? ' '.$s->unit_override : ($s->unit ? ' '.$s->unit : '') }}</td></tr>
                         @endforeach
                     @endforeach
-                    @forelse($product->specs->sortBy('sort_order') as $s)
+                    @foreach($product->specs->sortBy('sort_order') as $s)
+                        @php($shownSpecificationKeys->push(strtolower(preg_replace('/[^a-z0-9]+/i', '', $s->name) ?? $s->name)))
                         <tr><th>{{ $s->name }}</th><td>{{ $s->value }}{{ $s->unit ? ' '.$s->unit : '' }}</td></tr>
-                    @empty
-                        @if($product->mpn)<tr><th>Manufacturer Part Number</th><td>{{ $product->mpn }}</td></tr>@endif
-                        @if($manufacturerName)<tr><th>Manufacturer</th><td><a href="{{ $manufacturerUrl }}">{{ $manufacturerName }}</a></td></tr>@endif
-                        @if($product->brand)<tr><th>Brand</th><td><a href="{{ $brandUrl }}">{{ $product->brand->name }}</a></td></tr>@endif
-                        @if($product->category)<tr><th>Category</th><td>{{ $product->category->name }}</td></tr>@endif
+                    @endforeach
+                    @php($sourceRows = ($sourceSpecs ?? collect())->reject(fn ($s) => $shownSpecificationKeys->contains(strtolower(preg_replace('/[^a-z0-9]+/i', '', $s['label']) ?? $s['label']))))
+                    @if($sourceRows->isNotEmpty())
+                        <tr class="spec-group"><th colspan="2">Source Technical Data</th></tr>
+                        @foreach($sourceRows as $s)
+                            <tr><th>{{ $s['label'] }}</th><td>@if($s['url'])<a href="{{ $s['url'] }}" target="_blank" rel="noopener">{{ $s['value'] }}</a>@else{{ $s['value'] }}@endif</td></tr>
+                        @endforeach
+                    @elseif($advancedSpecs->isEmpty() && $product->specs->isEmpty())
                         <tr><th>Datasheet</th><td>Available on request</td></tr>
-                    @endforelse
+                    @endif
                 </table>
             </section>
             <aside class="panel" style="padding:18px">
@@ -325,7 +341,7 @@
         <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
             @forelse($related as $r)
                 @php($relatedImage = $r->images->first())
-                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($relatedImage?->srcset()) srcset="{{ $relatedImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw" @endif alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
+                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><x-product-image-badges :product="$r" /><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($relatedImage?->srcset()) srcset="{{ $relatedImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw" @endif alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">@if($r->mpn)<a href="/mpn/{{ urlencode($r->mpn) }}">{{ $r->mpn }}</a>@else<a href="{{ $publicBase }}/products?q={{ urlencode($r->sku) }}">{{ $r->sku }}</a>@endif</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
             @empty
                 <div class="panel" style="padding:24px"><p class="sub">Related products are being indexed.</p></div>
             @endforelse

@@ -7,6 +7,7 @@ use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
 use App\Services\Catalog\CatalogSearchService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
+use App\Services\Product\ProductSpecificationResolver;
 use App\Services\Marketplace\MarketplaceSeoRenderer;
 use App\Services\Seo\CatalogSeoTemplateService;
 use Illuminate\Http\RedirectResponse;
@@ -170,6 +171,7 @@ class ProductPageController extends Controller
             'lmsLinks' => $this->productLmsLinks($product->id),
             'alternatives' => $this->alternatives($product->id),
             'advancedSpecs' => $this->advancedSpecs($product->id),
+            'sourceSpecs' => app(ProductSpecificationResolver::class)->sourceSpecifications($product),
             'reviewSummary' => $this->reviewSummary($product->id),
             'reviews' => $this->approvedReviews($product->id),
             'pageSeo' => $pageSeo,

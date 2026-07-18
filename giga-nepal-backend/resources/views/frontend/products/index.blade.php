@@ -52,7 +52,7 @@
     .facetbar a:hover{border-color:#06b6d4;color:#075985}
     .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:16px 0 32px}
     .pcard{border:1px solid rgba(15,23,42,.12);border-radius:12px;padding:18px;background:#fff;display:flex;flex-direction:column;gap:8px}
-    .pcard-media{display:block;aspect-ratio:4/3;margin:-6px -6px 4px;border-radius:9px;overflow:hidden;background:#081527}
+    .pcard-media{position:relative;display:block;aspect-ratio:4/3;margin:-6px -6px 4px;border-radius:9px;overflow:hidden;background:#081527}
     .pcard-media img{display:block;width:100%;height:100%;object-fit:contain}
     .pcard h2{font-size:1rem;margin:0;line-height:1.35}
     .pcard a{color:#0F172A;text-decoration:none}.pcard a:hover{color:#0369A1}
@@ -138,15 +138,19 @@
         <div class="pmeta">{{ number_format($products->total()) }} product(s)</div>
         <div class="pgrid">
             @foreach ($products as $p)
-                @php($cardImage = $p->images->first())
+                @php
+                    $cardImage = $p->images->first();
+                    $cardBrandUrl = $p->brand ? $publicBase.'/brand/'.$p->brand->slug : null;
+                    $cardCategoryUrl = $p->category ? $publicBase.'/categories/'.$p->category->slug : null;
+                @endphp
                 <div class="pcard">
-                    <a class="pcard-media" href="{{ $publicBase }}/products/{{ $p->slug }}"><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy"></a>
-                    @if($p->brand)<span class="ptag">{{ $p->brand->name }}</span>@endif
+                    <a class="pcard-media" href="{{ $publicBase }}/products/{{ $p->slug }}"><x-product-image-badges :product="$p" /><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy"></a>
+                    @if($p->brand)<a class="ptag" href="{{ $cardBrandUrl }}">{{ $p->brand->name }}</a>@endif
                     <h2><a href="{{ $publicBase }}/products/{{ $p->slug }}">{{ $p->name }}</a></h2>
                     <div class="pmeta">
-                        @if($p->mpn)MPN: <strong>{{ $p->mpn }}</strong> · @endif
-                        SKU: {{ $p->sku ?? '—' }}
-                        @if($p->category) · {{ $p->category->name }}@endif
+                        @if($p->mpn)MPN: <a class="mono" href="/mpn/{{ urlencode($p->mpn) }}">{{ $p->mpn }}</a> · @endif
+                        @if($p->sku)SKU: <a class="mono" href="{{ $publicBase }}/products?q={{ urlencode($p->sku) }}">{{ $p->sku }}</a>@endif
+                        @if($p->category) · <a href="{{ $cardCategoryUrl }}">{{ $p->category->name }}</a>@endif
                     </div>
                     @if($p->track_inventory)
                         <span class="pstock {{ $p->stock_quantity > 0 ? 'in' : 'out' }}">{{ $p->stock_quantity > 0 ? 'In stock' : 'Out of stock' }}</span>

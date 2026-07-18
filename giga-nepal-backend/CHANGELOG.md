@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-18 - Product Discovery and Taxonomy Governance Upgrade
+
+- Added source-backed technical-specification presentation without rewriting curated product specifications, plus clickable NeoGiga SKU, MPN, brand, manufacturer and category identities on public product pages.
+- Added deterministic product-image status overlays. Genuine, source-verified, low-stock, featured and selling-fast labels require existing verification, inventory or commerce metadata; no status is inferred from marketing copy.
+- Added the dry-run-first `catalog:normalize-taxonomy` command. It assigns only explicit, high-confidence JLC source category matches to the existing NeoGiga taxonomy and retains incomplete source records in review.
+
 ## 2026-07-18 - Public AI Catalog and MCP Discovery Contract
 
 - Added a bounded, read-only `/api/v1/ai-catalog` contract for marketplace-aware catalog discovery, including a manifest, visible marketplace index, qualified product search, and qualified product detail responses.

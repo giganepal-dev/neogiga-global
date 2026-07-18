@@ -95,6 +95,7 @@
                     @endphp
                     <article class="product-card home-product-card">
                         <a class="product-img" href="{{ $publicBase }}/products/{{ $product->slug }}">
+                            <x-product-image-badges :product="$product" />
                             <img src="{{ $image?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $image?->alt_text ?: $product->name.' product image' }}" width="480" height="360" loading="lazy">
                         </a>
                         <div class="product-copy">
