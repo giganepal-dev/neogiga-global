@@ -6,6 +6,7 @@
 - Routed every AI catalog product query through the established publication gate, excluding drafts, unapproved imports, and operational data. The responses intentionally omit live prices, stock, customer, cart, order, RFQ, admin, and supplier-private fields.
 - Added public `agent-skill.md`, implementation documentation, and a dependency-free stdio MCP connector with four read-only catalog tools for global or regional NeoGiga hosts.
 - Updated `llms.txt` and the AI-crawler robots policy to discover the bounded API while keeping the rest of `/api/` non-crawlable.
+- Added an exact NeoGiga SKU and normalized-MPN lookup fast path ahead of the broad catalog search, keeping agent part-number lookups on indexed canonical identities.
 
 ## 2026-07-16 - JLCPCB Missing-Only Continuation
 
