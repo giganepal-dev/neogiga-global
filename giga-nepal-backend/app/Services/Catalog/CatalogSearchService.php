@@ -29,7 +29,7 @@ class CatalogSearchService
                     ->orWhere('products.manufacturer_name', $this->likeOperator(), $like);
 
                 if ($this->hasSearchTables()) {
-                    $inner->orWhereExists(function ($sub) use ($like) {
+                    $inner->orWhereExists(function ($sub) use ($like, $q) {
                         $sub->selectRaw('1')
                             ->from('product_search_documents as psd')
                             ->whereColumn('psd.product_id', 'products.id')
