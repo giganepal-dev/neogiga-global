@@ -7,6 +7,8 @@ use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Seo\CatalogSeoTemplateService;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -14,6 +16,19 @@ use Illuminate\View\View;
 
 class CategoryController extends Controller
 {
+    /** Allowed sort values mapped to DB columns/expressions */
+    private const SORT_MAP = [
+        'newest'        => ['products.created_at', 'desc'],
+        'price_asc'     => ['marketplace_product_prices.base_price', 'asc'],
+        'price_desc'    => ['marketplace_product_prices.base_price', 'desc'],
+        'name_asc'      => ['products.name', 'asc'],
+        'name_desc'     => ['products.name', 'desc'],
+        'rating_desc'   => ['products.rating_avg', 'desc'],
+    ];
+
+    private const DEFAULT_SORT = 'newest';
+    private const PER_PAGE = 24;
+
     public function index(): View
     {
         $roots = ProductCategory::query()
@@ -31,11 +46,17 @@ class CategoryController extends Controller
 
     public function show(string $slug): View
     {
+        $request = request(); // Route passes slug first, Request via helper
+
         $category = ProductCategory::query()
             ->where('slug', $slug)
             ->where('is_active', true)
             ->firstOrFail();
 
+        // --- Resolve all descendant IDs recursively ---
+        $categoryIds = $category->idsIncludingSelfAndDescendants();
+
+        // --- Immediate children for subcategory nav ---
         $children = ProductCategory::query()
             ->where('parent_id', $category->id)
             ->where('is_active', true)
@@ -43,24 +64,75 @@ class CategoryController extends Controller
             ->orderBy('name')
             ->get();
 
-        $childIds = ProductCategory::where('parent_id', $category->id)->pluck('id');
+        // --- Sort ---
+        $sort = $request->query('sort', self::DEFAULT_SORT);
+        if (! array_key_exists($sort, self::SORT_MAP)) {
+            $sort = self::DEFAULT_SORT;
+        }
+        [$sortCol, $sortDir] = self::SORT_MAP[$sort];
 
-        $products = Product::query()
-            ->with(['images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1)])
-            ->where(function ($query) use ($category, $childIds) {
-                $query->where('category_id', $category->id);
-                if ($childIds->isNotEmpty()) {
-                    $query->orWhereIn('category_id', $childIds);
-                }
-            })
-            ->published()
-            ->latest('id')
-            ->limit(24)
+        // --- Base product query with regional price join ---
+        $productsQuery = Product::query()
+            ->with(['images' => fn ($q) => $q->where('is_active', true)
+                ->orderByDesc('is_primary')->orderBy('sort_order')->limit(1)])
+            ->with('category')
+            ->whereIn('products.category_id', $categoryIds)
+            ->published();
+
+        // --- Regional price join ---
+        $marketplace = app(GlobalMarketplaceContextService::class)->context($request)['current'] ?? null;
+        if ($marketplace) {
+            $productsQuery->leftJoin('marketplace_product_prices as price', function ($join) use ($marketplace) {
+                $join->on('price.product_id', '=', 'products.id')
+                    ->where('price.marketplace_id', '=', $marketplace->id);
+            });
+            $productsQuery->addSelect('products.*', DB::raw('COALESCE(price.base_price, NULL) as regional_price'));
+        } else {
+            $productsQuery->addSelect('products.*');
+        }
+
+        // --- Stock filter ---
+        $stock = $request->query('stock');
+        if ($stock === 'local') {
+            $productsQuery->whereHas('stocks', fn ($q) => $q->where('quantity_available', '>', 0));
+        } elseif ($stock === 'global') {
+            // no-op: show all (global inherently includes everything)
+        } elseif ($stock === 'out_of_stock') {
+            $productsQuery->whereDoesntHave('stocks', fn ($q) => $q->where('quantity_available', '>', 0));
+        }
+
+        // --- Apply sort ---
+        if ($sortCol === 'marketplace_product_prices.base_price' && $marketplace) {
+            $productsQuery->orderByRaw('COALESCE(price.base_price, 999999999) ' . $sortDir);
+        } elseif ($sortCol === 'products.rating_avg') {
+            $productsQuery->orderByRaw('COALESCE(products.rating_avg, 0) ' . $sortDir);
+        } else {
+            $productsQuery->orderBy($sortCol, $sortDir);
+        }
+
+        // --- Paginate ---
+        $page = max(1, (int) $request->query('page', 1));
+        $total = $productsQuery->count('products.id');
+        $products = $productsQuery
+            ->skip(($page - 1) * self::PER_PAGE)
+            ->take(self::PER_PAGE)
             ->get();
+
+        $paginator = new LengthAwarePaginator(
+            $products,
+            $total,
+            self::PER_PAGE,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()],
+        );
+
+        // --- Counts ---
+        $directCount = Product::query()->where('category_id', $category->id)->published()->count();
+        $inclusiveCount = $total; // Already counted above
 
         $breadcrumb = $this->breadcrumb($category);
         $relatedLessons = $this->relatedLessons($category);
-        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context(request());
+        $marketplaceContext = app(GlobalMarketplaceContextService::class)->context($request);
         $pageSeo = app(CatalogSeoTemplateService::class)->activeCategory(
             $category,
             $marketplaceContext['current'] ?? null,
@@ -68,15 +140,19 @@ class CategoryController extends Controller
         );
 
         return view('frontend.categories.show', [
-            'category' => $category,
-            'children' => $children,
-            'products' => $products,
-            'breadcrumb' => $breadcrumb,
-            'relatedLessons' => $relatedLessons,
-            'pageSeo' => $pageSeo,
-            'canonical' => $pageSeo['canonical'],
-            'robots' => $pageSeo['robots'],
-            'robotsReason' => $pageSeo['robots_reason'],
+            'category'         => $category,
+            'children'         => $children,
+            'products'         => $paginator,
+            'directCount'      => $directCount,
+            'inclusiveCount'   => $inclusiveCount,
+            'currentSort'      => $sort,
+            'currentStock'     => $stock,
+            'breadcrumb'       => $breadcrumb,
+            'relatedLessons'   => $relatedLessons,
+            'pageSeo'          => $pageSeo,
+            'canonical'        => $pageSeo['canonical'],
+            'robots'           => $pageSeo['robots'],
+            'robotsReason'     => $pageSeo['robots_reason'],
         ]);
     }
 
@@ -85,7 +161,6 @@ class CategoryController extends Controller
      */
     private function breadcrumb(ProductCategory $category): array
     {
-        // Eager-load full ancestor chain to avoid N+1 lazy loads (was up to 12 queries)
         $category->loadMissing('parent.parent.parent.parent.parent.parent.parent.parent.parent.parent.parent.parent');
 
         $chain = [];

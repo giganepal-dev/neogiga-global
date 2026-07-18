@@ -104,6 +104,7 @@ Route::prefix('admin')->group(function () {
         Route::get('categories/{id}', [AdminDash::class, 'category'])->whereNumber('id');
         Route::get('products', [AdminDash::class, 'products']);
         Route::get('products/{id}', [AdminDash::class, 'product'])->whereNumber('id');
+        Route::get('brand-logos', [AdminDash::class, 'brandLogos'])->name('admin.brand-logos');
         Route::get('imports/jlcpcb', [AdminDash::class, 'jlcpcbImports']);
         Route::get('imports/elecforest', [AdminElecforestImport::class, 'index']);
         Route::post('imports/elecforest/start', [AdminElecforestImport::class, 'start'])->middleware('throttle:4,1');

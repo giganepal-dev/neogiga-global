@@ -351,6 +351,28 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function brandLogos(): View
+    {
+        $brands = DB::table('product_brands')
+            ->leftJoin('products', 'product_brands.id', '=', 'products.brand_id')
+            ->select(
+                'product_brands.id',
+                'product_brands.name',
+                'product_brands.slug',
+                'product_brands.logo_url',
+                'product_brands.website_url',
+                'product_brands.logo_source',
+                'product_brands.logo_verified_at',
+                'product_brands.updated_at',
+                DB::raw('COUNT(DISTINCT products.id) as product_count')
+            )
+            ->groupBy('product_brands.id')
+            ->orderBy('product_brands.name')
+            ->paginate(50);
+
+        return view('admin.brand-logos', ['brands' => $brands]);
+    }
+
     public function jlcpcbImports(Request $request): View
     {
         abort_unless(Schema::hasTable('catalog_product_sources'), 404);
