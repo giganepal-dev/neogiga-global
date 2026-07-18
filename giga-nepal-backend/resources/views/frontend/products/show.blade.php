@@ -215,15 +215,25 @@
                     @foreach($advancedSpecs->groupBy(fn($s) => $s->group_name ?: ($s->template_name ?: 'Advanced Specifications')) as $groupName => $rows)
                         <tr class="spec-group"><th colspan="2">{{ $groupName }}</th></tr>
                         @foreach($rows as $s)
-                            @php($shownSpecificationKeys->push(strtolower(preg_replace('/[^a-z0-9]+/i', '', $s->field_label) ?? $s->field_label)))
+                            @php
+                                $shownSpecificationKeys->push(strtolower(preg_replace('/[^a-z0-9]+/i', '', $s->field_label) ?? $s->field_label));
+                            @endphp
                             <tr><th>{{ $s->field_label }}</th><td>{{ $s->value }}{{ $s->unit_override ? ' '.$s->unit_override : ($s->unit ? ' '.$s->unit : '') }}</td></tr>
                         @endforeach
                     @endforeach
                     @foreach($product->specs->sortBy('sort_order') as $s)
-                        @php($shownSpecificationKeys->push(strtolower(preg_replace('/[^a-z0-9]+/i', '', $s->name) ?? $s->name)))
+                        @php
+                            $shownSpecificationKeys->push(strtolower(preg_replace('/[^a-z0-9]+/i', '', $s->name) ?? $s->name));
+                        @endphp
                         <tr><th>{{ $s->name }}</th><td>{{ $s->value }}{{ $s->unit ? ' '.$s->unit : '' }}</td></tr>
                     @endforeach
-                    @php($sourceRows = ($sourceSpecs ?? collect())->reject(fn ($s) => $shownSpecificationKeys->contains(strtolower(preg_replace('/[^a-z0-9]+/i', '', $s['label']) ?? $s['label']))))
+                    @php
+                        $sourceRows = ($sourceSpecs ?? collect())->reject(
+                            fn ($s) => $shownSpecificationKeys->contains(
+                                strtolower(preg_replace('/[^a-z0-9]+/i', '', $s['label']) ?? $s['label'])
+                            )
+                        );
+                    @endphp
                     @if($sourceRows->isNotEmpty())
                         <tr class="spec-group"><th colspan="2">Source Technical Data</th></tr>
                         @foreach($sourceRows as $s)
@@ -340,7 +350,9 @@
         <div class="section-head"><div><p class="eyebrow">Related products</p><h2>Similar engineering parts</h2></div></div>
         <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
             @forelse($related as $r)
-                @php($relatedImage = $r->images->first())
+                @php
+                    $relatedImage = $r->images->first();
+                @endphp
                 <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><x-product-image-badges :product="$r" /><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($relatedImage?->srcset()) srcset="{{ $relatedImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw" @endif alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">@if($r->mpn)<a href="/mpn/{{ urlencode($r->mpn) }}">{{ $r->mpn }}</a>@else<a href="{{ $publicBase }}/products?q={{ urlencode($r->sku) }}">{{ $r->sku }}</a>@endif</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
             @empty
                 <div class="panel" style="padding:24px"><p class="sub">Related products are being indexed.</p></div>
