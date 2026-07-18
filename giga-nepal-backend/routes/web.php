@@ -101,6 +101,16 @@ Route::prefix('seller')->group(function () {
 });
 
 
+// Reseller web portal
+Route::prefix('reseller')->group(function () {
+    Route::get('login', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'showLogin'])->name('reseller.login');
+    Route::post('login', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('logout', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'logout']);
+    Route::get('/', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
+    Route::get('products', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'products'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
+    Route::get('orders', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'orders'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
+});
+
 // Distributor web portal
 Route::prefix('distributor')->group(function () {
     Route::get('login', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'showLogin'])->name('distributor.login');

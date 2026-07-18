@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureAdminTokenPermission;
 use App\Http\Middleware\EnsureAdminWeb;
 use App\Http\Middleware\EnsureAdminWebPermission;
 use App\Http\Middleware\EnsureDistributorWeb;
+use App\Http\Middleware\EnsureResellerWeb;
 use App\Http\Middleware\EnsureSellerWeb;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsurePermission;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.web.permission' => EnsureAdminWebPermission::class,
             'seller.web' => EnsureSellerWeb::class,
             'distributor.web' => EnsureDistributorWeb::class,
+            'reseller.web' => EnsureResellerWeb::class,
             'api.token' => AuthenticateApiToken::class,
             'permission' => EnsurePermission::class,
             'pcb.auth' => \App\Http\Middleware\EnsurePcbWebAuth::class,
