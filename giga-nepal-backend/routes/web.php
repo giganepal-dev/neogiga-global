@@ -120,6 +120,16 @@ Route::prefix('manufacturer')->group(function () {
     Route::get('products', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'products'])->middleware(\App\Http\Middleware\EnsureManufacturerWeb::class);
 });
 
+// B2B / Business Customer portal
+Route::prefix('b2b')->group(function () {
+    Route::get('login', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'showLogin'])->name('b2b.login');
+    Route::post('login', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('logout', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'logout']);
+    Route::get('/', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureB2BWeb::class);
+    Route::get('orders', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'orders'])->middleware(\App\Http\Middleware\EnsureB2BWeb::class);
+    Route::get('rfqs', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'rfqs'])->middleware(\App\Http\Middleware\EnsureB2BWeb::class);
+});
+
 // Distributor web portal
 Route::prefix('distributor')->group(function () {
     Route::get('login', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'showLogin'])->name('distributor.login');
