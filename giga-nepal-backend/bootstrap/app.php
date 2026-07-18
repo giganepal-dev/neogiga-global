@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureAdminToken;
 use App\Http\Middleware\EnsureAdminTokenPermission;
 use App\Http\Middleware\EnsureAdminWeb;
 use App\Http\Middleware\EnsureAdminWebPermission;
+use App\Http\Middleware\EnsureSellerWeb;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\ForceMarketplaceRecommendationRedirect;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.permission' => EnsureAdminTokenPermission::class,
             'admin.web' => EnsureAdminWeb::class,
             'admin.web.permission' => EnsureAdminWebPermission::class,
+            'seller.web' => EnsureSellerWeb::class,
             'api.token' => AuthenticateApiToken::class,
             'permission' => EnsurePermission::class,
             'pcb.auth' => \App\Http\Middleware\EnsurePcbWebAuth::class,

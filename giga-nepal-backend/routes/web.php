@@ -77,6 +77,7 @@ Route::get('/health', HealthController::class)->withoutMiddleware([
     ValidateCsrfToken::class,
 ]);
 
+// Email preference management
 Route::get('/email/unsubscribe/{token}', [EmailPreferenceController::class, 'unsubscribe'])
     ->middleware('throttle:60,1')->name('email.unsubscribe');
 Route::post('/email/unsubscribe/{token}', [EmailPreferenceController::class, 'confirmUnsubscribe'])
@@ -85,6 +86,20 @@ Route::get('/email/preferences/{token}', [EmailPreferenceController::class, 'pre
     ->middleware('throttle:60,1')->name('email.preferences');
 Route::patch('/email/preferences/{token}', [EmailPreferenceController::class, 'updatePreferences'])
     ->middleware('throttle:10,1')->name('email.preferences.update');
+
+// Seller web portal (session guard mirrors the admin console; vendor scope
+// enforced by seller.web / SellerContextService — sellers see only their data).
+Route::prefix('seller')->group(function () {
+    Route::get('login', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'showLogin'])->name('seller.login');
+    Route::post('login', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('logout', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'logout']);
+
+    Route::middleware('seller.web')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'dashboard']);
+        Route::get('products', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'products']);
+        Route::get('orders', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'orders']);
+    });
+});
 
 Route::prefix('admin')->group(function () {
     Route::get('login', [AdminAuth::class, 'showLogin'])->name('admin.login');
