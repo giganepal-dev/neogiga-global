@@ -64,7 +64,7 @@
                     <div class="rfq-field"><label>Part name / description *</label><input name="item_name" required maxlength="190" value="{{ old('item_name', $product->name ?? '') }}" placeholder="e.g. STM32F103C8T6 microcontroller"></div>
                     <div class="rfq-field"><label>Qty *</label><input type="number" name="quantity" min="1" value="{{ old('quantity', 1) }}" required></div>
                     <div class="rfq-field"><label>Target price</label><input type="number" name="target_price" min="0" step="0.01" value="{{ old('target_price') }}" placeholder="Opt"></div>
-                    <button type="button" class="btn-remove" onclick="this.closest('.rfq-line').remove()" title="Remove">×</button>
+                    <button type="button" class="btn-remove" onclick="var l=this.parentElement;if(document.querySelectorAll(''.rfq-line'').length>1)l.remove()" title="Remove">×</button>
                 </div>
             </div>
 
@@ -105,11 +105,14 @@
 
 <script>
 function addRfqLine() {
-    var container = document.getElementById('rfq-lines');
-    var line = document.createElement('div');
-    line.className = 'rfq-line';
-    line.innerHTML = '<div class="rfq-field"><label>Part name *</label><input name="item_name[]" required maxlength="190" placeholder="Part name or description"></div><div class="rfq-field"><label>Qty *</label><input type="number" name="quantity[]" min="1" value="1" required></div><div class="rfq-field"><label>Target price</label><input type="number" name="target_price[]" min="0" step="0.01" placeholder="Opt"></div><button type="button" class="btn-remove" onclick="this.parentElement.remove()" title="Remove">&times;</button>';
-    container.appendChild(line);
+    var lines = document.getElementById('rfq-lines');
+    var first = lines.querySelector('.rfq-line');
+    var clone = first.cloneNode(true);
+    var inputs = clone.querySelectorAll('input');
+    inputs[0].value = '';
+    inputs[1].value = '1';
+    if(inputs[2]) inputs[2].value = '';
+    lines.appendChild(clone);
 }
 </script>
 @endsection
