@@ -8,6 +8,11 @@
 - Updated `llms.txt` and the AI-crawler robots policy to discover the bounded API while keeping the rest of `/api/` non-crawlable.
 - Added an exact NeoGiga SKU and normalized-MPN lookup fast path ahead of the broad catalog search, keeping agent part-number lookups on indexed canonical identities.
 
+## 2026-07-18 - Managed Catalog Markup Operation
+
+- Added a dry-run-first `pricing:managed-catalog-markup` command that applies an explicit markup to importer-managed catalog prices using the stored cost basis, creates only missing regional overlays, records regional price history, and preserves manual and seller prices.
+- The operation is backup- and plan-hash-gated for apply mode. It does not invent supplier costs, foreign-exchange rates, duty, tax, freight, or commercial source approval.
+
 ## 2026-07-16 - JLCPCB Missing-Only Continuation
 
 - Added a guarded JLCPCB ETL `--missing-only` mode for the existing canonical NeoGiga target. It scans an explicit keyset cursor range, reads existing source links in bounded batches, imports only absent source IDs, and preserves already linked products, prices, offers, specifications, media, SEO metadata, and review decisions.
