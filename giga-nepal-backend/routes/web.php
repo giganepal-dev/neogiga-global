@@ -96,7 +96,9 @@ Route::prefix('seller')->group(function () {
     Route::post('logout', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'logout']);
 
     Route::get('/', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
-    Route::get('products', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'products'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
+    Route::get('profile', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'profile'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
+    Route::post('profile', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'updateProfile'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
+    $0
     Route::get('orders', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'orders'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
 });
 
@@ -107,7 +109,9 @@ Route::prefix('reseller')->group(function () {
     Route::post('login', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'login'])->middleware('throttle:6,1');
     Route::post('logout', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'logout']);
     Route::get('/', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
-    Route::get('products', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'products'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
+    Route::get('profile', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'profile'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
+    Route::post('profile', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'updateProfile'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
+    $0
     Route::get('orders', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'orders'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
 });
 
@@ -117,7 +121,9 @@ Route::prefix('manufacturer')->group(function () {
     Route::post('login', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'login'])->middleware('throttle:6,1');
     Route::post('logout', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'logout']);
     Route::get('/', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureManufacturerWeb::class);
-    Route::get('products', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'products'])->middleware(\App\Http\Middleware\EnsureManufacturerWeb::class);
+    Route::get('profile', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'profile'])->middleware(\App\Http\Middleware\EnsureManufacturerWeb::class);
+    Route::post('profile', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'updateProfile'])->middleware(\App\Http\Middleware\EnsureManufacturerWeb::class);
+    $0
 });
 
 // B2B / Business Customer portal
@@ -137,7 +143,9 @@ Route::prefix('distributor')->group(function () {
     Route::post('logout', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'logout']);
 
     Route::get('/', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureDistributorWeb::class);
-    Route::get('products', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'products'])->middleware(\App\Http\Middleware\EnsureDistributorWeb::class);
+    Route::get('profile', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'profile'])->middleware(\App\Http\Middleware\EnsureDistributorWeb::class);
+    Route::post('profile', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'updateProfile'])->middleware(\App\Http\Middleware\EnsureDistributorWeb::class);
+    $0
     Route::get('orders', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'orders'])->middleware(\App\Http\Middleware\EnsureDistributorWeb::class);
 });
 Route::prefix('admin')->group(function () {
