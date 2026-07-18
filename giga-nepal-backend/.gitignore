@@ -28,3 +28,5 @@ yarn-error.log
 /tools/jlcpcb_etl/output/*.jsonl
 !/tools/jlcpcb_etl/.env.example
 __pycache__/
+.codebase-memory/
+storage/reports/
