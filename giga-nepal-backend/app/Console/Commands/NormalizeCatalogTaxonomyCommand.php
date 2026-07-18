@@ -41,7 +41,9 @@ class NormalizeCatalogTaxonomyCommand extends Command
     {
         try {
             $plan = $this->plan((int) $this->option('limit'));
-            $this->line(json_encode($plan, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+            $displayPlan = $plan;
+            unset($displayPlan['assignments']);
+            $this->line(json_encode($displayPlan, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
 
             if (! $this->option('apply')) {
                 $this->info('Dry run only: no category or product row was changed.');
