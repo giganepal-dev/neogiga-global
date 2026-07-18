@@ -58,6 +58,7 @@
         'applicableCountry' => strtoupper($activePrefix === 'en' ? 'US' : $activePrefix),
         'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
         'merchantReturnDays' => 30,
+        'returnFees' => 'https://schema.org/FreeReturn',
         'returnMethod' => 'https://schema.org/ReturnByMail',
     ];
 
@@ -92,7 +93,7 @@
             'hasMerchantReturnPolicy' => $merchantReturnPolicy,
             'shippingDetails' => $shippingDetails,
         ];
-    } elseif (! $hasReviews) {
+    } else {
         $productSchema['offers'] = [
             '@type' => 'Offer',
             'url' => $productCanonical,
