@@ -170,7 +170,7 @@
             <section class="panel" style="padding:18px">
                 <div class="product-gallery">
                     <a id="product-gallery-zoom" class="product-gallery-main" href="{{ $primaryImageUrl }}" target="_blank" rel="noopener" aria-label="Open enlarged image of {{ $product->name }}">
-                        <img id="product-gallery-main-image" class="{{ $primaryImage ? '' : 'product-gallery-placeholder' }}" src="{{ $primaryImageUrl }}" alt="{{ $primaryImageAlt }}" width="1200" height="900" fetchpriority="high">
+                        <img id="product-gallery-main-image" class="{{ $primaryImage ? '' : 'product-gallery-placeholder' }}" src="{{ $primaryImageUrl }}" @if($primaryImage?->srcset()) srcset="{{ $primaryImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 60vw, 50vw" @endif alt="{{ $primaryImageAlt }}" width="1200" height="900" fetchpriority="high">
                     </a>
                     <div class="product-gallery-thumbs" aria-label="Product image gallery">
                         @forelse($galleryImages as $image)
@@ -324,7 +324,7 @@
         <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
             @forelse($related as $r)
                 @php($relatedImage = $r->images->first())
-                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
+                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($relatedImage?->srcset()) srcset="{{ $relatedImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw" @endif alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
             @empty
                 <div class="panel" style="padding:24px"><p class="sub">Related products are being indexed.</p></div>
             @endforelse

@@ -105,4 +105,26 @@ class ProductImage extends Model
             return asset('storage/'.ltrim($path, '/'));
         }
     }
+
+    /**
+     * Build a srcset string from pre-generated WebP derivatives.
+     * Returns empty string if no derivatives exist (ponytail: only Elecforest images have them).
+     */
+    public function srcset(): string
+    {
+        $derivatives = data_get($this->metadata, 'derivatives', []);
+        if (empty($derivatives)) {
+            return '';
+        }
+
+        $parts = [];
+        foreach ([160, 400, 800, 1200] as $w) {
+            $key = 'webp_' . $w;
+            if (isset($derivatives[$key])) {
+                $parts[] = asset('storage/' . ltrim($derivatives[$key], '/')) . ' ' . $w . 'w';
+            }
+        }
+
+        return implode(', ', $parts);
+    }
 }
