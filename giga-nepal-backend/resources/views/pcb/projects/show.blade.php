@@ -66,6 +66,7 @@
                 <!-- Gerber Analysis -->
                 @foreach($project->gerberAnalysisRuns as $run)
                     @include('pcb.partials.gerber-analysis', ['run' => $run])
+                @include('pcb.partials.gerber-viewer')
                 @endforeach
 
                 <!-- Component Sourcing -->
