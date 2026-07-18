@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-18 - Public AI Catalog and MCP Discovery Contract
+
+- Added a bounded, read-only `/api/v1/ai-catalog` contract for marketplace-aware catalog discovery, including a manifest, visible marketplace index, qualified product search, and qualified product detail responses.
+- Routed every AI catalog product query through the established publication gate, excluding drafts, unapproved imports, and operational data. The responses intentionally omit live prices, stock, customer, cart, order, RFQ, admin, and supplier-private fields.
+- Added public `agent-skill.md`, implementation documentation, and a dependency-free stdio MCP connector with four read-only catalog tools for global or regional NeoGiga hosts.
+- Updated `llms.txt` and the AI-crawler robots policy to discover the bounded API while keeping the rest of `/api/` non-crawlable.
+- Added an exact NeoGiga SKU and normalized-MPN lookup fast path ahead of the broad catalog search, keeping agent part-number lookups on indexed canonical identities.
+
 ## 2026-07-16 - JLCPCB Missing-Only Continuation
 
 - Added a guarded JLCPCB ETL `--missing-only` mode for the existing canonical NeoGiga target. It scans an explicit keyset cursor range, reads existing source links in bounded batches, imports only absent source IDs, and preserves already linked products, prices, offers, specifications, media, SEO metadata, and review decisions.

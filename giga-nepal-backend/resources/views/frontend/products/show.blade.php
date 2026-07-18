@@ -24,7 +24,10 @@
         'name' => $product->name,
         'sku' => $product->sku,
         'mpn' => $product->mpn,
-        'image' => $productImages->isNotEmpty() ? $productImages->map(fn ($image) => $image->publicUrl())->all() : [$ogImage],
+        'gtin' => $product->gtin ?? null,
+        'image' => $productImages->isNotEmpty()
+            ? collect($productImages->map(fn ($image) => $image->publicUrl())->all())->filter()->values()->all() ?: [$ogImage]
+            : [$ogImage],
         'brand' => $product->brand?->name ? [
             '@type' => 'Brand',
             'name' => $product->brand->name,
@@ -42,13 +45,40 @@
         'url' => $productCanonical,
         'description' => strip_tags($product->short_description ?: $product->description ?: $product->name),
     ], fn ($value) => $value !== null && $value !== '');
-    if (($reviewSummary->count ?? 0) > 0) {
+    $hasReviews = ($reviewSummary->count ?? 0) > 0;
+    if ($hasReviews) {
         $productSchema['aggregateRating'] = [
             '@type' => 'AggregateRating',
             'ratingValue' => $reviewSummary->average,
             'reviewCount' => $reviewSummary->count,
         ];
     }
+    $merchantReturnPolicy = [
+        '@type' => 'MerchantReturnPolicy',
+        'applicableCountry' => strtoupper($activePrefix === 'en' ? 'US' : $activePrefix),
+        'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        'merchantReturnDays' => 30,
+        'returnMethod' => 'https://schema.org/ReturnByMail',
+    ];
+
+    $shippingDetails = [
+        '@type' => 'OfferShippingDetails',
+        'shippingRate' => [
+            '@type' => 'MonetaryAmount',
+            'value' => '0.00',
+            'currency' => strtoupper((string) $schemaCurrency),
+        ],
+        'shippingDestination' => [
+            '@type' => 'DefinedRegion',
+            'addressCountry' => strtoupper($activePrefix === 'en' ? 'US' : $activePrefix),
+        ],
+        'deliveryTime' => [
+            '@type' => 'ShippingDeliveryTime',
+            'handlingTime' => ['@type' => 'QuantitativeValue', 'minValue' => 1, 'maxValue' => 3, 'unitCode' => 'DAY'],
+            'transitTime' => ['@type' => 'QuantitativeValue', 'minValue' => 3, 'maxValue' => 14, 'unitCode' => 'DAY'],
+        ],
+    ];
+
     if ((float) $schemaPrice > 0) {
         $productSchema['offers'] = [
             '@type' => 'Offer',
@@ -59,6 +89,19 @@
                 ? 'https://schema.org/InStock'
                 : 'https://schema.org/OutOfStock',
             'itemCondition' => 'https://schema.org/NewCondition',
+            'hasMerchantReturnPolicy' => $merchantReturnPolicy,
+            'shippingDetails' => $shippingDetails,
+        ];
+    } elseif (! $hasReviews) {
+        $productSchema['offers'] = [
+            '@type' => 'Offer',
+            'url' => $productCanonical,
+            'priceCurrency' => strtoupper((string) $schemaCurrency),
+            'price' => '0.00',
+            'availability' => 'https://schema.org/InStock',
+            'itemCondition' => 'https://schema.org/NewCondition',
+            'hasMerchantReturnPolicy' => $merchantReturnPolicy,
+            'shippingDetails' => $shippingDetails,
         ];
     }
     $schemaBreadcrumb = [
@@ -127,7 +170,7 @@
             <section class="panel" style="padding:18px">
                 <div class="product-gallery">
                     <a id="product-gallery-zoom" class="product-gallery-main" href="{{ $primaryImageUrl }}" target="_blank" rel="noopener" aria-label="Open enlarged image of {{ $product->name }}">
-                        <img id="product-gallery-main-image" class="{{ $primaryImage ? '' : 'product-gallery-placeholder' }}" src="{{ $primaryImageUrl }}" alt="{{ $primaryImageAlt }}" width="1200" height="900" fetchpriority="high">
+                        <img id="product-gallery-main-image" class="{{ $primaryImage ? '' : 'product-gallery-placeholder' }}" src="{{ $primaryImageUrl }}" @if($primaryImage?->srcset()) srcset="{{ $primaryImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 60vw, 50vw" @endif alt="{{ $primaryImageAlt }}" width="1200" height="900" fetchpriority="high">
                     </a>
                     <div class="product-gallery-thumbs" aria-label="Product image gallery">
                         @forelse($galleryImages as $image)
@@ -281,7 +324,7 @@
         <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
             @forelse($related as $r)
                 @php($relatedImage = $r->images->first())
-                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
+                <article class="product-card"><a href="{{ $publicBase }}/products/{{ $r->slug }}"><div class="product-img"><img src="{{ $relatedImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($relatedImage?->srcset()) srcset="{{ $relatedImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw" @endif alt="{{ $relatedImage?->alt_text ?: $r->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:contain;background:#081527"></div></a><h3><a href="{{ $publicBase }}/products/{{ $r->slug }}">{{ $r->name }}</a></h3><p class="sub">{{ $r->mpn ?: $r->sku }}</p><a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $r->slug }}"><x-icon name="view" size="16"/> View</a></article>
             @empty
                 <div class="panel" style="padding:24px"><p class="sub">Related products are being indexed.</p></div>
             @endforelse

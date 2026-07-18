@@ -5,6 +5,7 @@ namespace App\Services\Catalog;
 use App\Services\Product\ProductPublicationGate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -28,14 +29,14 @@ class CatalogSearchService
                     ->orWhere('products.manufacturer_name', $this->likeOperator(), $like);
 
                 if ($this->hasSearchTables()) {
-                    $inner->orWhereExists(function ($sub) use ($like) {
+                    $inner->orWhereExists(function ($sub) use ($like, $q) {
                         $sub->selectRaw('1')
                             ->from('product_search_documents as psd')
                             ->whereColumn('psd.product_id', 'products.id')
                             ->where('psd.source_code', self::INDEXED_SOURCE)
-                            ->where(function ($doc) use ($like) {
-                                $doc->where('psd.searchable_text', $this->likeOperator(), $like)
-                                    ->orWhere('psd.title', $this->likeOperator(), $like)
+                            ->where(function ($doc) use ($like, $q) {
+                                $this->tsQueryWheres($doc, 'psd.searchable_text', $q);
+                                $doc->orWhere('psd.title', $this->likeOperator(), $like)
                                     ->orWhere('psd.sku', $this->likeOperator(), $like)
                                     ->orWhere('psd.mpn', $this->likeOperator(), $like)
                                     ->orWhere('psd.manufacturer', $this->likeOperator(), $like);
@@ -69,6 +70,39 @@ class CatalogSearchService
             return collect();
         }
 
+        $cacheKey = 'catalog:facets:' . sha1(json_encode($filters));
+
+        // Fast path: cached result
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
+        // ponytail: cache lock prevents thundering herd on cold start.
+        // Only one process computes facets; others wait or fall through.
+        $lock = Cache::lock('catalog:facets:lock', 15);
+        if ($lock->get()) {
+            try {
+                return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
+            } finally {
+                $lock->release();
+            }
+        }
+
+        if ($lock->block(5)) {
+            try {
+                return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
+            } finally {
+                $lock->release();
+            }
+        }
+
+        // Lock timed out — compute anyway rather than return nothing.
+        return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
+    }
+
+    private function computeFacetGroups(array $filters): Collection
+    {
+
         $q = trim((string) ($filters['q'] ?? ''));
 
         $query = DB::table('product_facet_values as pfv')
@@ -80,8 +114,7 @@ class CatalogSearchService
             ->where('pfv.source_code', self::INDEXED_SOURCE)
             ->whereIn('pfv.facet_name', ['manufacturer', 'category', 'stock', 'package', 'quality_band'])
             ->when($q !== '', function ($query) use ($q) {
-                $like = $this->likeTerm($q);
-                $query->where('psd.searchable_text', $this->likeOperator(), $like);
+                $this->tsQueryWheres($query, 'psd.searchable_text', $q);
             });
         app(ProductPublicationGate::class)->apply($query, 'p');
 
@@ -100,6 +133,14 @@ class CatalogSearchService
         if (! $this->hasSearchTables()) {
             return ['documents' => 0, 'facets' => 0, 'approved_documents' => 0];
         }
+
+        return Cache::remember('catalog:search-summary', 3600, function () {
+            return $this->computeIndexedSummary();
+        });
+    }
+
+    private function computeIndexedSummary(): array
+    {
 
         $documents = DB::table('product_search_documents as psd')
             ->join('products as p', 'p.id', '=', 'psd.product_id');
@@ -151,5 +192,38 @@ class CatalogSearchService
     private function likeTerm(string $term): string
     {
         return '%'.addcslashes($term, '%_\\').'%';
+    }
+
+    /**
+     * Full-text search using PostgreSQL tsvector when available.
+     * Falls back to ILIKE for SQLite and pre-migration states.
+     * ponytail: plainto_tsquery is safe for arbitrary user input.
+     */
+    private function tsQueryWheres($query, string $column, string $term): void
+    {
+        $isPgsql = DB::connection()->getDriverName() === 'pgsql';
+        $hasTsVector = $isPgsql && Schema::hasColumn('product_search_documents', 'search_vector');
+
+        if ($hasTsVector) {
+            $query->whereRaw(
+                "{$column} @@ plainto_tsquery('english', ?)",
+                [$term]
+            );
+        } else {
+            $query->where($column, $this->likeOperator(), $this->likeTerm($term));
+        }
+    }
+
+    /**
+     * Cached public product count for the products listing page.
+     * ponytail: 5-min cache, busted by page-cache-version bump.
+     */
+    public function cachedPublicProductCount(): int
+    {
+        return Cache::remember('catalog:public-product-count', 300, function () {
+            $query = DB::table('products as p');
+            app(ProductPublicationGate::class)->apply($query, 'p');
+            return $query->count('p.id');
+        });
     }
 }

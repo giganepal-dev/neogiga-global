@@ -92,10 +92,14 @@ class SellerDashboardService
         }
 
         $base = DB::table('vendor_payouts')->where('vendor_id', $vendor->id);
+        // Two vendor_payouts schemas exist (payments-abstraction: `amount`;
+        // phase-b: `net_amount`) — whichever migration ran first wins, so
+        // resolve the column instead of assuming phase-b.
+        $amountColumn = Schema::hasColumn('vendor_payouts', 'net_amount') ? 'net_amount' : 'amount';
 
         return [
-            'pending_payout' => (float) (clone $base)->whereIn('status', ['pending', 'approved'])->sum('net_amount'),
-            'paid_payout' => (float) (clone $base)->where('status', 'paid')->sum('net_amount'),
+            'pending_payout' => (float) (clone $base)->whereIn('status', ['pending', 'approved'])->sum($amountColumn),
+            'paid_payout' => (float) (clone $base)->where('status', 'paid')->sum($amountColumn),
             'payout_count' => (clone $base)->count(),
         ];
     }

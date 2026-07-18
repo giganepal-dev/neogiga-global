@@ -4,9 +4,17 @@ namespace App\Models\Marketplace;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 class MarketplaceProductPrice extends Model
 {
+    protected static function booted(): void
+    {
+        $bump = fn () => Cache::forever('catalog:page-cache-version', (string) now()->getTimestampMs());
+        static::saved($bump);
+        static::deleted($bump);
+    }
+
     protected $fillable = [
         'marketplace_id',
         'product_id',

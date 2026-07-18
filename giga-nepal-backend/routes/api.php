@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Inventory\InventoryController;
 use App\Http\Controllers\Api\Cart\CartController;
 use App\Http\Controllers\Api\Order\OrderController;
 use App\Http\Controllers\Api\AI\AiCommerceController;
+use App\Http\Controllers\Api\AiCatalogController;
 use App\Http\Controllers\Api\POS\PosController;
 use App\Http\Controllers\Api\LMS\LmsController;
 use App\Http\Controllers\Api\Admin\AdminConsoleController;
@@ -58,6 +59,16 @@ use App\Http\Controllers\Api\Onboarding\DistributorApplicationController as Publ
 */
 
 Route::prefix('v1')->group(function () {
+    // Public, read-only catalog contract for AI agents and MCP integrations.
+    // Product access remains constrained by ProductPublicationGate.
+    Route::prefix('ai-catalog')->middleware('throttle:30,1')->group(function () {
+        Route::get('/manifest', [AiCatalogController::class, 'manifest']);
+        Route::get('/marketplaces', [AiCatalogController::class, 'marketplaces']);
+        Route::get('/products/search', [AiCatalogController::class, 'search']);
+        Route::get('/products/{slug}', [AiCatalogController::class, 'show'])
+            ->where('slug', '[A-Za-z0-9][A-Za-z0-9._-]*');
+    });
+
     Route::post('/seller-applications', [SellerApplicationController::class, 'store'])->middleware('throttle:writes');
     Route::post('/distributor-applications', [PublicDistributorApplicationController::class, 'store'])->middleware('throttle:writes');
 
@@ -901,13 +912,14 @@ Route::prefix('v1/pcb')->middleware('api.token')->group(function () {
     Route::apiResource('projects', \App\Http\Controllers\Pcb\PcbProjectController::class);
     Route::get('projects/{project}/activity', [\App\Http\Controllers\Pcb\PcbProjectController::class, 'activity']);
     
-    // PCB Files (to be implemented)
-    // Route::post('projects/{project}/files', [PcbFileController::class, 'store']);
-    // Route::get('files/{file}/download', [PcbFileController::class, 'download']);
-    
-    // PCB Quotes (to be implemented)
-    // Route::post('projects/{project}/quote', [PcbQuoteController::class, 'create']);
-    // Route::get('quotes/{quote}', [PcbQuoteController::class, 'show']);
+    // PCB Files
+    Route::post('projects/{project}/files', [\App\Http\Controllers\Pcb\PcbFileController::class, 'store']);
+    Route::get('projects/{project}/files/{file}/download', [\App\Http\Controllers\Pcb\PcbFileController::class, 'download']);
+
+    // PCB Quotes
+    Route::post('projects/{project}/quote', [\App\Http\Controllers\Pcb\PcbQuoteController::class, 'store']);
+    Route::get('projects/{project}/quotes/{quote}', [\App\Http\Controllers\Pcb\PcbQuoteController::class, 'show']);
+    Route::post('projects/{project}/quotes/{quote}/approve', [\App\Http\Controllers\Pcb\PcbQuoteController::class, 'approve']);
 });
 
 // Public PCB endpoints (no auth required for initial quote)

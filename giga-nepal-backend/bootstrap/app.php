@@ -4,9 +4,11 @@ use App\Http\Middleware\EnsureAdminToken;
 use App\Http\Middleware\EnsureAdminTokenPermission;
 use App\Http\Middleware\EnsureAdminWeb;
 use App\Http\Middleware\EnsureAdminWebPermission;
+use App\Http\Middleware\EnsureSellerWeb;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\ForceMarketplaceRecommendationRedirect;
+use App\Http\Middleware\CachePublicPages;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,7 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Baseline security headers on every response (SEC-07).
+        // Full-page cache FIRST — skip entire Laravel stack for cached pages.
+        $middleware->prepend(CachePublicPages::class);
+
         $middleware->append(SecurityHeaders::class);
         $middleware->append(ForceMarketplaceRecommendationRedirect::class);
 
@@ -30,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.permission' => EnsureAdminTokenPermission::class,
             'admin.web' => EnsureAdminWeb::class,
             'admin.web.permission' => EnsureAdminWebPermission::class,
+            'seller.web' => EnsureSellerWeb::class,
             'api.token' => AuthenticateApiToken::class,
             'permission' => EnsurePermission::class,
             'pcb.auth' => \App\Http\Middleware\EnsurePcbWebAuth::class,

@@ -216,6 +216,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8" stroke-linejoin="round"/></svg>
                 Products
             </a>
+            <a href="/admin/brand-logos" class="{{ str_starts_with($r,'admin/brand-logos') ? 'active':'' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M21 15l-5-5L8.5 14l-2-2-3.5 4" stroke-linejoin="round"/></svg>
+                Brand Logos
+            </a>
             <a href="/admin/imports/jlcpcb" class="{{ str_starts_with($r,'admin/imports/jlcpcb') ? 'active':'' }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round"/></svg>
                 Import Review

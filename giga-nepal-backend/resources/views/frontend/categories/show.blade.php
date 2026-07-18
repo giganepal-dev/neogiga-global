@@ -11,6 +11,21 @@
         ? $activePrefix
         : config('neogiga_global.default_prefix', 'en');
     $publicBase = '/'.$activePrefix;
+
+    $sortOptions = [
+        'newest'      => 'Newest',
+        'price_asc'   => 'Price: Low → High',
+        'price_desc'  => 'Price: High → Low',
+        'name_asc'    => 'Name: A → Z',
+        'name_desc'   => 'Name: Z → A',
+        'rating_desc' => 'Top Rated',
+    ];
+    $stockOptions = [
+        ''             => 'All Stock',
+        'global'       => 'Global',
+        'local'        => 'Local Stock',
+        'out_of_stock' => 'Out of Stock',
+    ];
 @endphp
 @section('title', $metaTitle)
 @section('description', \Illuminate\Support\Str::limit(strip_tags($metaDesc), 158))
@@ -84,22 +99,52 @@
     </div>
 @endif
 
-<h2 style="font-size:1.05rem;margin:8px 0 12px;color:var(--soft)">Products in {{ $category->name }}</h2>
+{{-- Filter bar: stock tabs + sort dropdown --}}
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:8px 0 12px">
+    <div style="display:flex;align-items:center;gap:8px">
+        <h2 style="font-size:1.05rem;margin:0;color:var(--soft)">Products</h2>
+        <span class="badge b-info" style="font-size:.75rem">{{ number_format($inclusiveCount) }}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        {{-- Stock filter pills --}}
+        <div style="display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden">
+            @foreach ($stockOptions as $val => $label)
+                <a href="{{ request()->fullUrlWithQuery(['stock' => $val ?: null, 'page' => null]) }}"
+                   style="padding:6px 12px;font-size:.78rem;{{ ($currentStock ?? '') === $val ? 'background:var(--cyan);color:#000;font-weight:600' : 'color:var(--soft)' }}"
+                >{{ $label }}</a>
+            @endforeach
+        </div>
+        {{-- Sort dropdown --}}
+        <select class="control" onchange="location=this.value" style="font-size:.78rem;padding:6px 10px;background:rgba(13,34,64,.5);color:var(--soft);border:1px solid var(--line);border-radius:8px">
+            @foreach ($sortOptions as $val => $label)
+                <option value="{{ request()->fullUrlWithQuery(['sort' => $val, 'page' => null]) }}" @selected(($currentSort ?? 'newest') === $val)>{{ $label }}</option>
+            @endforeach
+        </select>
+    </div>
+</div>
+
 @if ($products->isEmpty())
     <div style="background:rgba(13,34,64,.5);border:1px solid var(--line);border-radius:var(--r);padding:40px 22px;text-align:center;color:var(--muted)">
         <x-icon name="products" size="40" style="opacity:.6;margin-bottom:8px;color:#5b7a99"/>
-        <h3 style="color:var(--soft);margin:0 0 4px">Catalog coming soon</h3>
-        <p style="margin:0 auto;max-width:44ch">Products for this category are being onboarded. Meanwhile, try the <a href="{{ $publicBase }}/#ai" style="color:var(--cyan)">AI BOM Builder</a> or <a href="{{ $publicBase }}/#vendors" style="color:var(--cyan)">list your products</a> as a vendor.</p>
+        <h3 style="color:var(--soft);margin:0 0 4px">No products match</h3>
+        <p style="margin:0 auto;max-width:44ch">No products found for the selected filters. Try adjusting stock or sort options.</p>
     </div>
 @else
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px">
         @foreach ($products as $p)
             @php($cardImage = $p->images->first())
             <article style="background:rgba(13,34,64,.55);border:1px solid var(--line);border-radius:var(--r);padding:16px">
-                <a href="{{ $publicBase }}/products/{{ $p->slug }}"><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy" style="display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#081527;border-radius:9px;margin-bottom:12px"><strong>{{ $p->name }}</strong></a>
+                <a href="{{ $publicBase }}/products/{{ $p->slug }}"><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($cardImage?->srcset()) srcset="{{ $cardImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw" @endif alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async" style="display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#081527;border-radius:9px;margin-bottom:12px"><strong>{{ $p->name }}</strong></a>
                 <div style="color:var(--muted);font-size:.82rem" class="mono">{{ $p->sku }}</div>
             </article>
         @endforeach
     </div>
+
+    {{-- Pagination --}}
+    @if ($products->hasPages())
+        <div style="display:flex;justify-content:center;margin-top:24px">
+            {{ $products->appends(request()->except('page'))->links() }}
+        </div>
+    @endif
 @endif
 @endsection

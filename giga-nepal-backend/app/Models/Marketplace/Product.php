@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Cache;
 
 class Product extends Model
 {
@@ -175,6 +176,13 @@ class Product extends Model
     public function seoMeta(): HasOne
     {
         return $this->hasOne(ProductSeoMeta::class);
+    }
+
+    protected static function booted(): void
+    {
+        $bump = fn () => Cache::forever('catalog:page-cache-version', (string) now()->getTimestampMs());
+        static::saved($bump);
+        static::deleted($bump);
     }
 
     public function scopePublished($query)

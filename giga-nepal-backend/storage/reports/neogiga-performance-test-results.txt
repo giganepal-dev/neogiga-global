@@ -1,0 +1,837 @@
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true
+
+   PASS  Tests\Feature\AdminWorkflowWiringTest
+  ✓ catalog and access controls use registered workflows                 3.94s  
+  ✓ inventory and pos controls expose existing mutation routes           0.03s  
+  ✓ admin shell links operational destinations and reports api scope     0.04s  
+
+   FAIL  Tests\Feature\BomImportFlowTest
+  ⨯ csv with header parses and matches by mpn                            0.05s  
+  ⨯ normalized mpn matches despite case and spaces                       0.03s  
+  ⨯ headerless paste uses positional fallback                            0.03s  
+  ⨯ ambiguous mpn needs review then manual override                      0.02s  
+  ⨯ manufacturer disambiguates duplicate mpn                             0.03s  
+  ⨯ convert to rfq creates request with all lines                        0.03s  
+  ⨯ imports are ownership scoped                                         0.03s  
+  ✓ empty content is rejected                                            0.02s  
+  ✓ parser maps qty alias and tab delimiter                              0.02s  
+
+   PASS  Tests\Feature\CatalogIdentitySeoTest
+  ✓ product links to brand and manufacturer identity pages               0.17s  
+
+   PASS  Tests\Feature\CatalogPublicationGateTest
+  ✓ published scope excludes product pending catalog source approval     0.04s  
+  ✓ public product service excludes product pending catalog source appr… 0.04s  
+  ✓ public product detail returns not found while catalog source is una… 0.05s  
+  ✓ product sitemap excludes product while catalog source is unapproved  0.06s  
+  ✓ virtual manufacturer sitemap uses the same import publication gate   0.06s  
+  ✓ approved product with approved source remains public and indexed     0.10s  
+  ✓ product and source approvals are independent required gates          0.05s  
+  ✓ public search inventory pos and review routes exclude pending impor… 0.10s  
+  ✓ existing manual product without source link keeps legacy publicatio… 0.07s  
+
+   PASS  Tests\Feature\CentralPricingEngineTest
+  ✓ latest rate returns newest fetch                                     0.03s  
+  ✓ record rejects non positive rate                                     0.02s  
+  ✓ fresh rate refuses stale rate                                        0.02s  
+  ✓ record from base currency updates currencies cache                   0.02s  
+  ✓ record from non base currency leaves cache alone                     0.02s  
+  ✓ calculate refuses without base cost                                  0.02s  
+  ✓ calculate refuses without fresh rate                                 0.02s  
+  ✓ calculate applies formula and logs                                   0.02s  
+  ✓ calculate applies import duty on customs value                       0.02s  
+  ✓ duty is zero without a matching rule                                 0.02s  
+  ✓ calculate in base currency needs no rate row                         0.02s  
+  ✓ apply creates price once and never overwrites                        0.03s  
+  ✓ refresh command records configured manual rates                      0.02s  
+  ✓ refresh command is noop with empty config                            0.02s  
+
+   FAIL  Tests\Feature\CommerceOpsSafetyTest
+  ✓ low stock refresh keeps alerts beyond the first chunk and resolves…  0.10s  
+  ⨯ pos refund serializes on sale and replays an idempotent request wit… 0.04s  
+  ✓ only super admin can manage permissions and toggle synchronizes jso… 0.04s  
+
+   PASS  Tests\Feature\CustomerCommunicationAuthorizationTest
+  ✓ web import and export require explicit permissions                   0.03s  
+  ✓ admin api campaign routes fail closed without campaign permission    0.02s  
+  ✓ renamed non spreadsheet upload is rejected                           0.08s  
+  ✓ settings api never returns secret like records                       0.02s  
+  ✓ customer api marketplace filter does not mix regional profiles       0.02s  
+  ✓ admin can save smtp configuration with encrypted credentials         0.04s  
+  ✓ admin can compose content and create campaign from the panel         0.03s  
+
+   PASS  Tests\Feature\CustomerCommunicationSafetyTest
+  ✓ unsubscribe requires confirmation and does not block transactional…  0.05s  
+  ✓ signed webhooks are idempotent and apply hard bounce and complaint…  0.02s  
+  ✓ webhook endpoint rejects invalid signatures                          0.02s  
+  ✓ campaign uses frozen country audience and cannot duplicate prepared… 0.02s  
+  ✓ campaign tests are allowlisted and invalid variables block delivery  0.02s  
+  ✓ marketing batches respect rate pause resume and provider message id… 0.05s  
+  ✓ newsletter uses frozen consent audience and marketing provider queu… 0.02s  
+  ✓ registration verification and password reset use transactional queu… 0.05s  
+
+   PASS  Tests\Feature\CustomerInvoiceImportTest
+  ✓ reference headers map and sri lanka row previews without writes      0.08s  
+  ✓ import is idempotent preserves provenance and never grants marketin… 0.05s  
+  ✓ invalid email and country conflict are reported and existing values… 0.03s  
+  ✓ resume keeps prior counts and spreadsheet exports escape formula pr… 0.03s  
+
+   WARN  Tests\Feature\DraftCatalogReleaseTest
+  ✓ dry run is read only and quarantines the template sku                0.07s  
+  ✓ apply uses exact margin verified media and fixed idempotent stock s… 0.05s  
+  ✓ apply requires all authorization gates and checksum tampering block… 0.05s  
+  - compatibility migration widens legacy review status without changin… 0.02s  
+
+   PASS  Tests\Feature\ElecforestImportTest
+  ✓ audit validates jsonl and normalizes invalid sku sentinel            0.02s  
+  ✓ dry run maps records without catalog or source writes                0.02s  
+  ✓ malformed line is recorded without stopping the stream               0.03s  
+  ✓ resume continues after the last processed line                       0.04s  
+  ✓ real import creates draft with provenance seo and isolated supplier… 0.03s  
+  ✓ rerun is idempotent for products source links offers and content ve… 0.03s  
+  ✓ duplicate supplier sku and same product name never merge records     0.03s  
+  ✓ numeric duplicate supplier skus are treated as ambiguous and never…  0.03s  
+  ✓ missing raw product url is recovered from source slug with audit pr… 0.03s  
+  ✓ unique supplier sku and exact source url match without name matchin… 0.04s  
+  ✓ verified manufacturer and mpn match has highest identity priority    0.02s  
+  ✓ category mapping is case and plural insensitive                      0.02s  
+  ✓ collection page is audited and rejected from canonical products      0.02s  
+  ✓ content rewrite removes unsafe html and supplier calls to action     0.03s  
+  ✓ queue mode dispatches bounded record jobs                            0.03s  
+  ✓ media importer rejects non allowlisted or private hosts before netw… 0.03s  
+  ✓ media importer ignores known shipping and payment assets before net… 0.03s  
+  ✓ media mime validation hash deduplication and failed retry queueing   0.05s  
+  ✓ database transaction rolls back partial product when source link co… 0.04s  
+  ✓ unverified records cannot publish and sitemap scope remains draft    0.03s  
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application redirects to canonical locale home                   0.03s  
+
+   PASS  Tests\Feature\GlobalCommerceMarketplaceTest
+  ✓ seeder creates all 25 marketplaces with unique prefixes              0.05s  
+  ✓ seeder is idempotent                                                 0.06s  
+  ✓ existing nepal and india become active with prefix                   0.05s  
+  ✓ new countries are seeded as preview and checkout disabled            0.05s  
+  ✓ all 25 prefixes resolve to a landing page                            0.40s  
+  ✓ preview marketplace landing shows coming soon not a storefront       0.07s  
+  ✓ active marketplace landing resolves                                  0.07s  
+  ✓ unknown prefix returns 404 not a redirect                            0.06s  
+  ✓ unsupported country leaves global routes unaffected                  0.05s  
+  ✓ no route collision with existing top level routes                    0.05s  
+  ✓ path prefix resolver only matches active marketplaces                0.05s  
+  ✓ context resolution order prefix beats cookie                         0.05s  
+  ✓ context resolution falls back to cookie preference without prefix    0.05s  
+  ✓ all editions includes preview marketplaces for the selector          0.05s  
+  ✓ force marketplace redirect is disabled by default                    0.05s  
+  ✓ force marketplace redirect sends india to regional homepage          0.06s  
+  ✓ force marketplace redirect skips crawlers                            0.05s  
+  ✓ force marketplace redirect respects user preference cookie           0.05s  
+
+   PASS  Tests\Feature\HostGuardTest
+  ✓ disabled by default allows any host                                  0.03s  
+  ✓ enabled allows configured host and www variant                       0.02s  
+  ✓ enabled blocks unknown host                                          0.02s  
+  ✓ enabled allows marketplace domain from db                            0.02s  
+
+   PASS  Tests\Feature\JlcpcbCatalogSeoGovernanceTest
+  ✓ dry run is deterministic and scopes missing and untouched rows only  0.11s  
+  ✓ apply requires confirmation and verified backup then preserves manu… 0.15s  
+  ✓ product plan uses a read only bounded manifest without returning pr… 0.07s  
+  ✓ same count product substitution invalidates the exact plan           0.12s  
+  ✓ competing product seo insert after plan verification is preserved a… 0.10s  
+  ✓ brand is locked and re evaluated after plan verification before tra… 0.10s  
+  ✓ category is locked and re evaluated after plan verification before…  0.10s  
+  ✓ product seo unique guard rejects a second row for the same product   0.04s  
+  ✓ product seo unique guard treats null product as the same scope       0.04s  
+  ✓ version unique guard treats null marketplace as the same scope       0.04s  
+
+   FAIL  Tests\Feature\JlcpcbCommerceEnrichmentTest
+  ⨯ dry run is read only and apply adds exact price and quote only over… 0.04s  
+  ⨯ replay is idempotent and low supplier stock is never inflated        0.03s  
+  ⨯ preexisting ambiguous manual and locked availability rows are never… 0.03s  
+  ✓ governance migration adopts only the complete prior generator signa… 0.02s  
+  ⨯ sub cent source cost keeps exact five percent formula at safe preci… 0.02s  
+  ⨯ command defaults to dry run and apply requires backup and plan hash  0.03s  
+
+   PASS  Tests\Feature\JlcpcbQualifiedPublicationTest
+  ✓ dry run is deterministic and reports each blocker without publishin… 0.11s  
+  ✓ apply publishes only the eligible row preserves manual visibility a… 0.14s  
+  ✓ apply requires yes exact plan hash and a verified untampered backup  0.17s  
+  ✓ apply cannot substitute a newly eligible product after the read onl… 0.09s  
+  ✓ apply rejects a planned fingerprint mutation before any publication… 0.08s  
+  ✓ apply rejects a tampered immutable dry run artifact                  0.08s  
+  ✓ apply locks and rechecks all source links when one is added after p… 0.09s  
+
+   PASS  Tests\Feature\JlcpcbSearchRebuildQueueTest
+  ✓ admin rebuild is dispatched to the long running catalog import queu… 0.04s  
+  ✓ failed callback records a terminal state for a timed out rebuild     0.02s  
+  ✓ rebuild uses bounded chunks and bulk replaces search documents and…  0.07s  
+
+   FAIL  Tests\Feature\MarketingJobsTest
+  ✓ scheduled analytics jobs write first party aggregates                0.02s  
+  ✓ abandoned cart job captures cart and queues reminder email           0.02s  
+  ⨯ segment regional sales and transactional email jobs run              0.02s  
+
+   PASS  Tests\Feature\MarketplaceAdminApiTest
+  ✓ admin routes are fail closed without token                           0.02s  
+  ✓ index lists marketplaces with token                                  0.02s  
+  ✓ generate domain previews then saves on confirm                       0.03s  
+  ✓ generate seo fills fields                                            0.02s  
+  ✓ validate launch reports blocking checklist                           0.02s  
+  ✓ enable is blocked by validation and disable requires reason          0.03s  
+  ✓ audit history returns entries                                        0.02s  
+  ✓ public active list excludes hidden                                   0.02s  
+  ✓ admin console settings write requires settings permission            0.02s  
+
+   FAIL  Tests\Feature\MarketplaceAdminUiTest
+  ✓ config page requires admin                                           0.03s  
+  ✓ editor loads for admin                                               0.03s  
+  ✓ general tab save persists and audits                                 0.03s  
+  ✓ generate seo fills title                                             0.03s  
+  ✓ disable requires reason                                              0.03s  
+  ✓ enable blocked by validation                                         0.02s  
+  ⨯ list search filters results                                          0.04s  
+  ✓ list missing seo filter                                              0.03s  
+  ✓ bulk set visible                                                     0.03s  
+  ✓ bulk generate default seo                                            0.03s  
+  ✓ bulk disable requires reason                                         0.02s  
+
+   PASS  Tests\Feature\MarketplaceDomainSeoTest
+  ✓ iso based domain generation                                          0.02s  
+  ✓ global stays on root domain                                          0.02s  
+  ✓ custom domain is preserved by seeder                                 0.03s  
+  ✓ duplicate domain rejection                                           0.02s  
+  ✓ hostname sanitization                                                0.02s  
+  ✓ invalid hosts rejected                                               0.02s  
+  ✓ seo default generation                                               0.02s  
+  ✓ inactive marketplace is noindex                                      0.02s  
+  ✓ manual seo override is preserved                                     0.02s  
+  ✓ regenerate only empty keeps existing content                         0.02s  
+  ✓ seeder is idempotent and audits                                      0.03s  
+
+   PASS  Tests\Feature\MarketplaceSeoRenderTest
+  ✓ no marketplace preserves legacy defaults                             0.02s  
+  ✓ active visible indexable marketplace is index follow                 0.02s  
+  ✓ marketplace home canonical is extended with the current catalog pat… 0.02s  
+  ✓ live host override wins until branded domain cutover and preserves…  0.02s  
+  ✓ dedicated regional canonical normalizes marketplace prefix aliases   0.02s  
+  ✓ non indexable marketplace is noindex                                 0.02s  
+  ✓ schema json is passed through                                        0.02s  
+  ✓ alignment seeder makes custom domains indexable only                 8.05s  
+
+   PASS  Tests\Feature\MarketplaceStatusTest
+  ✓ fresh preview marketplace fails validation                           0.03s  
+  ✓ enable is blocked when critical validation fails                     0.02s  
+  ✓ fully configured marketplace can be enabled                          0.02s  
+  ✓ super admin can force enable despite warnings                        0.02s  
+  ✓ disable requires a reason                                            0.02s  
+  ✓ disable turns off commerce and preserves data                        0.02s  
+
+   FAIL  Tests\Feature\Phase1AuthTest
+  ⨯ customer can register and use bearer token                           0.02s  
+  ⨯ customer can login and logout token                                  0.02s  
+
+   FAIL  Tests\Feature\Phase1CheckoutTest
+  ⨯ customer can add stocked product to cart and checkout pending order  0.02s  
+  ⨯ checkout rejects disabled or tampered payment method                 0.02s  
+
+   FAIL  Tests\Feature\Phase1PromoCheckoutTest
+  ⨯ coupon and gift card apply at checkout                               0.02s  
+
+   PASS  Tests\Feature\PricingRuleEngineTest
+  ✓ percentage markup                                                    0.03s  
+  ✓ fixed markup                                                         0.02s  
+  ✓ fixed selling price override                                         0.02s  
+  ✓ target margin is not markup                                          0.02s  
+  ✓ product scope beats category and global                              0.02s  
+  ✓ priority breaks ties within same scope                               0.02s  
+  ✓ stackable primaries compound                                         0.02s  
+  ✓ stop processing halts                                                0.02s  
+  ✓ minimum price modifier raises floor                                  0.02s  
+  ✓ price floor rule blocks below absolute minimum                       0.02s  
+  ✓ margin floor rule blocks thin margin                                 0.02s  
+  ✓ fixed amount in foreign currency is converted                        0.02s  
+  ✓ fixed foreign amount without rate is skipped not guessed             0.02s  
+  ✓ marketplace isolation                                                0.02s  
+  ✓ quantity tier gating                                                 0.02s  
+  ✓ draft and unapproved rules are ignored                               0.02s  
+  ✓ simulator never writes                                               0.02s  
+
+   PASS  Tests\Feature\ProductMediaBrandSeoUpgradeTest
+  ✓ permission gated media workflow preserves files and exposes active…  0.12s  
+  ✓ brand directory canonical route and empty brand state are public     0.08s  
+  ✓ approved seo patterns manual preservation dry run and rollback       0.03s  
+
+   PASS  Tests\Feature\RegionStockVisibilityTest
+  ✓ root redirects to canonical locale                                   0.02s  
+
+   PASS  Tests\Feature\RegionalPlatformHomepageTest
+  ✓ global nepal and india use one frontend with separate seo            0.11s  
+  ✓ regional hosts permanently redirect marketplace prefix aliases to t… 0.06s  
+  ✓ import generated product seo does not override nepal or india page…  0.08s  
+  ✓ genuinely manual product seo remains preserved on regional page      0.05s  
+
+   PASS  Tests\Feature\RfqSupportReviewsTest
+  ✓ public rfq form creates request items and history                    0.03s  
+  ✓ public rfq form validates required fields                            0.03s  
+  ✓ support ticket lifecycle create reply reopen handoff                 0.03s  
+  ✓ support tickets are ownership scoped                                 0.03s  
+  ✓ review submission is pending until moderated                         0.04s  
+  ✓ review requires auth and valid rating                                0.02s  
+
+   WARN  Tests\Feature\SellerApplicationApiTest
+  - public can submit seller application → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+  - application requires required fields → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+  - admin can view all applications → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+  - admin can view single application → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+  - admin can approve application → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+  - admin can reject application → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+  - admin can mark application under review → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+  - admin can view stats → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+  - unauthorized user cannot view applications → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+  - admin can filter applications by status → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+  - admin can search applications → Targets the unwired PR#2 duplicate module; live seller applications are served by Api\Onboarding.
+
+   PASS  Tests\Feature\SitemapSeoTest
+  ✓ root sitemap is a sharded sitemap index                              0.05s  
+  ✓ pages sitemap includes catalog hubs without fake last modified date… 0.04s  
+  ✓ unknown sitemap sections are not published                           0.03s  
+  ✓ catalog sitemaps cover brands manufacturers and nested categories    0.07s  
+  ✓ manufacturer sitemap merges public product identities without dupli… 0.04s  
+  ✓ new neogiga icon and placeholder assets exist                        0.02s  
+  ✓ categories without media use the global neogiga fallback             0.05s  
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\BomImportFlowTest > csv with header parses and matc…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/BomImportFlowTest.php:37
+     33▕             'name' => 'PSU rev A',
+     34▕             'content' => $csv,
+     35▕         ]);
+     36▕ 
+  ➜  37▕         $res->assertCreated();
+     38▕         $res->assertJsonPath('data.total_lines', 3);
+     39▕         $res->assertJsonPath('data.matched_lines', 2);
+     40▕         $res->assertJsonPath('data.unmatched_lines', 1);
+     41▕
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\BomImportFlowTest > normalized mpn matches despite…    
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/BomImportFlowTest.php:63
+     59▕             'name' => 'norm test',
+     60▕             'content' => "MPN,Qty\nstm32 f103 c8t6,5",
+     61▕         ]);
+     62▕ 
+  ➜  63▕         $res->assertCreated();
+     64▕         $res->assertJsonPath('data.matched_lines', 1);
+     65▕         $this->assertSame('exact', $res->json('data.lines.0.match_status'));
+     66▕     }
+     67▕
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\BomImportFlowTest > headerless paste uses positiona…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/BomImportFlowTest.php:78
+     74▕             'name' => 'headerless',
+     75▕             'content' => "LM358P,3\nSOME-OTHER-PART,1",
+     76▕         ]);
+     77▕ 
+  ➜  78▕         $res->assertCreated();
+     79▕         $res->assertJsonPath('data.total_lines', 2);
+     80▕         $this->assertSame('3.000', (string) $res->json('data.lines.0.quantity'));
+     81▕         $this->assertSame('exact', $res->json('data.lines.0.match_status'));
+     82▕     }
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\BomImportFlowTest > ambiguous mpn needs review then…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/BomImportFlowTest.php:94
+     90▕         $res = $this->withToken($token)->postJson('/api/v1/bom/imports', [
+     91▕             'name' => 'ambiguous',
+     92▕             'content' => "MPN,Quantity\nDUP-100,1", // no manufacturer -> cannot disambiguate
+     93▕         ]);
+  ➜  94▕         $res->assertCreated();
+     95▕         $importId = $res->json('data.id');
+     96▕         $line = $res->json('data.lines.0');
+     97▕ 
+     98▕         $this->assertSame('multiple', $line['match_status']);
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\BomImportFlowTest > manufacturer disambiguates dupl…   
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/BomImportFlowTest.php:126
+    122▕             'name' => 'mfr disambig',
+    123▕             'content' => "MPN,Manufacturer,Quantity\nDUP-200,Beta,1",
+    124▕         ]);
+    125▕ 
+  ➜ 126▕         $res->assertCreated();
+    127▕         $res->assertJsonPath('data.matched_lines', 1);
+    128▕         $line = $res->json('data.lines.0');
+    129▕         $this->assertSame('exact', $line['match_status']);
+    130▕         $this->assertSame(90, $line['match_confidence']);
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\BomImportFlowTest > convert to rfq creates request…    
+  Expected response status code [201] but received 422.
+Failed asserting that 422 is identical to 201.
+
+  at tests/Feature/BomImportFlowTest.php:142
+    138▕         $create = $this->withToken($token)->postJson('/api/v1/bom/imports', [
+    139▕             'name' => 'to rfq',
+    140▕             'content' => "MPN,Quantity\nRC0402FR-0710KL,10\nUNMATCHED-XYZ,4",
+    141▕         ]);
+  ➜ 142▕         $create->assertCreated();
+    143▕         $importId = $create->json('data.id');
+    144▕ 
+    145▕         $convert = $this->withToken($token)->postJson("/api/v1/bom/imports/{$importId}/convert-to-rfq", [
+    146▕             'company_name' => 'QA Labs',
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\BomImportFlowTest > imports are ownership scoped       
+  Expected response status code [404] but received 200.
+Failed asserting that 200 is identical to 404.
+
+  at tests/Feature/BomImportFlowTest.php:178
+    174▕             'name' => 'mine',
+    175▕             'content' => "MPN,Quantity\nABC-1,1",
+    176▕         ])->json('data.id');
+    177▕ 
+  ➜ 178▕         $this->withToken($otherToken)->getJson("/api/v1/bom/imports/{$importId}")->assertNotFound();
+    179▕         $this->withToken($ownerToken)->getJson("/api/v1/bom/imports/{$importId}")->assertOk();
+    180▕     }
+    181▕ 
+    182▕     public function test_empty_content_is_rejected(): void
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\CommerceOpsSafetyTest > pos refund serializes on sa…   
+  Failed asserting that 30 is identical to '30.0000'.
+
+  at tests/Feature/CommerceOpsSafetyTest.php:146
+    142▕             ->assertRedirect()
+    143▕             ->assertSessionHas('status', 'POS refund was already recorded; duplicate request ignored.');
+    144▕ 
+    145▕         $this->assertSame(1, DB::table('pos_refunds')->where('pos_sale_id', $saleId)->count());
+  ➜ 146▕         $this->assertSame('30.0000', DB::table('pos_refunds')->where('pos_sale_id', $saleId)->value('amount'));
+    147▕         $this->assertSame('partial_refund', DB::table('pos_sales')->where('id', $saleId)->value('payment_status'));
+    148▕         $this->assertTrue(collect($queries)->contains(
+    149▕             static fn (string $sql): bool => str_contains($sql, 'pos_sales') && str_contains($sql, 'for update')
+    150▕         ), 'The refund transaction must lock its POS sale before checking the remaining balance.');
+
+  1   tests/Feature/CommerceOpsSafetyTest.php:146
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\JlcpcbCommerceEnrichmentTest > dry…   QueryException   
+  SQLSTATE[HY000]: General error: 1 no such table: information_schema.columns (Connection: sqlite, Database: :memory:, SQL:     SELECT column_name, numeric_scale
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'marketplace_product_prices'
+      AND column_name IN ('base_price', 'sale_price', 'cost_price'))
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+8 vendor frames [22m
+  9   app/Services/Catalog/JlcpcbCommerceEnrichmentService.php:976
+  10  app/Services/Catalog/JlcpcbCommerceEnrichmentService.php:27
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\JlcpcbCommerceEnrichmentTest > repl…  QueryException   
+  SQLSTATE[HY000]: General error: 1 no such table: information_schema.columns (Connection: sqlite, Database: :memory:, SQL:     SELECT column_name, numeric_scale
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'marketplace_product_prices'
+      AND column_name IN ('base_price', 'sale_price', 'cost_price'))
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+8 vendor frames [22m
+  9   app/Services/Catalog/JlcpcbCommerceEnrichmentService.php:976
+  10  app/Services/Catalog/JlcpcbCommerceEnrichmentService.php:27
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\JlcpcbCommerceEnrichmentTest > pree…  QueryException   
+  SQLSTATE[HY000]: General error: 1 no such table: information_schema.columns (Connection: sqlite, Database: :memory:, SQL:     SELECT column_name, numeric_scale
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'marketplace_product_prices'
+      AND column_name IN ('base_price', 'sale_price', 'cost_price'))
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+8 vendor frames [22m
+  9   app/Services/Catalog/JlcpcbCommerceEnrichmentService.php:976
+  10  app/Services/Catalog/JlcpcbCommerceEnrichmentService.php:27
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\JlcpcbCommerceEnrichmentTest > sub…   QueryException   
+  SQLSTATE[HY000]: General error: 1 no such table: information_schema.columns (Connection: sqlite, Database: :memory:, SQL:     SELECT column_name, numeric_scale
+    FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'marketplace_product_prices'
+      AND column_name IN ('base_price', 'sale_price', 'cost_price'))
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+8 vendor frames [22m
+  9   app/Services/Catalog/JlcpcbCommerceEnrichmentService.php:976
+  10  app/Services/Catalog/JlcpcbCommerceEnrichmentService.php:27
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\JlcpcbCommerceEnrichmentTest > command defaults to…    
+  Expected status code 0 but received 1.
+Failed asserting that 1 matches expected 0.
+
+  at tests/Feature/JlcpcbCommerceEnrichmentTest.php:328
+    324▕         $this->seedJlcProduct('C1006', 0.0083111, 18_013);
+    325▕ 
+    326▕         $this->artisan('jlcpcb:enrich-commerce', ['--limit' => 1])
+    327▕             ->expectsOutputToContain('Dry run only')
+  ➜ 328▕             ->assertSuccessful();
+    329▕         $this->assertDatabaseCount('marketplace_product_prices', 0);
+    330▕         $this->assertDatabaseCount('supplier_availabilities', 0);
+    331▕ 
+    332▕         $this->artisan('jlcpcb:enrich-commerce', ['--limit' => 1, '--apply' => true])
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MarketingJobsTest > segment regiona…  QueryException   
+  SQLSTATE[HY000]: General error: 1 unrecognized token: ":" (Connection: sqlite, Database: :memory:, SQL: select "m"."country_id", null::bigint as region_id, count(o.id) as order_count, sum(o.grand_total) as amount from "orders" as "o" left join "marketplaces" as "m" on "m"."id" = "o"."marketplace_id" where "o"."created_at" >= 2026-07-17 00:00:00 and "o"."created_at" <= 2026-07-18 05:19:46 and "o"."status" not in (cancelled, failed) group by "m"."country_id")
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+10 vendor frames [22m
+  11  app/Jobs/Marketing/GenerateRegionalSalesReportJob.php:41
+  12  tests/Feature/MarketingJobsTest.php:184
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\MarketplaceAdminUiTest > list search filters result…   
+  Expected response status code [200] but received 500.
+Failed asserting that 500 is identical to 200.
+
+The following exception occurred during the last request:
+
+PDOException: SQLSTATE[HY000]: General error: 1 near "ilike": syntax error in /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php:420
+Stack trace:
+#0 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(420): PDO->prepare('select * from "...')
+#1 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(827): Illuminate\Database\Connection->{closure:Illuminate\Database\Connection::select():411}('select * from "...', Array)
+#2 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(794): Illuminate\Database\Connection->runQueryCallback('select * from "...', Array, Object(Closure))
+#3 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(411): Illuminate\Database\Connection->run('select * from "...', Array, Object(Closure))
+#4 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3505): Illuminate\Database\Connection->select('select * from "...', Array, true)
+#5 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3490): Illuminate\Database\Query\Builder->runSelect()
+#6 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4080): Illuminate\Database\Query\Builder->{closure:Illuminate\Database\Query\Builder::get():3489}()
+#7 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3489): Illuminate\Database\Query\Builder->onceWithColumns(Array, Object(Closure))
+#8 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(902): Illuminate\Database\Query\Builder->get(Array)
+#9 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(884): Illuminate\Database\Eloquent\Builder->getModels(Array)
+#10 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/app/Http/Controllers/Admin/MarketplaceConfigController.php(80): Illuminate\Database\Eloquent\Builder->get()
+#11 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(46): App\Http\Controllers\Admin\MarketplaceConfigController->index(Object(Illuminate\Http\Request))
+#12 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(265): Illuminate\Routing\ControllerDispatcher->dispatch(Object(Illuminate\Routing\Route), Object(App\Http\Controllers\Admin\MarketplaceConfigController), 'index')
+#13 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(211): Illuminate\Routing\Route->runController()
+#14 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(822): Illuminate\Routing\Route->run()
+#15 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\Routing\Router->{closure:Illuminate\Routing\Router::runRouteWithinStack():821}(Object(Illuminate\Http\Request))
+#16 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/app/Http/Middleware/EnsureAdminWeb.php(35): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}(Object(Illuminate\Http\Request))
+#17 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\Http\Middleware\EnsureAdminWeb->handle(Object(Illuminate\Http\Request), Object(Closure))
+#18 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#19 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Routing\Middleware\SubstituteBindings->handle(Object(Illuminate\Http\Request), Object(Closure))
+#20 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/VerifyCsrfToken.php(87): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#21 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\VerifyCsrfToken->handle(Object(Illuminate\Http\Request), Object(Closure))
+#22 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/View/Middleware/ShareErrorsFromSession.php(48): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#23 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\View\Middleware\ShareErrorsFromSession->handle(Object(Illuminate\Http\Request), Object(Closure))
+#24 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Session/Middleware/StartSession.php(120): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#25 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Session/Middleware/StartSession.php(63): Illuminate\Session\Middleware\StartSession->handleStatefulRequest(Object(Illuminate\Http\Request), Object(Illuminate\Session\Store), Object(Closure))
+#26 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Session\Middleware\StartSession->handle(Object(Illuminate\Http\Request), Object(Closure))
+#27 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Cookie/Middleware/AddQueuedCookiesToResponse.php(36): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#28 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse->handle(Object(Illuminate\Http\Request), Object(Closure))
+#29 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Cookie/Middleware/EncryptCookies.php(74): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#30 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Cookie\Middleware\EncryptCookies->handle(Object(Illuminate\Http\Request), Object(Closure))
+#31 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#32 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(821): Illuminate\Pipeline\Pipeline->then(Object(Closure))
+#33 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(800): Illuminate\Routing\Router->runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#34 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(764): Illuminate\Routing\Router->runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#35 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(753): Illuminate\Routing\Router->dispatchToRoute(Object(Illuminate\Http\Request))
+#36 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate\Routing\Router->dispatch(Object(Illuminate\Http\Request))
+#37 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\Foundation\Http\Kernel->{closure:Illuminate\Foundation\Http\Kernel::dispatchToRouter():197}(Object(Illuminate\Http\Request))
+#38 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/app/Http/Middleware/ForceMarketplaceRecommendationRedirect.php(22): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}(Object(Illuminate\Http\Request))
+#39 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\Http\Middleware\ForceMarketplaceRecommendationRedirect->handle(Object(Illuminate\Http\Request), Object(Closure))
+#40 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/app/Http/Middleware/SecurityHeaders.php(21): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#41 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\Http\Middleware\SecurityHeaders->handle(Object(Illuminate\Http\Request), Object(Closure))
+#42 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#43 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle(Object(Illuminate\Http\Request), Object(Closure))
+#44 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull->handle(Object(Illuminate\Http\Request), Object(Closure))
+#45 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#46 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle(Object(Illuminate\Http\Request), Object(Closure))
+#47 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\TrimStrings->handle(Object(Illuminate\Http\Request), Object(Closure))
+#48 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#49 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\ValidatePostSize->handle(Object(Illuminate\Http\Request), Object(Closure))
+#50 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(109): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#51 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance->handle(Object(Illuminate\Http\Request), Object(Closure))
+#52 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(61): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#53 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\HandleCors->handle(Object(Illuminate\Http\Request), Object(Closure))
+#54 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#55 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\TrustProxies->handle(Object(Illuminate\Http\Request), Object(Closure))
+#56 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#57 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks->handle(Object(Illuminate\Http\Request), Object(Closure))
+#58 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePathEncoding.php(26): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#59 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\ValidatePathEncoding->handle(Object(Illuminate\Http\Request), Object(Closure))
+#60 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#61 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate\Pipeline\Pipeline->then(Object(Closure))
+#62 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate\Foundation\Http\Kernel->sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#63 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(607): Illuminate\Foundation\Http\Kernel->handle(Object(Illuminate\Http\Request))
+#64 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(368): Illuminate\Foundation\Testing\TestCase->call('GET', '/admin/marketpl...', Array, Array, Array, Array)
+#65 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/tests/Feature/MarketplaceAdminUiTest.php(114): Illuminate\Foundation\Testing\TestCase->get('/admin/marketpl...')
+#66 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestCase.php(1667): Tests\Feature\MarketplaceAdminUiTest->test_list_search_filters_results()
+#67 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestCase.php(519): PHPUnit\Framework\TestCase->runTest()
+#68 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestRunner/TestRunner.php(87): PHPUnit\Framework\TestCase->runBare()
+#69 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestCase.php(365): PHPUnit\Framework\TestRunner->run(Object(Tests\Feature\MarketplaceAdminUiTest))
+#70 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestSuite.php(369): PHPUnit\Framework\TestCase->run()
+#71 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestSuite.php(369): PHPUnit\Framework\TestSuite->run()
+#72 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestSuite.php(369): PHPUnit\Framework\TestSuite->run()
+#73 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(64): PHPUnit\Framework\TestSuite->run()
+#74 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/TextUI/Application.php(211): PHPUnit\TextUI\TestRunner->run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#75 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/phpunit(104): PHPUnit\TextUI\Application->run(Array)
+#76 {main}
+
+Next Illuminate\Database\QueryException: SQLSTATE[HY000]: General error: 1 near "ilike": syntax error (Connection: sqlite, Database: :memory:, SQL: select * from "marketplaces" where ("name" ilike %Alpha% or "code" ilike %Alpha% or "domain" ilike %Alpha% or "generated_domain" ilike %Alpha% or exists (select * from "countries" where "marketplaces"."country_id" = "countries"."id" and "name" ilike %Alpha%)) and "marketplaces"."deleted_at" is null order by "is_active" desc, "name" asc) in /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+Stack trace:
+#0 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(794): Illuminate\Database\Connection->runQueryCallback('select * from "...', Array, Object(Closure))
+#1 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Connection.php(411): Illuminate\Database\Connection->run('select * from "...', Array, Object(Closure))
+#2 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3505): Illuminate\Database\Connection->select('select * from "...', Array, true)
+#3 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3490): Illuminate\Database\Query\Builder->runSelect()
+#4 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4080): Illuminate\Database\Query\Builder->{closure:Illuminate\Database\Query\Builder::get():3489}()
+#5 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(3489): Illuminate\Database\Query\Builder->onceWithColumns(Array, Object(Closure))
+#6 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(902): Illuminate\Database\Query\Builder->get(Array)
+#7 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(884): Illuminate\Database\Eloquent\Builder->getModels(Array)
+#8 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/app/Http/Controllers/Admin/MarketplaceConfigController.php(80): Illuminate\Database\Eloquent\Builder->get()
+#9 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(46): App\Http\Controllers\Admin\MarketplaceConfigController->index(Object(Illuminate\Http\Request))
+#10 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(265): Illuminate\Routing\ControllerDispatcher->dispatch(Object(Illuminate\Routing\Route), Object(App\Http\Controllers\Admin\MarketplaceConfigController), 'index')
+#11 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Route.php(211): Illuminate\Routing\Route->runController()
+#12 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(822): Illuminate\Routing\Route->run()
+#13 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\Routing\Router->{closure:Illuminate\Routing\Router::runRouteWithinStack():821}(Object(Illuminate\Http\Request))
+#14 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/app/Http/Middleware/EnsureAdminWeb.php(35): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}(Object(Illuminate\Http\Request))
+#15 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\Http\Middleware\EnsureAdminWeb->handle(Object(Illuminate\Http\Request), Object(Closure))
+#16 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(50): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#17 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Routing\Middleware\SubstituteBindings->handle(Object(Illuminate\Http\Request), Object(Closure))
+#18 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/VerifyCsrfToken.php(87): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#19 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\VerifyCsrfToken->handle(Object(Illuminate\Http\Request), Object(Closure))
+#20 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/View/Middleware/ShareErrorsFromSession.php(48): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#21 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\View\Middleware\ShareErrorsFromSession->handle(Object(Illuminate\Http\Request), Object(Closure))
+#22 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Session/Middleware/StartSession.php(120): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#23 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Session/Middleware/StartSession.php(63): Illuminate\Session\Middleware\StartSession->handleStatefulRequest(Object(Illuminate\Http\Request), Object(Illuminate\Session\Store), Object(Closure))
+#24 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Session\Middleware\StartSession->handle(Object(Illuminate\Http\Request), Object(Closure))
+#25 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Cookie/Middleware/AddQueuedCookiesToResponse.php(36): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#26 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse->handle(Object(Illuminate\Http\Request), Object(Closure))
+#27 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Cookie/Middleware/EncryptCookies.php(74): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#28 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Cookie\Middleware\EncryptCookies->handle(Object(Illuminate\Http\Request), Object(Closure))
+#29 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#30 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(821): Illuminate\Pipeline\Pipeline->then(Object(Closure))
+#31 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(800): Illuminate\Routing\Router->runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Illuminate\Http\Request))
+#32 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(764): Illuminate\Routing\Router->runRoute(Object(Illuminate\Http\Request), Object(Illuminate\Routing\Route))
+#33 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Routing/Router.php(753): Illuminate\Routing\Router->dispatchToRoute(Object(Illuminate\Http\Request))
+#34 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(200): Illuminate\Routing\Router->dispatch(Object(Illuminate\Http\Request))
+#35 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\Foundation\Http\Kernel->{closure:Illuminate\Foundation\Http\Kernel::dispatchToRouter():197}(Object(Illuminate\Http\Request))
+#36 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/app/Http/Middleware/ForceMarketplaceRecommendationRedirect.php(22): Illuminate\Pipeline\Pipeline->{closure:Illuminate\Pipeline\Pipeline::prepareDestination():178}(Object(Illuminate\Http\Request))
+#37 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\Http\Middleware\ForceMarketplaceRecommendationRedirect->handle(Object(Illuminate\Http\Request), Object(Closure))
+#38 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/app/Http/Middleware/SecurityHeaders.php(21): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#39 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): App\Http\Middleware\SecurityHeaders->handle(Object(Illuminate\Http\Request), Object(Closure))
+#40 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#41 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle(Object(Illuminate\Http\Request), Object(Closure))
+#42 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull->handle(Object(Illuminate\Http\Request), Object(Closure))
+#43 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#44 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\Foundation\Http\Middleware\TransformsRequest->handle(Object(Illuminate\Http\Request), Object(Closure))
+#45 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\TrimStrings->handle(Object(Illuminate\Http\Request), Object(Closure))
+#46 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#47 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\ValidatePostSize->handle(Object(Illuminate\Http\Request), Object(Closure))
+#48 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(109): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#49 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance->handle(Object(Illuminate\Http\Request), Object(Closure))
+#50 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(61): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#51 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\HandleCors->handle(Object(Illuminate\Http\Request), Object(Closure))
+#52 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#53 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\TrustProxies->handle(Object(Illuminate\Http\Request), Object(Closure))
+#54 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#55 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks->handle(Object(Illuminate\Http\Request), Object(Closure))
+#56 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePathEncoding.php(26): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#57 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(219): Illuminate\Http\Middleware\ValidatePathEncoding->handle(Object(Illuminate\Http\Request), Object(Closure))
+#58 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\Pipeline\Pipeline->{closure:{closure:Illuminate\Pipeline\Pipeline::carry():194}:195}(Object(Illuminate\Http\Request))
+#59 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(175): Illuminate\Pipeline\Pipeline->then(Object(Closure))
+#60 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(144): Illuminate\Foundation\Http\Kernel->sendRequestThroughRouter(Object(Illuminate\Http\Request))
+#61 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(607): Illuminate\Foundation\Http\Kernel->handle(Object(Illuminate\Http\Request))
+#62 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(368): Illuminate\Foundation\Testing\TestCase->call('GET', '/admin/marketpl...', Array, Array, Array, Array)
+#63 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/tests/Feature/MarketplaceAdminUiTest.php(114): Illuminate\Foundation\Testing\TestCase->get('/admin/marketpl...')
+#64 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestCase.php(1667): Tests\Feature\MarketplaceAdminUiTest->test_list_search_filters_results()
+#65 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestCase.php(519): PHPUnit\Framework\TestCase->runTest()
+#66 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestRunner/TestRunner.php(87): PHPUnit\Framework\TestCase->runBare()
+#67 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestCase.php(365): PHPUnit\Framework\TestRunner->run(Object(Tests\Feature\MarketplaceAdminUiTest))
+#68 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestSuite.php(369): PHPUnit\Framework\TestCase->run()
+#69 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestSuite.php(369): PHPUnit\Framework\TestSuite->run()
+#70 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/Framework/TestSuite.php(369): PHPUnit\Framework\TestSuite->run()
+#71 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(64): PHPUnit\Framework\TestSuite->run()
+#72 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/src/TextUI/Application.php(211): PHPUnit\TextUI\TestRunner->run(Object(PHPUnit\TextUI\Configuration\Configuration), Object(PHPUnit\Runner\ResultCache\DefaultResultCache), Object(PHPUnit\Framework\TestSuite))
+#73 /Users/ashokdhamala/Downloads/neogiga-main 2/giga-nepal-backend/vendor/phpunit/phpunit/phpunit(104): PHPUnit\TextUI\Application->run(Array)
+#74 {main}
+
+----------------------------------------------------------------------------------
+
+SQLSTATE[HY000]: General error: 1 near "ilike": syntax error (Connection: sqlite, Database: :memory:, SQL: select * from "marketplaces" where ("name" ilike %Alpha% or "code" ilike %Alpha% or "domain" ilike %Alpha% or "generated_domain" ilike %Alpha% or exists (select * from "countries" where "marketplaces"."country_id" = "countries"."id" and "name" ilike %Alpha%)) and "marketplaces"."deleted_at" is null order by "is_active" desc, "name" asc)
+
+  at tests/Feature/MarketplaceAdminUiTest.php:115
+    111▕         $this->marketplace(['code' => 'BETA', 'name' => 'Beta Store']);
+    112▕ 
+    113▕         $this->actingAs($this->admin())
+    114▕             ->get('/admin/marketplaces?q=Alpha')
+  ➜ 115▕             ->assertOk()
+    116▕             ->assertSee('Alpha Store')
+    117▕             ->assertDontSee('Beta Store');
+    118▕     }
+    119▕
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Phase1AuthTest > customer can regis…  QueryException   
+  SQLSTATE[HY000]: General error: 1 no such table: roles (Connection: sqlite, Database: :memory:, SQL: select * from "roles" where ("name" = customer) limit 1)
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+18 vendor frames [22m
+  19  tests/Feature/Phase1AuthTest.php:17
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Phase1AuthTest > customer can login…  QueryException   
+  SQLSTATE[HY000]: General error: 1 no such table: roles (Connection: sqlite, Database: :memory:, SQL: select * from "roles" where ("name" = customer) limit 1)
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+18 vendor frames [22m
+  19  tests/Feature/Phase1AuthTest.php:50
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Phase1CheckoutTest > customer can a…  QueryException   
+  SQLSTATE[HY000]: General error: 1 no such table: roles (Connection: sqlite, Database: :memory:, SQL: select * from "roles" where ("name" = customer) limit 1)
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+18 vendor frames [22m
+  19  tests/Feature/Phase1CheckoutTest.php:114
+  20  tests/Feature/Phase1CheckoutTest.php:20
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Phase1CheckoutTest > checkout rejec…  QueryException   
+  SQLSTATE[HY000]: General error: 1 no such table: roles (Connection: sqlite, Database: :memory:, SQL: select * from "roles" where ("name" = customer) limit 1)
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+18 vendor frames [22m
+  19  tests/Feature/Phase1CheckoutTest.php:114
+  20  tests/Feature/Phase1CheckoutTest.php:71
+
+  ────────────────────────────────────────────────────────────────────────────  
+   FAILED  Tests\Feature\Phase1PromoCheckoutTest > coupon an…  QueryException   
+  SQLSTATE[HY000]: General error: 1 no such table: roles (Connection: sqlite, Database: :memory:, SQL: select * from "roles" where ("name" = customer) limit 1)
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:838
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+      [2m+18 vendor frames [22m
+  19  tests/Feature/Phase1PromoCheckoutTest.php:63
+  20  tests/Feature/Phase1PromoCheckoutTest.php:22
+
+
+  Tests:    20 failed, 12 skipped, 202 passed (1195 assertions)
+  Duration: 21.30s
+

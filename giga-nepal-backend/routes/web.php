@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ProductImageController as AdminProductImage;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\AiCommercePageController;
 use App\Http\Controllers\Web\CartPageController;
+use App\Http\Controllers\Web\CustomerAuthController;
 use App\Http\Controllers\Web\BrandPageController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\EmailPreferenceController;
@@ -76,6 +77,7 @@ Route::get('/health', HealthController::class)->withoutMiddleware([
     ValidateCsrfToken::class,
 ]);
 
+// Email preference management
 Route::get('/email/unsubscribe/{token}', [EmailPreferenceController::class, 'unsubscribe'])
     ->middleware('throttle:60,1')->name('email.unsubscribe');
 Route::post('/email/unsubscribe/{token}', [EmailPreferenceController::class, 'confirmUnsubscribe'])
@@ -84,6 +86,18 @@ Route::get('/email/preferences/{token}', [EmailPreferenceController::class, 'pre
     ->middleware('throttle:60,1')->name('email.preferences');
 Route::patch('/email/preferences/{token}', [EmailPreferenceController::class, 'updatePreferences'])
     ->middleware('throttle:10,1')->name('email.preferences.update');
+
+// Seller web portal (session guard mirrors the admin console; vendor scope
+// enforced by seller.web / SellerContextService — sellers see only their data).
+Route::prefix('seller')->group(function () {
+    Route::get('login', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'showLogin'])->name('seller.login');
+    Route::post('login', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('logout', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'logout']);
+
+    Route::get('/', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
+    Route::get('products', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'products'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
+    Route::get('orders', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'orders'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
+});
 
 Route::prefix('admin')->group(function () {
     Route::get('login', [AdminAuth::class, 'showLogin'])->name('admin.login');
@@ -103,6 +117,7 @@ Route::prefix('admin')->group(function () {
         Route::get('categories/{id}', [AdminDash::class, 'category'])->whereNumber('id');
         Route::get('products', [AdminDash::class, 'products']);
         Route::get('products/{id}', [AdminDash::class, 'product'])->whereNumber('id');
+        Route::get('brand-logos', [AdminDash::class, 'brandLogos'])->name('admin.brand-logos');
         Route::get('imports/jlcpcb', [AdminDash::class, 'jlcpcbImports']);
         Route::get('imports/elecforest', [AdminElecforestImport::class, 'index']);
         Route::post('imports/elecforest/start', [AdminElecforestImport::class, 'start'])->middleware('throttle:4,1');
@@ -355,6 +370,13 @@ Route::get('/sitemap.xml', SitemapController::class);
 Route::get('/sitemaps/{section}-{page}.xml', [SitemapController::class, 'section'])
     ->whereIn('section', ['pages', 'categories', 'brands', 'manufacturers', 'products'])
     ->whereNumber('page');
+
+// Customer auth pages
+Route::get('/login', [CustomerAuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [CustomerAuthController::class, 'login'])->middleware('throttle:6,1');
+Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [CustomerAuthController::class, 'register'])->middleware('throttle:6,1');
+Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 
 // Password reset pages (the reset email links to the named password.reset route)
 Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequest'])->name('password.request');
