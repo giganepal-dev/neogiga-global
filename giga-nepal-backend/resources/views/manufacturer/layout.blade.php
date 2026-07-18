@@ -32,6 +32,7 @@
 <div class="main-grid">
     <nav class="sidebar">
         <a href="/manufacturer" class="{{ request()->is('manufacturer') ? 'active' : '' }}">Dashboard</a>
+        <a href="/manufacturer/profile" class="{{ request()->is('manufacturer/profile') ? 'active' : '' }}">Profile</a>
         <a href="/manufacturer/products" class="{{ request()->is('manufacturer/products') ? 'active' : '' }}">Products</a>
         <a href="/manufacturer/orders" class="{{ request()->is('manufacturer/orders') ? 'active' : '' }}">Orders</a>
     </nav>
