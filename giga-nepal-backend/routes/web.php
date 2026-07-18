@@ -13,6 +13,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\AiCommercePageController;
 use App\Http\Controllers\Web\CartPageController;
 use App\Http\Controllers\Web\CustomerAuthController;
+use App\Http\Controllers\Web\CustomerDashboardController;
 use App\Http\Controllers\Web\BrandPageController;
 use App\Http\Controllers\Web\CategoryController;
 use App\Http\Controllers\Web\EmailPreferenceController;
@@ -380,6 +381,7 @@ Route::post('/login', [CustomerAuthController::class, 'login'])->middleware('thr
 Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [CustomerAuthController::class, 'register'])->middleware('throttle:6,1');
 Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
+Route::get('/account', [CustomerDashboardController::class, 'index'])->middleware('auth')->name('account');
 
 // Password reset pages (the reset email links to the named password.reset route)
 Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequest'])->name('password.request');
@@ -419,6 +421,8 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
             Route::get('/seller-early-access', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->earlyAccess())->name('localized.seller.early-access');
             Route::get('/distributors', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->distributors())->name('localized.distributors');
             Route::get('/ai-commerce', fn (string $localePrefix, Request $request) => app(AiCommercePageController::class)->index($request, app(CommerceAiService::class)))->name('localized.ai');
+            Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->middleware('auth')->name('localized.dashboard');
+            Route::get('/account', [CustomerDashboardController::class, 'index'])->middleware('auth')->name('localized.account');
         });
 }
 
