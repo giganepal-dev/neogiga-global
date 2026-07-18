@@ -380,8 +380,11 @@ Route::get('/login', [CustomerAuthController::class, 'showLogin'])->name('login'
 Route::post('/login', [CustomerAuthController::class, 'login'])->middleware('throttle:6,1');
 Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [CustomerAuthController::class, 'register'])->middleware('throttle:6,1');
-Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 Route::get('/account', [CustomerDashboardController::class, 'index'])->middleware('auth')->name('account');
+Route::patch('/account/profile', [CustomerDashboardController::class, 'updateProfile'])->middleware(['auth', 'throttle:10,1'])->name('account.profile.update');
+Route::patch('/account/password', [CustomerDashboardController::class, 'updatePassword'])->middleware(['auth', 'throttle:6,1'])->name('account.password.update');
+Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
+Route::get('/logout', fn () => redirect('/login'))->name('logout.get');
 
 // Password reset pages (the reset email links to the named password.reset route)
 Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequest'])->name('password.request');
