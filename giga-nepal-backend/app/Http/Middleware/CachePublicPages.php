@@ -16,12 +16,15 @@ class CachePublicPages
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Cache all GET requests. 5-min TTL means logged-in users may
-        // briefly see a cached page — acceptable trade-off for speed.
-        // Skip: admin, API, cart, checkout, login, register, account pages.
+        // Skip: admin, API, cart, checkout, login, register, account pages,
+        // authenticated users, and non-GET requests.
         if ($request->isMethod('GET')
+            && ! auth()->check()
             && ! $request->is('admin*', 'api*', 'cart*', 'checkout*', 'login*', 'register*', 'account*', 'logout*')) {
-            $key = 'page:' . sha1($request->fullUrl());
+            // ponytail: sha1(host + fullUrl) prevents cross-marketplace cache collision.
+            // Version stamp allows instant invalidation when catalog data changes.
+            $version = Cache::get('catalog:page-cache-version', '1');
+            $key = 'page:' . $version . ':' . sha1($request->getHost() . $request->fullUrl());
 
             $cached = Cache::get($key);
             if ($cached) {
