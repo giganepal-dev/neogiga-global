@@ -461,7 +461,7 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
             Route::get('/projects', fn (string $localePrefix) => redirect('/learn'))->name('localized.projects.index');
             Route::get('/rfq', fn (string $localePrefix, Request $request) => app(RfqPageController::class)->create($request))->name('localized.rfq.create');
             Route::get('/bom', function (Request $request) { return app(\App\Http\Controllers\Web\BomPageController::class)->index(); })->name('localized.bom.index');
-            Route::get('/compare', function (Request $request) { return app(AppHttpControllersWebCompareController::class)->index($request); })->name('localized.compare');
+            Route::get('/compare', [\App\Http\Controllers\Web\CompareController::class, 'index'])->name('localized.compare');
             Route::post('/bom', function (Request $request) { return app(\App\Http\Controllers\Web\BomPageController::class)->match($request); })->name('localized.bom.match');
             Route::get('/sell-on-neogiga', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->sell())->name('localized.seller');
             Route::get('/seller-early-access', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->earlyAccess())->name('localized.seller.early-access');
