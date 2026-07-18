@@ -402,11 +402,16 @@ class DashboardController extends Controller
         abort_if(! $brand, 404);
 
         $seo = is_string($brand->seo_meta) ? json_decode($brand->seo_meta, true) : ($brand->seo_meta ?: []);
+        // Handle both flat and localized SEO structures
+        $seoGlobal = $seo['localized']['global'] ?? $seo;
         $productCount = DB::table('products')->where('brand_id', $id)->count();
 
         return view('admin.brand-detail', [
             'b' => $brand,
             'seo' => $seo,
+            'seoTitle' => $seoGlobal['title'] ?? '',
+            'seoDescription' => $seoGlobal['description'] ?? '',
+            'seoKeywords' => $seoGlobal['keywords'] ?? (is_array($seoGlobal['keywords'] ?? null) ? implode(', ', $seoGlobal['keywords']) : ''),
             'productCount' => $productCount,
         ]);
     }
@@ -416,6 +421,20 @@ class DashboardController extends Controller
         $brand = DB::table('product_brands')->where('id', $id)->first();
         abort_if(! $brand, 404);
 
+        // Preserve existing SEO structure — merge flat fields into localized format
+        $existingSeo = is_string($brand->seo_meta) ? json_decode($brand->seo_meta, true) : ($brand->seo_meta ?: []);
+        if (isset($existingSeo['localized'])) {
+            foreach (['global', 'india', 'nepal'] as $region) {
+                if (isset($existingSeo['localized'][$region])) {
+                    $existingSeo['localized'][$region]['title'] = $request->input('seo_title', $existingSeo['localized'][$region]['title'] ?? '');
+                    $existingSeo['localized'][$region]['description'] = $request->input('seo_description', $existingSeo['localized'][$region]['description'] ?? '');
+                }
+            }
+        } else {
+            $existingSeo['title'] = $request->input('seo_title', $existingSeo['title'] ?? '');
+            $existingSeo['description'] = $request->input('seo_description', $existingSeo['description'] ?? '');
+        }
+
         $data = [
             'name' => $request->input('name'),
             'description' => $request->input('description'),
@@ -423,11 +442,7 @@ class DashboardController extends Controller
             'is_active' => $request->boolean('is_active'),
             'is_featured' => $request->boolean('is_featured'),
             'is_menu_visible' => $request->boolean('is_menu_visible'),
-            'seo_meta' => json_encode([
-                'title' => $request->input('seo_title', ''),
-                'description' => $request->input('seo_description', ''),
-                'keywords' => $request->input('seo_keywords', ''),
-            ]),
+            'seo_meta' => json_encode($existingSeo),
             'updated_at' => now(),
         ];
 

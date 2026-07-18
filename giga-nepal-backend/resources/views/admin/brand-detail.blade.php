@@ -43,9 +43,9 @@
         <div class="card-h"><h2>SEO Metadata</h2><span class="badge b-info">Search engines</span></div>
         <form class="form-stack" method="post" action="/admin/brands/{{ $b->id }}">
             @csrf
-            <div class="field"><label>SEO Title</label><input class="control" name="seo_title" value="{{ old('seo_title', $seo['title'] ?? '') }}" placeholder="Buy {Brand} products online | NeoGiga"><div class="sub">Appears in search results and browser tabs</div></div>
-            <div class="field"><label>Meta Description</label><textarea class="control" name="seo_description" rows="2" maxlength="158" placeholder="Shop authentic {Brand} components...">{{ old('seo_description', $seo['description'] ?? '') }}</textarea><div class="sub">Max 158 characters for search snippet</div></div>
-            <div class="field"><label>SEO Keywords</label><input class="control" name="seo_keywords" value="{{ old('seo_keywords', $seo['keywords'] ?? '') }}" placeholder="brand, components, electronics"><div class="sub">Comma-separated</div></div>
+            <div class="field"><label>SEO Title</label><input class="control" name="seo_title" value="{{ old('seo_title', $seoTitle) }}" placeholder="Buy {Brand} products online | NeoGiga"><div class="sub">Appears in search results and browser tabs</div></div>
+            <div class="field"><label>Meta Description</label><textarea class="control" name="seo_description" rows="2" maxlength="158" placeholder="Shop authentic {Brand} components...">{{ old('seo_description', $seoDescription) }}</textarea><div class="sub">Max 158 characters for search snippet</div></div>
+            <div class="field"><label>SEO Keywords</label><input class="control" name="seo_keywords" value="{{ old('seo_keywords', $seoKeywords) }}" placeholder="brand, components, electronics"><div class="sub">Comma-separated</div></div>
 
             <input type="hidden" name="name" value="{{ $b->name }}">
             <input type="hidden" name="description" value="{{ $b->description }}">
