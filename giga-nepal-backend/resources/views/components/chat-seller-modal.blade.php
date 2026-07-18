@@ -13,7 +13,7 @@
             @php($img = $product->images->first())
             <img src="{{ $img?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" style="width:48px;height:36px;object-fit:contain;background:#081527;border-radius:6px" alt="">
             <div><strong style="font-size:.85rem">{{ $product->name }}</strong>
-            <div style="font-size:.72rem;color:var(--faint)">SKU: {{ $product->sku }} · MPN: {{ $product->mpn }}</div></div>
+            <div style="font-size:.72rem;color:var(--faint)">SKU: {{ $product->sku }}@if($product->mpn) · MPN: {{ $product->mpn }}@endif</div></div>
         </div>
     @endif
 
