@@ -28,6 +28,30 @@
 
 Country comes from the marketplace row (NP/IN/PK…), currency from the regional price row; page cache keys on host (`CachePublicPages` sha1(host+url)) so no cross-region HTML leakage. Unit-tested: NP context → `NP`+`NPR` everywhere; PK override honored; no country → configured default (US, matching current live global output).
 
+## LIVE OUTCOME (2026-07-19, deployed + verified)
+
+All four hosts verified on the affected URL after deploy + FPM reload:
+
+| Host | priceCurrency | applicableCountry | shipDest | returnFees | refundType | seller | aggregateRating |
+|---|---|---|---|---|---|---|---|
+| neogiga.com | USD | US | US | ✔ | ✔ | ✔ | absent (no reviews — correct) |
+| np.neogiga.com | NPR | NP | NP | ✔ | ✔ | ✔ | absent |
+| in.neogiga.com | INR | IN | IN | ✔ | ✔ | ✔ | absent |
+| pk.neogiga.com | PKR | PK | PK | ✔ | ✔ | ✔ | absent |
+
+Extra live-caught fix: the GLOBAL edition's pseudo-country iso is `GL` (reads as
+Greenland) — the builder now ignores it and uses the configured default (US).
+
+**Incident + prevention:** the first page-cache version bump caused a thundering
+herd (~95% bot traffic — Amazonbot/GPTBot/Ahrefs — on faceted `/products` URLs;
+load 64 on 6 cores, PG statement timeouts). Mitigated permanently in
+`CachePublicPages`: crawlers get `503 Retry-After: 3600` on **uncached
+parameterized** listing URLs (which are noindex anyway); cached copies and all
+clean URLs serve bots normally. Verified live: GPTBot+params → 503 in 0.9s;
+human+params → 200; second cache bump caused **no load spike** (stayed ~10, the
+box's normal baseline). Ops note: `systemctl reload php8.4-fpm` is required after
+deploying PHP files — workers pick up CLI-side immediately, web does not.
+
 ## Post-deploy validation (Part C/D)
 
 ```bash

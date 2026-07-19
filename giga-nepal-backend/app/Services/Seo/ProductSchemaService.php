@@ -29,7 +29,10 @@ class ProductSchemaService
     public function build(Product $product, array $ctx): array
     {
         $policy = $this->policy($ctx['marketplace'] ?? null);
-        $country = strtoupper((string) ($ctx['country'] ?? '')) ?: (string) $policy['default_country'];
+        // The GLOBAL edition's pseudo-country (iso "GL") is not a real
+        // shipping/return country — use the configured default instead.
+        $isGlobal = strtoupper((string) ($ctx['marketplace']->code ?? '')) === 'GLOBAL';
+        $country = (! $isGlobal ? strtoupper((string) ($ctx['country'] ?? '')) : '') ?: (string) $policy['default_country'];
         $currency = strtoupper((string) ($ctx['currency'] ?? 'USD'));
         $manufacturer = $ctx['manufacturer'] ?? null;
 

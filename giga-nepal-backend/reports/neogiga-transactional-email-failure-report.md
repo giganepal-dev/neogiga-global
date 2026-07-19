@@ -78,6 +78,30 @@ php artisan tinker --execute="app(\App\Services\Marketing\TransactionalEmailServ
 # then: SELECT id,status,provider,provider_message_id,failure_reason FROM email_messages ORDER BY id DESC LIMIT 3;
 ```
 
+## LIVE OUTCOME (2026-07-19, executed on prod)
+
+**Actual root cause (superseded the DNS-ranked hypotheses):** messages queued with a
+`marketplace_id` resolved that marketplace's sender profile **or null — never the
+verified Global profile** (`RegionalEmailBrandingService::senderProfile()` early
+return). Only one profile exists (Global, verified+enabled). Proof: all 4 failures
+had `marketplace_id=1, sender_profile_id=null`; the only 2 sent rows had
+`marketplace_id=null, sender_profile_id=1`. Env was already correct on prod;
+4 supervisord workers (incl. `transactional`) were running — memory was stale.
+
+| Recipient | Event | Provider | Attempt | Failure reason | Provider response | Fix | Retest result |
+|---|---|---|---|---|---|---|---|
+| ashok@ecoinc.com.np | order_confirmed (#10) | neogiga_transactional_smtp | 2 | sender profile not verified/enabled | — | global-profile fallback | **sent** |
+| ashok@ecoinc.com.np | tracking_available (#11) | neogiga_transactional_smtp | 2 | same | — | same | **sent** |
+| ecoholidayasia@gmail.com | order_placed (#12) | neogiga_transactional_smtp | 2 | same | — | same | **sent — Gmail 250 2.0.0 OK (gsmtp)** |
+| ecoholidayasia@gmail.com | order_confirmed (#13) | neogiga_transactional_smtp | 2 | same | — | same | **sent — Gmail 250 2.0.0 OK (gsmtp)** |
+| giganepal@gmail.com | controlled test (#14, marketplace_id=1) | neogiga_transactional_smtp | 1 | — | Gmail 250 2.0.0 OK | n/a | **sent** |
+
+Still open (deliverability hardening, not delivery): DKIM record for selector
+`default` is signed on-box but **not published in DNS** (zone at
+registrar-servers.com / Namecheap). Publish the TXT from
+`/etc/opendkim/keys/neogiga.com/default.txt` to reach inbox (not spam) reliably;
+DMARC currently passes via strict SPF alignment only.
+
 ## Rollback
 
 ```bash

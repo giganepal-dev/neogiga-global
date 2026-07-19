@@ -107,6 +107,22 @@ class ProductSchemaServiceTest extends TestCase
         );
     }
 
+    public function test_global_marketplace_pseudo_country_is_ignored(): void
+    {
+        // GLOBAL edition carries a pseudo-country (iso "GL") — never a real
+        // shipping/return country. Live-caught regression 2026-07-19.
+        $marketplace = (new Marketplace)->forceFill(['code' => 'GLOBAL']);
+
+        $schema = app(ProductSchemaService::class)->build($this->product(), $this->ctx([
+            'marketplace' => $marketplace, 'country' => 'GL',
+        ]));
+
+        $this->assertSame(
+            strtoupper((string) config('neogiga_global.schema_commerce.default_country')),
+            $schema['offers']['hasMerchantReturnPolicy']['applicableCountry'],
+        );
+    }
+
     public function test_marketplace_settings_override_return_policy(): void
     {
         $marketplace = (new Marketplace)->forceFill([
