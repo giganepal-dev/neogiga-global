@@ -487,11 +487,9 @@ Route::get('/{prefix}', [MarketplaceLandingController::class, 'show'])
     ->name('marketplace.landing');
 
 // Footer information pages (config-driven; see config/neogiga_pages.php)
-Route::view('/terms', 'frontend.pages.terms')->name('pages.terms');
-Route::view('/privacy', 'frontend.pages.privacy')->name('pages.privacy');
 Route::get('/{pageSlug}', function (string $pageSlug) {
     $page = config('neogiga_pages.'.$pageSlug);
     abort_unless(is_array($page), 404);
 
     return view('frontend.pages.static', ['page' => $page]);
-})->where('pageSlug', 'about|contact|quality-assurance|how-to-order|shipping|returns|payment-terms|faq|cookie-notice')->name('pages.static');
+})->where('pageSlug', 'about|contact|quality-assurance|how-to-order|shipping|returns|payment-terms|faq|cookie-notice|terms|privacy')->name('pages.static');

@@ -35,13 +35,13 @@ class ImportCatalogProducts extends Command
         if ($dryRun) $this->warn("DRY RUN");
 
         $handle = fopen($file, 'r');
-        $headers = fgetcsv($handle);
+        $headers = fgetcsv($handle, null, ',', '"', '');
         $headers[0] = ltrim($headers[0], "\xEF\xBB\xBF");
 
         $bar = $this->output->createProgressBar();
         $bar->start();
 
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, null, ',', '"', '')) !== false) {
             $bar->advance();
             try {
                 $data = array_combine($headers, array_slice($row, 0, count($headers)) + array_fill(0, count($headers), ""));
