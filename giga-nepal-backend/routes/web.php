@@ -222,6 +222,12 @@ Route::prefix('admin')->group(function () {
         Route::delete('categories/{category}/spec-templates/{template}/fields/{field}', [AdminCommerce::class, 'deleteCategorySpecField'])->whereNumber(['category', 'template', 'field'])->middleware('throttle:20,1');
         Route::post('products', [AdminCommerce::class, 'storeProduct'])->middleware('throttle:20,1');
         Route::post('products/{product}/duplicate', [AdminCommerce::class, 'duplicateProduct'])->whereNumber('product')->middleware('throttle:20,1');
+        // Tax & Tariff management
+        Route::get('tax', [AdminCommerce::class, 'taxIndex']);
+        Route::post('tax/zones', [AdminCommerce::class, 'storeTaxZone'])->middleware('throttle:20,1');
+        Route::post('tax/zones/{zone}/toggle', [AdminCommerce::class, 'toggleTaxZone'])->whereNumber('zone')->middleware('throttle:20,1');
+        Route::post('tax/rules', [AdminCommerce::class, 'storeTaxRule'])->middleware('throttle:20,1');
+        Route::post('tax/duties', [AdminCommerce::class, 'storeDutyRule'])->middleware('throttle:20,1');
         Route::post('products/{product}/toggle', [AdminCommerce::class, 'deactivateProduct'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/stock', [AdminCommerce::class, 'adjustProductStock'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/regional-stock', [AdminCommerce::class, 'storeProductRegionalStock'])->whereNumber('product')->middleware('throttle:20,1');

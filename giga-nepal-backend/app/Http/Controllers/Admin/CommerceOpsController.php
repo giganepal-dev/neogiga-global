@@ -3631,4 +3631,74 @@ class CommerceOpsController extends Controller
             default => [now()->addDay(), now()->addDays(5)],
         };
     }
+
+    // ── Tax & Tariff ──────────────────────────────────────────────
+
+    public function taxIndex(): \Illuminate\View\View
+    {
+        return view('admin.tax', [
+            'zones' => DB::table('tax_zones')->orderBy('name')->get(),
+            'rules' => DB::table('tax_rules')->orderBy('tax_name')->get(),
+            'duties' => DB::table('import_duty_rules')->orderBy('hs_code')->get(),
+            'sources' => DB::table('tax_tariff_source_registry')->orderBy('country_code')->get(),
+            'marketplaces' => \App\Models\Marketplace\Marketplace::orderBy('name')->get(['id', 'name', 'country_iso2']),
+            'countries' => DB::table('countries')->orderBy('name')->get(['id', 'name', 'iso_code_2']),
+        ]);
+    }
+
+    public function storeTaxZone(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        DB::table('tax_zones')->insert([
+            'marketplace_id' => $request->input('marketplace_id'),
+            'country_id' => $request->input('country_id'),
+            'name' => $request->input('name'),
+            'code' => $request->input('code'),
+            'tax_rate' => (float) $request->input('tax_rate', 0),
+            'is_compound' => $request->boolean('is_compound'),
+            'is_inclusive' => $request->boolean('is_inclusive'),
+            'priority' => (int) $request->input('priority', 10),
+            'is_active' => $request->boolean('is_active'),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        return back()->with('status', 'Tax zone added.');
+    }
+
+    public function toggleTaxZone(int $zone): \Illuminate\Http\RedirectResponse
+    {
+        $current = DB::table('tax_zones')->where('id', $zone)->value('is_active');
+        DB::table('tax_zones')->where('id', $zone)->update(['is_active' => ! $current, 'updated_at' => now()]);
+        return back()->with('status', 'Tax zone ' . ($current ? 'deactivated' : 'activated') . '.');
+    }
+
+    public function storeTaxRule(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        DB::table('tax_rules')->insert([
+            'marketplace_id' => $request->input('marketplace_id'),
+            'country_id' => $request->input('country_id'),
+            'tax_name' => $request->input('tax_name'),
+            'tax_type' => $request->input('tax_type', 'vat'),
+            'tax_rate' => (float) $request->input('tax_rate', 0),
+            'is_compound' => $request->boolean('is_compound'),
+            'is_inclusive' => $request->boolean('is_inclusive'),
+            'applies_to' => $request->input('applies_to', 'all'),
+            'is_active' => $request->boolean('is_active'),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        return back()->with('status', 'Tax rule added.');
+    }
+
+    public function storeDutyRule(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        DB::table('import_duty_rules')->insert([
+            'country_id' => $request->input('country_id'),
+            'marketplace_id' => $request->input('marketplace_id'),
+            'hs_code' => $request->input('hs_code'),
+            'duty_rate' => (float) $request->input('duty_rate', 0),
+            'duty_type' => $request->input('duty_type', 'ad_valorem'),
+            'origin_country' => $request->input('origin_country'),
+            'is_active' => $request->boolean('is_active'),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        return back()->with('status', 'Import duty rule added.');
+    }
 }
