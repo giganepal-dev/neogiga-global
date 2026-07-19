@@ -540,14 +540,16 @@ class DashboardController extends Controller
             'indexJobs' => Schema::hasTable('catalog_index_rebuild_jobs')
                 ? DB::table('catalog_index_rebuild_jobs')->where('source_code', 'jlcpcb_parts_database')->orderByDesc('id')->limit(8)->get()
                 : collect(),
-            'stats' => [
+            'stats' => Cache::remember('admin:jlcpcb-import-stats', 300, function () {
+                return [
                 'pending' => DB::table('catalog_product_sources as cps')->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')->where('cs.code', 'jlcpcb_parts_database')->whereNotIn('cps.review_status', ['approved', 'rejected'])->count(),
                 'approved' => DB::table('catalog_product_sources as cps')->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')->where('cs.code', 'jlcpcb_parts_database')->where('cps.review_status', 'approved')->count(),
                 'rejected' => DB::table('catalog_product_sources as cps')->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')->where('cs.code', 'jlcpcb_parts_database')->where('cps.review_status', 'rejected')->count(),
                 'total' => DB::table('catalog_product_sources as cps')->join('catalog_sources as cs', 'cs.id', '=', 'cps.source_id')->where('cs.code', 'jlcpcb_parts_database')->count(),
                 'indexed' => Schema::hasTable('product_search_documents') ? DB::table('product_search_documents')->where('source_code', 'jlcpcb_parts_database')->count() : 0,
                 'facets' => Schema::hasTable('product_facet_values') ? DB::table('product_facet_values')->where('source_code', 'jlcpcb_parts_database')->count() : 0,
-            ],
+                ];
+            }),
             'taxonomyReview' => $this->jlcpcbTaxonomyReviewSummary(),
             'filters' => [
                 'q' => (string) $request->query('q', ''),
