@@ -82,7 +82,7 @@ class ProductPageController extends Controller
             ->when($sort === 'stock', fn ($query) => $query->orderByDesc('stock_quantity'))
             ->when($sort === 'manufacturer', fn ($query) => $query->orderBy('manufacturer_name')->orderBy('name'))
             ->when(! in_array($sort, ['newest', 'price', 'stock', 'manufacturer'], true), fn ($query) => $query->orderByDesc('is_featured')->orderBy('name'))
-            ->paginate(24)
+            ->paginate(100)
             ->withQueryString();
 
         // Search and faceted combinations are useful to people but create an

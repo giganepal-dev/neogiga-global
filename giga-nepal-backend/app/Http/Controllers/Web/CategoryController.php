@@ -27,7 +27,7 @@ class CategoryController extends Controller
     ];
 
     private const DEFAULT_SORT = 'newest';
-    private const PER_PAGE = 24;
+    private const PER_PAGE = 100;
 
     public function index(): View
     {
