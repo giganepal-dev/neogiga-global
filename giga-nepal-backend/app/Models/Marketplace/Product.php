@@ -153,6 +153,12 @@ class Product extends Model
         return $this->hasMany(InventoryStock::class);
     }
 
+    /** Alias for inventoryStocks — used by catalog import commands. */
+    public function stocks(): HasMany
+    {
+        return $this->inventoryStocks();
+    }
+
     public function relatedProducts(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'product_related_items', 'product_id', 'related_product_id');
