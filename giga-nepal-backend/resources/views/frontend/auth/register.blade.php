@@ -31,6 +31,9 @@
             <label for="name">Full name</label>
             <input type="text" id="name" name="name" value="{{ old('name') }}" required autofocus autocomplete="name">
 
+            <label for="company_name">Company name <span style="color:var(--faint);font-weight:400">(optional)</span></label>
+            <input type="text" id="company_name" name="company_name" value="{{ old('company_name') }}" maxlength="190" autocomplete="organization">
+
             <label for="email">Email address</label>
             <input type="email" id="email" name="email" value="{{ old('email') }}" required autocomplete="email">
 

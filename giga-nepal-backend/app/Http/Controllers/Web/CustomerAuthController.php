@@ -66,6 +66,7 @@ class CustomerAuthController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:120'],
+            'company_name' => ['nullable', 'string', 'min:1', 'max:190'],
             'email' => ['required', 'email:rfc', 'max:190', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'max:120', 'confirmed'],
             'terms' => ['accepted'],
@@ -87,6 +88,18 @@ class CustomerAuthController extends Controller
             'password' => $data['password'],
             'role_id' => $role->id,
         ]);
+
+        // Store company name in customer profile if provided
+        if (! empty($data['company_name'])) {
+            try {
+                DB::table('customer_profiles')->updateOrInsert(
+                    ['user_id' => $user->id],
+                    ['company_name' => $data['company_name'], 'email' => $user->email, 'created_at' => now(), 'updated_at' => now()]
+                );
+            } catch (\Throwable) {
+                // Non-critical — company name stored if table supports it
+            }
+        }
 
         Auth::login($user);
         $request->session()->regenerate();

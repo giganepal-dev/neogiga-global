@@ -146,7 +146,7 @@
 
 <section class="section" id="regional-editions" style="background:var(--bg2)">
     <div class="wrap">
-        <div class="section-head"><div><p class="eyebrow">Regional websites</p><h2>The same NeoGiga platform in every active market</h2><p class="sub">Regional domains keep their own canonical SEO, currency and warehouse context while using the shared global application.</p></div></div>
+        <div class="section-head"><div><p class="eyebrow">Regional Sourcing Network</p><h2>NeoGiga Regional Sourcing Network</h2><p class="sub">Access local pricing, regional warehouses, distributor support and global component sourcing through NeoGiga marketplaces.</p></div></div>
         <div class="grid home-editions">
             @foreach(($marketplaceContext['editions'] ?? []) as $edition)
                 <a class="panel home-edition" href="{{ $edition['url'] }}">
