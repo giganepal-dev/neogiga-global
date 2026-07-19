@@ -50,7 +50,8 @@ class RegionalTaxSeeder extends Seeder
                 ->where('code', $zone['code'])
                 ->exists();
 
-            if (! $exists) {
+            if (! $exists && $marketplace) {
+                unset($zone['country_code']);
                 DB::table('tax_zones')->insert(array_merge($zone, [
                     'country_id' => $country?->id,
                     'marketplace_id' => $marketplace?->id,
