@@ -78,10 +78,13 @@ class EnrichManufacturerImages extends Command
 
     private function tiProductPage($product): ?string
     {
-        // Extract family from MPN (e.g., LM5088MHX-2/NOPB → LM5088)
         $mpn = $product->mpn;
-        $family = preg_replace('/[A-Z]+-?\d*\/?.*$/', '', $mpn); // crude but works for TI
-        if (strlen($family) < 3) $family = explode('-', str_replace('/', '-', $mpn))[0];
+        // Extract family: LM5088MHX-2/NOPB → LM5088
+        if (preg_match('/^([A-Z]+\d+)/', $mpn, $fm)) {
+            $family = $fm[1];
+        } else {
+            return null;
+        }
 
         $encodedMpn = str_replace('/', '%2F', $mpn);
         $url = "https://www.ti.com/product/{$family}/part-details/{$encodedMpn}";
@@ -92,15 +95,12 @@ class EnrichManufacturerImages extends Command
 
         if (! $response->successful()) return null;
 
-        // Extract JSON-LD image
         preg_match('/"image":\s*"([^"]+)"/', $response->body(), $matches);
         if (! empty($matches[1])) {
             return str_replace('\/', '/', $matches[1]);
         }
 
-        // Fallback: img tag
-        preg_match('/<img[^>]+src="([^"]*package[^"]*\.(?:png|jpg|jpeg|webp))"/i', $response->body(), $m2);
-        return $m2[1] ?? null;
+        return null;
     }
 
     private function adiProductPage($product): ?string
