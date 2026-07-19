@@ -148,7 +148,7 @@
                     @if($p->brand)<a class="ptag" href="{{ $cardBrandUrl }}">{{ $p->brand->name }}</a>@endif
                     <h2><a href="{{ $publicBase }}/products/{{ $p->slug }}">{{ $p->name }}</a></h2>
                     <div class="pmeta">
-                        @if($p->mpn)MPN: <a class="mono" href="/mpn/{{ str_replace('/','--', urlencode($p->mpn) }}">{{ $p->mpn }}</a> · @endif
+                        @if($p->mpn)MPN: <a class="mono" href="/mpn/{{ str_replace('/','--', urlencode($p->mpn)) }}">{{ $p->mpn }}</a> · @endif
                         @if($p->sku)SKU: <a class="mono" href="{{ $publicBase }}/products?q={{ urlencode($p->sku) }}">{{ $p->sku }}</a>@endif
                         @if($p->category) · <a href="{{ $cardCategoryUrl }}">{{ $p->category->name }}</a>@endif
                     </div>

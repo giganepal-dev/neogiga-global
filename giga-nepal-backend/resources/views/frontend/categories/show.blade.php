@@ -135,7 +135,7 @@
             @php($cardImage = $p->images->first())
             <article style="background:rgba(13,34,64,.55);border:1px solid var(--line);border-radius:var(--r);padding:16px">
                 <a href="{{ $publicBase }}/products/{{ $p->slug }}" style="position:relative;display:block"><x-product-image-badges :product="$p" /><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($cardImage?->srcset()) srcset="{{ $cardImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw" @endif alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async" style="display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#081527;border-radius:9px;margin-bottom:12px"><strong>{{ $p->name }}</strong></a>
-                <div style="color:var(--muted);font-size:.82rem" class="mono">@if($p->sku)<a href="{{ $publicBase }}/products?q={{ urlencode($p->sku) }}">{{ $p->sku }}</a>@endif @if($p->mpn)· <a href="/mpn/{{ str_replace('/','--', urlencode($p->mpn) }}">{{ $p->mpn }}</a>@endif</div>
+                <div style="color:var(--muted);font-size:.82rem" class="mono">@if($p->sku)<a href="{{ $publicBase }}/products?q={{ urlencode($p->sku) }}">{{ $p->sku }}</a>@endif @if($p->mpn)· <a href="/mpn/{{ str_replace('/','--', urlencode($p->mpn)) }}">{{ $p->mpn }}</a>@endif</div>
             </article>
         @endforeach
     </div>
