@@ -359,7 +359,7 @@ class DashboardController extends Controller
                 'product_brands.id',
                 'product_brands.name',
                 'product_brands.slug',
-                'product_brands.logo_url',
+                'product_brands.logo_path',
                 'product_brands.website_url',
                 'product_brands.logo_source',
                 'product_brands.logo_verified_at',

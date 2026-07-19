@@ -79,7 +79,7 @@ class WaveshareImporter extends BaseImporter
             [
                 'name' => 'Waveshare',
                 'slug' => 'waveshare',
-                'logo_url' => 'https://cdn.waveshare.com/logo.png',
+                'logo_path' => 'https://cdn.waveshare.com/logo.png',
                 'description' => 'Displays, HATs, and industrial modules',
             ],
             [

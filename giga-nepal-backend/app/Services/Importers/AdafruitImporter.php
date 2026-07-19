@@ -80,7 +80,7 @@ class AdafruitImporter extends BaseImporter
             [
                 'name' => 'Adafruit',
                 'slug' => 'adafruit',
-                'logo_url' => 'https://cdn.adafruit.com/logo.png',
+                'logo_path' => 'https://cdn.adafruit.com/logo.png',
                 'description' => 'Open-source hardware company',
             ],
             [
