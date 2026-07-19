@@ -55,6 +55,7 @@ class Marketplace extends Model
         'seo_fulfilment_phrase', 'seo_site_suffix',
         'short_description', 'marketplace_description', 'homepage_heading', 'homepage_subheading',
         'logo', 'favicon', 'banner_image', 'created_by', 'updated_by',
+        'welcome_messages', 'welcome_enabled',
     ];
 
     protected $casts = [
@@ -89,7 +90,47 @@ class Marketplace extends Model
         'seo_is_auto_generated' => 'boolean',
         'seo_last_generated_at' => 'datetime',
         'has_local_warehouse' => 'boolean',
+        'welcome_messages' => 'array',
+        'welcome_enabled' => 'boolean',
     ];
+
+    /**
+     * Resolve the welcome message for a given locale, falling back to English.
+     * @return array{title: string, subtitle: string}|null
+     */
+    public function welcomeFor(string $locale = 'en'): ?array
+    {
+        if (! ($this->welcome_enabled ?? true)) {
+            return null;
+        }
+
+        $messages = $this->welcome_messages ?? [];
+
+        // Exact locale match
+        if (! empty($messages[$locale]['title'])) {
+            return $messages[$locale];
+        }
+
+        // Primary language fallback (e.g., 'en-US' → 'en')
+        $lang = strtok($locale, '-');
+        if ($lang !== $locale && ! empty($messages[$lang]['title'])) {
+            return $messages[$lang];
+        }
+
+        // English fallback
+        if ($locale !== 'en' && ! empty($messages['en']['title'])) {
+            return $messages['en'];
+        }
+
+        // First available locale
+        foreach ($messages as $msg) {
+            if (! empty($msg['title'])) {
+                return $msg;
+            }
+        }
+
+        return null;
+    }
 
     public function country(): BelongsTo
     {

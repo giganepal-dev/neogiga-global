@@ -3,27 +3,26 @@
 namespace App\Console\Commands;
 
 use App\Models\Marketplace\Product;
-use App\Models\Marketplace\ProductImage;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Scrapes product images from official/LCSC websites by MPN lookup.
- * Rate-limited, resumable, writes to product_images table.
- *
- * # ponytail: sequential single-threaded scraper; if throughput matters, add queue jobs per MPN
+ * Discovers product images by MPN from LCSC and other sources.
+ * Writes candidates to product_image_candidates for review before assignment.
+ * Rate-limited, resumable, manufacturer-validated.
  */
 class ScrapeProductImagesCommand extends Command
 {
     protected $signature = 'catalog:scrape-images-by-mpn
                             {--batch-size=50 : Products per batch}
                             {--delay=2 : Seconds between requests}
-                            {--limit= : Max products to process (default: all)}';
+                            {--limit= : Max products to process}
+                            {--manufacturer= : Filter by manufacturer name}
+                            {--dry-run : Discover candidates without saving}';
 
-    protected $description = 'Scrape product images by MPN from official websites';
+    protected $description = 'Discover product images by MPN from official sources';
 
     private const CHECKPOINT_TABLE = 'image_scrape_checkpoints';
 
@@ -34,12 +33,18 @@ class ScrapeProductImagesCommand extends Command
         $batchSize = (int) $this->option('batch-size');
         $delay = (int) $this->option('delay');
         $limit = $this->option('limit') ? (int) $this->option('limit') : null;
+        $manufacturer = $this->option('manufacturer');
+        $dryRun = (bool) $this->option('dry-run');
 
-        $products = $this->productsWithoutImages($batchSize, $limit);
+        if ($dryRun) {
+            $this->warn('DRY RUN — candidates will not be saved.');
+        }
+
+        $products = $this->productsWithoutImages($batchSize, $limit, $manufacturer);
         $total = $limit ? min($products->count(), $limit) : $products->count();
 
         if ($total === 0) {
-            $this->info('All products have images.');
+            $this->info('All matching products have images.');
             return 0;
         }
 
@@ -59,13 +64,16 @@ class ScrapeProductImagesCommand extends Command
                 continue;
             }
 
-            $imageUrl = $this->findImage($mpn, $mfr);
+            $result = $this->findImage($mpn, $mfr);
 
-            if ($imageUrl) {
-                $saved = $this->saveImage($product, $imageUrl);
+            if ($result && ! $dryRun) {
+                $saved = $this->saveCandidate($product, $mpn, $result);
                 if ($saved) {
                     $found++;
                 }
+            } elseif ($result && $dryRun) {
+                $found++;
+                $this->line("  [dry-run] {$mfr} {$mpn} → {$result['url']} (confidence: {$result['confidence']}%)");
             }
 
             $this->markProcessed($mpn);
@@ -76,25 +84,27 @@ class ScrapeProductImagesCommand extends Command
                 break;
             }
 
-            // Rate limit: random delay between requests
-            usleep(($delay * 1000000) + random_int(0, 2000000));
+            usleep(($delay * 1_000_000) + random_int(0, 2_000_000));
         }
 
         $bar->finish();
         $this->newLine();
-        $this->info("Done: {$found} images saved out of {$processed} processed.");
+        $this->info("Done: {$found} candidates discovered out of {$processed} processed.");
 
         return 0;
     }
 
-    private function productsWithoutImages(int $batchSize, ?int $limit)
+    private function productsWithoutImages(int $batchSize, ?int $limit, ?string $manufacturer)
     {
         $query = Product::query()
             ->whereDoesntHave('images', fn ($q) => $q->where('is_active', true))
             ->whereNotNull('mpn')
             ->where('mpn', '!=', '');
 
-        // Skip already-processed MPNs
+        if ($manufacturer) {
+            $query->where('manufacturer_name', 'like', "%{$manufacturer}%");
+        }
+
         if (DB::getSchemaBuilder()->hasTable(self::CHECKPOINT_TABLE)) {
             $query->whereNotIn('mpn', function ($sub) {
                 $sub->select('mpn')->from(self::CHECKPOINT_TABLE);
@@ -109,28 +119,31 @@ class ScrapeProductImagesCommand extends Command
     }
 
     /**
-     * Attempt to find product image from available sources.
+     * @return array{url:string,source_name:string,confidence:int,source_page_url:?string}|null
      */
-    private function findImage(string $mpn, string $mfr): ?string
+    private function findImage(string $mpn, string $mfr): ?array
     {
-        // Source 1: LCSC/JLCPCB component search
-        $url = $this->scrapeLcsc($mpn);
-        if ($url) {
-            return $url;
+        // Source 1: LCSC component search (highest confidence source)
+        $lcsc = $this->scrapeLcsc($mpn, $mfr);
+        if ($lcsc) {
+            return $lcsc;
         }
 
-        // Source 2: Google Images search (last resort, may trigger CAPTCHA)
+        // Source 2: Google Images (lower confidence, requires manufacturer context)
         if ($mfr !== '') {
-            $url = $this->scrapeGoogleImages($mpn, $mfr);
+            $google = $this->scrapeGoogleImages($mpn, $mfr);
+            if ($google) {
+                return $google; // Already has lower confidence from the method
+            }
         }
 
-        return $url;
+        return null;
     }
 
     /**
-     * Search LCSC for product image by MPN.
+     * Search LCSC by MPN with manufacturer validation.
      */
-    private function scrapeLcsc(string $mpn): ?string
+    private function scrapeLcsc(string $mpn, string $mfr): ?array
     {
         try {
             $searchUrl = 'https://wmsc.lcsc.com/wmsc/search/global?keyword=' . urlencode($mpn);
@@ -150,42 +163,55 @@ class ScrapeProductImagesCommand extends Command
                 return null;
             }
 
-            // Take first match with matching MPN or closest
+            // Find best match: prefer exact MPN + manufacturer match
+            $bestScore = 0;
+            $bestImage = null;
+
             foreach ($products as $item) {
-                $itemMpn = $item['productCode'] ?? $item['mpn'] ?? '';
-                if (strcasecmp(trim($itemMpn), $mpn) === 0) {
+                $itemMpn = trim((string) ($item['productCode'] ?? $item['mpn'] ?? ''));
+                $itemMfr = trim((string) ($item['brandNameEn'] ?? $item['brandName'] ?? $item['brand'] ?? ''));
+
+                $mpnMatch = strcasecmp($itemMpn, $mpn) === 0;
+                $mfrMatch = $mfr !== '' && $itemMfr !== '' && stripos($itemMfr, $mfr) !== false;
+
+                $score = 0;
+                if ($mpnMatch && $mfrMatch) {
+                    $score = 95; // Exact MPN + manufacturer match
+                } elseif ($mpnMatch) {
+                    $score = 70; // Exact MPN only
+                } elseif ($mfrMatch && stripos($itemMpn, $mpn) !== false) {
+                    $score = 50; // Partial MPN + manufacturer match
+                } else {
+                    $score = 20; // Weak match
+                }
+
+                if ($score > $bestScore) {
                     $imagePath = $item['productImages'] ?? $item['productImage'] ?? null;
                     if (is_array($imagePath) && ! empty($imagePath)) {
                         $imagePath = $imagePath[0];
                     }
                     if ($imagePath && is_string($imagePath)) {
-                        return str_starts_with($imagePath, 'http')
-                            ? $imagePath
-                            : 'https:' . $imagePath;
+                        $bestScore = $score;
+                        $bestImage = [
+                            'url' => str_starts_with($imagePath, 'http') ? $imagePath : 'https:' . $imagePath,
+                            'source_name' => 'lcsc',
+                            'confidence' => $score,
+                            'source_page_url' => 'https://www.lcsc.com/search?q=' . urlencode($mpn),
+                        ];
                     }
                 }
             }
 
-            // Fallback: first result's image
-            $first = $products[0];
-            $imagePath = $first['productImages'] ?? $first['productImage'] ?? null;
-            if (is_array($imagePath) && ! empty($imagePath)) {
-                $imagePath = $imagePath[0];
-            }
-
-            return ($imagePath && is_string($imagePath))
-                ? (str_starts_with($imagePath, 'http') ? $imagePath : 'https:' . $imagePath)
-                : null;
-        } catch (\Throwable $e) {
+            return $bestImage;
+        } catch (\Throwable) {
             return null;
         }
     }
 
     /**
-     * Scrape Google Images as last resort.
-     * ⚠️ May trigger CAPTCHAs; use sparingly.
+     * Scrape Google Images as last resort. Lower confidence.
      */
-    private function scrapeGoogleImages(string $mpn, string $mfr): ?string
+    private function scrapeGoogleImages(string $mpn, string $mfr): ?array
     {
         try {
             $query = urlencode("{$mfr} {$mpn} datasheet");
@@ -200,78 +226,68 @@ class ScrapeProductImagesCommand extends Command
                 return null;
             }
 
-            // Extract first image URL from Google Images results
             preg_match_all('/"ou":"(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp|svg))"/i', $response->body(), $matches);
 
             if (! empty($matches[1])) {
-                // Filter out tiny/broken images, take first reasonable one
                 foreach ($matches[1] as $imageUrl) {
                     if (! str_contains($imageUrl, 'favicon') && ! str_contains($imageUrl, 'icon')) {
-                        return $imageUrl;
+                        return [
+                            'url' => $imageUrl,
+                            'source_name' => 'google_images',
+                            'confidence' => 25, // Low confidence — Google Images results are not MPN-validated
+                            'source_page_url' => $url,
+                        ];
                     }
                 }
             }
 
             return null;
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return null;
         }
     }
 
     /**
-     * Download and save image to product_images table.
+     * Save discovered image as a candidate for review.
      */
-    private function saveImage(Product $product, string $imageUrl): bool
+    private function saveCandidate(Product $product, string $mpn, array $result): bool
     {
         try {
-            $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (compatible; NeoGigaBot/1.0)',
-            ])->timeout(30)->get($imageUrl);
-
-            if (! $response->successful()) {
+            if (! DB::getSchemaBuilder()->hasTable('product_image_candidates')) {
                 return false;
             }
 
-            $body = $response->body();
-            if (strlen($body) < 512) {
-                return false; // Too small, likely not a real image
+            $exists = DB::table('product_image_candidates')
+                ->where('product_id', $product->id)
+                ->where('candidate_url', $result['url'])
+                ->exists();
+
+            if ($exists) {
+                return false;
             }
 
-            $ext = $this->guessExtension($imageUrl, $response->header('Content-Type'));
-            $filename = 'products/scraped/' . $product->id . '_' . Str::random(8) . '.' . $ext;
+            $rightsStatus = $result['confidence'] >= 80 ? 'approved' : 'pending_review';
 
-            Storage::disk('public')->put($filename, $body);
-
-            ProductImage::create([
+            DB::table('product_image_candidates')->insert([
                 'product_id' => $product->id,
-                'file_path' => $filename,
-                'original_url' => $imageUrl,
-                'source_url' => $imageUrl,
-                'is_active' => true,
-                'is_primary' => true,
-                'sort_order' => 0,
+                'candidate_url' => $result['url'],
+                'source_name' => $result['source_name'],
+                'source_page_url' => $result['source_page_url'] ?? null,
+                'manufacturer' => $product->manufacturer_name,
+                'mpn' => $mpn,
+                'confidence_score' => $result['confidence'],
+                'rights_status' => $rightsStatus,
+                'rights_review_required' => $result['confidence'] < 80,
+                'discovered_by' => 'catalog:scrape-images-by-mpn',
+                'discovered_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             return true;
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return false;
         }
-    }
-
-    private function guessExtension(string $url, ?string $contentType): string
-    {
-        $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
-        if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'])) {
-            return $ext === 'jpeg' ? 'jpg' : $ext;
-        }
-
-        return match ($contentType) {
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/webp' => 'webp',
-            'image/svg+xml' => 'svg',
-            default => 'jpg',
-        };
     }
 
     private function markProcessed(string $mpn): void

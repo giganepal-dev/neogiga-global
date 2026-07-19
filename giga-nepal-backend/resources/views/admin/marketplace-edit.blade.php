@@ -24,7 +24,7 @@
 </style>
 
 <div class="mtabs" role="tablist">
-    @foreach(['general'=>'General','domain'=>'Domain & Routing','status'=>'Status & Access','seo'=>'SEO','branding'=>'Branding','advanced'=>'Advanced'] as $k=>$label)
+    @foreach(['general'=>'General','domain'=>'Domain & Routing','status'=>'Status & Access','seo'=>'SEO','branding'=>'Branding','welcome'=>'Welcome','advanced'=>'Advanced'] as $k=>$label)
         <button type="button" class="mtab-btn {{ $tab===$k?'on':'' }}" data-tab="{{ $k }}">{{ $label }}</button>
     @endforeach
 </div>
@@ -168,6 +168,36 @@
             <div><label>Homepage subheading</label><input type="text" name="homepage_subheading" value="{{ old('homepage_subheading',$m->homepage_subheading) }}"></div>
             <div><label>Marketplace description</label><textarea name="marketplace_description">{{ old('marketplace_description',$m->marketplace_description) }}</textarea></div>
             <div><button class="btn btn-primary" type="submit">Save branding</button></div>
+        </form>
+    </div></div>
+</div>
+
+{{-- WELCOME --}}
+@php $wl = $m->welcome_messages ?? []; @endphp
+<div class="mtab {{ $tab==='welcome'?'on':'' }}" data-tab="welcome">
+    <div class="card"><div class="card-b">
+        <form class="frm" method="post" action="/admin/marketplaces/{{ $m->id }}/config"><input type="hidden" name="tab" value="welcome">@csrf
+            <div class="chk"><input type="checkbox" name="welcome_enabled" value="1" @checked($m->welcome_enabled ?? true) id="we"><label for="we">Enable regional welcome message</label></div>
+            <p class="sub">Configure per-locale welcome messages for this marketplace. The English fallback is always required.</p>
+            <div id="welcome-locales">
+                @php $i = 0 @endphp
+                @foreach(['en'=>'English','ur'=>'Urdu','ne'=>'Nepali','hi'=>'Hindi','bn'=>'Bengali','si'=>'Sinhala','ta'=>'Tamil','ar'=>'Arabic','fr'=>'French','de'=>'German','es'=>'Spanish','pt'=>'Portuguese','ja'=>'Japanese','ko'=>'Korean','zh'=>'Chinese','my'=>'Burmese'] as $code=>$langName)
+                    @php $msg = $wl[$code] ?? null @endphp
+                    <div class="row" style="margin-bottom:8px">
+                        <div>
+                            <label>{{ $langName }} ({{ $code }}) title</label>
+                            <input type="hidden" name="welcome_locale[]" value="{{ $code }}">
+                            <input type="text" name="welcome_title[]" value="{{ old("welcome_title.{$i}", $msg['title'] ?? '') }}" placeholder="@if($code==='en')Welcome to NeoGiga {{ $m->regional_brand_name ?: $m->name }}@endif">
+                        </div>
+                        <div>
+                            <label>{{ $langName }} subtitle</label>
+                            <input type="text" name="welcome_subtitle[]" value="{{ old("welcome_subtitle.{$i}", $msg['subtitle'] ?? '') }}">
+                        </div>
+                    </div>
+                    @php $i++ @endphp
+                @endforeach
+            </div>
+            <div><button class="btn btn-primary" type="submit">Save welcome messages</button></div>
         </form>
     </div></div>
 </div>

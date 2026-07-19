@@ -105,7 +105,13 @@ class SellerApplicationController extends Controller
 
         $application = SellerApplication::create($data);
 
-        // TODO: Send email notification to admin and applicant
+        try {
+            app(\App\Services\Marketing\AccountCommunicationService::class)->application(
+                $request->user(), 'seller', 'submitted'
+            );
+        } catch (\Throwable) {
+            // Non-blocking
+        }
 
         return response()->json([
             'success' => true,
@@ -154,11 +160,21 @@ class SellerApplicationController extends Controller
             switch ($request->action) {
                 case 'approve':
                     $application->approve($adminUser, $request->admin_notes);
-                    // TODO: Trigger vendor account creation and send approval email
+                    try {
+                        $applicant = $application->user_id ? \App\Models\User::find($application->user_id) : null;
+                        if ($applicant) {
+                            app(\App\Services\Marketing\AccountCommunicationService::class)->application($applicant, 'seller', 'approved');
+                        }
+                    } catch (\Throwable) {}
                     break;
                 case 'reject':
                     $application->reject($adminUser, $request->admin_notes);
-                    // TODO: Send rejection email
+                    try {
+                        $applicant = $application->user_id ? \App\Models\User::find($application->user_id) : null;
+                        if ($applicant) {
+                            app(\App\Services\Marketing\AccountCommunicationService::class)->application($applicant, 'seller', 'rejected');
+                        }
+                    } catch (\Throwable) {}
                     break;
                 case 'under_review':
                     $application->markUnderReview($adminUser);

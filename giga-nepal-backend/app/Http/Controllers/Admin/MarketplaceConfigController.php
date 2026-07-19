@@ -42,11 +42,11 @@ class MarketplaceConfigController extends Controller
 
         if ($s = trim((string) $request->query('q', ''))) {
             $q->where(function ($w) use ($s) {
-                $w->where('name', 'ilike', "%{$s}%")
-                    ->orWhere('code', 'ilike', "%{$s}%")
-                    ->orWhere('domain', 'ilike', "%{$s}%")
-                    ->orWhere('generated_domain', 'ilike', "%{$s}%")
-                    ->orWhereHas('country', fn ($c) => $c->where('name', 'ilike', "%{$s}%"));
+                $w->where('name', \App\Support\Sql::ilike(), "%{$s}%")
+                    ->orWhere('code', \App\Support\Sql::ilike(), "%{$s}%")
+                    ->orWhere('domain', \App\Support\Sql::ilike(), "%{$s}%")
+                    ->orWhere('generated_domain', \App\Support\Sql::ilike(), "%{$s}%")
+                    ->orWhereHas('country', fn ($c) => $c->where('name', \App\Support\Sql::ilike(), "%{$s}%"));
             });
         }
         if (($v = $request->query('status')) !== null && $v !== '') {
@@ -174,6 +174,7 @@ class MarketplaceConfigController extends Controller
             'status' => $this->saveStatus($request, $m),
             'seo' => $this->saveSeo($request, $m),
             'branding' => $this->saveBranding($request, $m),
+            'welcome' => $this->saveWelcome($request, $m),
             'advanced' => $this->saveAdvanced($request, $m),
             default => null,
         };
@@ -371,6 +372,39 @@ class MarketplaceConfigController extends Controller
             'homepage_subheading' => 'nullable|string|max:255',
             'marketplace_description' => 'nullable|string|max:2000',
         ]));
+    }
+
+    private function saveWelcome(Request $request, Marketplace $m): void
+    {
+        $m->welcome_enabled = $request->boolean('welcome_enabled');
+
+        $locales = $request->input('welcome_locale', []);
+        $titles = $request->input('welcome_title', []);
+        $subtitles = $request->input('welcome_subtitle', []);
+        $messages = [];
+
+        foreach ($locales as $i => $locale) {
+            $locale = trim((string) $locale);
+            $title = trim((string) ($titles[$i] ?? ''));
+            if ($locale === '' || $title === '') {
+                continue;
+            }
+            $messages[$locale] = [
+                'title' => $title,
+                'subtitle' => trim((string) ($subtitles[$i] ?? '')),
+            ];
+        }
+
+        // Always keep English fallback if not explicitly provided
+        if (empty($messages['en']['title'])) {
+            $countryName = $m->regional_brand_name ?: $m->name;
+            $messages['en'] = [
+                'title' => "Welcome to NeoGiga {$countryName}",
+                'subtitle' => '',
+            ];
+        }
+
+        $m->welcome_messages = ! empty($messages) ? $messages : null;
     }
 
     private function saveAdvanced(Request $request, Marketplace $m): void

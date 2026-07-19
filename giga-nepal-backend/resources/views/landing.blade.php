@@ -29,7 +29,12 @@
 <section class="hero">
     <div class="wrap hero-grid">
         <div>
-            <p class="eyebrow">{{ $editionName }} · {{ $currencyCode }} · {{ $isLiveEdition ? 'Live regional catalog' : 'Regional platform preview' }}</p>
+            @if($welcomeMessage)
+                <p class="eyebrow">{{ $welcomeMessage['title'] }}</p>
+                @if(!empty($welcomeMessage['subtitle']))<p style="color:var(--cyan);font-weight:600;margin:-8px 0 0">{{ $welcomeMessage['subtitle'] }}</p>@endif
+            @else
+                <p class="eyebrow">{{ $editionName }} · {{ $currencyCode }} · {{ $isLiveEdition ? 'Live regional catalog' : 'Regional platform preview' }}</p>
+            @endif
             <h1>Engineering supply,<br><span style="color:var(--cyan)">one global platform.</span></h1>
             <p>Source semiconductors, electronic components, robotics, IoT, industrial automation, batteries and engineering tools through one verified product master—with regional pricing, inventory and fulfilment for {{ $countryName }}.</p>
             <form class="search hero-search" method="get" action="{{ $publicBase }}/products" role="search">
@@ -96,7 +101,7 @@
                     <article class="product-card home-product-card">
                         <a class="product-img" href="{{ $publicBase }}/products/{{ $product->slug }}">
                             <x-product-image-badges :product="$product" />
-                            <img src="{{ $image?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $image?->alt_text ?: $product->name.' product image' }}" width="480" height="360" loading="lazy">
+                            <img src="{{ $image?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $image?->alt_text ?: trim(($product->manufacturer_name ?? '').' '.($product->mpn ?? '').' product image') }}" width="480" height="360" loading="lazy">
                         </a>
                         <div class="product-copy">
                             <span class="badge {{ (float) $product->stock_quantity > 0 ? 'b-ok' : 'b-warn' }}">{{ (float) $product->stock_quantity > 0 ? number_format((float) $product->stock_quantity).' available' : 'RFQ sourcing' }}</span>

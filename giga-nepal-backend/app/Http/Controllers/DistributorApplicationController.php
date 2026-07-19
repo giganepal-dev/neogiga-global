@@ -162,7 +162,11 @@ class DistributorApplicationController extends Controller
                 'status' => 'pending',
             ]));
 
-            // TODO: Send email notification to applicant and admin
+            try {
+                app(\App\Services\Marketing\AccountCommunicationService::class)->application(
+                    $request->user(), 'distributor', 'submitted'
+                );
+            } catch (\Throwable) {}
 
             return response()->json([
                 'success' => true,
@@ -243,14 +247,23 @@ class DistributorApplicationController extends Controller
                 $updateData['approved_at'] = now();
                 $updateData['is_active'] = true;
                 
-                // TODO: Create distributor account and assign territories
-                // TODO: Send approval email with commission details
-                
+                try {
+                    $applicant = $application->user_id ? \App\Models\User::find($application->user_id) : null;
+                    if ($applicant) {
+                        app(\App\Services\Marketing\AccountCommunicationService::class)->application($applicant, 'distributor', 'approved');
+                    }
+                } catch (\Throwable) {}
+
             } elseif ($request->status === 'rejected') {
                 $updateData['rejected_at'] = now();
                 $updateData['is_active'] = false;
-                
-                // TODO: Send rejection email with reason
+
+                try {
+                    $applicant = $application->user_id ? \App\Models\User::find($application->user_id) : null;
+                    if ($applicant) {
+                        app(\App\Services\Marketing\AccountCommunicationService::class)->application($applicant, 'distributor', 'rejected');
+                    }
+                } catch (\Throwable) {}
                 
             } elseif ($request->status === 'under_review') {
                 $updateData['reviewed_at'] = now();

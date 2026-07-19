@@ -55,6 +55,78 @@ class TransactionalCommunicationService
 
     private function body(string $event, array $data, array $brand): string
     {
+        // Try Blade template for known event types
+        $template = $this->templateForEvent($event);
+        if ($template && view()->exists($template)) {
+            try {
+                return view($template, $this->templateData($event, $data, $brand))->render();
+            } catch (\Throwable) {
+                // Fall through to inline rendering on template error
+            }
+        }
+
+        // Inline fallback for events without templates
+        return $this->inlineBody($event, $data, $brand);
+    }
+
+    private function templateForEvent(string $event): ?string
+    {
+        return match (true) {
+            in_array($event, ['registration_received', 'email_verification', 'account_activation', 'welcome'], true) => 'mail.transactional.welcome',
+            in_array($event, ['order_placed', 'order_confirmed'], true) => 'mail.transactional.order-confirmation',
+            str_starts_with($event, 'order_') => 'mail.transactional.order-status',
+            str_starts_with($event, 'shipment_'), str_starts_with($event, 'payment_'), str_starts_with($event, 'refund_') => 'mail.transactional.order-status',
+            default => null,
+        };
+    }
+
+    /** @return array<string, mixed> */
+    private function templateData(string $event, array $data, array $brand): array
+    {
+        $locale = (string) ($data['locale'] ?? 'en');
+        $statusLabels = [
+            'order_placed' => 'Order Received', 'order_confirmed' => 'Order Confirmed',
+            'order_approved' => 'Approved', 'order_processing' => 'Processing',
+            'order_shipped' => 'Shipped', 'order_delivered' => 'Delivered',
+            'order_cancelled' => 'Cancelled', 'order_refunded' => 'Refunded',
+            'payment_received' => 'Payment Received', 'payment_failed' => 'Payment Failed',
+        ];
+
+        return [
+            'locale' => $locale,
+            'brand' => $brand['marketplace_name'] ?? 'NeoGiga',
+            'regionName' => $brand['marketplace_name'] ?? null,
+            'subject' => $data['subject'] ?? ($statusLabels[$event] ?? 'NeoGiga update'),
+            'securityNote' => 'This is a transactional message related to your account or order. It contains no promotional content.',
+            'greeting' => $data['greeting'] ?? 'Welcome to NeoGiga!',
+            'userName' => $data['customer_name'] ?? 'Customer',
+            'userEmail' => $data['customer_email'] ?? '',
+            'loginUrl' => $data['login_url'] ?? ($brand['base_url'] ?? 'https://neogiga.com') . '/en/login',
+            'orderNumber' => $data['order_number'] ?? '',
+            'orderDate' => $data['order_date'] ?? '',
+            'orderStatus' => $data['order_status'] ?? '',
+            'orderTotal' => $data['order_total'] ?? '0.00',
+            'orderUrl' => $data['order_url'] ?? ($brand['base_url'] ?? 'https://neogiga.com') . '/en/account/orders',
+            'currency' => $data['currency'] ?? 'USD',
+            'paymentStatus' => $data['payment_status'] ?? '',
+            'statusLabel' => $statusLabels[$event] ?? str_replace('_', ' ', $event),
+            'statusBadge' => in_array($event, ['order_cancelled', 'order_refunded', 'payment_failed']) ? 'badge-warn' : 'badge-ok',
+            'statusDate' => $data['status_date'] ?? date('Y-m-d H:i'),
+            'statusMessage' => $data['status_message'] ?? '',
+            'nextStep' => $data['next_step'] ?? '',
+            'trackingNumber' => $data['tracking_number'] ?? '',
+            'carrier' => $data['carrier'] ?? '',
+            'customerAction' => $data['customer_action'] ?? '',
+            'shippingAddress' => $data['shipping_address'] ?? '',
+            'products' => $data['products'] ?? [],
+            'verificationUrl' => $data['verification_url'] ?? null,
+            'activationUrl' => $data['activation_url'] ?? null,
+            'passwordResetUrl' => $data['password_reset_url'] ?? null,
+        ];
+    }
+
+    private function inlineBody(string $event, array $data, array $brand): string
+    {
         $label = e((string) str($event)->replace('_', ' ')->title());
         $name = e((string) ($data['customer_name'] ?? 'Customer'));
         $details = [];

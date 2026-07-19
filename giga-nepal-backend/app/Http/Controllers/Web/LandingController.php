@@ -101,6 +101,8 @@ class LandingController extends Controller
             ],
         ];
 
+        $welcomeMessage = $current?->welcomeFor($locale);
+
         return response()
             ->view('landing', compact(
                 'categories',
@@ -112,6 +114,7 @@ class LandingController extends Controller
                 'locale',
                 'marketplaceContext',
                 'marketplaceSeo',
+                'welcomeMessage',
             ))
             ->header('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
     }

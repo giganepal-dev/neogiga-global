@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Marketing\AccountCommunicationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -89,6 +90,13 @@ class CustomerAuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+
+        // Queue registration and verification emails (non-blocking)
+        try {
+            app(AccountCommunicationService::class)->registration($user);
+        } catch (\Throwable) {
+            // Email failure must not block registration
+        }
 
         return redirect('/en')->with('status', 'Welcome to NeoGiga! Your account has been created.');
     }

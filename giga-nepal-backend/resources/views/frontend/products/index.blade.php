@@ -144,7 +144,7 @@
                     $cardCategoryUrl = $p->category ? $publicBase.'/categories/'.$p->category->slug : null;
                 @endphp
                 <div class="pcard">
-                    <a class="pcard-media" href="{{ $publicBase }}/products/{{ $p->slug }}"><x-product-image-badges :product="$p" /><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy"></a>
+                    <a class="pcard-media" href="{{ $publicBase }}/products/{{ $p->slug }}"><x-product-image-badges :product="$p" /><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" alt="{{ $cardImage?->alt_text ?: trim(($p->manufacturer_name ?? '').' '.($p->mpn ?? '').' product image') }}" width="480" height="360" loading="lazy"></a>
                     @if($p->brand)<a class="ptag" href="{{ $cardBrandUrl }}">{{ $p->brand->name }}</a>@endif
                     <h2><a href="{{ $publicBase }}/products/{{ $p->slug }}">{{ $p->name }}</a></h2>
                     <div class="pmeta">
