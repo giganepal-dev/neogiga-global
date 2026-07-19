@@ -29,6 +29,11 @@
 
     @if($categories->isNotEmpty())<div class="section-head"><div><p class="eyebrow">Categories</p><h2>Product categories</h2></div></div><div class="category-grid grid" style="margin-bottom:34px">@foreach($categories as $category)<a class="category-card" href="{{ $publicBase }}/categories/{{ $category->slug }}"><h3>{{ $category->name }}</h3><span class="badge b-muted">{{ number_format($category->products_count) }} products</span></a>@endforeach</div>@endif
 
+    <form method="get" action="{{ $publicBase }}/products" style="display:flex;gap:8px;margin:0 0 14px">
+        <input type="hidden" name="brand_id" value="{{ $brand->id }}">
+        <input type="search" name="q" value="{{ request('q') }}" placeholder="Search within {{ $brand->name }}" aria-label="Search within {{ $brand->name }}" style="flex:1;max-width:480px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--s1);color:var(--on);font:inherit">
+        <button type="submit" class="btn btn-ghost btn-sm">Search</button>
+    </form>
     <div class="section-head"><div><p class="eyebrow">Catalog</p><h2>{{ $brand->name }} products</h2></div><a class="btn btn-ghost" href="{{ $publicBase }}/products?brand_id={{ $brand->id }}">Open filtered catalog</a></div>
     @if($products->count())
         <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">

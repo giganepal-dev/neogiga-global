@@ -62,6 +62,10 @@
     <header class="category-directory-heading">
         <h1><x-icon name="categories" size="24"/> Browse by category</h1>
         <p class="lead">Explore {{ number_format($total) }} curated product families across the engineering supply chain, from silicon to finished robotics. Every branch links straight into the NeoGiga catalog.</p>
+        <form method="get" action="{{ request()->url() }}" style="display:flex;gap:8px;margin-top:12px;max-width:480px">
+            <input type="search" name="q" value="{{ request('q') }}" placeholder="Search categories (e.g. microcontroller, sensor, battery)" aria-label="Search categories" style="flex:1;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--s1);color:var(--on);font:inherit">
+            <button type="submit" class="btn btn-ghost"><x-icon name="search" size="16"/> Search</button>
+        </form>
     </header>
 
     <div class="category-directory">

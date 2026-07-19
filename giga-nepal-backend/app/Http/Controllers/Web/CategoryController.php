@@ -31,14 +31,18 @@ class CategoryController extends Controller
 
     public function index(): View
     {
+        $q = trim((string) request()->query('q', ''));
         $roots = ProductCategory::query()
             ->whereNull('parent_id')
             ->where('is_active', true)
-            // Imported supplier path labels are retained for audit, but are not
-            // storefront roots. NeoGiga taxonomy roots always have a display order.
             ->where('sort_order', '>', 0)
             ->where('slug', '!=', 'uncategorized')
-            ->with(['children' => fn ($q) => $q
+            ->when($q !== '', fn ($query) => $query->where(function ($inner) use ($q) {
+                $inner->where('name', 'ilike', "%{$q}%")
+                    ->orWhere('description', 'ilike', "%{$q}%")
+                    ->orWhereHas('children', fn ($c) => $c->where('name', 'ilike', "%{$q}%"));
+            }))
+            ->with(['children' => fn ($c) => $c
                 ->where('is_active', true)
                 ->where('name', 'not like', '%|%')
                 ->orderBy('sort_order')

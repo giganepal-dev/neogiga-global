@@ -99,6 +99,13 @@
     </div>
 @endif
 
+{{-- Search within category --}}
+<form method="get" action="{{ request()->url() }}" style="display:flex;gap:8px;margin:0 0 12px">
+    <input type="search" name="q" value="{{ request('q') }}" placeholder="Search within {{ $category->name }}" aria-label="Search within {{ $category->name }}" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--s1);color:var(--on);font:inherit">
+    <button type="submit" class="btn btn-ghost btn-sm">Search</button>
+    @if(request('q'))<a href="{{ request()->url() }}" class="btn btn-ghost btn-sm">Clear</a>@endif
+</form>
+
 {{-- Filter bar: stock tabs + sort dropdown --}}
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:8px 0 12px">
     <div style="display:flex;align-items:center;gap:8px">
