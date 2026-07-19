@@ -398,7 +398,8 @@ Route::get('/manufacturers/{slug}', fn (Request $request, string $slug) => redir
 Route::get('/brands', [BrandPageController::class, 'index'])->name('brands.index');
 Route::get('/brand/{slug}', [BrandPageController::class, 'show'])->where('slug', '[a-z0-9\-]+')->name('brand.show');
 Route::get('/brands/{slug}', fn (Request $request, string $slug) => redirect()->to('/brand/'.$slug.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+');
-Route::get('/mpn/{mpn}', [SeoLandingController::class, 'mpn'])->where('mpn', '[A-Za-z0-9\\.\\-_]+');
+Route::get('/mpn/{mpn}', [SeoLandingController::class, 'mpn'])->where('mpn', '[A-Za-z0-9\\.\\-_\\+\\%\\(\\)\\,\\s\\/]+');
+Route::get('/mpn/{mpn}/{suffix}', [SeoLandingController::class, 'mpn'])->where('mpn', '[A-Za-z0-9\\.\\-_\\+]+')->where('suffix', '[A-Za-z0-9\\.\\-_\\+\\%\\(\\)\\,]+');
 Route::get('/technologies/{slug}', [SeoLandingController::class, 'technology'])->where('slug', '[a-z0-9\-]+');
 Route::get('/applications/{slug}', [SeoLandingController::class, 'application'])->where('slug', '[a-z0-9\-]+');
 Route::get('/countries/{code}', [SeoLandingController::class, 'country'])->where('code', '[A-Za-z]{2,3}');
