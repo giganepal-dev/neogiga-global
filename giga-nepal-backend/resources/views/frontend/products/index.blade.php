@@ -50,7 +50,10 @@
     .facetbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
     .facetbar a{border:1px solid rgba(15,23,42,.14);border-radius:999px;padding:6px 10px;text-decoration:none;color:#0f172a;background:#fff;font-size:.82rem}
     .facetbar a:hover{border-color:#06b6d4;color:#075985}
-    .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:16px 0 32px}
+    .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin:16px 0 32px}
+    @media(max-width:980px){.pgrid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}}
+    @media(max-width:620px){.pgrid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}}
+    @media(max-width:430px){.pgrid{grid-template-columns:1fr}}
     .pcard{border:1px solid rgba(15,23,42,.12);border-radius:12px;padding:18px;background:#fff;display:flex;flex-direction:column;gap:8px}
     .pcard-media{position:relative;display:block;aspect-ratio:4/3;margin:-6px -6px 4px;border-radius:9px;overflow:hidden;background:#081527}
     .pcard-media img{display:block;width:100%;height:100%;object-fit:contain}
