@@ -226,7 +226,7 @@ if(!results||!results.length){panel.innerHTML='<div class=sp-empty>No matches fo
 results.forEach(function(p,i){
 var div=document.createElement('div');div.className='search-item';
 var img=p.image||'';
-div.innerHTML='<a href='+(p.url||'/en/products/'+p.slug)+' style=display:contents><img src='+img+' alt=\"\" width=44 height=33 loading=lazy onerror=this.remove()><span><span class=si-name>'+esc(p.name)+'</span><br><span class=si-meta>'+(p.mpn||p.sku||'')+'</span></span><span class=si-badge>'+(p.category||'')+'</span></a>';
+div.innerHTML='<a href='+(p.url||base.replace('/suggest','')+'/products/'+p.slug)+' style=display:contents><img src='+img+' alt=\"\" width=44 height=33 loading=lazy onerror=this.remove()><span><span class=si-name>'+esc(p.name)+'</span><br><span class=si-meta>'+(p.mpn||p.sku||'')+'</span></span><span class=si-badge>'+(p.category||'')+'</span></a>';
 div.addEventListener('mouseenter',function(){active=i;highlight(panel.querySelectorAll('.search-item'))});
 panel.appendChild(div)
 });panel.hidden=false}
