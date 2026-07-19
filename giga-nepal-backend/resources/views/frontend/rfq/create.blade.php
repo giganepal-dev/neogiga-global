@@ -18,11 +18,13 @@
     .rfq-field input,.rfq-field textarea,.rfq-field select{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--s1);color:var(--on);font:inherit}
     .rfq-field textarea{resize:vertical;min-height:80px}
     .rfq-lines{margin:0 -8px}
-    .rfq-line{display:grid;grid-template-columns:1fr 80px 120px 40px;gap:8px;align-items:end;padding:10px 8px;border-bottom:1px solid var(--line)}
+    .rfq-line{display:grid;grid-template-columns:minmax(0,1fr) minmax(80px,100px) minmax(100px,140px) auto;gap:8px;align-items:end;padding:10px 8px;border-bottom:1px solid var(--line)}
     .rfq-line:last-child{border-bottom:0}
     .rfq-line .rfq-field{margin-bottom:0}
+    @media(max-width:768px){.rfq-line{grid-template-columns:1fr 1fr;gap:6px}.rfq-line .btn-remove{grid-column:1/-1;justify-self:end}}
+    @media(max-width:430px){.rfq-line{grid-template-columns:1fr;gap:4px}}
     .btn-sm{min-height:36px;padding:0 12px;font-size:.8rem}
-    .btn-remove{color:#ef4444;background:none;border:none;cursor:pointer;font-size:1.2rem;padding:4px}
+    .btn-remove{display:inline-flex;align-items:center;gap:4px;color:#ef4444;background:none;border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:.82rem;padding:6px 10px;min-height:44px}.btn-remove:hover{background:#fef2f2;border-color:#fecaca}
     .rfq-msg{padding:12px 14px;border-radius:9px;margin-bottom:16px;font-size:.9rem}
     .rfq-msg.ok{background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.2)}
     .rfq-msg.err{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
@@ -64,7 +66,7 @@
                     <div class="rfq-field"><label>Part name / description *</label><input name="item_name" required maxlength="190" value="{{ old('item_name', $product->name ?? '') }}" placeholder="e.g. STM32F103C8T6 microcontroller"></div>
                     <div class="rfq-field"><label>Qty *</label><input type="number" name="quantity" min="1" value="{{ old('quantity', 1) }}" required></div>
                     <div class="rfq-field"><label>Target price</label><input type="number" name="target_price" min="0" step="0.01" value="{{ old('target_price') }}" placeholder="Opt"></div>
-<button type="button" class="btn-remove" onclick="(function(l){if(document.querySelectorAll(".rfq-line").length>1)l.remove()})(this.parentElement)" title="Remove">×</button>
+<button type="button" class="btn-remove" title="Remove this part" aria-label="Remove this part" onclick="removeRfqLine(this)"><x-icon name="x-circle" size="18"/> Remove</button>
                 </div>
             </div>
 
@@ -109,10 +111,17 @@ function addRfqLine() {
     var first = lines.querySelector('.rfq-line');
     var clone = first.cloneNode(true);
     var inputs = clone.querySelectorAll('input');
-    inputs[0].value = '';
-    inputs[1].value = '1';
-    if(inputs[2]) inputs[2].value = '';
+    for (var i = 0; i < inputs.length; i++) {
+        if (i === 1) inputs[i].value = '1';
+        else inputs[i].value = '';
+    }
     lines.appendChild(clone);
+}
+function removeRfqLine(btn) {
+    var all = document.querySelectorAll('.rfq-line');
+    if (all.length <= 1) return;
+    var row = btn.closest('.rfq-line');
+    if (row) row.remove();
 }
 </script>
 @endsection

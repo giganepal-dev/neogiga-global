@@ -69,10 +69,10 @@
 <section class="section">
     <div class="wrap">
         <div class="home-stats" aria-label="NeoGiga catalog coverage">
-            <a class="home-stat" href="{{ $publicBase }}/products"><strong>{{ number_format($stats['products']) }}</strong><span>Available catalog products</span></a>
-            <a class="home-stat" href="{{ $publicBase }}/categories"><strong>{{ number_format($stats['categories']) }}</strong><span>Categories and subcategories</span></a>
-            <a class="home-stat" href="{{ $publicBase }}/brands"><strong>{{ number_format($stats['brands']) }}</strong><span>Brands and manufacturers</span></a>
-            <a class="home-stat" href="#regional-editions"><strong>{{ number_format(max($stats['marketplaces'], ($marketplaceContext['editions'] ?? collect())->count())) }}</strong><span>Configured marketplaces</span></a>
+            <a class="home-stat" href="{{ $publicBase }}/products"><strong>1M+</strong><span>Sourcing MPNs</span></a>
+            <a class="home-stat" href="{{ $publicBase }}/categories"><strong>4K+</strong><span>Engineering Categories</span></a>
+            <a class="home-stat" href="{{ $publicBase }}/brands"><strong>2,000+</strong><span>Brands &amp; Manufacturers</span></a>
+            <a class="home-stat" href="{{ $publicBase }}/distributors"><strong>26+</strong><span>Regional Warehouses &amp; Distribution Centres</span></a>
         </div>
     </div>
 </section>

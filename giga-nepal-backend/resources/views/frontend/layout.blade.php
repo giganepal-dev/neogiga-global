@@ -156,8 +156,7 @@
                     <button type="submit" class="icon-btn" style="background:transparent;border-color:var(--line);color:var(--muted)"><x-icon name="login" size="18"/> Sign out</button>
                 </form>
             @else
-                <a class="icon-btn" href="/login"><x-icon name="login" size="18"/> Sign in</a>
-                <a class="icon-btn" href="/register"><x-icon name="register" size="18"/> Register</a>
+                <a class="icon-btn" href="/login"><x-icon name="login" size="18"/> Login</a>
             @endauth
             <a class="icon-btn gold" href="{{ $publicBase }}/sell-on-neogiga"><x-icon name="sellers" size="18"/> Seller</a>
         </div>
