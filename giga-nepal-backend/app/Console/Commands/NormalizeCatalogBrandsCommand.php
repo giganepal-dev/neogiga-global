@@ -128,21 +128,18 @@ class NormalizeCatalogBrandsCommand extends Command
 
             DB::transaction(function () use ($plan): void {
                 foreach ($plan['merges'] as $merge) {
+                    $productUpdates = [
+                        'brand_id' => $merge['target_brand_id'],
+                        'updated_at' => now(),
+                    ];
+                    if ($merge['target_manufacturer_id']) {
+                        $productUpdates['manufacturer_id'] = $merge['target_manufacturer_id'];
+                    }
                     DB::table('products')
                         ->where('brand_id', $merge['source_brand_id'])
-                        ->update([
-                            'brand_id' => $merge['target_brand_id'],
-                            'updated_at' => now(),
-                        ]);
+                        ->update($productUpdates);
 
                     if ($merge['source_manufacturer_id'] && $merge['target_manufacturer_id']) {
-                        DB::table('products')
-                            ->where('manufacturer_id', $merge['source_manufacturer_id'])
-                            ->update([
-                                'manufacturer_id' => $merge['target_manufacturer_id'],
-                                'updated_at' => now(),
-                            ]);
-
                         $aliasKey = [
                             'manufacturer_id' => $merge['target_manufacturer_id'],
                             'normalized_alias' => $this->normalizedAlias($merge['source_name']),
