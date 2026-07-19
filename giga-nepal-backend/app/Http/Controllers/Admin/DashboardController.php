@@ -1593,6 +1593,22 @@ class DashboardController extends Controller
         }
     }
 
+    /** Products searchable in at least one marketplace: public + marketplace_only visibility. */
+    private function safeSearchableCount(): int
+    {
+        if (! Schema::hasTable('product_search_documents') || ! Schema::hasColumn('product_search_documents', 'visibility_status')) {
+            return 0;
+        }
+
+        try {
+            return DB::table('product_search_documents')
+                ->whereIn('visibility_status', ['marketplace_only', 'public'])
+                ->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
     private function safeSum(string $table, string $column): float
     {
         if (! Schema::hasTable($table) || ! Schema::hasColumn($table, $column)) {
@@ -1787,7 +1803,7 @@ class DashboardController extends Controller
             'manufacturers' => $this->safeCount('manufacturers'),
             'search_documents' => $this->safeCount('product_search_documents'),
             'facet_values' => $this->safeCount('product_facet_values'),
-            'marketplace_searchable' => $this->safeWhereCount('product_search_documents', 'visibility_status', 'marketplace_searchable'),
+            'marketplace_searchable' => $this->safeSearchableCount(),
             'public_products' => $this->safeWhereCount('product_search_documents', 'visibility_status', 'public'),
             'active_images' => $activeImages,
             'placeholder_images' => $this->safePlaceholderImageCount(),
