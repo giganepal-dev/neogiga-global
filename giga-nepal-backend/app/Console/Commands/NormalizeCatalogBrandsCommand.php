@@ -24,6 +24,9 @@ class NormalizeCatalogBrandsCommand extends Command
      * @var array<string, string>
      */
     private const MERGES = [
+        '' => 'item',
+        'icore' => 'i-core',
+        'sei-stackpole-electronics-inc' => 'sei-stackpole-electronics',
         'st-microelectronics' => 'stmicroelectronics',
         'liteon' => 'lite-on',
         'ta-i-tech' => 'tai-tech',
@@ -102,6 +105,9 @@ class NormalizeCatalogBrandsCommand extends Command
         'acconeer' => 'Acconeer',
         'diotec-semiconductor' => 'DIOTEC Semiconductor',
         'setsafe-setfuse' => 'SETsafe / SETfuse',
+        'item' => 'Unbranded',
+        'i-core' => 'iCore',
+        'sei-stackpole-electronics' => 'SEI Stackpole Electronics',
     ];
 
     public function handle(): int
@@ -207,7 +213,7 @@ class NormalizeCatalogBrandsCommand extends Command
         )));
         $brands = DB::table('product_brands')
             ->whereIn('slug', $slugs)
-            ->get(['id', 'name', 'slug', 'manufacturer_id'])
+            ->get(['id', 'name', 'slug', 'manufacturer_id', 'is_active'])
             ->keyBy('slug');
 
         $missing = array_values(array_diff($slugs, $brands->keys()->all()));
@@ -219,6 +225,9 @@ class NormalizeCatalogBrandsCommand extends Command
         foreach (self::MERGES as $sourceSlug => $targetSlug) {
             $source = $brands[$sourceSlug];
             $target = $brands[$targetSlug];
+            if (! $source->is_active) {
+                continue;
+            }
             if ($source->id === $target->id) {
                 throw new RuntimeException("Brand merge source {$sourceSlug} resolves to its own target.");
             }
