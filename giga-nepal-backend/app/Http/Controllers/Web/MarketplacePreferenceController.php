@@ -24,7 +24,7 @@ class MarketplacePreferenceController extends Controller
         }
 
         $returnPath = $this->safeReturnPath((string) ($data['return_path'] ?? '/'));
-        $target = $data['action'] === 'stay'
+        $target = ($data['action'] ?? 'stay') === 'stay'
             ? url($returnPath)
             : $this->targetUrl($request, $edition, $returnPath);
 

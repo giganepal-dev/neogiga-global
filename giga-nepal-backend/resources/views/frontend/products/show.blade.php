@@ -46,6 +46,7 @@
 @endphp
 <script type="application/ld+json">
 {!! json_encode($productSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
+document.querySelectorAll(".spec-group").forEach(function(g){g.addEventListener("click",function(){g.classList.toggle("collapsed")})});
 </script>
 <script type="application/ld+json">
 {!! json_encode([
@@ -58,6 +59,7 @@
         'item' => $item['item'],
     ])->all(),
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
+document.querySelectorAll(".spec-group").forEach(function(g){g.addEventListener("click",function(){g.classList.toggle("collapsed")})});
 </script>
 @endpush
 
@@ -293,6 +295,7 @@
 </section>
 <script>
 (function(){var main=document.getElementById('product-gallery-main-image'),zoom=document.getElementById('product-gallery-zoom');if(!main||!zoom)return;document.querySelectorAll('[data-gallery-src]').forEach(function(button){button.addEventListener('click',function(){document.querySelectorAll('[data-gallery-src]').forEach(function(item){item.classList.remove('active')});button.classList.add('active');main.src=button.dataset.gallerySrc;main.alt=button.dataset.galleryAlt;zoom.href=button.dataset.gallerySrc;zoom.setAttribute('aria-label','Open enlarged image: '+button.dataset.galleryAlt)})})})();
+document.querySelectorAll(".spec-group").forEach(function(g){g.addEventListener("click",function(){g.classList.toggle("collapsed")})});
 </script>
 @endsection
 @include('components.chat-seller-modal', ['product' => $product])
