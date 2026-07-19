@@ -10,6 +10,7 @@ use App\Services\Marketplace\MarketplaceSeoRenderer;
 use App\Services\MarketplaceResolverService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;

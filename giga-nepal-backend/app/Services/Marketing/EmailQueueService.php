@@ -43,7 +43,11 @@ class EmailQueueService
             'updated_at' => now(),
         ]);
         if ($dispatch && $type === 'transactional') {
-            SendTransactionalEmailJob::dispatch(['email_message_id' => $id])->onQueue(config('marketing.transactional.queue', 'transactional'));
+            // afterCommit: never let a worker race a still-open transaction —
+            // the job reads email_messages by id and must see the committed row.
+            SendTransactionalEmailJob::dispatch(['email_message_id' => $id])
+                ->onQueue(config('marketing.transactional.queue', 'transactional'))
+                ->afterCommit();
         }
 
         return $id;

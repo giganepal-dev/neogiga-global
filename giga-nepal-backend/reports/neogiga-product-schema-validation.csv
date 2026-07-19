@@ -1,0 +1,8 @@
+url,product_schema,rating,review,return_policy,shipping_details,region,validation_result
+https://neogiga.com/en/products/lx-ffc-20p-0-5mm-20cm-11107,PRESENT (live curl 2026-07-19),ABSENT (no approved reviews - correct),ABSENT (correct),PRESENT incl returnFees,PRESENT,US/USD (global),VALID JSON-LD parsed locally; pending post-deploy re-check
+https://neogiga.com/en/products/lx-ffc-ffc-20p-0-5mm-8cm-122342,same generator (one shared blade/builder),per-review data,per-review data,PRESENT,PRESENT,US/USD (global),pending post-deploy batch script
+https://neogiga.com/en/products/lx-ffc-10p-0-5mm-25cm-11106,same generator,per-review data,per-review data,PRESENT,PRESENT,US/USD (global),pending post-deploy batch script
+https://np.neogiga.com/en/products/*,same generator,conditional,conditional,applicableCountry=NP after deploy (was US - BUG FIXED),NPR after deploy,NP/NPR,pending post-deploy batch script
+https://in.neogiga.com/en/products/*,same generator,conditional,conditional,applicableCountry=IN after deploy,INR,IN/INR,pending post-deploy batch script
+https://pk.neogiga.com/en/products/*,same generator,conditional,conditional,applicableCountry=PK after deploy,PKR,PK/PKR,pending post-deploy batch script (pk still noindex until flag flip)
+NOTE,"one central builder (ProductSchemaService) serves every product URL; unit suite (6 tests / 26 assertions) covers the per-URL matrix; run the batch script in neogiga-product-schema-audit.md against 20+ slugs after deploy to fill live rows",,,,,,

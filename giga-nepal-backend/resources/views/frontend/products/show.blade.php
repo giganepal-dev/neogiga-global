@@ -18,93 +18,23 @@
     $schemaManufacturer ??= $schemaBrandManufacturer;
     $schemaPrice = $marketplacePrice?->sale_price ?: ($marketplacePrice?->base_price ?: ($product->sale_price ?: $product->base_price));
     $schemaCurrency = $marketplacePrice?->currency_code ?: ($marketplaceContext['currency_code'] ?? 'USD');
-    $productSchema = array_filter([
-        '@context' => 'https://schema.org',
-        '@type' => 'Product',
-        'name' => $product->name,
-        'sku' => $product->sku,
-        'mpn' => $product->mpn,
-        'gtin' => $product->gtin ?? null,
-        'image' => $productImages->isNotEmpty()
-            ? collect($productImages->map(fn ($image) => $image->publicUrl())->all())->filter()->values()->all() ?: [$ogImage]
+    // Central builder — regional country/policy come from the marketplace,
+    // never the URL locale prefix (see ProductSchemaService).
+    $productSchema = app(\App\Services\Seo\ProductSchemaService::class)->build($product, [
+        'canonical' => $productCanonical,
+        'origin' => $canonicalOrigin,
+        'base' => $publicBase,
+        'images' => $productImages->isNotEmpty()
+            ? (collect($productImages->map(fn ($image) => $image->publicUrl())->all())->filter()->values()->all() ?: [$ogImage])
             : [$ogImage],
-        'brand' => $product->brand?->name ? [
-            '@type' => 'Brand',
-            'name' => $product->brand->name,
-            'url' => $canonicalOrigin.$publicBase.'/brand/'.$product->brand->slug,
-        ] : null,
-        'manufacturer' => $schemaManufacturer?->name ? [
-            '@type' => 'Organization',
-            'name' => $schemaManufacturer->name,
-            'url' => $canonicalOrigin.$publicBase.'/manufacturer/'.$schemaManufacturer->slug,
-        ] : (($product->manufacturer_name ?: $product->brand?->name) ? [
-            '@type' => 'Organization',
-            'name' => $product->manufacturer_name ?: $product->brand->name,
-        ] : null),
-        'category' => $product->category?->name,
-        'url' => $productCanonical,
-        'description' => strip_tags($product->short_description ?: $product->description ?: $product->name),
-    ], fn ($value) => $value !== null && $value !== '');
-    $hasReviews = ($reviewSummary->count ?? 0) > 0;
-    if ($hasReviews) {
-        $productSchema['aggregateRating'] = [
-            '@type' => 'AggregateRating',
-            'ratingValue' => $reviewSummary->average,
-            'reviewCount' => $reviewSummary->count,
-        ];
-    }
-    $merchantReturnPolicy = [
-        '@type' => 'MerchantReturnPolicy',
-        'applicableCountry' => strtoupper($activePrefix === 'en' ? 'US' : $activePrefix),
-        'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
-        'merchantReturnDays' => 30,
-        'returnFees' => 'https://schema.org/FreeReturn',
-        'returnMethod' => 'https://schema.org/ReturnByMail',
-    ];
-
-    $shippingDetails = [
-        '@type' => 'OfferShippingDetails',
-        'shippingRate' => [
-            '@type' => 'MonetaryAmount',
-            'value' => '0.00',
-            'currency' => strtoupper((string) $schemaCurrency),
-        ],
-        'shippingDestination' => [
-            '@type' => 'DefinedRegion',
-            'addressCountry' => strtoupper($activePrefix === 'en' ? 'US' : $activePrefix),
-        ],
-        'deliveryTime' => [
-            '@type' => 'ShippingDeliveryTime',
-            'handlingTime' => ['@type' => 'QuantitativeValue', 'minValue' => 1, 'maxValue' => 3, 'unitCode' => 'DAY'],
-            'transitTime' => ['@type' => 'QuantitativeValue', 'minValue' => 3, 'maxValue' => 14, 'unitCode' => 'DAY'],
-        ],
-    ];
-
-    if ((float) $schemaPrice > 0) {
-        $productSchema['offers'] = [
-            '@type' => 'Offer',
-            'url' => $productCanonical,
-            'priceCurrency' => strtoupper((string) $schemaCurrency),
-            'price' => number_format((float) $schemaPrice, 2, '.', ''),
-            'availability' => ($product->stock_quantity ?? 0) > 0
-                ? 'https://schema.org/InStock'
-                : 'https://schema.org/OutOfStock',
-            'itemCondition' => 'https://schema.org/NewCondition',
-            'hasMerchantReturnPolicy' => $merchantReturnPolicy,
-            'shippingDetails' => $shippingDetails,
-        ];
-    } else {
-        $productSchema['offers'] = [
-            '@type' => 'Offer',
-            'url' => $productCanonical,
-            'priceCurrency' => strtoupper((string) $schemaCurrency),
-            'price' => '0.00',
-            'availability' => 'https://schema.org/InStock',
-            'itemCondition' => 'https://schema.org/NewCondition',
-            'hasMerchantReturnPolicy' => $merchantReturnPolicy,
-            'shippingDetails' => $shippingDetails,
-        ];
-    }
+        'price' => $schemaPrice,
+        'currency' => $schemaCurrency,
+        'country' => $marketplaceContext['country_code'] ?? null,
+        'marketplace' => $marketplaceContext['current'] ?? null,
+        'manufacturer' => $schemaManufacturer,
+        'reviewSummary' => $reviewSummary ?? null,
+        'reviews' => $reviews ?? [],
+    ]);
     $schemaBreadcrumb = [
         ['name' => 'Home', 'item' => $canonicalOrigin.$publicBase],
         ['name' => 'Products', 'item' => $canonicalOrigin.$publicBase.'/products'],

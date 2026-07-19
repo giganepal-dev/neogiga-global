@@ -1,0 +1,31 @@
+NeoGiga email + schema fix — test evidence (local, 2026-07-19)
+Branch: fix/transactional-email-and-product-schema
+
+php artisan test --filter="TransactionalEmailTest|ProductMediaBrandSeoUpgradeTest|ProductSchemaServiceTest"
+
+  PASS  Tests\Unit\ProductSchemaServiceTest
+   - no reviews omits aggregate rating and review
+   - genuine reviews emit rating and review without private data
+   - zero price emits no offer at all
+   - offer uses marketplace country and currency
+   - no country falls back to configured default
+   - marketplace settings override return policy
+
+  PASS  Tests\Feature\ProductMediaBrandSeoUpgradeTest   (was 2 FAILED pre-fix:
+        "Class App\Providers\Cache not found" — missing facade import, fixed)
+
+  PASS  Tests\Feature\TransactionalEmailTest  (incl. "transactional email disabled behavior",
+        welcome/order-status/order-confirmation template render tests)
+
+  Tests: 16 passed (150 assertions)
+
+Blade compile check: php artisan view:cache -> "Blade templates cached successfully."
+Live JSON-LD parse (python3 json.loads on curl output of the affected URL): 2 blocks, both valid;
+Product block contains offers{price,priceCurrency,availability,itemCondition,
+hasMerchantReturnPolicy{returnFees,...},shippingDetails{...}}.
+
+PROD-DEPENDENT CHECKS — PENDING (no SSH from this session; see runbook):
+ - real test email accepted by provider
+ - registration -> email_messages row -> sent
+ - order approve -> order_confirmed email -> provider_message_id
+ - post-deploy live schema on all 4 regional hosts

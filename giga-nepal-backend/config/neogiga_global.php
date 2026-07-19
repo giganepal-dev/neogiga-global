@@ -75,6 +75,29 @@ return [
         'global' => ['Stripe', 'PayPal', 'Wire', 'Bank Transfer'],
     ],
 
+    // Product JSON-LD commerce defaults (ProductSchemaService). These mirror the
+    // marketplace-wide published policy (/returns) and are overridable per
+    // marketplace via marketplaces.settings['commerce_schema'] — set real
+    // regional values there before launching paid regional logistics.
+    'schema_commerce' => [
+        'default_country' => 'US', // global edition (no marketplace country)
+        'return' => [
+            'category' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
+            'days' => 30,
+            'method' => 'https://schema.org/ReturnByMail',
+            'fees' => 'https://schema.org/FreeReturn',
+            'refund_type' => 'https://schema.org/FullRefund',
+            'policy_path' => '/returns',
+        ],
+        'shipping' => [
+            'rate' => '0.00',
+            'handling_min' => 1,
+            'handling_max' => 3,
+            'transit_min' => 3,
+            'transit_max' => 14,
+        ],
+    ],
+
     'seo_templates' => [
         'product_title' => '{mpn} in {country} | {brand} | Local Stock & RFQ Sourcing',
         'product_description' => 'Source {name} through {brand}. Availability, tax, warranty and delivery are confirmed from regional marketplace configuration.',
