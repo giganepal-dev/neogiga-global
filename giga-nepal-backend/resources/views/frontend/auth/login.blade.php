@@ -20,6 +20,13 @@
 </style>
 <div class="wrap">
     <div class="auth-card">
+        @if(session('registration_success'))
+            <div class="auth-msg ok" style="text-align:center">
+                <strong>✅ Account created!</strong><br>
+                Welcome {{ session('registration_success')['name'] }}. @if(session('registration_success')['verification_sent'])A verification email was sent to {{ session('registration_success')['email'] }}.@endif
+                @if(session('registration_success')['company_name'])<br>Company: {{ session('registration_success')['company_name'] }}@endif
+            </div>
+        @endif
         <h1>Sign in</h1>
         <p>Access your orders, RFQs and BOM tools.</p>
 

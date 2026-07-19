@@ -111,7 +111,12 @@ class CustomerAuthController extends Controller
             // Email failure must not block registration
         }
 
-        return redirect('/en')->with('status', 'Welcome to NeoGiga! Your account has been created.');
+        return redirect('/en/login')->with('registration_success', [
+            'name' => $user->name,
+            'email' => $user->email,
+            'company_name' => $data['company_name'] ?? null,
+            'verification_sent' => true,
+        ]);
     }
 
     public function logout(Request $request): RedirectResponse
