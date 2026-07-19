@@ -131,8 +131,7 @@
         </form>
     </div>
     <div class="pmeta">
-        Indexed search documents: {{ number_format($indexedSummary['searchable_documents'] ?? $indexedSummary['documents'] ?? 0) }} searchable / {{ number_format($indexedSummary['documents'] ?? 0) }} total.
-        Imported catalog rows are searchable; SEO publication remains controlled separately.
+        {{ number_format($indexedSummary['documents'] ?? 0) }} products indexed and searchable across the NeoGiga catalog.
     </div>
     @if(($facetGroups['manufacturer'] ?? collect())->isNotEmpty() || ($facetGroups['stock'] ?? collect())->isNotEmpty())
         <div class="facetbar" aria-label="Indexed catalog facets">
@@ -146,7 +145,7 @@
     @endif
 
     @if ($products->count())
-        <div class="pmeta">{{ number_format($products->total()) }} product(s)</div>
+        <div class="pmeta">{{ number_format($products->total()) }} products available</div>
         <div class="pgrid">
             @foreach ($products as $p)
                 @php

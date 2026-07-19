@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Services\Catalog\CatalogSearchService;
 use App\Services\Marketing\CampaignAnalyticsService;
 use App\Services\Marketing\EmailProviderConfigurationService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
