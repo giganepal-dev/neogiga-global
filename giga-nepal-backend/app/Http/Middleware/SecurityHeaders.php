@@ -29,8 +29,12 @@ class SecurityHeaders
         if (!$request->is('api/*')) {
             $response->headers->set(
                 'Content-Security-Policy',
-                "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
-                . "script-src 'self'; font-src 'self'; connect-src 'self'; "
+                "default-src 'self'; "
+                . "img-src 'self' data: https:; "
+                . "style-src 'self' 'unsafe-inline'; "
+                . "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; "
+                . "font-src 'self'; "
+                . "connect-src 'self' https://backend.neogiga.com https://pk.neogiga.com https://np.neogiga.com https://in.neogiga.com; "
                 . "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
             );
         }
