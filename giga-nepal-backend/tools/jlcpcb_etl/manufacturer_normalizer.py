@@ -9,10 +9,21 @@ from dataclasses import dataclass
 
 DEFAULT_ALIASES = {
     "ti": "texas instruments",
+    "texas": "texas instruments",
+    "texas i": "texas instruments",
+    "texas instrument": "texas instruments",
     "texas instruments inc": "texas instruments",
     "texas instruments incorporated": "texas instruments",
+    "texas instruements": "texas instruments",
+    "texas instrumental": "texas instruments",
     "adi": "analog devices",
+    "analog": "analog devices",
     "analog devices inc": "analog devices",
+    "analog devices /maxim integrated": "analog devices",
+    "analog devices / maxim integrated": "analog devices",
+    "analog devices inc /maxim integrated": "analog devices",
+    "analog devices inc / maxim integrated": "analog devices",
+    "maxim / analog device": "analog devices",
     "stmicroelectronics": "stmicroelectronics",
     "stmicro electronics": "stmicroelectronics",
 }
@@ -38,6 +49,8 @@ class ManufacturerName:
 
 def _clean_text(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value or "")
+    normalized = normalized.replace("|", " ")
+    normalized = normalized.replace('"', "").strip(" \t\r\n'")
     normalized = normalized.replace("&", " and ")
     normalized = re.sub(r"[\.,]", " ", normalized)
     normalized = re.sub(r"\s+", " ", normalized).strip()

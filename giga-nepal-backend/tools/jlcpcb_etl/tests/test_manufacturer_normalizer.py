@@ -22,5 +22,20 @@ def test_aliases_are_configurable():
     assert result.normalized_name == "nxp"
 
 
+def test_known_texas_instruments_variants_share_the_canonical_identity():
+    for value in ("Texas", "Texas I", "Texas instrument", "Texas Instruements"):
+        assert normalize_manufacturer_name(value).normalized_name == "texas instruments"
+
+
+def test_known_analog_devices_maxim_variant_shares_the_canonical_identity():
+    result = normalize_manufacturer_name("Analog Devices Inc /Maxim Integrated")
+    assert result.normalized_name == "analog devices"
+
+
+def test_quotes_and_pipe_are_removed_from_source_display_name():
+    result = normalize_manufacturer_name(' "LITTELFUSE INC " | ')
+    assert result.display_name == "LITTELFUSE INC"
+
+
 def test_normalize_mpn_removes_spaces_and_uppercases():
     assert normalize_mpn(" esp 32-wroom ") == "ESP32-WROOM"
