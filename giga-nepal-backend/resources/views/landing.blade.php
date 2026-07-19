@@ -48,13 +48,20 @@
                 <a class="btn btn-ghost" href="{{ $publicBase }}/ai-commerce">Build with AI</a>
             </div>
         </div>
-        <aside class="panel home-status" aria-label="Regional platform status">
-            <div><span class="badge {{ $isLiveEdition ? 'b-info' : 'b-warn' }}">{{ $isLiveEdition ? 'Shared NeoGiga platform' : 'Coming soon · shared NeoGiga platform' }}</span><h2 style="margin:12px 0 4px">{{ $editionName }}</h2><p class="sub" style="margin:0">The same catalog, design and APIs as neogiga.com, localized by marketplace context.</p></div>
-            <div class="home-status-row"><span>Catalog</span><strong>{{ number_format($stats['products']) }} products</strong></div>
+        <aside class="panel home-status" aria-label="Regional sourcing hub">
+            <div>
+                <span class="badge b-ok">Regional Engineering Sourcing Hub</span>
+                <h2 style="margin:12px 0 4px">Source electronic components faster in {{ $countryName }}</h2>
+                <p class="sub" style="margin:0">Search by MPN, upload a BOM, request an RFQ, compare regional stock and source from verified warehouses and distributors.</p>
+            </div>
+            <div class="home-status-row"><span>Products available</span><strong>{{ number_format($stats['products']) }}</strong></div>
             <div class="home-status-row"><span>Regional currency</span><strong>{{ $currencyCode }}</strong></div>
-            <div class="home-status-row"><span>Marketplace SEO</span><strong>{{ $marketplaceSeo['robots'] ?? 'index,follow' }}</strong></div>
-            <div class="home-status-row"><span>Canonical domain</span><strong class="mono" style="font-size:.78rem">{{ parse_url($canonicalUrl, PHP_URL_HOST) }}</strong></div>
-            <a class="btn btn-ghost" href="{{ $publicBase }}/distributors">View warehouses &amp; distributors</a>
+            <div class="home-status-row"><span>Delivered across</span><strong>{{ $countryName }}</strong></div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+                <a class="btn btn-primary" href="{{ $publicBase }}/bom"><x-icon name="rfq" size="16"/> Upload BOM</a>
+                <a class="btn btn-gold" href="{{ $publicBase }}/rfq"><x-icon name="rfq" size="16"/> Request RFQ</a>
+                <a class="btn btn-ghost" href="{{ $publicBase }}/products">Browse products</a>
+            </div>
         </aside>
     </div>
 </section>

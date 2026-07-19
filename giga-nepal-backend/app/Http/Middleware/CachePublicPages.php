@@ -24,7 +24,7 @@ class CachePublicPages
             // ponytail: sha1(host + fullUrl) prevents cross-marketplace cache collision.
             // Version stamp allows instant invalidation when catalog data changes.
             $version = Cache::get('catalog:page-cache-version', '1');
-            $key = 'page:' . $version . ':' . sha1($request->getHost() . $request->fullUrl());
+            $key = 'page:'.$version.':'.sha1($request->getHost().$request->fullUrl());
 
             $cached = Cache::get($key);
             if ($cached) {
@@ -33,6 +33,17 @@ class CachePublicPages
                     'Content-Type' => 'text/html; charset=UTF-8',
                     'Cache-Control' => 'public, max-age=0, s-maxage=300, stale-while-revalidate=600',
                 ]);
+            }
+
+            // Crawlers never trigger UNCACHED faceted-listing renders — the
+            // facet count queries behind them are this box's documented DB
+            // storm (2026-07-19 incident: ~95% bot traffic, load 64), and
+            // filtered listing URLs are noindex anyway. Cached copies above
+            // still serve bots normally; clean URLs stay fully crawlable.
+            if ($request->getQueryString()
+                && $request->is('*products*', '*categories*', '*brands*', '*compare*', '*search*')
+                && preg_match('/bot|crawl|spider|slurp/i', (string) $request->userAgent())) {
+                return response('Service busy — retry later.', 503, ['Retry-After' => '3600']);
             }
 
             $response = $next($request);

@@ -10,10 +10,12 @@ class RegionalEmailBrandingService
     {
         $query = DB::table('email_sender_profiles')->where('purpose', $purpose);
         $profile = $marketplaceId ? (clone $query)->where('marketplace_id', $marketplaceId)->first() : null;
-        if ($marketplaceId) {
+        if ($profile) {
             return $profile;
         }
 
+        // Marketplaces without their own profile fall back to the verified
+        // Global sender — a regional email must never hard-fail on branding.
         return (clone $query)->where('name', 'like', 'NeoGiga Global%')->first();
     }
 

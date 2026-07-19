@@ -1,0 +1,13 @@
+check,target,value,status,note
+active_mailer_config,marketing.transactional.mailer,env TRANSACTIONAL_MAILER -> MAIL_MAILER -> log,AT_RISK,defaults to log mailer if env unset; verify prod .env
+transactional_enabled,marketing.transactional.enabled,env TRANSACTIONAL_EMAIL_ENABLED (default false),AT_RISK,must be true in prod
+test_mode,marketing.transactional.test_mode,env TRANSACTIONAL_EMAIL_TEST_MODE (default true),AT_RISK,must be false in prod
+spf,neogiga.com,"v=spf1 mx a:mail.neogiga.com ip4:217.216.78.56 -all",PASS,hard-fail policy; self-hosted SMTP authorized
+dkim,mail._domainkey.neogiga.com + 5 common selectors,absent,FAIL,no DKIM record found; Gmail requires aligned DKIM
+dmarc,_dmarc.neogiga.com,"v=DMARC1; p=quarantine; adkim=s; aspf=s; pct=25",WARN,strict alignment with no DKIM = quarantines legit mail
+mx,neogiga.com,10 mail.neogiga.com,INFO,self-hosted mail host
+sender_domain_verified,provider (Resend/SES),not configured,N/A,no third-party provider active; code supports resend/ses/smtp
+queue_worker,neogiga-prod,not installed since 2026-07-17 migration,FAIL,install systemd unit (runbook section B)
+suppression_list,email_suppressions / eligibility service,implemented in code,PASS,verified via TransactionalEmailTest
+retry_backoff,SendTransactionalEmailJob,tries=3 backoff=30/120/600 transient-only,PASS,permanent 4xx fail once
+idempotency,EmailQueueService,sha256(event|related|event_id|recipient),PASS,order emails now deterministic per status
