@@ -94,6 +94,14 @@
                     <option value="{{ $country->id }}" @selected((string) $filters['countryId'] === (string) $country->id)>{{ $country->name }}</option>
                 @endforeach
             </select>
+            <input type="number" name="price_min" value="{{ $filters['priceMin'] }}" placeholder="Min price" step="0.01" min="0" style="min-width:100px">
+            <input type="number" name="price_max" value="{{ $filters['priceMax'] }}" placeholder="Max price" step="0.01" min="0" style="min-width:100px">
+            <select name="rating_min" aria-label="Minimum rating">
+                <option value="">Any rating</option>
+                <option value="4" @selected($filters['ratingMin'] === '4')>4★ & above</option>
+                <option value="3" @selected($filters['ratingMin'] === '3')>3★ & above</option>
+                <option value="2" @selected($filters['ratingMin'] === '2')>2★ & above</option>
+            </select>
             <select name="datasheet" aria-label="Datasheet">
                 <option value="">Any datasheet</option>
                 <option value="1" @selected($filters['datasheet'] === '1')>Datasheet available</option>
