@@ -87,11 +87,18 @@ class SeoLandingController extends Controller
         ]);
     }
 
-    public function mpn(string $mpn): View
+    public function mpn(string $mpn, ?string $suffix = null): View
     {
-        $normalized = strtoupper($mpn);
+        // Decode -- back to / (safe URL encoding) and recombine multi-segment MPNs
+        $mpn = str_replace('--', '/', $mpn);
+        $fullMpn = $suffix ? $mpn . '/' . str_replace('--', '/', $suffix) : $mpn;
+        $normalized = strtoupper(urldecode($fullMpn));
         $products = $this->baseProducts()
-            ->whereRaw('LOWER(mpn) = ?', [strtolower($mpn)])
+            ->where(function ($q) use ($fullMpn, $normalized) {
+                $q->whereRaw('LOWER(mpn) = ?', [strtolower($fullMpn)])
+                  ->orWhereRaw('LOWER(mpn) = ?', [strtolower(urldecode($fullMpn))])
+                  ->orWhere('normalized_mpn', $normalized);
+            })
             ->limit(24)
             ->get();
 

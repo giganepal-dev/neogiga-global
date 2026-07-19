@@ -63,8 +63,8 @@ class ProductPageController extends Controller
             ->when($category, fn ($query) => $query->where('category_id', $category->id))
             ->when($brandId > 0, fn ($query) => $query->where('brand_id', $brandId))
             ->when($manufacturer !== '', fn ($query) => $query->where(function ($w) use ($manufacturer) {
-                $w->where('manufacturer_name', 'ilike', "%{$manufacturer}%")
-                    ->orWhere('mpn', 'ilike', "%{$manufacturer}%");
+                $w->where('manufacturer_name', \App\Support\Sql::ilike(), "%{$manufacturer}%")
+                    ->orWhere('mpn', \App\Support\Sql::ilike(), "%{$manufacturer}%");
             }))
             ->when($stock === 'low', fn ($query) => $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold'))
             ->when($stock === 'out', fn ($query) => $query->where('stock_quantity', '<=', 0))
@@ -266,9 +266,9 @@ class ProductPageController extends Controller
         $products = \App\Models\Marketplace\Product::query()
             ->published()
             ->where(function ($w) use ($q) {
-                $w->where('name', 'ilike', "%{$q}%")
-                  ->orWhere('mpn', 'ilike', "%{$q}%")
-                  ->orWhere('sku', 'ilike', "%{$q}%");
+                $w->where('name', \App\Support\Sql::ilike(), "%{$q}%")
+                  ->orWhere('mpn', \App\Support\Sql::ilike(), "%{$q}%")
+                  ->orWhere('sku', \App\Support\Sql::ilike(), "%{$q}%");
             })
             ->with(['category:id,name', 'images' => fn ($qImg) => $qImg->where('is_active', true)->where('is_primary', true)->limit(1)])
             ->limit(8)

@@ -38,7 +38,15 @@ class CachePublicPages
             $response = $next($request);
 
             if ($response->isSuccessful() && ! $response->isRedirection()) {
-                Cache::put($key, $response->getContent(), 300); // 5 min
+                $content = (string) $response->getContent();
+
+                // Never cache pages embedding a CSRF token: the token belongs to
+                // one visitor's session, so serving it to others 419s every form
+                // submit (BOM upload, add-to-cart, reviews). Token-free pages
+                // (home, listings, categories, brands) still cache normally.
+                if (! str_contains($content, 'name="_token"') && ! str_contains($content, 'csrf-token')) {
+                    Cache::put($key, $content, 300); // 5 min
+                }
             }
 
             $response->headers->set('X-Page-Cache', 'MISS');

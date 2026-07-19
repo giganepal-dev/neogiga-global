@@ -147,7 +147,7 @@ class DashboardController extends Controller
     {
         $roots = ProductCategory::whereNull('parent_id')
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
-                $inner->where('name', 'ilike', "%{$term}%")->orWhere('slug', 'ilike', "%{$term}%");
+                $inner->where('name', \App\Support\Sql::ilike(), "%{$term}%")->orWhere('slug', \App\Support\Sql::ilike(), "%{$term}%");
             }))
             ->when($request->query('status') === 'active', fn ($q) => $q->where('is_active', true))
             ->when($request->query('status') === 'inactive', fn ($q) => $q->where('is_active', false))
@@ -243,9 +243,9 @@ class DashboardController extends Controller
             ->leftJoin('vendors as v', 'v.id', '=', 'products.vendor_id')
             ->select('products.*', 'c.name as category_name', 'b.name as brand_name', 'v.name as vendor_name')
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
-                $inner->where('products.name', 'ilike', "%{$term}%")
-                    ->orWhere('products.sku', 'ilike', "%{$term}%")
-                    ->orWhere('products.mpn', 'ilike', "%{$term}%");
+                $inner->where('products.name', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('products.sku', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('products.mpn', \App\Support\Sql::ilike(), "%{$term}%");
             }))
             ->when($request->query('category_id'), fn ($q, $category) => $q->where('products.category_id', $category))
             ->when($request->query('brand_id'), fn ($q, $brand) => $q->where('products.brand_id', $brand))
@@ -388,7 +388,7 @@ class DashboardController extends Controller
                 'product_brands.updated_at',
                 DB::raw('COUNT(DISTINCT products.id) as product_count')
             )
-            ->when($q !== '', fn ($query) => $query->where('product_brands.name', 'ilike', "%{$q}%"))
+            ->when($q !== '', fn ($query) => $query->where('product_brands.name', \App\Support\Sql::ilike(), "%{$q}%"))
             ->groupBy('product_brands.id')
             ->orderBy('product_brands.name')
             ->paginate(50);
@@ -510,10 +510,10 @@ class DashboardController extends Controller
 
         $query->when($request->query('q'), function ($q, $term) {
             $q->where(function ($inner) use ($term) {
-                $inner->where('p.name', 'ilike', "%{$term}%")
-                    ->orWhere('p.sku', 'ilike', "%{$term}%")
-                    ->orWhere('p.mpn', 'ilike', "%{$term}%")
-                    ->orWhere('cps.source_part_id', 'ilike', "%{$term}%");
+                $inner->where('p.name', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('p.sku', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('p.mpn', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('cps.source_part_id', \App\Support\Sql::ilike(), "%{$term}%");
             });
         });
 
@@ -713,9 +713,9 @@ class DashboardController extends Controller
             ->leftJoin('vendor_profiles as p', 'p.vendor_id', '=', 'vendors.id')
             ->select('vendors.*', 'p.business_type', 'p.rating_average', 'p.total_sales')
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
-                $inner->where('vendors.name', 'ilike', "%{$term}%")
-                    ->orWhere('vendors.email', 'ilike', "%{$term}%")
-                    ->orWhere('vendors.slug', 'ilike', "%{$term}%");
+                $inner->where('vendors.name', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('vendors.email', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('vendors.slug', \App\Support\Sql::ilike(), "%{$term}%");
             }))
             ->when($request->query('status'), fn ($q, $status) => $q->where('vendors.status', $status))
             ->when($request->query('type'), fn ($q, $type) => $q->where('vendors.type', $type))
@@ -780,7 +780,7 @@ class DashboardController extends Controller
     {
         $users = User::with('role')
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
-                $inner->where('name', 'ilike', "%{$term}%")->orWhere('email', 'ilike', "%{$term}%");
+                $inner->where('name', \App\Support\Sql::ilike(), "%{$term}%")->orWhere('email', \App\Support\Sql::ilike(), "%{$term}%");
             }))
             ->when($request->query('role_id'), fn ($q, $role) => $q->where('role_id', $role))
             ->orderByDesc('id')
@@ -952,7 +952,7 @@ class DashboardController extends Controller
         $adminSettings = DB::table('admin_settings')
             ->when($request->query('group'), fn ($q, $group) => $q->where('group', $group))
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
-                $inner->where('key', 'ilike', "%{$term}%")->orWhere('description', 'ilike', "%{$term}%");
+                $inner->where('key', \App\Support\Sql::ilike(), "%{$term}%")->orWhere('description', \App\Support\Sql::ilike(), "%{$term}%");
             }))
             ->orderBy('group')
             ->orderBy('key')
@@ -961,7 +961,7 @@ class DashboardController extends Controller
         $marketplaceSettings = DB::table('marketplace_settings')
             ->when($request->query('marketplace_id'), fn ($q, $marketplace) => $q->where('marketplace_id', $marketplace))
             ->when($request->query('setting_group'), fn ($q, $group) => $q->where('group', $group))
-            ->when($request->query('q'), fn ($q, $term) => $q->where('key', 'ilike', "%{$term}%"))
+            ->when($request->query('q'), fn ($q, $term) => $q->where('key', \App\Support\Sql::ilike(), "%{$term}%"))
             ->orderBy('group')
             ->orderBy('key')
             ->limit(120)
@@ -989,11 +989,11 @@ class DashboardController extends Controller
     {
         $assets = DB::table('admin_media_assets')
             ->when($request->query('folder'), fn ($q, $folder) => $q->where('folder', $folder))
-            ->when($request->query('type'), fn ($q, $type) => $q->where('mime_type', 'ilike', "%{$type}%"))
+            ->when($request->query('type'), fn ($q, $type) => $q->where('mime_type', \App\Support\Sql::ilike(), "%{$type}%"))
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
-                $inner->where('title', 'ilike', "%{$term}%")
-                    ->orWhere('original_name', 'ilike', "%{$term}%")
-                    ->orWhere('alt_text', 'ilike', "%{$term}%");
+                $inner->where('title', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('original_name', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('alt_text', \App\Support\Sql::ilike(), "%{$term}%");
             }))
             ->orderByDesc('id')
             ->paginate(24)
@@ -1015,9 +1015,9 @@ class DashboardController extends Controller
         $pages = DB::table('seo_pages')
             ->when($request->query('robots'), fn ($q, $robots) => $q->where('robots', $robots))
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
-                $inner->where('url_path', 'ilike', "%{$term}%")
-                    ->orWhere('title', 'ilike', "%{$term}%")
-                    ->orWhere('meta_description', 'ilike', "%{$term}%");
+                $inner->where('url_path', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('title', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('meta_description', \App\Support\Sql::ilike(), "%{$term}%");
             }))
             ->orderBy('url_path')
             ->paginate(25)
@@ -1347,7 +1347,7 @@ class DashboardController extends Controller
         $query = Order::with(['user', 'marketplace'])
             ->when($request->query('status'), fn ($q, $s) => $q->where('status', $s))
             ->when($request->query('payment'), fn ($q, $p) => $q->where('payment_status', $p))
-            ->when($request->query('q'), fn ($q, $t) => $q->where('order_number', 'ilike', "%{$t}%"))
+            ->when($request->query('q'), fn ($q, $t) => $q->where('order_number', \App\Support\Sql::ilike(), "%{$t}%"))
             ->orderByDesc('id');
 
         return view('admin.orders', [
@@ -1396,10 +1396,10 @@ class DashboardController extends Controller
             ->when($request->query('status'), fn ($q, $status) => $q->where('t.status', $status))
             ->when($request->query('priority'), fn ($q, $priority) => $q->where('t.priority', $priority))
             ->when($request->query('q'), fn ($q, $term) => $q->where(function ($inner) use ($term) {
-                $inner->where('t.ticket_number', 'ilike', "%{$term}%")
-                    ->orWhere('t.subject', 'ilike', "%{$term}%")
-                    ->orWhere('u.email', 'ilike', "%{$term}%")
-                    ->orWhere('c.name', 'ilike', "%{$term}%");
+                $inner->where('t.ticket_number', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('t.subject', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('u.email', \App\Support\Sql::ilike(), "%{$term}%")
+                    ->orWhere('c.name', \App\Support\Sql::ilike(), "%{$term}%");
             }))
             ->orderByRaw("case t.priority when 'urgent' then 1 when 'high' then 2 when 'medium' then 3 else 4 end")
             ->orderByDesc('t.id')

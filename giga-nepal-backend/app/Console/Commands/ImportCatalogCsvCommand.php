@@ -30,7 +30,7 @@ class ImportCatalogCsvCommand extends Command
             rewind($fh);
         }
 
-        $headers = fgetcsv($fh);
+        $headers = fgetcsv($fh, null, ',', '"', '');
         if (! $headers) {
             $this->error('CSV has no headers');
             fclose($fh);
@@ -53,7 +53,7 @@ class ImportCatalogCsvCommand extends Command
         $bar = $this->output->createProgressBar();
         $bar->start();
 
-        while (($row = fgetcsv($fh)) !== false) {
+        while (($row = fgetcsv($fh, null, ',', '"', '')) !== false) {
             $bar->advance();
             if (count($row) < count($headers)) { $row = array_pad($row, count($headers), ''); }
             elseif (count($row) > count($headers)) { $row = array_slice($row, 0, count($headers)); }

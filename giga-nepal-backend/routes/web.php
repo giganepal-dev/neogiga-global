@@ -398,7 +398,8 @@ Route::get('/manufacturers/{slug}', fn (Request $request, string $slug) => redir
 Route::get('/brands', [BrandPageController::class, 'index'])->name('brands.index');
 Route::get('/brand/{slug}', [BrandPageController::class, 'show'])->where('slug', '[a-z0-9\-]+')->name('brand.show');
 Route::get('/brands/{slug}', fn (Request $request, string $slug) => redirect()->to('/brand/'.$slug.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->where('slug', '[a-z0-9\-]+');
-Route::get('/mpn/{mpn}', [SeoLandingController::class, 'mpn'])->where('mpn', '[A-Za-z0-9\\.\\-_]+');
+Route::get('/mpn/{mpn}', [SeoLandingController::class, 'mpn'])->where('mpn', '[A-Za-z0-9\\.\\-_\\+\\%\\(\\)\\,\\s\\/]+');
+Route::get('/mpn/{mpn}/{suffix}', [SeoLandingController::class, 'mpn'])->where('mpn', '[A-Za-z0-9\\.\\-_\\+]+')->where('suffix', '[A-Za-z0-9\\.\\-_\\+\\%\\(\\)\\,]+');
 Route::get('/technologies/{slug}', [SeoLandingController::class, 'technology'])->where('slug', '[a-z0-9\-]+');
 Route::get('/applications/{slug}', [SeoLandingController::class, 'application'])->where('slug', '[a-z0-9\-]+');
 Route::get('/countries/{code}', [SeoLandingController::class, 'country'])->where('code', '[A-Za-z]{2,3}');
@@ -487,11 +488,9 @@ Route::get('/{prefix}', [MarketplaceLandingController::class, 'show'])
     ->name('marketplace.landing');
 
 // Footer information pages (config-driven; see config/neogiga_pages.php)
-Route::view('/terms', 'frontend.pages.terms')->name('pages.terms');
-Route::view('/privacy', 'frontend.pages.privacy')->name('pages.privacy');
 Route::get('/{pageSlug}', function (string $pageSlug) {
     $page = config('neogiga_pages.'.$pageSlug);
     abort_unless(is_array($page), 404);
 
     return view('frontend.pages.static', ['page' => $page]);
-})->where('pageSlug', 'about|contact|quality-assurance|how-to-order|shipping|returns|payment-terms|faq|cookie-notice')->name('pages.static');
+})->where('pageSlug', 'about|contact|quality-assurance|how-to-order|shipping|returns|payment-terms|faq|cookie-notice|terms|privacy')->name('pages.static');

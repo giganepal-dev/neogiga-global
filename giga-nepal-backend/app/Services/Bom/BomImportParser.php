@@ -87,7 +87,9 @@ class BomImportParser
             if (trim($line) === '') {
                 continue;
             }
-            $rows[] = array_map('trim', str_getcsv($line, $delimiter));
+            // Explicit enclosure/escape: silences the PHP 8.4 deprecation and
+            // pins RFC-4180 / Excel behaviour (quotes escaped by doubling, no backslash).
+            $rows[] = array_map('trim', str_getcsv($line, $delimiter, '"', ''));
         }
 
         return $rows;

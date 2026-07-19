@@ -71,8 +71,20 @@ class AppServiceProvider extends ServiceProvider
             $request = request();
             $context = app(GlobalMarketplaceContextService::class)->context($request);
 
+            $searchCategories = Cache::remember('layout:search-categories', 3600, function () {
+                return \App\Models\Marketplace\ProductCategory::query()
+                    ->whereNull('parent_id')
+                    ->where('is_active', true)
+                    ->where('sort_order', '>', 0)
+                    ->orderBy('sort_order')
+                    ->limit(8)
+                    ->get(['name', 'slug'])
+                    ->toArray();
+            });
+
             $view->with('marketplaceContext', $context)
                 ->with('locale', $context['locale'] ?? 'en')
+                ->with('searchCategories', $searchCategories)
                 ->with('marketplaceSeo', app(MarketplaceSeoRenderer::class)->tags($context['current'] ?? null, url()->current()));
         });
     }

@@ -64,15 +64,26 @@ class BrandVisibilityService
     {
         $visibility = is_string($visibility) ? json_decode($visibility, true) : $visibility;
         if (! is_array($visibility) || $visibility === []) {
-            return true;
+            return true; // No visibility restriction → visible everywhere
         }
 
-        $values = $visibility['ids'] ?? $visibility['marketplace_ids'] ?? $visibility['country_ids'] ?? $visibility['codes'] ?? $visibility;
-        $values = is_array($values) ? $values : [$values];
-        $normalized = collect($values)->map(fn ($value) => strtolower(trim((string) $value)))->filter();
+        // "global": true means visible to all marketplaces unless explicitly excluded
+        $hasGlobal = ! empty($visibility['global']);
 
-        return ($id !== null && $normalized->contains((string) $id))
-            || ($code !== null && $normalized->contains(strtolower($code)));
+        // Check boolean-based visibility: {"global": true, "nepal": false}
+        // The keys are marketplace codes/ids; truthy = allowed, falsy = excluded
+        $codeKey = $code ? strtolower($code) : null;
+        $idKey = $id ? (string) $id : null;
+
+        foreach ($visibility as $key => $value) {
+            $keyLower = strtolower(trim((string) $key));
+            if (($codeKey && $keyLower === $codeKey) || ($idKey && $keyLower === $idKey)) {
+                return (bool) $value; // Explicit allow/deny
+            }
+        }
+
+        // Not explicitly listed → visible if global is true, hidden otherwise
+        return $hasGlobal;
     }
 
     private function dataFingerprint(): string
