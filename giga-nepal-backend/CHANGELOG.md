@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-19 - Catalog Brand Identity Normalization
+
+- Added the dry-run-first `catalog:normalize-brands` command, guarded by a verified backup reference, explicit confirmation, and an exact plan hash. It deactivates reviewed source aliases rather than deleting them, preserves manufacturer aliases, and relinks products to the canonical brand/manufacturer identity.
+- Consolidated 46 reviewed duplicate, spelling, casing, legal-suffix, acquisition, quote, and pipe-delimited brand aliases into international display names, including Texas Instruments, Analog Devices, STMicroelectronics, Littelfuse, MACOM, NXP Semiconductors, and Microchip Technology.
+- Replaced active placeholder and malformed labels with `Unbranded`, `iCore`, `SEI Stackpole Electronics`, and `SETsafe / SETfuse`. The active public catalog now has no quote/pipe names and no punctuation-normalized duplicate brand groups.
+- Extended the JLCPCB manufacturer normalizer to prevent known Texas Instruments and Analog Devices/Maxim aliases, quotation marks, and pipe delimiters from creating new public brand variants.
+
 ## 2026-07-18 - Product Discovery and Taxonomy Governance Upgrade
 
 - Added source-backed technical-specification presentation without rewriting curated product specifications, plus clickable NeoGiga SKU, MPN, brand, manufacturer and category identities on public product pages.
