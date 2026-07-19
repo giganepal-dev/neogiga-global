@@ -89,6 +89,10 @@ class RfqPageController extends Controller
         Log::info('RFQ submitted via web form', ['rfq_number' => $rfq->rfq_number]);
 
         return redirect()->route('rfq.create')
-            ->with('status', "Your request {$rfq->rfq_number} has been received. Our sales team will reply with a quotation.");
+            ->with('rfq_submitted', [
+                'reference' => $rfq->rfq_number,
+                'items_count' => 1,
+                'email' => $data['contact_email'] ?? null,
+            ]);
     }
 }

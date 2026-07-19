@@ -9,6 +9,10 @@
 
 @php
     $status = $p->status ?? 'draft';
+    $lifecycle = strtoupper((string) ($p->lifecycle_status ?? ''));
+    $lifecycleOptions = ['ACTIVE' => 'Active', 'NRND' => 'NRND', 'EOL' => 'End of Life', 'OBSOLETE' => 'Obsolete', 'DISCONTINUED' => 'Discontinued', 'LAST_TIME_BUY' => 'Last Time Buy', 'PREVIEW' => 'Preview', 'NEW' => 'New'];
+    $catalogAuditFlags = [];
+    $qualityChecks = [];
 @endphp
 
 <div class="grid kpis">

@@ -3,6 +3,26 @@
 @section('description','Request wholesale pricing for electronic components. Upload BOM or add parts manually. NeoGiga sales team replies with a formal quotation.')
 
 @section('content')
+@if(session('rfq_submitted'))
+    <x-confirmation
+        title="RFQ Submitted Successfully"
+        :reference="session('rfq_submitted')['reference']"
+        message="Thank you. Your quotation request has been received by NeoGiga. Our sourcing team will review the requested parts and respond with a formal quotation."
+        :summary="[
+            'RFQ Reference' => session('rfq_submitted')['reference'],
+            'Parts Requested' => session('rfq_submitted')['items_count'].' part(s)',
+            'Contact Email' => session('rfq_submitted')['email'] ?? '—',
+            'Status' => 'Received',
+        ]"
+        emailStatus="queued"
+        nextStep="We will notify you when the quotation is prepared or when additional information is required."
+        :primaryAction="['label' => 'Submit Another RFQ', 'url' => url()->current()]"
+        :secondaryActions="[
+            ['label' => 'Upload BOM', 'url' => url('/en/bom')],
+            ['label' => 'Browse Products', 'url' => url('/en/products')],
+        ]"
+    />
+@else
 <style>
     .rfq-wrap{max-width:860px;margin:0 auto;padding:24px 0 64px}
     .rfq-hero{text-align:center;margin-bottom:28px}
@@ -124,4 +144,5 @@ function removeRfqLine(btn) {
     if (row) row.remove();
 }
 </script>
+@endif
 @endsection
