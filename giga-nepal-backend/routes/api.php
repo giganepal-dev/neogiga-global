@@ -712,6 +712,16 @@ $affiliateAdmin = function () {
 Route::middleware('admin.token')->prefix('admin')->group($affiliateAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($affiliateAdmin);
 
+// SMD Identification — admin
+Route::middleware('admin.token')->prefix('v1/admin/smd')->group(function () {
+    Route::post('imports', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'adminImport']);
+    Route::get('imports/{id}', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'adminImportStatus']);
+    Route::post('matches/{id}/verify', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'adminVerify'])->whereNumber('id');
+    Route::post('matches/{id}/reject', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'adminReject'])->whereNumber('id');
+    Route::post('matches/{id}/link-product', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'adminLinkProduct'])->whereNumber('id');
+    Route::get('queue', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'adminQueue']);
+});
+
 /*
 |--------------------------------------------------------------------------
 | ERP procurement (2026-07-07 adaptation — additive, admin-only)
@@ -984,6 +994,13 @@ Route::prefix('v1/auth')->group(function () {
 */
 // Public support inquiry — no auth required (from product page "Chat with Seller" modal)
 Route::post('v1/support/inquire', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'inquire'])->middleware('throttle:5,1');
+
+// SMD Marking Code Identification
+Route::get('v1/smd-markings/search', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'search'])->middleware('throttle:30,1');
+Route::get('v1/smd-markings/{marking}', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'show'])->where('marking', '[A-Za-z0-9\.\-\+_ ]{1,20}');
+Route::get('v1/smd-packages', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'packages']);
+Route::post('v1/smd-identification', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'search'])->middleware('throttle:20,1');
+Route::post('v1/smd-identification/report', [\App\Http\Controllers\Api\SmdIdentificationController::class, 'report'])->middleware('throttle:10,1');
 
 Route::prefix('v1/support')->middleware('api.token')->group(function () {
     Route::get('/tickets', [CustomerSupportController::class, 'index']);

@@ -483,6 +483,11 @@ Route::get('/sso/start', [SsoController::class, 'start'])
 Route::get('/sso/consume', [SsoController::class, 'consume'])
     ->middleware('throttle:20,1')
     ->name('sso.consume');
+
+// SMD Marking Code Identifier — public engineering tool
+Route::get('/tools/smd-marking-code-identifier', fn () => view('frontend.tools.smd-identifier'))->name('tools.smd');
+Route::get('/tools/smd-marking-code-identifier/{marking}', fn (string $marking) => view('frontend.tools.smd-identifier', ['presetMarking' => $marking]))->where('marking', '[A-Za-z0-9\.\-\+_ ]{1,20}');
+
 // POS cashier UI + session-backed cashier API (admin)
 Route::get('/pos/receipt/{token}', [PosReceiptController::class, 'show'])->where('token', '[a-z0-9]{32}');
 Route::middleware('admin.web')->prefix('pos/cashier')->group(function () {
