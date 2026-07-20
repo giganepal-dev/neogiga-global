@@ -188,6 +188,15 @@ class CustomerImportService
                 'unresolved_countries' => ! $countryResolution['resolved'] ? 1 : 0,
             ]);
         }
+
+        // Suppression check — never import unsubscribed/bounced/complained emails
+        $email = mb_strtolower(trim($normalized['account_email'] ?? ''));
+        if ($this->isSuppressed($email)) {
+            DB::table('customer_import_rows')->where('id', $rowId)->update(['status' => 'invalid', 'action' => 'suppressed', 'processed_at' => now(), 'updated_at' => now()]);
+            $validation['errors'][] = "Email {$email} is suppressed (unsubscribed, bounced, or complained).";
+            return $this->rowOutcome($row, 'suppressed', $validation, ['skipped_rows' => 1, 'error_rows' => 1]);
+        }
+
         if ($countryResolution['conflict']) {
             DB::table('customer_import_rows')->where('id', $rowId)->update(['status' => 'review_required', 'action' => 'country_conflict', 'processed_at' => now(), 'updated_at' => now()]);
 
@@ -802,5 +811,39 @@ class CustomerImportService
     private function json(mixed $value): string
     {
         return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Check if an email is suppressed — unsubscribed, hard-bounced, complained,
+     * or on any suppression list. Returns true if it should NOT be imported.
+     */
+    private function isSuppressed(string $email): bool
+    {
+        if ($email === '') {
+            return false;
+        }
+
+        // Check unsubscribes
+        if (DB::table('unsubscribes')->whereRaw('lower(email) = ?', [$email])->exists()) {
+            return true;
+        }
+
+        // Check email suppressions (hard bounces, complaints, manual suppression)
+        if (DB::table('email_suppressions')->whereRaw('lower(email) = ?', [$email])->exists()) {
+            return true;
+        }
+
+        // Check bounces (permanent/hard only)
+        if (DB::table('email_bounces')->whereRaw('lower(email) = ?', [$email])->where('type', 'hard')->exists()) {
+            return true;
+        }
+
+        // Check suppression lists (domain-wide or pattern-based)
+        $domain = substr(strrchr($email, '@') ?: '', 1);
+        if ($domain !== '' && DB::table('suppression_lists')->where('domain', $domain)->exists()) {
+            return true;
+        }
+
+        return false;
     }
 }
