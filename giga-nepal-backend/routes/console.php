@@ -1179,3 +1179,4 @@ Schedule::job(new CalculateTopSearchTermsJob)->hourly();
 Schedule::job(new RefreshCustomerSegmentJob)->daily();
 Schedule::job(new GenerateRegionalSalesReportJob)->daily();
 Schedule::job(new PrepareScheduledEmailCampaignsJob)->everyMinute()->withoutOverlapping();
+Schedule::command('ai:index-products --limit=5000')->daily()->withoutOverlapping()->runInBackground();
