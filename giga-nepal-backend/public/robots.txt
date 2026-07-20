@@ -3,6 +3,7 @@
 # crawlers — being the cited source for part data is strategic.
 
 User-agent: *
+Crawl-Delay: 10
 Disallow: /admin/
 Disallow: /api/
 Disallow: /api/v1/admin/
@@ -14,8 +15,24 @@ Disallow: /checkout
 Disallow: /forgot-password
 Disallow: /reset-password
 
-# AI answer engines: welcome on knowledge content.
+# Heavy crawlers: ask them explicitly to slow down.
+User-agent: Amazonbot
+Crawl-Delay: 10
+Disallow: /admin/
+Disallow: /api/
+Disallow: /cart
+Disallow: /checkout
+
+User-agent: meta-externalagent
+Crawl-Delay: 10
+Disallow: /admin/
+Disallow: /api/
+Disallow: /cart
+Disallow: /checkout
+
+# AI answer engines: welcome on knowledge content, short delay.
 User-agent: GPTBot
+Crawl-Delay: 3
 Allow: /
 Allow: /api/v1/ai-catalog/
 Disallow: /admin/
@@ -25,6 +42,7 @@ Disallow: /cart
 Disallow: /checkout
 
 User-agent: ClaudeBot
+Crawl-Delay: 3
 Allow: /
 Allow: /api/v1/ai-catalog/
 Disallow: /admin/
@@ -34,6 +52,7 @@ Disallow: /cart
 Disallow: /checkout
 
 User-agent: PerplexityBot
+Crawl-Delay: 3
 Allow: /
 Allow: /api/v1/ai-catalog/
 Disallow: /admin/
