@@ -8,31 +8,45 @@ use App\Http\Controllers\Admin\DashboardController as AdminDash;
 use App\Http\Controllers\Admin\ElecforestImportController as AdminElecforestImport;
 use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
 use App\Http\Controllers\Admin\MarketplaceConfigController as AdminMarketplaceConfig;
+use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
 use App\Http\Controllers\Admin\ProductImageController as AdminProductImage;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\Pcb\PcbPublicQuoteController;
 use App\Http\Controllers\Web\AiCommercePageController;
+use App\Http\Controllers\Web\B2B\B2BPortalController;
+use App\Http\Controllers\Web\BomPageController;
+use App\Http\Controllers\Web\BrandPageController;
 use App\Http\Controllers\Web\CartPageController;
+use App\Http\Controllers\Web\CategoryController;
+use App\Http\Controllers\Web\CompareController;
 use App\Http\Controllers\Web\CustomerAuthController;
 use App\Http\Controllers\Web\CustomerDashboardController;
-use App\Http\Controllers\Web\BrandPageController;
-use App\Http\Controllers\Web\CategoryController;
+use App\Http\Controllers\Web\Distributor\DistributorPortalController;
 use App\Http\Controllers\Web\EmailPreferenceController;
 use App\Http\Controllers\Web\LandingController;
 use App\Http\Controllers\Web\LmsPageController;
+use App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController;
 use App\Http\Controllers\Web\MarketplaceLandingController;
 use App\Http\Controllers\Web\MarketplacePreferenceController;
+use App\Http\Controllers\Web\OrderTrackingController;
 use App\Http\Controllers\Web\PasswordResetController;
-use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
-use App\Http\Controllers\Pcb\PcbPublicQuoteController;
 use App\Http\Controllers\Web\PcbPortalAuthController;
 use App\Http\Controllers\Web\PcbPortalController;
 use App\Http\Controllers\Web\ProductPageController;
 use App\Http\Controllers\Web\RedesignController;
+use App\Http\Controllers\Web\Reseller\ResellerPortalController;
 use App\Http\Controllers\Web\RfqPageController;
+use App\Http\Controllers\Web\Seller\SellerPortalController;
 use App\Http\Controllers\Web\SellOnNeoGigaController;
 use App\Http\Controllers\Web\SeoLandingController;
 use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\SsoController;
+use App\Http\Middleware\CanonicalizeRegionalMarketplacePath;
+use App\Http\Middleware\EnsureB2BWeb;
+use App\Http\Middleware\EnsureDistributorWeb;
+use App\Http\Middleware\EnsureManufacturerWeb;
+use App\Http\Middleware\EnsureResellerWeb;
+use App\Http\Middleware\EnsureSellerWeb;
 use App\Services\CommerceAi\CommerceAiService;
 use App\Services\Lms\CourseCatalogService;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -50,7 +64,7 @@ Route::domain('admin.neogiga.com')->get('/', fn () => redirect('/admin'));
 
 // PCB Platform — pcb.neogiga.com
 if (config('pcb.enabled', true)) {
-            Route::domain(config('pcb.domain', 'pcb.neogiga.com'))->group(function () {
+    Route::domain(config('pcb.domain', 'pcb.neogiga.com'))->group(function () {
         Route::get('/', fn () => redirect('/en'))->name('pcb.root');
         Route::get('/en', [PcbPortalController::class, 'landing'])->name('pcb.home');
         Route::get('/en/login', [PcbPortalAuthController::class, 'login'])->name('pcb.login');
@@ -91,58 +105,62 @@ Route::patch('/email/preferences/{token}', [EmailPreferenceController::class, 'u
 // Seller web portal (session guard mirrors the admin console; vendor scope
 // enforced by seller.web / SellerContextService — sellers see only their data).
 Route::prefix('seller')->group(function () {
-    Route::get('login', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'showLogin'])->name('seller.login');
-    Route::post('login', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'login'])->middleware('throttle:6,1');
-    Route::post('logout', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'logout']);
+    Route::get('login', [SellerPortalController::class, 'showLogin'])->name('seller.login');
+    Route::post('login', [SellerPortalController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('logout', [SellerPortalController::class, 'logout']);
 
-    Route::get('/', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
-    Route::get('profile', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'profile'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
-    Route::post('profile', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'updateProfile'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
-    Route::get('orders', [\App\Http\Controllers\Web\Seller\SellerPortalController::class, 'orders'])->middleware(\App\Http\Middleware\EnsureSellerWeb::class);
+    Route::get('/', [SellerPortalController::class, 'dashboard'])->middleware(EnsureSellerWeb::class);
+    Route::get('profile', [SellerPortalController::class, 'profile'])->middleware(EnsureSellerWeb::class);
+    Route::post('profile', [SellerPortalController::class, 'updateProfile'])->middleware(EnsureSellerWeb::class);
+    Route::get('orders', [SellerPortalController::class, 'orders'])->middleware(EnsureSellerWeb::class);
+    Route::get('products', [SellerPortalController::class, 'products'])->middleware(EnsureSellerWeb::class);
 });
-
 
 // Reseller web portal
 Route::prefix('reseller')->group(function () {
-    Route::get('login', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'showLogin'])->name('reseller.login');
-    Route::post('login', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'login'])->middleware('throttle:6,1');
-    Route::post('logout', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'logout']);
-    Route::get('/', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
-    Route::get('profile', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'profile'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
-    Route::post('profile', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'updateProfile'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
-    Route::get('orders', [\App\Http\Controllers\Web\Reseller\ResellerPortalController::class, 'orders'])->middleware(\App\Http\Middleware\EnsureResellerWeb::class);
+    Route::get('login', [ResellerPortalController::class, 'showLogin'])->name('reseller.login');
+    Route::post('login', [ResellerPortalController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('logout', [ResellerPortalController::class, 'logout']);
+    Route::get('/', [ResellerPortalController::class, 'dashboard'])->middleware(EnsureResellerWeb::class);
+    Route::get('profile', [ResellerPortalController::class, 'profile'])->middleware(EnsureResellerWeb::class);
+    Route::post('profile', [ResellerPortalController::class, 'updateProfile'])->middleware(EnsureResellerWeb::class);
+    Route::get('orders', [ResellerPortalController::class, 'orders'])->middleware(EnsureResellerWeb::class);
+    Route::get('products', [ResellerPortalController::class, 'products'])->middleware(EnsureResellerWeb::class);
 });
 
 // Manufacturer web portal
 Route::prefix('manufacturer')->group(function () {
-    Route::get('login', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'showLogin'])->name('manufacturer.login');
-    Route::post('login', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'login'])->middleware('throttle:6,1');
-    Route::post('logout', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'logout']);
-    Route::get('/', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureManufacturerWeb::class);
-    Route::get('profile', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'profile'])->middleware(\App\Http\Middleware\EnsureManufacturerWeb::class);
-    Route::post('profile', [\App\Http\Controllers\Web\Manufacturer\ManufacturerPortalController::class, 'updateProfile'])->middleware(\App\Http\Middleware\EnsureManufacturerWeb::class);
+    Route::get('login', [ManufacturerPortalController::class, 'showLogin'])->name('manufacturer.login');
+    Route::post('login', [ManufacturerPortalController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('logout', [ManufacturerPortalController::class, 'logout']);
+    Route::get('/', [ManufacturerPortalController::class, 'dashboard'])->middleware(EnsureManufacturerWeb::class);
+    Route::get('profile', [ManufacturerPortalController::class, 'profile'])->middleware(EnsureManufacturerWeb::class);
+    Route::post('profile', [ManufacturerPortalController::class, 'updateProfile'])->middleware(EnsureManufacturerWeb::class);
+    Route::get('products', [ManufacturerPortalController::class, 'products'])->middleware(EnsureManufacturerWeb::class);
 });
 
 // B2B / Business Customer portal
 Route::prefix('b2b')->group(function () {
-    Route::get('login', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'showLogin'])->name('b2b.login');
-    Route::post('login', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'login'])->middleware('throttle:6,1');
-    Route::post('logout', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'logout']);
-    Route::get('/', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureB2BWeb::class);
-    Route::get('orders', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'orders'])->middleware(\App\Http\Middleware\EnsureB2BWeb::class);
-    Route::get('rfqs', [\App\Http\Controllers\Web\B2B\B2BPortalController::class, 'rfqs'])->middleware(\App\Http\Middleware\EnsureB2BWeb::class);
+    Route::get('login', [B2BPortalController::class, 'showLogin'])->name('b2b.login');
+    Route::post('login', [B2BPortalController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('logout', [B2BPortalController::class, 'logout']);
+    Route::get('/', [B2BPortalController::class, 'dashboard'])->middleware(EnsureB2BWeb::class);
+    Route::get('orders', [B2BPortalController::class, 'orders'])->middleware(EnsureB2BWeb::class);
+    Route::get('rfqs', [B2BPortalController::class, 'rfqs'])->middleware(EnsureB2BWeb::class);
+    Route::get('products', [B2BPortalController::class, 'products'])->middleware(EnsureB2BWeb::class);
 });
 
 // Distributor web portal
 Route::prefix('distributor')->group(function () {
-    Route::get('login', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'showLogin'])->name('distributor.login');
-    Route::post('login', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'login'])->middleware('throttle:6,1');
-    Route::post('logout', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'logout']);
+    Route::get('login', [DistributorPortalController::class, 'showLogin'])->name('distributor.login');
+    Route::post('login', [DistributorPortalController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('logout', [DistributorPortalController::class, 'logout']);
 
-    Route::get('/', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'dashboard'])->middleware(\App\Http\Middleware\EnsureDistributorWeb::class);
-    Route::get('profile', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'profile'])->middleware(\App\Http\Middleware\EnsureDistributorWeb::class);
-    Route::post('profile', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'updateProfile'])->middleware(\App\Http\Middleware\EnsureDistributorWeb::class);
-    Route::get('orders', [\App\Http\Controllers\Web\Distributor\DistributorPortalController::class, 'orders'])->middleware(\App\Http\Middleware\EnsureDistributorWeb::class);
+    Route::get('/', [DistributorPortalController::class, 'dashboard'])->middleware(EnsureDistributorWeb::class);
+    Route::get('profile', [DistributorPortalController::class, 'profile'])->middleware(EnsureDistributorWeb::class);
+    Route::post('profile', [DistributorPortalController::class, 'updateProfile'])->middleware(EnsureDistributorWeb::class);
+    Route::get('orders', [DistributorPortalController::class, 'orders'])->middleware(EnsureDistributorWeb::class);
+    Route::get('products', [DistributorPortalController::class, 'products'])->middleware(EnsureDistributorWeb::class);
 });
 Route::prefix('admin')->group(function () {
     Route::get('login', [AdminAuth::class, 'showLogin'])->name('admin.login');
@@ -438,8 +456,8 @@ Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout'
 Route::get('/logout', fn () => redirect('/login'))->name('logout.get');
 
 // Password reset pages (the reset email links to the named password.reset route)
-Route::get('/track-order', [\App\Http\Controllers\Web\OrderTrackingController::class, 'index'])->name('track.order');
-Route::post('/track-order', [\App\Http\Controllers\Web\OrderTrackingController::class, 'lookup'])->name('track.order.lookup');
+Route::get('/track-order', [OrderTrackingController::class, 'index'])->name('track.order');
+Route::post('/track-order', [OrderTrackingController::class, 'lookup'])->name('track.order.lookup');
 Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequest'])->name('password.request');
 Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:6,1')->name('password.email');
 Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
@@ -458,7 +476,7 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
 
     Route::prefix('{localePrefix}')
         ->whereIn('localePrefix', $localePrefixes)
-        ->middleware(\App\Http\Middleware\CanonicalizeRegionalMarketplacePath::class)
+        ->middleware(CanonicalizeRegionalMarketplacePath::class)
         ->group(function () {
             Route::get('/', fn (string $localePrefix) => app(LandingController::class)())->name('localized.home');
             Route::get('/products', fn (string $localePrefix, Request $request) => app(ProductPageController::class)->index($request))->name('localized.products.index');
@@ -473,9 +491,13 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
             Route::get('/lms', fn (string $localePrefix) => app(LmsPageController::class)->index(app(CourseCatalogService::class)))->name('localized.lms.index');
             Route::get('/projects', fn (string $localePrefix) => redirect('/learn'))->name('localized.projects.index');
             Route::get('/rfq', fn (string $localePrefix, Request $request) => app(RfqPageController::class)->create($request))->name('localized.rfq.create');
-            Route::get('/bom', function (Request $request) { return app(\App\Http\Controllers\Web\BomPageController::class)->index(); })->name('localized.bom.index');
-            Route::get('/compare', [\App\Http\Controllers\Web\CompareController::class, 'index'])->name('localized.compare');
-            Route::post('/bom', function (Request $request) { return app(\App\Http\Controllers\Web\BomPageController::class)->match($request); })->name('localized.bom.match');
+            Route::get('/bom', function (Request $request) {
+                return app(BomPageController::class)->index();
+            })->name('localized.bom.index');
+            Route::get('/compare', [CompareController::class, 'index'])->name('localized.compare');
+            Route::post('/bom', function (Request $request) {
+                return app(BomPageController::class)->match($request);
+            })->name('localized.bom.match');
             Route::get('/sell-on-neogiga', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->sell())->name('localized.seller');
             Route::get('/seller-early-access', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->earlyAccess())->name('localized.seller.early-access');
             Route::get('/distributors', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->distributors())->name('localized.distributors');
@@ -490,7 +512,7 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
 // any existing top-level route above (none of them are 2-8 letter codes).
 Route::get('/{prefix}', [MarketplaceLandingController::class, 'show'])
     ->whereIn('prefix', ['in', 'np', 'bd', 'lk', 'pk', 'bt', 'mv', 'ae', 'sa', 'qa', 'om', 'kw', 'us', 'ca', 'uk', 'de', 'fr', 'it', 'es', 'nl', 'au', 'nz', 'br', 'za', 'ke'])
-    ->middleware(\App\Http\Middleware\CanonicalizeRegionalMarketplacePath::class)
+    ->middleware(CanonicalizeRegionalMarketplacePath::class)
     ->name('marketplace.landing');
 
 // Footer information pages (config-driven; see config/neogiga_pages.php)

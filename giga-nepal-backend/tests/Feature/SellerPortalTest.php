@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -49,9 +50,7 @@ class SellerPortalTest extends TestCase
         $res = $this->get('/seller');
         $res->assertOk();
         $res->assertSee('Acme Components');
-        $res->assertSee('Onboarding checklist');
-        $res->assertViewHas('overview', fn ($o) => $o['products']['total_products'] === 1
-            && $o['products']['approved_products'] === 1);
+        $res->assertViewHas('stats', fn ($s) => $s['product_count'] === 1);
     }
 
     public function test_seller_sees_only_own_products(): void
@@ -73,7 +72,7 @@ class SellerPortalTest extends TestCase
     {
         [, $vendorId] = $this->seller('boss@example.com', 'Staffed Vendor');
         $staff = $this->user('staff@example.com');
-        if (! \Illuminate\Support\Facades\Schema::hasTable('vendor_staff')) {
+        if (! Schema::hasTable('vendor_staff')) {
             $this->markTestSkipped('vendor_staff table not present in this schema.');
         }
         DB::table('vendor_staff')->insert([

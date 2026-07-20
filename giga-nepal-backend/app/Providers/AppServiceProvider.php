@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Marketplace\ProductCategory;
 use App\Services\Ai\AiToolsContract;
 use App\Services\Ai\DatabaseAiTools;
 use App\Services\Marketing\EmailProviderConfigurationService;
@@ -45,6 +46,8 @@ class AppServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(database_path('migrations/admin_console'));
         $this->loadMigrationsFrom(database_path('migrations/inventory_pos'));
         $this->loadMigrationsFrom(database_path('migrations/lms'));
+        $this->loadMigrationsFrom(database_path('migrations/b2b'));
+        $this->loadMigrationsFrom(database_path('migrations/distributor'));
 
         // Admin-managed email transports are encrypted in the existing provider table.
         // The service safely falls back to environment configuration until that table exists.
@@ -73,7 +76,7 @@ class AppServiceProvider extends ServiceProvider
             $context = app(GlobalMarketplaceContextService::class)->context($request);
 
             $searchCategories = Cache::remember('layout:search-categories', 3600, function () {
-                return \App\Models\Marketplace\ProductCategory::query()
+                return ProductCategory::query()
                     ->whereNull('parent_id')
                     ->where('is_active', true)
                     ->where('sort_order', '>', 0)
