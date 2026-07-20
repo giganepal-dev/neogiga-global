@@ -25,4 +25,19 @@ class RfqRequest extends Model
     {
         return $this->hasMany(Quotation::class);
     }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(RfqAssignment::class, 'rfq_id');
+    }
+
+    public function bids(): HasMany
+    {
+        return $this->hasMany(RfqBid::class, 'rfq_id');
+    }
+
+    public function awards(): HasMany
+    {
+        return $this->hasMany(RfqAward::class, 'rfq_id');
+    }
 }

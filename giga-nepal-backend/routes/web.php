@@ -420,6 +420,9 @@ Route::get('/sso/start', [SsoController::class, 'start'])
 Route::get('/sso/consume', [SsoController::class, 'consume'])
     ->middleware('throttle:20,1')
     ->name('sso.consume');
+// POS cashier UI (authenticated)
+Route::get('/pos/cashier', fn () => view('pos.cashier'))->middleware('admin.web');
+
 Route::redirect('/learn', '/en/lms', 301);
 Route::redirect('/learning', '/en/lms', 301);
 Route::get('/learn/projects/{slug}', [LmsPageController::class, 'project']);
