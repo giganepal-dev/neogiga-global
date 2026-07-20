@@ -91,6 +91,10 @@ class SendTransactionalEmailJob implements ShouldQueue
     private function log(object $message, string $key, string $status, ?array $result, array $decision): void
     {
         $messageMetadata = json_decode((string) ($message->metadata ?? '{}'), true) ?: [];
+        $now = now();
+        $attemptCount = ((int) ($message->attempts ?? 0)) + 1;
+        $isSent = in_array($status, ['sent', 'test_queued'], true);
+
         DB::table('communication_logs')->updateOrInsert(['idempotency_key' => $key], [
             'event_type' => $messageMetadata['event_type'] ?? $message->message_type,
             'channel' => 'email',
@@ -100,16 +104,41 @@ class SendTransactionalEmailJob implements ShouldQueue
             'provider' => $result['provider'] ?? $message->provider,
             'provider_message_id' => $result['provider_message_id'] ?? null,
             'status' => $status,
-            'attempts' => ((int) ($message->attempts ?? 0)) + 1,
+            'attempts' => $attemptCount,
             'related_type' => $message->related_type ?? null,
             'related_id' => $message->related_id ?? null,
             'marketplace_id' => $message->marketplace_id ?? null,
             'country_id' => $message->country_id ?? null,
-            'sent_at' => in_array($status, ['sent', 'test_queued'], true) ? now() : null,
+            'sent_at' => $isSent ? $now : null,
             'failure_reason' => $status === 'suppressed' ? implode(',', $decision['reasons']) : ($result['failure_reason'] ?? null),
             'metadata' => json_encode(['eligibility' => $decision, 'sandbox' => $result['sandbox'] ?? null]),
-            'updated_at' => now(),
-            'created_at' => now(),
+            'updated_at' => $now,
+            'created_at' => $now,
         ]);
+
+        // Also write to the delivery-log table for operational visibility
+        if (Schema::hasTable('email_delivery_logs')) {
+            DB::table('email_delivery_logs')->updateOrInsert(
+                ['idempotency_key' => $key],
+                [
+                    'message_id' => $message->id,
+                    'event_type' => $status,
+                    'email_provider_id' => $result['provider_id'] ?? null,
+                    'to_email' => $message->to_email,
+                    'to_name' => $message->to_name ?? null,
+                    'subject' => $message->subject ?? null,
+                    'template_name' => $messageMetadata['template_name'] ?? null,
+                    'status' => $status,
+                    'error_message' => $status === 'failed' ? ($result['failure_reason'] ?? 'Unknown transport error') : null,
+                    'attempt_count' => $attemptCount,
+                    'last_attempt_at' => $now,
+                    'sent_at' => $isSent ? $now : ($message->sent_at ?? null),
+                    'is_transactional' => true,
+                    'marketplace_id' => $message->marketplace_id ?? null,
+                    'updated_at' => $now,
+                    'created_at' => DB::table('email_delivery_logs')->where('idempotency_key', $key)->exists() ? null : $now,
+                ],
+            );
+        }
     }
 }
