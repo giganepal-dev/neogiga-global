@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ElecforestImportController as AdminElecforestImpo
 use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
 use App\Http\Controllers\Admin\MarketplaceConfigController as AdminMarketplaceConfig;
 use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
+use App\Http\Controllers\Admin\PricingAdminController;
 use App\Http\Controllers\Admin\ProductImageController as AdminProductImage;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Pcb\PcbPublicQuoteController;
@@ -246,6 +247,17 @@ Route::prefix('admin')->group(function () {
         Route::post('tax/zones/{zone}/toggle', [AdminCommerce::class, 'toggleTaxZone'])->whereNumber('zone')->middleware('throttle:20,1');
         Route::post('tax/rules', [AdminCommerce::class, 'storeTaxRule'])->middleware('throttle:20,1');
         Route::post('tax/duties', [AdminCommerce::class, 'storeDutyRule'])->middleware('throttle:20,1');
+
+        // Pricing engine — rules, floors, rounding
+        Route::get('pricing', [PricingAdminController::class, 'index'])->name('admin.pricing.index');
+        Route::post('pricing/rules', [PricingAdminController::class, 'store'])->middleware('throttle:20,1')->name('admin.pricing.store');
+        Route::post('pricing/rules/{rule}/toggle', [PricingAdminController::class, 'toggle'])->whereNumber('rule')->name('admin.pricing.toggle');
+        Route::post('pricing/rules/{rule}/approve', [PricingAdminController::class, 'approve'])->whereNumber('rule')->name('admin.pricing.approve');
+        Route::delete('pricing/rules/{rule}', [PricingAdminController::class, 'destroy'])->whereNumber('rule')->name('admin.pricing.destroy');
+        Route::post('pricing/margin-floor', [PricingAdminController::class, 'storeMarginFloor'])->name('admin.pricing.margin-floor');
+        Route::post('pricing/price-floor', [PricingAdminController::class, 'storePriceFloor'])->name('admin.pricing.price-floor');
+        Route::post('pricing/rounding', [PricingAdminController::class, 'storeRounding'])->name('admin.pricing.rounding');
+
         Route::post('products/{product}/toggle', [AdminCommerce::class, 'deactivateProduct'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/stock', [AdminCommerce::class, 'adjustProductStock'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/regional-stock', [AdminCommerce::class, 'storeProductRegionalStock'])->whereNumber('product')->middleware('throttle:20,1');
