@@ -466,6 +466,15 @@ Route::post('/login', [CustomerAuthController::class, 'login'])->middleware('thr
 Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [CustomerAuthController::class, 'register'])->middleware('throttle:6,1');
 Route::get('/account', [CustomerDashboardController::class, 'index'])->middleware('auth')->name('account');
+Route::get('/account/saved', function () {
+    $saved = \Illuminate\Support\Facades\DB::table('saved_products')
+        ->join('products', 'saved_products.product_id', '=', 'products.id')
+        ->where('saved_products.user_id', auth()->id())
+        ->select('products.id', 'products.name', 'products.slug', 'products.sku', 'products.mpn', 'products.list_price', 'saved_products.created_at as saved_at', 'saved_products.list_name')
+        ->orderByDesc('saved_products.created_at')
+        ->get();
+    return view('frontend.account.saved', ['saved' => $saved]);
+})->middleware('auth')->name('account.saved');
 Route::patch('/account/profile', [CustomerDashboardController::class, 'updateProfile'])->middleware(['auth', 'throttle:10,1'])->name('account.profile.update');
 Route::patch('/account/password', [CustomerDashboardController::class, 'updatePassword'])->middleware(['auth', 'throttle:6,1'])->name('account.password.update');
 Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
