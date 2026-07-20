@@ -138,6 +138,72 @@ class CustomerSupportController extends Controller
         return response()->json(['data' => ['status' => 'human agent requested']]);
     }
 
+    /**
+     * Public inquiry — no auth required. Used by the product-page
+     * "Chat with Seller" modal for anonymous / pre-login inquiries.
+     */
+    public function inquire(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'subject' => ['required', 'string', 'max:190'],
+            'message' => ['required', 'string', 'max:5000'],
+            'about_type' => ['nullable', 'string'],
+            'about_id' => ['nullable', 'integer'],
+            'product_name' => ['nullable', 'string', 'max:255'],
+            'product_sku' => ['nullable', 'string', 'max:100'],
+            'product_mpn' => ['nullable', 'string', 'max:100'],
+            'quantity' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $meta = [
+            'channel' => 'public_chat_modal',
+            'about_type' => $data['about_type'] ?? null,
+            'about_id' => $data['about_id'] ?? null,
+            'product_name' => $data['product_name'] ?? null,
+            'product_sku' => $data['product_sku'] ?? null,
+            'product_mpn' => $data['product_mpn'] ?? null,
+            'quantity' => $data['quantity'] ?? null,
+        ];
+
+        $subject = $data['subject'];
+        if (! empty($data['product_sku'])) {
+            $subject = "[{$data['product_sku']}] {$subject}";
+        }
+
+        $ticketId = DB::transaction(function () use ($data, $meta, $subject) {
+            $id = DB::table('support_tickets')->insertGetId([
+                'ticket_number' => 'INQ-' . now()->format('YmdHis') . '-' . random_int(100, 999),
+                'user_id' => auth()->id(), // null if guest
+                'subject' => $subject,
+                'description' => $data['message'],
+                'priority' => 'medium',
+                'status' => 'open',
+                'category' => 'product_qa',
+                'metadata' => json_encode($meta),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('support_ticket_messages')->insert([
+                'support_ticket_id' => $id,
+                'sender_type' => 'customer',
+                'message' => $data['message'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return $id;
+        });
+
+        return response()->json([
+            'data' => [
+                'id' => $ticketId,
+                'status' => 'sent',
+                'message' => 'Inquiry sent! Seller will respond within 24 hours.',
+            ],
+        ], 201);
+    }
+
     private function ownTicket(Request $request, int $id): object
     {
         $ticket = DB::table('support_tickets')

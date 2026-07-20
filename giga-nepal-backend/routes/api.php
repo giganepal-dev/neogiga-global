@@ -903,6 +903,9 @@ Route::prefix('v1/auth')->group(function () {
 | seller side: SellerSupportTicketController). Ownership-checked, append-only
 | transcript, AI-handoff placeholder via metadata.needs_human.
 */
+// Public support inquiry — no auth required (from product page "Chat with Seller" modal)
+Route::post('v1/support/inquire', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'inquire'])->middleware('throttle:5,1');
+
 Route::prefix('v1/support')->middleware('api.token')->group(function () {
     Route::get('/tickets', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'index']);
     Route::post('/tickets', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'store'])->middleware('throttle:writes');
