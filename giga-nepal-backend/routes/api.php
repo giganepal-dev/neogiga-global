@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\Order\OrderController;
 use App\Http\Controllers\Api\AI\AiCommerceController;
 use App\Http\Controllers\Api\AiCatalogController;
 use App\Http\Controllers\Api\POS\PosController;
+use App\Http\Controllers\Api\Messaging\MessagingController;
 use App\Http\Controllers\Api\LMS\LmsController;
 use App\Http\Controllers\Api\Admin\AdminConsoleController;
 use App\Http\Controllers\Api\Admin\MarketplaceAdminController;
@@ -299,6 +300,15 @@ Route::prefix('v1')->group(function () {
             Route::post('/sales/{sale}/payment', [PosController::class, 'processPayment'])->whereNumber('sale');
             Route::post('/sales/{sale}/refund', [PosController::class, 'processRefund'])->whereNumber('sale');
         });
+    });
+
+    // Messaging — customer ↔ seller with privacy masking
+    Route::prefix('messaging')->middleware('api.token')->group(function () {
+        Route::get('/conversations', [MessagingController::class, 'index']);
+        Route::post('/conversations', [MessagingController::class, 'store'])->middleware('throttle:20,1');
+        Route::get('/conversations/{id}', [MessagingController::class, 'show'])->whereNumber('id');
+        Route::post('/conversations/{id}/reply', [MessagingController::class, 'reply'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::patch('/conversations/{id}/status', [MessagingController::class, 'updateStatus'])->whereNumber('id');
     });
 
     // LMS (public catalog/project reads; learner actions require API token)
