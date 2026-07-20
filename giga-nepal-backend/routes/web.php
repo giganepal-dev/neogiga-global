@@ -41,6 +41,7 @@ use App\Http\Controllers\Web\Seller\SellerPortalController;
 use App\Http\Controllers\Web\SellOnNeoGigaController;
 use App\Http\Controllers\Web\SeoLandingController;
 use App\Http\Controllers\Web\SitemapController;
+use App\Http\Controllers\Web\TwoFactorController;
 use App\Http\Controllers\Web\SsoController;
 use App\Http\Middleware\CanonicalizeRegionalMarketplacePath;
 use App\Http\Middleware\EnsureB2BWeb;
@@ -469,6 +470,22 @@ Route::patch('/account/profile', [CustomerDashboardController::class, 'updatePro
 Route::patch('/account/password', [CustomerDashboardController::class, 'updatePassword'])->middleware(['auth', 'throttle:6,1'])->name('account.password.update');
 Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 Route::get('/logout', fn () => redirect('/login'))->name('logout.get');
+Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
+
+// Two-Factor Authentication (root level)
+Route::middleware('auth')->group(function () {
+    Route::get('/2fa/setup', [TwoFactorController::class, 'setup'])->name('2fa.setup');
+    Route::post('/2fa/enable', [TwoFactorController::class, 'enable'])->name('2fa.enable');
+    Route::get('/2fa/manage', [TwoFactorController::class, 'manage'])->name('2fa.manage');
+    Route::post('/2fa/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable');
+    Route::post('/2fa/new-codes', [TwoFactorController::class, 'newRecoveryCodes'])->name('2fa.new-codes');
+});
+Route::get('/2fa/challenge', [TwoFactorController::class, 'challenge'])->name('2fa.challenge');
+Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])->name('2fa.verify');
+
+// Also register under localized prefix for neogiga.com routing
+Route::get('/{locale}/2fa/challenge', [TwoFactorController::class, 'challenge'])->where('locale', '[a-z]{2}')->name('localized.2fa.challenge');
+Route::post('/{locale}/2fa/verify', [TwoFactorController::class, 'verify'])->where('locale', '[a-z]{2}')->name('localized.2fa.verify');
 
 // Password reset pages (the reset email links to the named password.reset route)
 Route::get('/track-order', [OrderTrackingController::class, 'index'])->name('track.order');
