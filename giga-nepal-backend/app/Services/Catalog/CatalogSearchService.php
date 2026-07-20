@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class CatalogSearchService
 {
@@ -21,27 +23,20 @@ class CatalogSearchService
         $quality = trim((string) ($filters['quality'] ?? ''));
 
         if ($q !== '') {
-            $query->where(function ($inner) use ($q) {
+            // Two-step search: an EXISTS inside this OR chain defeats every
+            // index (planner can't BitmapOr a subplan) and seq-scans products.
+            // Prefetching matching doc ids keeps the whole OR indexable.
+            $docIds = $this->hasSearchTables() ? $this->matchingDocumentProductIds($q) : [];
+
+            $query->where(function ($inner) use ($q, $docIds) {
                 $like = $this->likeTerm($q);
                 $inner->where('products.name', $this->likeOperator(), $like)
                     ->orWhere('products.sku', $this->likeOperator(), $like)
                     ->orWhere('products.mpn', $this->likeOperator(), $like)
                     ->orWhere('products.manufacturer_name', $this->likeOperator(), $like);
 
-                if ($this->hasSearchTables()) {
-                    $inner->orWhereExists(function ($sub) use ($like, $q) {
-                        $sub->selectRaw('1')
-                            ->from('product_search_documents as psd')
-                            ->whereColumn('psd.product_id', 'products.id')
-                            ->where('psd.source_code', self::INDEXED_SOURCE)
-                            ->where(function ($doc) use ($like, $q) {
-                                $this->tsQueryWheres($doc, 'psd.searchable_text', $q);
-                                $doc->orWhere('psd.title', $this->likeOperator(), $like)
-                                    ->orWhere('psd.sku', $this->likeOperator(), $like)
-                                    ->orWhere('psd.mpn', $this->likeOperator(), $like)
-                                    ->orWhere('psd.manufacturer', $this->likeOperator(), $like);
-                            });
-                    });
+                if ($docIds !== []) {
+                    $inner->orWhereIn('products.id', $docIds);
                 }
             });
         }
@@ -83,14 +78,14 @@ class CatalogSearchService
             $lock = Cache::lock('catalog:facets:lock', 15);
             if ($lock->get()) {
                 try {
-                    return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
+                    return Cache::remember($cacheKey, 3600, fn () => $this->safeComputeFacetGroups($filters));
                 } finally {
                     $lock->release();
                 }
             }
             if ($lock->block(5)) {
                 try {
-                    return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
+                    return Cache::remember($cacheKey, 3600, fn () => $this->safeComputeFacetGroups($filters));
                 } finally {
                     $lock->release();
                 }
@@ -98,7 +93,21 @@ class CatalogSearchService
         } catch (\Illuminate\Contracts\Cache\LockTimeoutException) {
             // Lock contention — skip facets gracefully.
         }
-        return Cache::remember($cacheKey, 3600, fn () => $this->computeFacetGroups($filters));
+        return Cache::remember($cacheKey, 3600, fn () => $this->safeComputeFacetGroups($filters));
+    }
+
+    private function safeComputeFacetGroups(array $filters): Collection
+    {
+        try {
+            return $this->computeFacetGroups($filters);
+        } catch (Throwable $e) {
+            Log::warning('Catalog facet generation skipped.', [
+                'message' => $e->getMessage(),
+                'filters' => $filters,
+            ]);
+
+            return collect();
+        }
     }
 
     private function computeFacetGroups(array $filters): Collection
@@ -196,6 +205,29 @@ class CatalogSearchService
     }
 
     /**
+     * Product ids whose search documents match the term, via indexed lookups
+     * (GIN tsvector + trgm on searchable_text, which contains title/sku/mpn/
+     * manufacturer). Cached per term; capped so orWhereIn stays bounded.
+     */
+    private function matchingDocumentProductIds(string $term): array
+    {
+        $cacheKey = 'catalog:search-doc-ids:'.sha1($term);
+
+        return Cache::remember($cacheKey, 600, function () use ($term) {
+            $query = DB::table('product_search_documents as psd')
+                ->where('psd.source_code', self::INDEXED_SOURCE)
+                ->where(function ($doc) use ($term) {
+                    $this->tsQueryWheres($doc, 'psd.searchable_text', $term);
+                    $doc->orWhere('psd.searchable_text', $this->likeOperator(), $this->likeTerm($term));
+                });
+
+            // ponytail: 5k cap bounds the IN list; broad terms still match via
+            // the products-column ILIKEs in applyPublicFilters.
+            return $query->limit(5000)->pluck('psd.product_id')->all();
+        });
+    }
+
+    /**
      * Full-text search using PostgreSQL tsvector when available.
      * Falls back to ILIKE for SQLite and pre-migration states.
      * ponytail: plainto_tsquery is safe for arbitrary user input.
@@ -206,8 +238,12 @@ class CatalogSearchService
         $hasTsVector = $isPgsql && Schema::hasColumn('product_search_documents', 'search_vector');
 
         if ($hasTsVector) {
+            // Must target the generated tsvector column, not the raw text column:
+            // text @@ tsquery recomputes to_tsvector per row (seq scan, ~30s);
+            // search_vector @@ tsquery hits the GIN index (~20ms).
+            $vectorColumn = str_replace('searchable_text', 'search_vector', $column);
             $query->whereRaw(
-                "{$column} @@ plainto_tsquery('english', ?)",
+                "{$vectorColumn} @@ plainto_tsquery('english', ?)",
                 [$term]
             );
         } else {
