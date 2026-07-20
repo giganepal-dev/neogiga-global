@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
 use App\Http\Controllers\Admin\MarketplaceConfigController as AdminMarketplaceConfig;
 use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
 use App\Http\Controllers\Admin\PricingAdminController;
+use App\Http\Controllers\Admin\PosAdminController;
 use App\Http\Controllers\Admin\ProductImageController as AdminProductImage;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Pcb\PcbPublicQuoteController;
@@ -258,6 +259,13 @@ Route::prefix('admin')->group(function () {
         Route::post('pricing/margin-floor', [PricingAdminController::class, 'storeMarginFloor'])->name('admin.pricing.margin-floor');
         Route::post('pricing/price-floor', [PricingAdminController::class, 'storePriceFloor'])->name('admin.pricing.price-floor');
         Route::post('pricing/rounding', [PricingAdminController::class, 'storeRounding'])->name('admin.pricing.rounding');
+
+        // POS management
+        Route::get('pos/manage', [PosAdminController::class, 'index'])->name('admin.pos.manage');
+        Route::post('pos/registers', [PosAdminController::class, 'storeRegister'])->name('admin.pos.store-register');
+        Route::post('pos/registers/{id}/toggle', [PosAdminController::class, 'toggleRegister'])->whereNumber('id')->name('admin.pos.toggle-register');
+        Route::post('pos/shifts/open', [PosAdminController::class, 'openShift'])->name('admin.pos.open-shift');
+        Route::post('pos/shifts/close', [PosAdminController::class, 'closeShift'])->name('admin.pos.close-shift');
 
         Route::post('products/{product}/toggle', [AdminCommerce::class, 'deactivateProduct'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/stock', [AdminCommerce::class, 'adjustProductStock'])->whereNumber('product')->middleware('throttle:20,1');
