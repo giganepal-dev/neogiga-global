@@ -16,14 +16,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="yandex-verification" content="208c27f08c871e90" />
+    @if($gaId = config('marketing.analytics.ga_measurement_id'))
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6LCPY27D9N"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $gaId }}"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-6LCPY27D9N');
+      gtag('config', '{{ $gaId }}');
     </script>
+    @endif
     <title>@yield('title', $marketplaceSeo['title'] ?? 'NeoGiga - Global Engineering Marketplace')</title>
     <meta name="description" content="@yield('description', $marketplaceSeo['description'] ?? 'Global marketplace for semiconductors, IoT, robotics, automation, battery technology, power storage and engineering tools.')">
     <link rel="canonical" href="{{ $resolvedCanonical }}">
