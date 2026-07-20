@@ -5,14 +5,14 @@ namespace Tests\Feature;
 use App\Models\Payments\PaymentProvider;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class Phase1CheckoutTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     public function test_customer_can_add_stocked_product_to_cart_and_checkout_pending_order(): void
     {

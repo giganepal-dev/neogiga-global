@@ -257,7 +257,7 @@ class CustomerCommunicationSafetyTest extends TestCase
 
         $verificationMessage = $registrationMessages->first(fn ($message) => json_decode($message->metadata, true)['event_type'] === 'email_verification');
         $verificationBody = Crypt::decryptString(json_decode($verificationMessage->metadata, true)['sensitive_body_encrypted']);
-        preg_match('/href="([^"]+)"/', html_entity_decode($verificationBody), $verificationLink);
+        preg_match('/href="([^"]*verify-email[^"]*)"/', html_entity_decode($verificationBody), $verificationLink);
         $this->assertNotEmpty($verificationLink[1] ?? null);
         $this->get($verificationLink[1])->assertOk()->assertJsonPath('data.message', 'Email verified successfully.');
         $this->assertNotNull(DB::table('users')->where('id', $userId)->value('email_verified_at'));

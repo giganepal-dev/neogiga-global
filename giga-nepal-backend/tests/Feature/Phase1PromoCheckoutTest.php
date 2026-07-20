@@ -7,14 +7,14 @@ use App\Models\Promotion\Coupon;
 use App\Models\Promotion\GiftCard;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class Phase1PromoCheckoutTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     public function test_coupon_and_gift_card_apply_at_checkout(): void
     {
@@ -29,8 +29,8 @@ class Phase1PromoCheckoutTest extends TestCase
             'product_id' => $productId, 'marketplace_id' => $marketplaceId, 'quantity' => 2,
         ])->assertCreated();
 
-        $coupon = Coupon::create(['code' => 'SAVE10-' . uniqid(), 'type' => 'percentage', 'value' => 10, 'is_active' => true, 'scope' => 'cart']);
-        $card = GiftCard::create(['code' => 'GC-' . strtoupper(uniqid()), 'initial_balance' => 20, 'current_balance' => 20, 'currency' => 'USD', 'status' => 'active']);
+        $coupon = Coupon::create(['code' => 'SAVE10-'.uniqid(), 'type' => 'percentage', 'value' => 10, 'is_active' => true, 'scope' => 'cart']);
+        $card = GiftCard::create(['code' => 'GC-'.strtoupper(uniqid()), 'initial_balance' => 20, 'current_balance' => 20, 'currency' => 'USD', 'status' => 'active']);
         $card->transactions()->create(['type' => 'issue', 'amount' => 20, 'balance_after' => 20, 'created_at' => now()]);
 
         // Apply coupon (server computes 10% of 39.98 = 4.00)
@@ -68,7 +68,7 @@ class Phase1PromoCheckoutTest extends TestCase
 
         $user = User::create([
             'name' => 'Promo Customer',
-            'email' => 'promo-' . uniqid() . '@example.test',
+            'email' => 'promo-'.uniqid().'@example.test',
             'password' => Hash::make('password123'),
             'role_id' => $role->id,
         ]);
@@ -107,7 +107,7 @@ class Phase1PromoCheckoutTest extends TestCase
         ]);
 
         return DB::table('marketplaces')->insertGetId([
-            'name' => 'Promo Marketplace', 'code' => 'promo-' . $suffix, 'country_id' => $countryId,
+            'name' => 'Promo Marketplace', 'code' => 'promo-'.$suffix, 'country_id' => $countryId,
             'currency_id' => $currencyId, 'timezone' => 'UTC', 'locale' => 'en', 'is_active' => true,
             'is_default' => false, 'allow_vendor_registration' => true, 'require_vendor_approval' => false,
             'tax_rate' => 0, 'created_at' => now(), 'updated_at' => now(),
@@ -118,18 +118,18 @@ class Phase1PromoCheckoutTest extends TestCase
     {
         $suffix = substr(uniqid(), -8);
         $productId = DB::table('products')->insertGetId([
-            'name' => 'Promo Product', 'slug' => 'promo-product-' . $suffix, 'sku' => 'PP-' . $suffix,
+            'name' => 'Promo Product', 'slug' => 'promo-product-'.$suffix, 'sku' => 'PP-'.$suffix,
             'type' => 'simple', 'status' => 'approved', 'base_price' => 19.99, 'track_inventory' => true,
             'stock_quantity' => 10, 'approved_at' => now(), 'created_at' => now(), 'updated_at' => now(),
         ]);
         $warehouseId = DB::table('warehouses')->insertGetId([
-            'marketplace_id' => $marketplaceId, 'name' => 'Promo WH', 'code' => 'PWH-' . $suffix,
+            'marketplace_id' => $marketplaceId, 'name' => 'Promo WH', 'code' => 'PWH-'.$suffix,
             'address_line1' => 'X', 'is_active' => true, 'is_default' => true,
             'created_at' => now(), 'updated_at' => now(),
         ]);
         DB::table('inventory_stocks')->insert([
             'product_id' => $productId, 'warehouse_id' => $warehouseId, 'marketplace_id' => $marketplaceId,
-            'sku' => 'PP-' . $suffix, 'quantity_available' => 10, 'quantity_reserved' => 0,
+            'sku' => 'PP-'.$suffix, 'quantity_available' => 10, 'quantity_reserved' => 0,
             'quantity_damaged' => 0, 'quantity_incoming' => 0, 'reorder_point' => 2, 'is_active' => true,
             'created_at' => now(), 'updated_at' => now(),
         ]);

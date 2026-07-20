@@ -77,7 +77,9 @@ class RegionalPlatformHomepageTest extends TestCase
                 ->assertSee('/en/products', false)
                 ->assertSee('/en/categories', false)
                 ->assertSee('/en/rfq', false)
-                ->assertSee('Shared NeoGiga platform');
+                // c4ebd26 replaced the "Shared Platform" card with the Regional
+                // Sourcing Hub; the shared cross-edition message is now this heading.
+                ->assertSee('One platform from idea to delivery');
         }
 
         $global->assertSee('hreflang="en-np" href="https://np.neogiga.com/en"', false)

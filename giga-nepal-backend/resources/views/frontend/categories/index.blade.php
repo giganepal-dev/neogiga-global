@@ -31,6 +31,7 @@
         'position' => $index + 1,
         'name' => $category->name,
         'url' => url($publicBase.'/categories/'.$category->slug),
+        'image' => $category->image_path ? url($category->image_path) : url('/images/brand/neogiga-icon-512.png'),
     ])->all(),
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>

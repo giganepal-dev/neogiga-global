@@ -29,7 +29,7 @@ class GenerateRegionalSalesReportJob implements ShouldQueue
             ->leftJoin('marketplaces as m', 'm.id', '=', 'o.marketplace_id')
             ->select(
                 'm.country_id',
-                DB::raw('null::bigint as region_id'),
+                DB::raw('cast(null as bigint) as region_id'),
                 DB::raw('count(o.id) as order_count'),
                 DB::raw('sum(o.grand_total) as amount')
             )

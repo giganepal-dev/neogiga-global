@@ -10,6 +10,7 @@ use App\Models\Marketplace\ProductCategory;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\MarketplacePathResolver;
 use App\Services\Marketplace\MarketplaceSeoRenderer;
+use App\Services\Marketplace\MarketplaceUrlGenerator;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
@@ -37,6 +38,22 @@ class LandingController extends Controller
             $marketplaceContext['country_id'] = $current->country_id;
             $marketplaceContext['country_code'] = strtoupper((string) ($current->country?->iso_code_2 ?? ''));
             $marketplaceContext['locale'] = $current->locale ?: 'en';
+        }
+
+        // Preview/inactive regional editions never render a functional
+        // storefront: bd.neogiga.com (host-resolved) and /bd (prefix-resolved)
+        // both land on the "Coming soon" marketplace page.
+        if ($current
+            && strtoupper((string) $current->code) !== 'GLOBAL'
+            && ($current->launch_status ?? 'active') !== 'active') {
+            return response()->view('frontend.marketplace.landing', [
+                'marketplace' => $current,
+                'isPreview' => true,
+                'brandedUrl' => $current->domains->firstWhere('is_active', true)
+                    ? app(MarketplaceUrlGenerator::class)->forMarketplace($current)
+                    : null,
+                'editions' => app(GlobalMarketplaceContextService::class)->allEditions(),
+            ]);
         }
 
         $marketplaceSeo = app(MarketplaceSeoRenderer::class)->tags($current, url()->current());

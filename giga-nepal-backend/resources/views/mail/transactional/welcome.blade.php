@@ -12,7 +12,13 @@
   Marketplace: {{ $regionName ?? 'Global' }}
 </p>
 
+@if(!empty($verificationUrl))
+<a class="btn" href="{{ $verificationUrl }}">Verify your email</a>
+@elseif(!empty($activationUrl))
+<a class="btn" href="{{ $activationUrl }}">Activate your account</a>
+@else
 <a class="btn" href="{{ $loginUrl ?? 'https://neogiga.com/en/login' }}">Sign in to your account</a>
+@endif
 
 <p class="muted" style="margin-top:16px">If you did not create this account, please contact our support team immediately.</p>
 @endsection

@@ -730,6 +730,15 @@ class JlcpcbCommerceEnrichmentService
 
                 continue;
             }
+            if (in_array($field, ['quote_only', 'is_reservable', 'is_fulfillable', 'is_active'], true)) {
+                // Booleans: pgsql PDO returns native bool, sqlite returns 0/1 —
+                // string-casting false ('' vs '0') made every replay a phantom update.
+                if ((bool) ($existing->{$field} ?? false) !== (bool) ($values[$field] ?? false)) {
+                    return true;
+                }
+
+                continue;
+            }
             if ((string) ($existing->{$field} ?? '') !== (string) ($values[$field] ?? '')) {
                 return true;
             }
@@ -973,20 +982,24 @@ class JlcpcbCommerceEnrichmentService
                 throw new RuntimeException("Run the additive availability-governance migration; supplier_availabilities.{$column} is missing.");
             }
         }
-        $priceScales = collect(DB::select(
-            <<<'SQL'
-                SELECT column_name, numeric_scale
-                FROM information_schema.columns
-                WHERE table_schema = current_schema()
-                  AND table_name = 'marketplace_product_prices'
-                  AND column_name IN ('base_price', 'sale_price', 'cost_price')
-            SQL
-        ))->pluck('numeric_scale', 'column_name');
-        foreach (['base_price', 'sale_price', 'cost_price'] as $column) {
-            if ((int) ($priceScales[$column] ?? 0) < 8) {
-                throw new RuntimeException(
-                    "Run the additive sub-cent precision migration; marketplace_product_prices.{$column} must retain at least eight decimal places."
-                );
+        // Decimal scale is a Postgres/MySQL invariant; SQLite (tests) has no
+        // real column scale to assert — same skip as DraftCatalogReleaseService.
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            $priceScales = collect(DB::select(
+                <<<'SQL'
+                    SELECT column_name, numeric_scale
+                    FROM information_schema.columns
+                    WHERE table_schema = current_schema()
+                      AND table_name = 'marketplace_product_prices'
+                      AND column_name IN ('base_price', 'sale_price', 'cost_price')
+                SQL
+            ))->pluck('numeric_scale', 'column_name');
+            foreach (['base_price', 'sale_price', 'cost_price'] as $column) {
+                if ((int) ($priceScales[$column] ?? 0) < 8) {
+                    throw new RuntimeException(
+                        "Run the additive sub-cent precision migration; marketplace_product_prices.{$column} must retain at least eight decimal places."
+                    );
+                }
             }
         }
         $minimum = (int) config('jlcpcb_commerce.availability.minimum_quantity');

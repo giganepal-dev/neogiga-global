@@ -182,7 +182,7 @@ class MarketingJobsTest extends TestCase
         ]);
 
         (new GenerateRegionalSalesReportJob)->handle();
-        $this->assertSame('99.00', (string) DB::table('regional_sales_reports')->value('amount'));
+        $this->assertSame(99.0, (float) DB::table('regional_sales_reports')->value('amount'));
 
         app(SendTransactionalEmailJob::class, ['payload' => [
             'to_email' => 'notify@example.test',

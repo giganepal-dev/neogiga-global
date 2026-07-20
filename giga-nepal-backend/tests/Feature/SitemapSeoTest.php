@@ -111,6 +111,7 @@ class SitemapSeoTest extends TestCase
             'slug' => 'fallback-category',
             'is_active' => true,
             'image_path' => null,
+            'sort_order' => 1, // directory index hides sort_order = 0 (uncategorized)
             'created_at' => now(),
             'updated_at' => now(),
         ]);
