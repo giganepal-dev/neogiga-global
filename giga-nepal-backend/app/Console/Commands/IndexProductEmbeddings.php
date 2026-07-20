@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Index product specifications and datasheets into ai_embeddings.
@@ -50,24 +51,43 @@ class IndexProductEmbeddings extends Command
             ->take($limit)
             ->orderBy('id')
             ->each(function ($product) use (&$indexed, &$skipped, $bar) {
-                $text = $this->buildTextBlob($product);
+                try {
+                    $text = $this->buildTextBlob($product);
+                } catch (\Exception $e) {
+                    $this->warn("  Skipping product #{$product->id}: {$e->getMessage()}");
+                    $skipped++;
+                    $bar->advance();
+                    return;
+                }
                 if (empty(trim($text))) {
                     $skipped++;
                     $bar->advance();
                     return;
                 }
 
-                DB::table('ai_embeddings')->updateOrInsert(
-                    ['source_type' => 'product', 'source_id' => $product->id],
-                    [
-                        'content_text' => $text,
-                        'content_hash' => md5($text),
-                        'status' => 'indexed',
-                        'indexed_at' => now(),
+                $existing = DB::table('ai_embeddings')
+                    ->where('source_type', 'product')
+                    ->where('source_id', $product->id)
+                    ->first();
+
+                if ($existing) {
+                    DB::table('ai_embeddings')->where('id', $existing->id)->update([
+                        'embedding_metadata' => json_encode(['text' => $text, 'hash' => md5($text), 'indexed_at' => now()->toIso8601String()]),
                         'updated_at' => now(),
-                        'created_at' => DB::raw('COALESCE((SELECT created_at FROM ai_embeddings WHERE source_type=\'product\' AND source_id=' . $product->id . '), NOW())'),
-                    ],
-                );
+                    ]);
+                } else {
+                    DB::table('ai_embeddings')->insert([
+                        'uuid' => (string) Str::uuid(),
+                        'provider' => 'local',
+                        'model' => 'text-index',
+                        'source_type' => 'product',
+                        'source_id' => $product->id,
+                        'embedding_metadata' => json_encode(['text' => $text, 'hash' => md5($text), 'indexed_at' => now()->toIso8601String()]),
+                        'permission_scope' => 'public',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
 
                 $indexed++;
                 $bar->advance();
@@ -110,22 +130,25 @@ class IndexProductEmbeddings extends Command
         }
 
         // Specifications
-        $specs = DB::table('product_specifications')
+        $specs = DB::table('product_specs')
             ->where('product_id', $product->id)
-            ->pluck('value', 'name');
-        foreach ($specs as $name => $value) {
-            if (! empty($value)) {
-                $parts[] = "{$name}: {$value}";
+            ->select('name', 'value')
+            ->get();
+        foreach ($specs as $spec) {
+            if (! empty($spec->value)) {
+                $parts[] = "{$spec->name}: {$spec->value}";
             }
         }
 
-        // Datasheet text (if available)
-        $datasheet = DB::table('product_datasheets')
-            ->where('product_id', $product->id)
-            ->orderByDesc('created_at')
-            ->value('extracted_text');
-        if ($datasheet) {
-            $parts[] = mb_substr($datasheet, 0, 5000); // first 5K chars
+        // Datasheet text (if table has extracted_text column)
+        if (DB::getSchemaBuilder()->hasColumn('product_datasheets', 'extracted_text')) {
+            $datasheet = DB::table('product_datasheets')
+                ->where('product_id', $product->id)
+                ->orderByDesc('created_at')
+                ->value('extracted_text');
+            if ($datasheet) {
+                $parts[] = mb_substr($datasheet, 0, 5000);
+            }
         }
 
         // Description

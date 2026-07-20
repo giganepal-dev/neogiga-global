@@ -194,6 +194,7 @@ document.querySelectorAll(".spec-group").forEach(function(g){g.addEventListener(
                     <a class="btn btn-gold" href="/ai-commerce?part={{ urlencode($product->mpn ?: $product->sku ?: $product->name) }}"><x-icon name="ai-search" size="18"/> Ask AI Engineer</a>
                     <form method="post" action="/cart/items" style="display:grid;grid-template-columns:86px 1fr;gap:8px">@csrf<input type="hidden" name="product_id" value="{{ $product->id }}"><input class="control" type="number" name="quantity" min="1" max="500" value="1" aria-label="Quantity"><button class="btn btn-ghost" type="submit"><x-icon name="cart" size="18"/> Add to Cart</button></form><a href="/en/compare?p={{ $product->slug }}" class="btn btn-ghost" style="margin-top:6px">Compare</a>
                     <a href="/en/bom" class="btn btn-ghost" style="margin-top:6px">Add to BOM</a>
+                    <button type="button" class="btn btn-ghost saved-btn" style="margin-top:6px" data-product="{{ $product->id }}" onclick="toggleSave(this)"><x-icon name="heart" size="16"/> Save</button>
                     <button type="button" class="btn btn-ghost" style="margin-top:6px" onclick="document.getElementById('chat-modal-{{ $product->id }}').style.display='flex'">Chat with Seller</button>
                 </div>
                 <p class="sub">B2B pricing, contract offers, regional warehouse stock and delivery dates are handled through RFQ until checkout is fully opened.</p>

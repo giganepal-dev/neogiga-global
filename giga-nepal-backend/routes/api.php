@@ -143,6 +143,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/{product}/warranty', [ProductCommerceController::class, 'warranty']);
         Route::get('/{product}/generic-suggestions', [ProductCommerceController::class, 'genericSuggestions']);
         Route::get('/{product}/compatible', [ProductCommerceController::class, 'compatible']);
+        Route::post('/{product}/save', function (\Illuminate\Http\Request $request, int $product) {
+            $user = auth()->user(); if (!$user) return response()->json(['saved' => false], 401);
+            $exists = \Illuminate\Support\Facades\DB::table('saved_products')->where('user_id', $user->id)->where('product_id', $product)->exists();
+            if ($exists) { \Illuminate\Support\Facades\DB::table('saved_products')->where('user_id', $user->id)->where('product_id', $product)->delete(); return response()->json(['saved' => false]); }
+            \Illuminate\Support\Facades\DB::table('saved_products')->insert(['user_id' => $user->id, 'product_id' => $product, 'created_at' => now(), 'updated_at' => now()]);
+            return response()->json(['saved' => true]);
+        })->middleware('api.token')->whereNumber('product');
         Route::get('/{product}/related', [ProductCommerceController::class, 'related']);
         Route::get('/{product}/accessories', [ProductCommerceController::class, 'accessories']);
         Route::get('/{product}/stock', [ProductCommerceController::class, 'stock']);
