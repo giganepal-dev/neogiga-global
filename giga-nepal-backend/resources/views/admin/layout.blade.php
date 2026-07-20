@@ -147,6 +147,15 @@
         .tree .kids{list-style:none;margin:0;padding-left:22px;border-left:1px dashed #dbe4ec;margin-left:15px}
         .tree .cnt{margin-left:auto;color:var(--muted);font-size:.75rem}
 
+    /* Collapsible menu sections */
+    .nav-section{margin-bottom:2px}
+    .nav-section-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 6px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);cursor:pointer;user-select:none;border-radius:var(--r-sm);margin:4px 8px 0}
+    .nav-section-header:hover{color:var(--accent);background:#f8fafc}
+    .nav-section-header::after{content:'▾';font-size:10px;transition:transform .2s}
+    .nav-section.collapsed .nav-section-header::after{transform:rotate(-90deg)}
+    .nav-section-body{overflow:hidden;transition:max-height .25s ease}
+    .nav-section.collapsed .nav-section-body{max-height:0 !important}
+
         .note{background:#eff6ff;border:1px solid #dbeafe;color:#1e3a8a;border-radius:var(--r-sm);padding:11px 14px;font-size:.84rem;margin-bottom:16px}
 
         @media (max-width:900px){
@@ -185,201 +194,7 @@
             <span><b>NeoGiga</b><small>Admin Console</small></span>
         </a>
         <nav class="nav" aria-label="Primary">
-            <span class="lbl">Overview</span>
-            @php $r = request()->path(); @endphp
-            <a href="/admin" class="{{ $r==='admin' ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
-                Dashboard
-            </a>
-            <a href="/admin/system-health" class="{{ str_starts_with($r,'admin/system-health') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h4l2-6 4 12 2-6h4" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 5h14v14H5z" stroke-linejoin="round"/></svg>
-                System Health
-            </a>
-            <a href="/admin/settings" class="{{ str_starts_with($r,'admin/settings') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1A2 2 0 014.2 17l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1A2 2 0 017.1 4.2l.1.1a1.7 1.7 0 001.9.3h.1a1.7 1.7 0 001-1.6V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.6h.1a1.7 1.7 0 001.9-.3l.1-.1A2 2 0 0119.8 7l-.1.1a1.7 1.7 0 00-.3 1.9v.1a1.7 1.7 0 001.6 1h.1a2 2 0 010 4H21a1.7 1.7 0 00-1.6 1z" stroke-linejoin="round"/></svg>
-                Settings
-            </a>
-            <a href="/admin/media" class="{{ str_starts_with($r,'admin/media') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 11a2 2 0 100-4 2 2 0 000 4zM21 16l-5-5-4 4-2-2-5 5" stroke-linejoin="round"/></svg>
-                Media
-            </a>
-            <a href="/admin/seo" class="{{ str_starts_with($r,'admin/seo') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M8 11h6M11 8v6" stroke-linecap="round"/></svg>
-                SEO
-            </a>
-            <a href="/admin/pcb" class="{{ str_starts_with($r,'admin/pcb') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4" stroke-linejoin="round"/></svg>
-                PCB
-            </a>
-            <span class="lbl">Catalog</span>
-            <a href="/admin/categories" class="{{ str_starts_with($r,'admin/categories') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h12" stroke-linecap="round"/></svg>
-                Categories
-            </a>
-            <a href="/admin/products" class="{{ str_starts_with($r,'admin/products') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8" stroke-linejoin="round"/></svg>
-                Products
-            </a>
-            <a href="/admin/brands" class="{{ str_starts_with($r,'admin/brands') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M21 15l-5-5L8.5 14l-2-2-3.5 4" stroke-linejoin="round"/></svg>
-                Brands
-            </a>
-            <a href="/admin/brand-logos" class="{{ str_starts_with($r,'admin/brand-logos') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M21 15l-5-5L8.5 14l-2-2-3.5 4" stroke-linejoin="round"/></svg>
-                Brand Logos
-            </a>
-            <a href="/admin/imports/jlcpcb" class="{{ str_starts_with($r,'admin/imports/jlcpcb') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round"/></svg>
-                Import Review
-            </a>
-            <a href="/admin/imports/elecforest" class="{{ str_starts_with($r,'admin/imports/elecforest') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round"/></svg>
-                ElecForest Imports
-            </a>
-            <a href="/admin/tax" class="{{ str_starts_with($r,'admin/tax') ? 'active':'' }}">Tax & Tariff</a>
-            <a href="/admin/pricing" class="{{ str_starts_with($r,'admin/pricing') ? 'active':'' }}">Pricing Engine</a>
-            <a href="/admin/marketplaces" class="{{ str_starts_with($r,'admin/marketplaces') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>
-                Marketplaces
-            </a>
-            <span class="lbl">Network</span>
-            <a href="/admin/vendors" class="{{ str_starts_with($r,'admin/vendors') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" stroke-linecap="round"/><circle cx="9" cy="7" r="4"/><path d="M17 11a4 4 0 000-8" stroke-linecap="round"/></svg>
-                Vendors
-            </a>
-            <a href="/admin/distributors" class="{{ str_starts_with($r,'admin/distributors') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18M6 7v10a2 2 0 002 2h8a2 2 0 002-2V7" stroke-linejoin="round"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M9 12h6" stroke-linecap="round"/></svg>
-                Distributors
-            </a>
-            <a href="/admin/users" class="{{ str_starts_with($r,'admin/users') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1" stroke-linecap="round"/></svg>
-                Users &amp; Roles
-            </a>
-            <a href="/admin/lms" class="{{ str_starts_with($r,'admin/lms') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5z"/><path d="M8 6h8M8 10h8" stroke-linecap="round"/></svg>
-                LMS
-            </a>
-            <a href="/admin/bom-imports" class="{{ str_starts_with($r,'admin/bom-imports') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h14v16H5z" stroke-linejoin="round"/><path d="M8 8h8M8 12h8M8 16h4" stroke-linecap="round"/><path d="M17 16l2 2 3-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                BOM Imports
-            </a>
-            <a href="/admin/inventory" class="{{ str_starts_with($r,'admin/inventory') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7M12 11v10" stroke-linejoin="round"/></svg>
-                Inventory
-            </a>
-            <a href="/admin/pos" class="{{ str_starts_with($r,'admin/pos') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h2m4 0h2M8 16h2m4 0h2" stroke-linecap="round"/></svg>
-                POS
-            </a>
-
-            <span class="lbl">Growth</span>
-            @if(auth()->user()?->hasPermission('campaigns.view'))
-            <a href="/admin/marketing" class="{{ $r==='admin/marketing' ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h16M8 15l3-3 3 2 5-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Marketing &amp; CRM
-            </a>
-            @endif
-            @if(auth()->user()?->hasPermission('customers.view'))
-            <a href="/admin/marketing/crm" class="{{ str_starts_with($r,'admin/marketing/crm') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="3"/><path d="M2 20a6 6 0 0112 0M17 11a3 3 0 100-6M16 20a5 5 0 016-4" stroke-linecap="round"/></svg>
-                CRM &amp; Segments
-            </a>
-            @endif
-            @if(auth()->user()?->hasPermission('customers.import'))
-            <a href="/admin/marketing/customer-imports" class="{{ str_starts_with($r,'admin/marketing/customer-imports') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round"/></svg>
-                Customer Imports
-            </a>
-            @endif
-            @if(auth()->user()?->hasPermission('campaigns.view'))
-            <a href="/admin/marketing/newsletter" class="{{ str_starts_with($r,'admin/marketing/newsletter') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6" stroke-linejoin="round"/></svg>
-                Newsletter
-            </a>
-            <a href="/admin/marketing/email" class="{{ str_starts_with($r,'admin/marketing/email') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14M5 12h10M5 17h7" stroke-linecap="round"/></svg>
-                Email Campaigns
-            </a>
-            <a href="/admin/marketing/automation" class="{{ str_starts_with($r,'admin/marketing/automation') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v4m0 10v4M3 12h4m10 0h4M7.8 7.8l2.8 2.8m2.8 2.8l2.8 2.8M16.2 7.8l-2.8 2.8m-2.8 2.8l-2.8 2.8" stroke-linecap="round"/></svg>
-                Automation
-            </a>
-            <a href="/admin/marketing/whatsapp" class="{{ str_starts_with($r,'admin/marketing/whatsapp') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19l1.2-3.6A8 8 0 1112 20a8 8 0 01-3.5-.8L5 19z" stroke-linejoin="round"/></svg>
-                WhatsApp
-            </a>
-            <a href="/admin/marketing/analytics" class="{{ str_starts_with($r,'admin/marketing/analytics') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 19V9m7 10V5m7 14v-7" stroke-linecap="round"/></svg>
-                Analytics
-            </a>
-            <a href="/admin/marketing/abandoned-carts" class="{{ str_starts_with($r,'admin/marketing/abandoned-carts') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h2l2 11h11l2-7H6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="19" r="1"/><circle cx="18" cy="19" r="1"/></svg>
-                Abandoned Carts
-            </a>
-
-            <a href="/admin/marketing/audit" class="{{ str_starts_with($r,'admin/marketing/audit') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3l7 3v5c0 4.5-2.8 8.5-7 10-4.2-1.5-7-5.5-7-10V6l7-3z" stroke-linejoin="round"/></svg>
-                Audit Log
-            </a>
-            @endif
-            @if(auth()->user()?->hasPermission('email.providers.manage'))
-            <a href="/admin/marketing/settings" class="{{ str_starts_with($r,'admin/marketing/settings') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/><path d="M4 12h2m12 0h2M12 4v2m0 12v2" stroke-linecap="round"/></svg>
-                Communication Settings
-            </a>
-            @endif
-
-            <span class="lbl">Commerce</span>
-            <a href="/admin/orders" class="{{ str_starts_with($r,'admin/orders') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2l1.5 3M18 2l-1.5 3M3 6h18l-2 12H5L3 6z" stroke-linejoin="round"/><path d="M9 10v4m6-4v4" stroke-linecap="round"/></svg>
-                Orders
-            </a>
-            <a href="/admin/support" class="{{ str_starts_with($r,'admin/support') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 01-8 8H7l-4 3v-6.2A8 8 0 1113 20" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11h8M8 15h5" stroke-linecap="round"/></svg>
-                Support
-            </a>
-            <a href="/admin/payments" class="{{ str_starts_with($r,'admin/payments') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 15h4" stroke-linecap="round"/></svg>
-                Payments &amp; Wallet
-            </a>
-            <a href="/admin/promotions" class="{{ str_starts_with($r,'admin/promotions') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9l8-5 8 5v11H4z" stroke-linejoin="round"/><path d="M9 20v-6h6v6M8 12h.01" stroke-linecap="round"/></svg>
-                Coupons &amp; Gift Cards
-            </a>
-            <a href="/admin/applications" class="{{ str_starts_with($r,'admin/applications') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6v4H9zM5 7h14v14H5z" stroke-linejoin="round"/><path d="M9 13l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Applications
-            </a>
-            <a href="/admin/affiliate" class="{{ str_starts_with($r,'admin/affiliate') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="M14 7h4v4M7 10v4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Affiliates
-            </a>
-            <a href="/admin/region-stock" class="{{ str_starts_with($r,'admin/region-stock') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 018 8c0 5-8 12-8 12S4 15 4 10a8 8 0 018-8z" stroke-linejoin="round"/></svg>
-                Region Stock
-            </a>
-            <a href="/admin/procurement" class="{{ str_starts_with($r,'admin/procurement') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h2l2 12h11l2-8H6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
-                Suppliers &amp; POs
-            </a>
-            <a href="/admin/reviews" class="{{ str_starts_with($r,'admin/reviews') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l2.7 5.6 6.3.9-4.5 4.3 1 6.2-5.5-3-5.5 3 1-6.2L3 9.5l6.3-.9L12 3z" stroke-linejoin="round"/></svg>
-                Reviews
-            </a>
-            <a href="/admin/rfqs" class="{{ str_starts_with($r,'admin/rfqs') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6M8 17h8" stroke-linejoin="round"/></svg>
-                RFQ Inbox
-            </a>
-            <a href="/admin/quotations" class="{{ str_starts_with($r,'admin/quotations') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l3 3v15H6z" stroke-linejoin="round"/><path d="M9 9h6M9 13h6M9 17h4" stroke-linecap="round"/></svg>
-                RFQ &amp; Quotations
-            </a>
-            <a href="/admin/expenses" class="{{ str_starts_with($r,'admin/expenses') ? 'active':'' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5a2.5 2 0 015 0c0 2.5-5 1.5-5 4a2.5 2 0 005 0" stroke-linecap="round"/></svg>
-                Expenses &amp; Reports
-            </a>
-        </nav>
-        <div class="foot">v0.1 · {{ config('app.env') }}</div>
+        @include('admin.partials.sidebar-nav')
     </aside>
 
     <div class="main">
