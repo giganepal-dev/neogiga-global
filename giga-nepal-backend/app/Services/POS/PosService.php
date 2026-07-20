@@ -5,6 +5,7 @@ namespace App\Services\POS;
 use App\Services\Inventory\StockMovementService;
 use App\Services\Product\ProductPublicationGate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -13,15 +14,14 @@ class PosService
     public function __construct(
         private StockMovementService $stockMovements,
         private ProductPublicationGate $publicationGate,
+        private PosTerminalService $terminals,
+        private PosReceiptService $receipts,
     ) {}
 
     public function openSession(array $data): array
     {
         return DB::transaction(function () use ($data) {
-            $terminalId = $data['pos_terminal_id'] ?? null;
-            if (! $terminalId) {
-                $terminalId = $this->defaultTerminal($data);
-            }
+            $terminalId = $this->terminals->resolveForSession($data);
 
             $existing = DB::table('pos_sessions')
                 ->where('pos_terminal_id', $terminalId)
@@ -115,8 +115,9 @@ class PosService
             $tax = (float) ($data['tax_amount'] ?? 0);
             $total = max(0, $subtotal - $discount + $tax);
             $reference = 'SALE-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
+            $qrToken = Str::lower(Str::random(32));
 
-            $saleId = DB::table('pos_sales')->insertGetId([
+            $salePayload = [
                 'pos_session_id' => $session->id,
                 'marketplace_id' => $session->marketplace_id,
                 'vendor_id' => $session->vendor_id,
@@ -138,7 +139,16 @@ class PosService
                 'completed_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ];
+
+            if (Schema::hasColumn('pos_sales', 'receipt_qr_token')) {
+                $salePayload['receipt_qr_token'] = $qrToken;
+            }
+            if (Schema::hasColumn('pos_sales', 'pos_customer_account_id') && ! empty($data['pos_customer_account_id'])) {
+                $salePayload['pos_customer_account_id'] = $data['pos_customer_account_id'];
+            }
+
+            $saleId = DB::table('pos_sales')->insertGetId($salePayload);
 
             foreach ($items as $row) {
                 DB::table('pos_sale_items')->insert([
@@ -169,7 +179,14 @@ class PosService
                 ]);
             }
 
-            return ['id' => $saleId, 'sale_reference' => $reference, 'total_amount' => $total, 'payment_status' => 'pending'];
+            return [
+                'id' => $saleId,
+                'sale_reference' => $reference,
+                'total_amount' => $total,
+                'payment_status' => 'pending',
+                'receipt_qr_token' => $qrToken,
+                'receipt_url' => $this->receipts->receiptUrl($qrToken),
+            ];
         });
     }
 
@@ -203,6 +220,85 @@ class PosService
         });
     }
 
+    public function refund(int $saleId, array $data, ?int $processedBy = null): array
+    {
+        if (! Schema::hasTable('pos_refunds')) {
+            throw new RuntimeException('POS refund table is not available.');
+        }
+
+        $amount = $this->formatPosAmount($this->posAmountUnits($data['amount']));
+        $idempotencyKey = trim((string) ($data['idempotency_key'] ?? ''));
+        abort_if($idempotencyKey === '', 422, 'Idempotency key is required.');
+        $requestFingerprint = hash('sha256', json_encode([
+            'pos_sale_id' => $saleId,
+            'processed_by' => $processedBy,
+            'amount' => $amount,
+            'refund_method' => $data['refund_method'],
+            'reason' => trim((string) $data['reason']),
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+        return DB::transaction(function () use ($saleId, $data, $amount, $idempotencyKey, $requestFingerprint, $processedBy): array {
+            $row = DB::table('pos_sales')->where('id', $saleId)->lockForUpdate()->first();
+            if (! $row) {
+                throw new RuntimeException('POS sale not found.');
+            }
+
+            $existing = DB::table('pos_refunds')
+                ->where('pos_sale_id', $saleId)
+                ->where('metadata->idempotency_key', $idempotencyKey)
+                ->lockForUpdate()
+                ->first();
+
+            if ($existing) {
+                $metadata = json_decode((string) $existing->metadata, true) ?: [];
+                if (($metadata['request_fingerprint'] ?? null) !== $requestFingerprint) {
+                    throw new RuntimeException('Idempotency key was already used for a different refund request.');
+                }
+
+                return ['refund_id' => (int) $existing->id, 'replayed' => true];
+            }
+
+            $saleTotal = $this->posAmountUnits($row->total_amount);
+            $alreadyRefunded = $this->posAmountUnits(DB::table('pos_refunds')
+                ->where('pos_sale_id', $saleId)
+                ->whereIn('status', config('pos.refund_statuses', ['recorded', 'processed']))
+                ->sum('amount'));
+            $requested = $this->posAmountUnits($amount);
+            $remaining = max(0, $saleTotal - $alreadyRefunded);
+            if ($requested > $remaining) {
+                throw new RuntimeException('Refund exceeds remaining sale total.');
+            }
+
+            $refundId = DB::table('pos_refunds')->insertGetId([
+                'pos_sale_id' => $saleId,
+                'amount' => $amount,
+                'currency_code' => $row->currency_code ?? 'USD',
+                'refund_method' => $data['refund_method'],
+                'reason' => $data['reason'],
+                'status' => 'recorded',
+                'processed_by' => $processedBy,
+                'processed_at' => now(),
+                'metadata' => json_encode([
+                    'saved_via' => 'pos_api',
+                    'gateway_action' => 'not_sent',
+                    'idempotency_key' => $idempotencyKey,
+                    'request_fingerprint' => $requestFingerprint,
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $newRefunded = $alreadyRefunded + $requested;
+            DB::table('pos_sales')->where('id', $saleId)->update([
+                'payment_status' => $newRefunded >= $saleTotal ? 'refunded' : 'partial_refund',
+                'status' => $newRefunded >= $saleTotal ? 'refunded' : $row->status,
+                'updated_at' => now(),
+            ]);
+
+            return ['refund_id' => $refundId, 'replayed' => false];
+        }, 3);
+    }
+
     public function sale(int $saleId): ?object
     {
         $sale = DB::table('pos_sales')->where('id', $saleId)->first();
@@ -211,28 +307,33 @@ class PosService
         }
         $sale->items = DB::table('pos_sale_items')->where('pos_sale_id', $saleId)->get();
         $sale->payments = DB::table('pos_payments')->where('pos_sale_id', $saleId)->get();
+        if (Schema::hasTable('pos_refunds')) {
+            $sale->refunds = DB::table('pos_refunds')->where('pos_sale_id', $saleId)->get();
+        }
 
         return $sale;
     }
 
-    private function defaultTerminal(array $data): int
+    private function posAmountUnits(mixed $value): int
     {
-        $terminal = DB::table('pos_terminals')->where('warehouse_id', $data['warehouse_id'])->where('status', 'active')->first();
-        if ($terminal) {
-            return $terminal->id;
+        $decimal = trim((string) $value);
+        if (! preg_match('/^(\d+)(?:\.(\d+))?$/', $decimal, $matches)) {
+            throw new RuntimeException('POS amount must be a non-negative decimal value.');
         }
 
-        return DB::table('pos_terminals')->insertGetId([
-            'terminal_name' => $data['terminal_name'] ?? 'Default POS Terminal',
-            'terminal_code' => 'POS-'.Str::upper(Str::random(8)),
-            'marketplace_id' => $data['marketplace_id'] ?? null,
-            'vendor_id' => $data['vendor_id'] ?? null,
-            'warehouse_id' => $data['warehouse_id'],
-            'status' => 'active',
-            'location' => $data['location'] ?? null,
-            'metadata' => json_encode(['created_by' => 'pos_service']),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $fraction = $matches[2] ?? '';
+        if (strlen($fraction) > 4 && trim(substr($fraction, 4), '0') !== '') {
+            throw new RuntimeException('POS amount supports at most four decimal places.');
+        }
+
+        $whole = (int) $matches[1];
+        $fractionUnits = (int) str_pad(substr($fraction, 0, 4), 4, '0');
+
+        return ($whole * 10000) + $fractionUnits;
+    }
+
+    private function formatPosAmount(int $units): string
+    {
+        return intdiv($units, 10000).'.'.str_pad((string) ($units % 10000), 4, '0', STR_PAD_LEFT);
     }
 }

@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Marketplace\Marketplace;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Order extends Model
@@ -12,6 +13,7 @@ class Order extends Model
     protected $fillable = [
         'order_number',
         'user_id',
+        'b2b_account_id',
         'marketplace_id',
         'status',
         'currency_code',
@@ -55,12 +57,12 @@ class Order extends Model
 
     public function marketplace(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Marketplace\Marketplace::class, 'marketplace_id');
+        return $this->belongsTo(Marketplace::class, 'marketplace_id');
     }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function items(): HasMany

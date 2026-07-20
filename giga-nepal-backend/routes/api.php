@@ -1,35 +1,52 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\Auth\PublicAuthController;
-use App\Http\Controllers\Api\Auth\SellerAuthController;
-use App\Http\Controllers\Api\Auth\DistributorAuthController;
-use App\Http\Controllers\Api\Marketplace\MarketplaceController;
-use App\Http\Controllers\Api\Product\CategoryController;
-use App\Http\Controllers\Api\Product\BrandController;
-use App\Http\Controllers\Api\Product\ProductController;
-use App\Http\Controllers\Api\Product\ProductCommerceController;
-use App\Http\Controllers\Api\Vendor\VendorController;
-use App\Http\Controllers\Api\Inventory\InventoryController;
-use App\Http\Controllers\Api\Cart\CartController;
-use App\Http\Controllers\Api\Order\OrderController;
-use App\Http\Controllers\Api\AI\AiCommerceController;
-use App\Http\Controllers\Api\AiCatalogController;
-use App\Http\Controllers\Api\POS\PosController;
-use App\Http\Controllers\Api\Messaging\MessagingController;
-use App\Http\Controllers\Api\LMS\LmsController;
-use App\Http\Controllers\Api\Admin\AdminConsoleController;
-use App\Http\Controllers\Api\Admin\MarketplaceAdminController;
-use App\Http\Controllers\Api\Admin\ProductAdminController;
-use App\Http\Controllers\Api\Admin\VendorAdminController;
-use App\Http\Controllers\Api\Admin\DistributorAdminController;
 use App\Http\Controllers\Api\Admin\B2BAdminController;
 use App\Http\Controllers\Api\Admin\BomAdminController;
-use App\Http\Controllers\Api\Admin\OnboardingAdminController;
+use App\Http\Controllers\Api\Admin\DistributorAdminController;
+use App\Http\Controllers\Api\Admin\ImportExportController;
 use App\Http\Controllers\Api\Admin\InventoryAdminController;
 use App\Http\Controllers\Api\Admin\LmsAdminController;
-use App\Http\Controllers\Api\Admin\ImportExportController;
+use App\Http\Controllers\Api\Admin\MarketplaceAdminController;
+use App\Http\Controllers\Api\Admin\OnboardingAdminController;
+use App\Http\Controllers\Api\Admin\ProductAdminController;
+use App\Http\Controllers\Api\Admin\ResellerAdminController;
+use App\Http\Controllers\Api\Admin\VendorAdminController;
+use App\Http\Controllers\Api\AI\AiCommerceController;
+use App\Http\Controllers\Api\AiCatalogController;
+use App\Http\Controllers\Api\Auth\DistributorAuthController;
+use App\Http\Controllers\Api\Auth\PublicAuthController;
+use App\Http\Controllers\Api\Auth\SellerAuthController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\B2B\B2BAccountController;
+use App\Http\Controllers\Api\B2B\B2BQuotationController;
+use App\Http\Controllers\Api\B2B\B2BRfqController;
+use App\Http\Controllers\Api\Bom\BomImportController;
+use App\Http\Controllers\Api\Bom\BomProjectController;
+use App\Http\Controllers\Api\Cart\CartController;
+use App\Http\Controllers\Api\CommerceAi\CommerceAiDemoController;
+use App\Http\Controllers\Api\Distributor\DistributorApplicationController;
+use App\Http\Controllers\Api\Distributor\DistributorDashboardController;
+use App\Http\Controllers\Api\Distributor\DistributorResourceController;
+use App\Http\Controllers\Api\Inventory\InventoryController;
+use App\Http\Controllers\Api\LMS\LmsController;
+use App\Http\Controllers\Api\Manufacturer\ManufacturerResourceController;
+use App\Http\Controllers\Api\Marketplace\MarketplaceController;
+use App\Http\Controllers\Api\Messaging\MessagingController;
+use App\Http\Controllers\Api\Onboarding\DistributorApplicationController as PublicDistributorApplicationController;
+use App\Http\Controllers\Api\Onboarding\SellerApplicationController;
+use App\Http\Controllers\Api\Order\OrderController;
+use App\Http\Controllers\Api\POS\PosController;
+use App\Http\Controllers\Api\Product\BrandController;
+use App\Http\Controllers\Api\Product\CategoryController;
+use App\Http\Controllers\Api\Product\ProductCommerceController;
+use App\Http\Controllers\Api\Product\ProductController;
+use App\Http\Controllers\Api\Reseller\ResellerApplicationController;
+use App\Http\Controllers\Api\Reseller\ResellerMessagingController;
+use App\Http\Controllers\Api\Reseller\ResellerOrderController;
+use App\Http\Controllers\Api\Reseller\ResellerProductController;
+use App\Http\Controllers\Api\Reseller\ResellerRfqController;
+use App\Http\Controllers\Api\Reseller\ResellerSupportTicketController;
+use App\Http\Controllers\Api\Reseller\ResellerTerritoryController;
 use App\Http\Controllers\Api\Seller\SellerDashboardController;
 use App\Http\Controllers\Api\Seller\SellerInventoryController;
 use App\Http\Controllers\Api\Seller\SellerOrderController;
@@ -38,17 +55,8 @@ use App\Http\Controllers\Api\Seller\SellerPerformanceController;
 use App\Http\Controllers\Api\Seller\SellerProductController;
 use App\Http\Controllers\Api\Seller\SellerProfileController;
 use App\Http\Controllers\Api\Seller\SellerSupportTicketController;
-use App\Http\Controllers\Api\Distributor\DistributorApplicationController;
-use App\Http\Controllers\Api\Distributor\DistributorDashboardController;
-use App\Http\Controllers\Api\Distributor\DistributorResourceController;
-use App\Http\Controllers\Api\B2B\B2BAccountController;
-use App\Http\Controllers\Api\B2B\B2BRfqController;
-use App\Http\Controllers\Api\B2B\B2BQuotationController;
-use App\Http\Controllers\Api\Bom\BomImportController;
-use App\Http\Controllers\Api\Bom\BomProjectController;
-use App\Http\Controllers\Api\CommerceAi\CommerceAiDemoController;
-use App\Http\Controllers\Api\Onboarding\SellerApplicationController;
-use App\Http\Controllers\Api\Onboarding\DistributorApplicationController as PublicDistributorApplicationController;
+use App\Http\Controllers\Api\Vendor\VendorController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -211,6 +219,25 @@ Route::prefix('v1')->group(function () {
 
     Route::post('/distributors/apply', [DistributorApplicationController::class, 'apply'])->middleware('throttle:writes');
 
+    Route::post('/reseller/apply', [ResellerApplicationController::class, 'apply'])->middleware('throttle:writes');
+    Route::prefix('reseller')->middleware(['api.token', 'permission:reseller.access'])->group(function () {
+        Route::get('/products', [ResellerProductController::class, 'index'])->middleware('permission:reseller.products.manage');
+        Route::post('/products/match-mpn', [ResellerProductController::class, 'matchMpn'])->middleware('permission:reseller.products.manage');
+        Route::post('/products', [ResellerProductController::class, 'store'])->middleware(['permission:reseller.products.manage', 'throttle:writes']);
+        Route::post('/products/import', [ResellerProductController::class, 'import'])->middleware(['permission:reseller.products.manage', 'throttle:writes']);
+        Route::get('/orders', [ResellerOrderController::class, 'index'])->middleware('permission:reseller.orders.view');
+        Route::get('/rfqs', [ResellerRfqController::class, 'index'])->middleware('permission:reseller.rfq.bid');
+        Route::post('/rfqs/{assignment}/bid', [ResellerRfqController::class, 'submitBid'])->whereNumber('assignment')->middleware(['permission:reseller.rfq.bid', 'throttle:writes']);
+        Route::get('/territories', [ResellerTerritoryController::class, 'index']);
+        Route::post('/territories/request', [ResellerTerritoryController::class, 'requestExpansion'])->middleware('throttle:writes');
+        Route::get('/support-tickets', [ResellerSupportTicketController::class, 'index'])->middleware('permission:reseller.support.manage');
+        Route::post('/support-tickets', [ResellerSupportTicketController::class, 'store'])->middleware(['permission:reseller.support.manage', 'throttle:writes']);
+        Route::get('/messages', [ResellerMessagingController::class, 'index'])->middleware('permission:reseller.messaging.manage');
+        Route::get('/messages/{conversation}', [ResellerMessagingController::class, 'show'])->whereNumber('conversation')->middleware('permission:reseller.messaging.manage');
+        Route::post('/messages/{conversation}', [ResellerMessagingController::class, 'reply'])->whereNumber('conversation')->middleware(['permission:reseller.messaging.manage', 'throttle:writes']);
+        Route::post('/messages/admin/contact', [ResellerMessagingController::class, 'contactAdmin'])->middleware(['permission:reseller.messaging.manage', 'throttle:writes']);
+    });
+
     Route::prefix('distributor')->middleware(['api.token', 'permission:distributor.access'])->group(function () {
         Route::get('/dashboard', [DistributorDashboardController::class, 'dashboard']);
         Route::get('/dashboard/overview', [DistributorDashboardController::class, 'overview']);
@@ -221,6 +248,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/territories', [DistributorResourceController::class, 'territories']);
         Route::get('/products/territory', [DistributorResourceController::class, 'territoryProducts']);
         Route::get('/vendors/territory', [DistributorResourceController::class, 'territoryVendors']);
+        Route::get('/territory-stock/summary', [DistributorResourceController::class, 'territoryStockSummary']);
+        Route::get('/territory-requests', [DistributorResourceController::class, 'territoryRequests']);
+        Route::post('/territory-requests', [DistributorResourceController::class, 'storeTerritoryRequest'])->middleware('throttle:writes');
         Route::get('/leads', [DistributorResourceController::class, 'leads']);
         Route::post('/leads', [DistributorResourceController::class, 'storeLead'])->middleware(['permission:distributor.leads.manage', 'throttle:writes']);
         Route::get('/customers', [DistributorResourceController::class, 'table'])->defaults('table', 'distributor_customers');
@@ -238,6 +268,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/rfq', [B2BRfqController::class, 'index']);
         Route::get('/quotations', [B2BQuotationController::class, 'index']);
         Route::post('/quotations/{quotation}/accept', [B2BQuotationController::class, 'accept'])->whereNumber('quotation')->middleware('throttle:writes');
+        Route::post('/quotations/{quotation}/pay', [B2BQuotationController::class, 'pay'])->whereNumber('quotation')->middleware('throttle:writes');
     });
 
     Route::prefix('bom')->group(function () {
@@ -296,17 +327,29 @@ Route::prefix('v1')->group(function () {
         Route::post('/create-pos-invoice', [AiCommerceController::class, 'createPosInvoice']);
     });
 
-    // POS (product search public; terminal/session/sale mutations require API token)
+    // POS (product search public; terminal/session/sale mutations require API token + pos.access)
     Route::prefix('pos')->group(function () {
         Route::get('/products/search', [PosController::class, 'searchProducts']);
-        Route::middleware('api.token')->group(function () {
+        Route::middleware(['api.token', 'permission:pos.access'])->group(function () {
+            Route::get('/terminals', [PosController::class, 'terminals']);
+            Route::get('/customers/search', [PosController::class, 'searchCustomers'])->middleware('permission:pos.customers.manage');
+            Route::post('/customers', [PosController::class, 'storeCustomer'])->middleware(['permission:pos.customers.manage', 'throttle:writes']);
             Route::post('/sessions/open', [PosController::class, 'openSession']);
             Route::post('/sessions/close', [PosController::class, 'closeSession']);
             Route::post('/sales', [PosController::class, 'createSale']);
             Route::get('/sales/{sale}', [PosController::class, 'showSale'])->whereNumber('sale');
+            Route::get('/sales/{sale}/receipt', [PosController::class, 'saleReceipt'])->whereNumber('sale');
             Route::post('/sales/{sale}/payment', [PosController::class, 'processPayment'])->whereNumber('sale');
-            Route::post('/sales/{sale}/refund', [PosController::class, 'processRefund'])->whereNumber('sale');
+            Route::post('/sales/{sale}/refund', [PosController::class, 'processRefund'])->whereNumber('sale')->middleware('permission:pos.refund');
         });
+    });
+
+    Route::prefix('manufacturer')->middleware(['api.token', 'permission:manufacturer.access'])->group(function () {
+        Route::get('/profile', [ManufacturerResourceController::class, 'profile']);
+        Route::get('/inventory/summary', [ManufacturerResourceController::class, 'inventorySummary']);
+        Route::get('/inventory', [ManufacturerResourceController::class, 'inventory']);
+        Route::get('/allocations', [ManufacturerResourceController::class, 'allocations']);
+        Route::post('/allocations', [ManufacturerResourceController::class, 'storeAllocation'])->middleware('throttle:writes');
     });
 
     // Messaging — customer ↔ seller with privacy masking
@@ -442,6 +485,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/distributor-commissions/{commission}/approve', [DistributorAdminController::class, 'approveCommission'])->whereNumber('commission')->middleware('throttle:writes');
             Route::get('/distributor-payouts', [DistributorAdminController::class, 'payouts']);
             Route::post('/distributor-payouts/{payout}/mark-paid', [DistributorAdminController::class, 'markPayoutPaid'])->whereNumber('payout')->middleware('throttle:writes');
+            Route::get('/distributor-territory-requests', [DistributorAdminController::class, 'territoryRequests']);
+            Route::post('/distributor-territory-requests/{territoryRequest}/approve', [DistributorAdminController::class, 'approveTerritoryRequest'])->whereNumber('territoryRequest')->middleware('throttle:writes');
+            Route::post('/distributor-territory-requests/{territoryRequest}/reject', [DistributorAdminController::class, 'rejectTerritoryRequest'])->whereNumber('territoryRequest')->middleware('throttle:writes');
 
             Route::get('/b2b/accounts', [B2BAdminController::class, 'accounts']);
             Route::get('/b2b/accounts/{account}', [B2BAdminController::class, 'account'])->whereNumber('account');
@@ -449,11 +495,17 @@ Route::prefix('v1')->group(function () {
             Route::post('/b2b/accounts/{account}/reject', [B2BAdminController::class, 'reject'])->whereNumber('account')->middleware('throttle:writes');
             Route::get('/b2b/rfq', [B2BAdminController::class, 'rfqs']);
             Route::get('/b2b/rfq/{rfq}', [B2BAdminController::class, 'rfq'])->whereNumber('rfq');
-            Route::post('/b2b/rfq/{rfq}/create-quotation', [B2BAdminController::class, 'createQuotation'])->whereNumber('rfq')->middleware('throttle:writes');
+            Route::post('/b2b/rfq/{rfq}/create-quotation', [B2BAdminController::class, 'createQuotationFromRfq'])->whereNumber('rfq')->middleware('throttle:writes');
             Route::get('/b2b/quotations', [B2BAdminController::class, 'quotations']);
             Route::post('/b2b/quotations', [B2BAdminController::class, 'createQuotation'])->middleware('throttle:writes');
             Route::get('/b2b/purchase-orders', [B2BAdminController::class, 'purchaseOrders']);
             Route::get('/b2b/price-lists', [B2BAdminController::class, 'priceLists']);
+
+            Route::get('/reseller/applications', [ResellerAdminController::class, 'applications']);
+            Route::post('/reseller/applications/{application}/approve', [ResellerAdminController::class, 'approveApplication'])->whereNumber('application')->middleware('throttle:writes');
+            Route::post('/reseller/applications/{application}/reject', [ResellerAdminController::class, 'rejectApplication'])->whereNumber('application')->middleware('throttle:writes');
+            Route::post('/reseller/territory-requests/{request}/approve', [ResellerAdminController::class, 'approveTerritoryRequest'])->whereNumber('request')->middleware('throttle:writes');
+            Route::post('/reseller/rfq/{rfq}/assign', [ResellerAdminController::class, 'assignRfq'])->whereNumber('rfq')->middleware('throttle:writes');
 
             Route::get('/bom/projects', [BomAdminController::class, 'projects']);
             Route::post('/bom/projects', [BomAdminController::class, 'storeProject'])->middleware('throttle:writes');
@@ -465,7 +517,6 @@ Route::prefix('v1')->group(function () {
     });
 });
 
-
 /*
 |--------------------------------------------------------------------------
 | Marketing Phase 2 Foundation
@@ -473,22 +524,47 @@ Route::prefix('v1')->group(function () {
 | Additive CRM/newsletter/email/WhatsApp/analytics endpoints. Public writes
 | are throttled; admin routes keep the existing fail-closed admin.token gate.
 */
-use App\Http\Controllers\Api\Marketing\CustomerProfileController as MarketingCustomerProfileController;
-use App\Http\Controllers\Api\Marketing\NewsletterController as MarketingNewsletterController;
-use App\Http\Controllers\Api\Marketing\AuthEmailOtpController as MarketingAuthEmailOtpController;
-use App\Http\Controllers\Api\Marketing\WhatsappOptInController as MarketingWhatsappOptInController;
-use App\Http\Controllers\Api\Marketing\AnalyticsController as MarketingAnalyticsController;
-use App\Http\Controllers\Api\Admin\Marketing\CrmController as MarketingCrmController;
-use App\Http\Controllers\Api\Admin\Marketing\NewsletterAdminController as MarketingNewsletterAdminController;
-use App\Http\Controllers\Api\Admin\Marketing\EmailAdminController as MarketingEmailAdminController;
-use App\Http\Controllers\Api\Admin\Marketing\WhatsappAdminController as MarketingWhatsappAdminController;
+use App\Http\Controllers\Api\Admin\AffiliateAdminController;
+use App\Http\Controllers\Api\Admin\FinanceAdminController;
 use App\Http\Controllers\Api\Admin\Marketing\AbandonedCartAdminController as MarketingAbandonedCartAdminController;
-use App\Http\Controllers\Api\Admin\Marketing\CampaignAdminController as MarketingCampaignAdminController;
 use App\Http\Controllers\Api\Admin\Marketing\AnalyticsAdminController as MarketingAnalyticsAdminController;
-use App\Http\Controllers\Api\Admin\Marketing\DashboardAdminController as MarketingDashboardAdminController;
-use App\Http\Controllers\Api\Admin\Marketing\SettingsAdminController as MarketingSettingsAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\CampaignAdminController as MarketingCampaignAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\CrmController as MarketingCrmController;
 use App\Http\Controllers\Api\Admin\Marketing\CustomerImportController as MarketingCustomerImportController;
+use App\Http\Controllers\Api\Admin\Marketing\DashboardAdminController as MarketingDashboardAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\EmailAdminController as MarketingEmailAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\NewsletterAdminController as MarketingNewsletterAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\SettingsAdminController as MarketingSettingsAdminController;
+use App\Http\Controllers\Api\Admin\Marketing\WhatsappAdminController as MarketingWhatsappAdminController;
+use App\Http\Controllers\Api\Admin\PaymentAdminController;
+use App\Http\Controllers\Api\Admin\ProcurementAdminController;
+use App\Http\Controllers\Api\Admin\ProductImageAdminController;
+use App\Http\Controllers\Api\Admin\PromotionAdminController;
+use App\Http\Controllers\Api\Admin\QuotationAdminController;
+use App\Http\Controllers\Api\Affiliate\AffiliateController;
+use App\Http\Controllers\Api\Auth\EmailVerificationController;
+use App\Http\Controllers\Api\Auth\ForgotPasswordController;
+use App\Http\Controllers\Api\Auth\ResetPasswordController;
+use App\Http\Controllers\Api\Marketing\AnalyticsController as MarketingAnalyticsController;
+use App\Http\Controllers\Api\Marketing\AuthEmailOtpController as MarketingAuthEmailOtpController;
+use App\Http\Controllers\Api\Marketing\CustomerProfileController as MarketingCustomerProfileController;
 use App\Http\Controllers\Api\Marketing\EmailWebhookController;
+use App\Http\Controllers\Api\Marketing\NewsletterController as MarketingNewsletterController;
+use App\Http\Controllers\Api\Marketing\WhatsappOptInController as MarketingWhatsappOptInController;
+use App\Http\Controllers\Api\Product\ProductReviewController;
+use App\Http\Controllers\Api\Promotion\PromotionController;
+use App\Http\Controllers\Api\Sales\RfqController;
+use App\Http\Controllers\Api\Support\CustomerSupportController;
+use App\Http\Controllers\Api\Wallet\WalletController;
+use App\Http\Controllers\LowStockAlertController;
+use App\Http\Controllers\Pcb\PcbCapabilitiesController;
+use App\Http\Controllers\Pcb\PcbFileController;
+use App\Http\Controllers\Pcb\PcbProjectController;
+use App\Http\Controllers\Pcb\PcbPublicQuoteController;
+use App\Http\Controllers\Pcb\PcbQuoteController;
+use App\Http\Controllers\RegionStockVisibilityController;
+use App\Http\Controllers\StockReservationController;
+use App\Http\Controllers\TerritoryStockAllocationController;
 
 $marketingPublic = function () {
     Route::post('/email/webhooks/{provider}', EmailWebhookController::class)
@@ -600,7 +676,10 @@ $marketingAdmin = function () {
 
 $marketingPublic();
 Route::middleware('admin.token')->prefix('admin')->group($marketingAdmin);
-Route::prefix('v1')->group(function () use ($marketingPublic, $marketingAdmin) { $marketingPublic(); Route::middleware('admin.token')->prefix('admin')->group($marketingAdmin); });
+Route::prefix('v1')->group(function () use ($marketingPublic, $marketingAdmin) {
+    $marketingPublic();
+    Route::middleware('admin.token')->prefix('admin')->group($marketingAdmin);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -610,25 +689,25 @@ Route::prefix('v1')->group(function () use ($marketingPublic, $marketingAdmin) {
 | endpoints require admin.token. No monetary field is client-trusted.
 */
 Route::prefix('v1/affiliate')->group(function () {
-    Route::post('/track', [\App\Http\Controllers\Api\Affiliate\AffiliateController::class, 'track'])->middleware('throttle:writes');
+    Route::post('/track', [AffiliateController::class, 'track'])->middleware('throttle:writes');
     Route::middleware('api.token')->group(function () {
-        Route::post('/apply', [\App\Http\Controllers\Api\Affiliate\AffiliateController::class, 'apply'])->middleware('throttle:writes');
-        Route::get('/dashboard', [\App\Http\Controllers\Api\Affiliate\AffiliateController::class, 'dashboard']);
+        Route::post('/apply', [AffiliateController::class, 'apply'])->middleware('throttle:writes');
+        Route::get('/dashboard', [AffiliateController::class, 'dashboard']);
     });
 });
 
 $affiliateAdmin = function () {
-    Route::get('/affiliates', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'index']);
-    Route::get('/affiliates/{affiliate}', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'show'])->whereNumber('affiliate');
-    Route::post('/affiliates/{affiliate}/approve', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'approve'])->whereNumber('affiliate');
-    Route::post('/affiliates/{affiliate}/suspend', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'suspend'])->whereNumber('affiliate');
-    Route::get('/affiliate-commissions', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'commissions']);
-    Route::post('/affiliate-commissions/{entry}/approve', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'approveCommission'])->whereNumber('entry');
-    Route::post('/affiliate-commissions/{entry}/reverse', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'reverseCommission'])->whereNumber('entry');
-    Route::get('/affiliate-payouts', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'payouts']);
-    Route::post('/affiliate-payouts/{payout}/mark-paid', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'markPayoutPaid'])->whereNumber('payout');
-    Route::get('/commission-rules', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'rules']);
-    Route::post('/commission-rules', [\App\Http\Controllers\Api\Admin\AffiliateAdminController::class, 'storeRule']);
+    Route::get('/affiliates', [AffiliateAdminController::class, 'index']);
+    Route::get('/affiliates/{affiliate}', [AffiliateAdminController::class, 'show'])->whereNumber('affiliate');
+    Route::post('/affiliates/{affiliate}/approve', [AffiliateAdminController::class, 'approve'])->whereNumber('affiliate');
+    Route::post('/affiliates/{affiliate}/suspend', [AffiliateAdminController::class, 'suspend'])->whereNumber('affiliate');
+    Route::get('/affiliate-commissions', [AffiliateAdminController::class, 'commissions']);
+    Route::post('/affiliate-commissions/{entry}/approve', [AffiliateAdminController::class, 'approveCommission'])->whereNumber('entry');
+    Route::post('/affiliate-commissions/{entry}/reverse', [AffiliateAdminController::class, 'reverseCommission'])->whereNumber('entry');
+    Route::get('/affiliate-payouts', [AffiliateAdminController::class, 'payouts']);
+    Route::post('/affiliate-payouts/{payout}/mark-paid', [AffiliateAdminController::class, 'markPayoutPaid'])->whereNumber('payout');
+    Route::get('/commission-rules', [AffiliateAdminController::class, 'rules']);
+    Route::post('/commission-rules', [AffiliateAdminController::class, 'storeRule']);
 };
 Route::middleware('admin.token')->prefix('admin')->group($affiliateAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($affiliateAdmin);
@@ -640,15 +719,15 @@ Route::middleware('admin.token')->prefix('v1/admin')->group($affiliateAdmin);
 | Suppliers + Purchase Orders. All PO totals server-computed. admin.token gated.
 */
 $procurementAdmin = function () {
-    Route::get('/suppliers', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'suppliers']);
-    Route::post('/suppliers', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'storeSupplier']);
-    Route::patch('/suppliers/{supplier}', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'updateSupplier'])->whereNumber('supplier');
-    Route::get('/purchase-orders', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'purchaseOrders']);
-    Route::post('/purchase-orders', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'storePurchaseOrder']);
-    Route::get('/purchase-orders/{order}', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'showPurchaseOrder'])->whereNumber('order');
-    Route::post('/purchase-orders/{order}/place', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'placePurchaseOrder'])->whereNumber('order');
-    Route::post('/purchase-orders/{order}/receive', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'receivePurchaseOrder'])->whereNumber('order');
-    Route::post('/purchase-orders/{order}/cancel', [\App\Http\Controllers\Api\Admin\ProcurementAdminController::class, 'cancelPurchaseOrder'])->whereNumber('order');
+    Route::get('/suppliers', [ProcurementAdminController::class, 'suppliers']);
+    Route::post('/suppliers', [ProcurementAdminController::class, 'storeSupplier']);
+    Route::patch('/suppliers/{supplier}', [ProcurementAdminController::class, 'updateSupplier'])->whereNumber('supplier');
+    Route::get('/purchase-orders', [ProcurementAdminController::class, 'purchaseOrders']);
+    Route::post('/purchase-orders', [ProcurementAdminController::class, 'storePurchaseOrder']);
+    Route::get('/purchase-orders/{order}', [ProcurementAdminController::class, 'showPurchaseOrder'])->whereNumber('order');
+    Route::post('/purchase-orders/{order}/place', [ProcurementAdminController::class, 'placePurchaseOrder'])->whereNumber('order');
+    Route::post('/purchase-orders/{order}/receive', [ProcurementAdminController::class, 'receivePurchaseOrder'])->whereNumber('order');
+    Route::post('/purchase-orders/{order}/cancel', [ProcurementAdminController::class, 'cancelPurchaseOrder'])->whereNumber('order');
 };
 Route::middleware('admin.token')->prefix('admin')->group($procurementAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($procurementAdmin);
@@ -661,22 +740,22 @@ Route::middleware('admin.token')->prefix('v1/admin')->group($procurementAdmin);
 | Admin management (admin.token). Discounts computed server-side.
 */
 Route::prefix('v1')->middleware('api.token')->group(function () {
-    Route::post('/coupons/validate', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'validateCoupon'])->middleware('throttle:writes');
-    Route::post('/gift-cards/check', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'checkGiftCard'])->middleware('throttle:writes');
-    Route::post('/cart/apply-coupon', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'applyCoupon'])->middleware('throttle:writes');
-    Route::delete('/cart/coupon', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'removeCoupon']);
-    Route::post('/cart/apply-gift-card', [\App\Http\Controllers\Api\Promotion\PromotionController::class, 'applyGiftCard'])->middleware('throttle:writes');
+    Route::post('/coupons/validate', [PromotionController::class, 'validateCoupon'])->middleware('throttle:writes');
+    Route::post('/gift-cards/check', [PromotionController::class, 'checkGiftCard'])->middleware('throttle:writes');
+    Route::post('/cart/apply-coupon', [PromotionController::class, 'applyCoupon'])->middleware('throttle:writes');
+    Route::delete('/cart/coupon', [PromotionController::class, 'removeCoupon']);
+    Route::post('/cart/apply-gift-card', [PromotionController::class, 'applyGiftCard'])->middleware('throttle:writes');
 });
 
 $promotionAdmin = function () {
-    Route::get('/coupons', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'coupons']);
-    Route::post('/coupons', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'storeCoupon']);
-    Route::patch('/coupons/{coupon}', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'updateCoupon'])->whereNumber('coupon');
-    Route::get('/coupons/{coupon}/redemptions', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'couponRedemptions'])->whereNumber('coupon');
-    Route::get('/gift-cards', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'giftCards']);
-    Route::post('/gift-cards', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'storeGiftCard']);
-    Route::post('/gift-cards/{giftCard}/disable', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'disableGiftCard'])->whereNumber('giftCard');
-    Route::get('/gift-cards/{giftCard}/transactions', [\App\Http\Controllers\Api\Admin\PromotionAdminController::class, 'giftCardTransactions'])->whereNumber('giftCard');
+    Route::get('/coupons', [PromotionAdminController::class, 'coupons']);
+    Route::post('/coupons', [PromotionAdminController::class, 'storeCoupon']);
+    Route::patch('/coupons/{coupon}', [PromotionAdminController::class, 'updateCoupon'])->whereNumber('coupon');
+    Route::get('/coupons/{coupon}/redemptions', [PromotionAdminController::class, 'couponRedemptions'])->whereNumber('coupon');
+    Route::get('/gift-cards', [PromotionAdminController::class, 'giftCards']);
+    Route::post('/gift-cards', [PromotionAdminController::class, 'storeGiftCard']);
+    Route::post('/gift-cards/{giftCard}/disable', [PromotionAdminController::class, 'disableGiftCard'])->whereNumber('giftCard');
+    Route::get('/gift-cards/{giftCard}/transactions', [PromotionAdminController::class, 'giftCardTransactions'])->whereNumber('giftCard');
 };
 Route::middleware('admin.token')->prefix('admin')->group($promotionAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($promotionAdmin);
@@ -689,21 +768,21 @@ Route::middleware('admin.token')->prefix('v1/admin')->group($promotionAdmin);
 | Admin RFQ review + quotation issue/send (admin.token). Totals server-side.
 */
 Route::prefix('v1')->middleware('api.token')->group(function () {
-    Route::post('/rfq', [\App\Http\Controllers\Api\Sales\RfqController::class, 'submit'])->middleware('throttle:writes');
-    Route::get('/rfq', [\App\Http\Controllers\Api\Sales\RfqController::class, 'index']);
-    Route::get('/quotations', [\App\Http\Controllers\Api\Sales\RfqController::class, 'quotes']);
-    Route::get('/quotations/{quotation}', [\App\Http\Controllers\Api\Sales\RfqController::class, 'showQuote'])->whereNumber('quotation');
-    Route::post('/quotations/{quotation}/accept', [\App\Http\Controllers\Api\Sales\RfqController::class, 'acceptQuote'])->whereNumber('quotation')->middleware('throttle:writes');
+    Route::post('/rfq', [RfqController::class, 'submit'])->middleware('throttle:writes');
+    Route::get('/rfq', [RfqController::class, 'index']);
+    Route::get('/quotations', [RfqController::class, 'quotes']);
+    Route::get('/quotations/{quotation}', [RfqController::class, 'showQuote'])->whereNumber('quotation');
+    Route::post('/quotations/{quotation}/accept', [RfqController::class, 'acceptQuote'])->whereNumber('quotation')->middleware('throttle:writes');
 });
 
 $salesAdmin = function () {
-    Route::get('/rfq', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'rfqs']);
-    Route::get('/rfq/{rfq}', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'showRfq'])->whereNumber('rfq');
-    Route::get('/quotations', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'quotations']);
-    Route::post('/quotations', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'storeQuotation']);
-    Route::get('/quotations/{quotation}', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'showQuotation'])->whereNumber('quotation');
-    Route::post('/quotations/{quotation}/send', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'sendQuotation'])->whereNumber('quotation');
-    Route::post('/quotations/{quotation}/reject', [\App\Http\Controllers\Api\Admin\QuotationAdminController::class, 'rejectQuotation'])->whereNumber('quotation');
+    Route::get('/rfq', [QuotationAdminController::class, 'rfqs']);
+    Route::get('/rfq/{rfq}', [QuotationAdminController::class, 'showRfq'])->whereNumber('rfq');
+    Route::get('/quotations', [QuotationAdminController::class, 'quotations']);
+    Route::post('/quotations', [QuotationAdminController::class, 'storeQuotation']);
+    Route::get('/quotations/{quotation}', [QuotationAdminController::class, 'showQuotation'])->whereNumber('quotation');
+    Route::post('/quotations/{quotation}/send', [QuotationAdminController::class, 'sendQuotation'])->whereNumber('quotation');
+    Route::post('/quotations/{quotation}/reject', [QuotationAdminController::class, 'rejectQuotation'])->whereNumber('quotation');
 };
 Route::middleware('admin.token')->prefix('admin')->group($salesAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($salesAdmin);
@@ -715,24 +794,24 @@ Route::middleware('admin.token')->prefix('v1/admin')->group($salesAdmin);
 | Expense tracking + read-only procurement/quotation/expense/supplier reports.
 */
 $financeAdmin = function () {
-    Route::get('/expenses', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'expenses']);
-    Route::post('/expenses', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'storeExpense']);
-    Route::patch('/expenses/{expense}', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'updateExpense'])->whereNumber('expense');
-    Route::get('/reports/procurement', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'reportProcurement']);
-    Route::get('/reports/supplier-spend', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'reportSupplierSpend']);
-    Route::get('/reports/quotations', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'reportQuotations']);
-    Route::get('/reports/expenses', [\App\Http\Controllers\Api\Admin\FinanceAdminController::class, 'reportExpenses']);
+    Route::get('/expenses', [FinanceAdminController::class, 'expenses']);
+    Route::post('/expenses', [FinanceAdminController::class, 'storeExpense']);
+    Route::patch('/expenses/{expense}', [FinanceAdminController::class, 'updateExpense'])->whereNumber('expense');
+    Route::get('/reports/procurement', [FinanceAdminController::class, 'reportProcurement']);
+    Route::get('/reports/supplier-spend', [FinanceAdminController::class, 'reportSupplierSpend']);
+    Route::get('/reports/quotations', [FinanceAdminController::class, 'reportQuotations']);
+    Route::get('/reports/expenses', [FinanceAdminController::class, 'reportExpenses']);
 };
 Route::middleware('admin.token')->prefix('admin')->group($financeAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($financeAdmin);
 
 $productMediaAdmin = function () {
-    Route::get('/products/{product}/images', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'index'])->whereNumber('product')->middleware('admin.permission:catalog.manage');
-    Route::post('/products/{product}/images', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'store'])->whereNumber('product')->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
-    Route::patch('/products/{product}/images/reorder', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'reorder'])->whereNumber('product')->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
-    Route::patch('/products/{product}/images/{image}', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'update'])->whereNumber(['product', 'image'])->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
-    Route::post('/products/{product}/images/{image}/primary', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'primary'])->whereNumber(['product', 'image'])->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
-    Route::delete('/products/{product}/images/{image}', [\App\Http\Controllers\Api\Admin\ProductImageAdminController::class, 'destroy'])->whereNumber(['product', 'image'])->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
+    Route::get('/products/{product}/images', [ProductImageAdminController::class, 'index'])->whereNumber('product')->middleware('admin.permission:catalog.manage');
+    Route::post('/products/{product}/images', [ProductImageAdminController::class, 'store'])->whereNumber('product')->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
+    Route::patch('/products/{product}/images/reorder', [ProductImageAdminController::class, 'reorder'])->whereNumber('product')->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
+    Route::patch('/products/{product}/images/{image}', [ProductImageAdminController::class, 'update'])->whereNumber(['product', 'image'])->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
+    Route::post('/products/{product}/images/{image}/primary', [ProductImageAdminController::class, 'primary'])->whereNumber(['product', 'image'])->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
+    Route::delete('/products/{product}/images/{image}', [ProductImageAdminController::class, 'destroy'])->whereNumber(['product', 'image'])->middleware(['admin.permission:catalog.manage', 'throttle:writes']);
 };
 Route::middleware('admin.token')->prefix('admin')->group($productMediaAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($productMediaAdmin);
@@ -819,19 +898,19 @@ Route::prefix('distributor')->group(function () {
 | (no secrets), audit events, wallet adjustments, and vendor payouts (admin.token).
 */
 Route::prefix('v1')->middleware('api.token')->group(function () {
-    Route::get('/wallet', [\App\Http\Controllers\Api\Wallet\WalletController::class, 'show']);
-    Route::get('/wallet/ledger', [\App\Http\Controllers\Api\Wallet\WalletController::class, 'ledger']);
+    Route::get('/wallet', [WalletController::class, 'show']);
+    Route::get('/wallet/ledger', [WalletController::class, 'ledger']);
 });
 
 $paymentsAdmin = function () {
-    Route::get('/payment-providers', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'providers']);
-    Route::patch('/payment-providers/{provider}', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'updateProvider'])->whereNumber('provider');
-    Route::get('/payments/events', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'events']);
-    Route::post('/wallets/adjust', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'adjustWallet']);
-    Route::get('/vendor-payouts', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'vendorPayouts']);
-    Route::post('/vendor-payouts', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'storeVendorPayout']);
-    Route::post('/vendor-payouts/{vendorPayout}/approve', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'approveVendorPayout'])->whereNumber('vendorPayout');
-    Route::post('/vendor-payouts/{vendorPayout}/mark-paid', [\App\Http\Controllers\Api\Admin\PaymentAdminController::class, 'markVendorPayoutPaid'])->whereNumber('vendorPayout');
+    Route::get('/payment-providers', [PaymentAdminController::class, 'providers']);
+    Route::patch('/payment-providers/{provider}', [PaymentAdminController::class, 'updateProvider'])->whereNumber('provider');
+    Route::get('/payments/events', [PaymentAdminController::class, 'events']);
+    Route::post('/wallets/adjust', [PaymentAdminController::class, 'adjustWallet']);
+    Route::get('/vendor-payouts', [PaymentAdminController::class, 'vendorPayouts']);
+    Route::post('/vendor-payouts', [PaymentAdminController::class, 'storeVendorPayout']);
+    Route::post('/vendor-payouts/{vendorPayout}/approve', [PaymentAdminController::class, 'approveVendorPayout'])->whereNumber('vendorPayout');
+    Route::post('/vendor-payouts/{vendorPayout}/mark-paid', [PaymentAdminController::class, 'markVendorPayoutPaid'])->whereNumber('vendorPayout');
 };
 Route::middleware('admin.token')->prefix('admin')->group($paymentsAdmin);
 Route::middleware('admin.token')->prefix('v1/admin')->group($paymentsAdmin);
@@ -845,35 +924,35 @@ Route::middleware('admin.token')->prefix('v1/admin')->group($paymentsAdmin);
 */
 $regionStockAdmin = function () {
     // Region stock visibility rules
-    Route::apiResource('region-stock-visibilities', \App\Http\Controllers\RegionStockVisibilityController::class);
-    
+    Route::apiResource('region-stock-visibilities', RegionStockVisibilityController::class);
+
     // Territory stock allocations
-    Route::get('/territory-allocations', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'index']);
-    Route::post('/territory-allocations', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'store']);
-    Route::get('/territory-allocations/{id}', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'show'])->whereNumber('id');
-    Route::put('/territory-allocations/{id}', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'update'])->whereNumber('id');
-    Route::delete('/territory-allocations/{id}', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'destroy'])->whereNumber('id');
-    
+    Route::get('/territory-allocations', [TerritoryStockAllocationController::class, 'index']);
+    Route::post('/territory-allocations', [TerritoryStockAllocationController::class, 'store']);
+    Route::get('/territory-allocations/{id}', [TerritoryStockAllocationController::class, 'show'])->whereNumber('id');
+    Route::put('/territory-allocations/{id}', [TerritoryStockAllocationController::class, 'update'])->whereNumber('id');
+    Route::delete('/territory-allocations/{id}', [TerritoryStockAllocationController::class, 'destroy'])->whereNumber('id');
+
     // Stock reservations
-    Route::get('/stock-reservations', [\App\Http\Controllers\StockReservationController::class, 'index']);
-    Route::post('/stock-reservations', [\App\Http\Controllers\StockReservationController::class, 'store']);
-    Route::get('/stock-reservations/{id}', [\App\Http\Controllers\StockReservationController::class, 'show'])->whereNumber('id');
-    Route::patch('/stock-reservations/{id}/confirm', [\App\Http\Controllers\StockReservationController::class, 'confirm'])->whereNumber('id');
-    Route::patch('/stock-reservations/{id}/cancel', [\App\Http\Controllers\StockReservationController::class, 'cancel'])->whereNumber('id');
-    
+    Route::get('/stock-reservations', [StockReservationController::class, 'index']);
+    Route::post('/stock-reservations', [StockReservationController::class, 'store']);
+    Route::get('/stock-reservations/{id}', [StockReservationController::class, 'show'])->whereNumber('id');
+    Route::patch('/stock-reservations/{id}/confirm', [StockReservationController::class, 'confirm'])->whereNumber('id');
+    Route::patch('/stock-reservations/{id}/cancel', [StockReservationController::class, 'cancel'])->whereNumber('id');
+
     // Low stock alerts
-    Route::get('/low-stock-alerts', [\App\Http\Controllers\LowStockAlertController::class, 'index']);
-    Route::post('/low-stock-alerts', [\App\Http\Controllers\LowStockAlertController::class, 'store']);
-    Route::get('/low-stock-alerts/{id}', [\App\Http\Controllers\LowStockAlertController::class, 'show'])->whereNumber('id');
-    Route::patch('/low-stock-alerts/{id}', [\App\Http\Controllers\LowStockAlertController::class, 'update'])->whereNumber('id');
-    Route::delete('/low-stock-alerts/{id}', [\App\Http\Controllers\LowStockAlertController::class, 'destroy'])->whereNumber('id');
+    Route::get('/low-stock-alerts', [LowStockAlertController::class, 'index']);
+    Route::post('/low-stock-alerts', [LowStockAlertController::class, 'store']);
+    Route::get('/low-stock-alerts/{id}', [LowStockAlertController::class, 'show'])->whereNumber('id');
+    Route::patch('/low-stock-alerts/{id}', [LowStockAlertController::class, 'update'])->whereNumber('id');
+    Route::delete('/low-stock-alerts/{id}', [LowStockAlertController::class, 'destroy'])->whereNumber('id');
 };
 Route::middleware('admin.token')->prefix('v1/admin')->group($regionStockAdmin);
 
 // Public/Authenticated: Get visible stock for current marketplace/region
 Route::middleware('api.token')->prefix('v1')->group(function () {
-    Route::get('/stock/visible', [\App\Http\Controllers\RegionStockVisibilityController::class, 'visibleStock']);
-    Route::get('/stock/territory/{distributorId}', [\App\Http\Controllers\TerritoryStockAllocationController::class, 'territoryStock']);
+    Route::get('/stock/visible', [RegionStockVisibilityController::class, 'visibleStock']);
+    Route::get('/stock/territory/{distributorId}', [TerritoryStockAllocationController::class, 'territoryStock']);
 });
 
 /*
@@ -885,13 +964,13 @@ Route::middleware('api.token')->prefix('v1')->group(function () {
 | against the existing custom-token auth. Additive.
 */
 Route::prefix('v1/auth')->group(function () {
-    Route::post('/forgot-password', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'sendResetLink'])->middleware('throttle:writes');
-    Route::post('/reset-password', [\App\Http\Controllers\Api\Auth\ResetPasswordController::class, 'reset'])->middleware('throttle:writes');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->middleware('throttle:writes');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->middleware('throttle:writes');
 
     Route::middleware(['api.token', 'throttle:6,1'])->group(function () {
-        Route::post('/email/verification-notification', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'sendVerification'])->name('verification.send');
+        Route::post('/email/verification-notification', [EmailVerificationController::class, 'sendVerification'])->name('verification.send');
     });
-    Route::get('/verify-email/{id}/{hash}', [\App\Http\Controllers\Api\Auth\EmailVerificationController::class, 'verify'])
+    Route::get('/verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
         ->whereNumber('id')->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 });
 
@@ -907,11 +986,11 @@ Route::prefix('v1/auth')->group(function () {
 Route::post('v1/support/inquire', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'inquire'])->middleware('throttle:5,1');
 
 Route::prefix('v1/support')->middleware('api.token')->group(function () {
-    Route::get('/tickets', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'index']);
-    Route::post('/tickets', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'store'])->middleware('throttle:writes');
-    Route::get('/tickets/{id}', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'show'])->whereNumber('id');
-    Route::post('/tickets/{id}/messages', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'reply'])->whereNumber('id')->middleware('throttle:writes');
-    Route::post('/tickets/{id}/request-human', [\App\Http\Controllers\Api\Support\CustomerSupportController::class, 'requestHuman'])->whereNumber('id')->middleware('throttle:writes');
+    Route::get('/tickets', [CustomerSupportController::class, 'index']);
+    Route::post('/tickets', [CustomerSupportController::class, 'store'])->middleware('throttle:writes');
+    Route::get('/tickets/{id}', [CustomerSupportController::class, 'show'])->whereNumber('id');
+    Route::post('/tickets/{id}/messages', [CustomerSupportController::class, 'reply'])->whereNumber('id')->middleware('throttle:writes');
+    Route::post('/tickets/{id}/request-human', [CustomerSupportController::class, 'requestHuman'])->whereNumber('id')->middleware('throttle:writes');
 });
 
 /*
@@ -922,36 +1001,36 @@ Route::prefix('v1/support')->middleware('api.token')->group(function () {
 | lands in the /admin/reviews moderation queue (never auto-published).
 */
 Route::prefix('v1/products/{product}')->group(function () {
-    Route::get('/reviews', [\App\Http\Controllers\Api\Product\ProductReviewController::class, 'index'])->whereNumber('product');
-    Route::post('/reviews', [\App\Http\Controllers\Api\Product\ProductReviewController::class, 'store'])->whereNumber('product')->middleware(['api.token', 'throttle:writes']);
+    Route::get('/reviews', [ProductReviewController::class, 'index'])->whereNumber('product');
+    Route::post('/reviews', [ProductReviewController::class, 'store'])->whereNumber('product')->middleware(['api.token', 'throttle:writes']);
 });
 
 // Add PCB routes before the final closing brackets
 Route::prefix('v1/pcb')->middleware('api.token')->group(function () {
     // PCB Projects
-    Route::apiResource('projects', \App\Http\Controllers\Pcb\PcbProjectController::class);
-    Route::get('projects/{project}/activity', [\App\Http\Controllers\Pcb\PcbProjectController::class, 'activity']);
-    
+    Route::apiResource('projects', PcbProjectController::class);
+    Route::get('projects/{project}/activity', [PcbProjectController::class, 'activity']);
+
     // PCB Files
-    Route::post('projects/{project}/files', [\App\Http\Controllers\Pcb\PcbFileController::class, 'store']);
-    Route::get('projects/{project}/files/{file}/download', [\App\Http\Controllers\Pcb\PcbFileController::class, 'download']);
+    Route::post('projects/{project}/files', [PcbFileController::class, 'store']);
+    Route::get('projects/{project}/files/{file}/download', [PcbFileController::class, 'download']);
 
     // PCB Quotes
-    Route::post('projects/{project}/quote', [\App\Http\Controllers\Pcb\PcbQuoteController::class, 'store']);
-    Route::get('projects/{project}/quotes/{quote}', [\App\Http\Controllers\Pcb\PcbQuoteController::class, 'show']);
-    Route::post('projects/{project}/quotes/{quote}/approve', [\App\Http\Controllers\Pcb\PcbQuoteController::class, 'approve']);
+    Route::post('projects/{project}/quote', [PcbQuoteController::class, 'store']);
+    Route::get('projects/{project}/quotes/{quote}', [PcbQuoteController::class, 'show']);
+    Route::post('projects/{project}/quotes/{quote}/approve', [PcbQuoteController::class, 'approve']);
 });
 
 // Public PCB endpoints (no auth required for initial quote)
 // Public PCB routes — no auth required, rate-limited
 Route::prefix('v1')->group(function () {
-    Route::post('quote/calculate', [\App\Http\Controllers\Pcb\PcbPublicQuoteController::class, 'calculate'])
+    Route::post('quote/calculate', [PcbPublicQuoteController::class, 'calculate'])
         ->middleware('throttle:60,1')
         ->name('api.pcb.quote.calculate');
 });
 
 Route::prefix('v1/pcb/public')->group(function () {
-    Route::post('quote/calculate', [\App\Http\Controllers\Pcb\PcbPublicQuoteController::class, 'calculate'])
+    Route::post('quote/calculate', [PcbPublicQuoteController::class, 'calculate'])
         ->middleware('throttle:60,1');
-    Route::get('capabilities', [\App\Http\Controllers\Pcb\PcbCapabilitiesController::class, 'index']);
+    Route::get('capabilities', [PcbCapabilitiesController::class, 'index']);
 });

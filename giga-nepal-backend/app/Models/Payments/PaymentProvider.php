@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PaymentProvider extends Model
 {
     protected $fillable = [
-        'code', 'name', 'is_enabled', 'is_live', 'supported_currencies', 'config', 'sort_order',
+        'marketplace_id', 'code', 'name', 'is_enabled', 'is_live', 'supported_currencies', 'config', 'sort_order',
     ];
 
     protected $casts = [

@@ -25,6 +25,7 @@ class Product extends Model
         'manufacturer_id',
         'category_id',
         'vendor_id',
+        'reseller_id',
         'manufacturer_name',
         'description',
         'short_description',

@@ -1,18 +1,18 @@
 @extends('manufacturer.layout')
 @section('title','Dashboard')
 @section('content')
-<h1 style="margin:0 0 8px">{{ $mfr->name }}</h1>
-<p style="color:var(--muted);margin:0 0 24px">{{ $mfr->legal_name ?? '' }}</p>
+<div class="page-intro"><h1>{{ $manufacturer->name }}</h1><p>{{ $manufacturer->legal_name ?? 'Manufacturer account' }}</p></div>
 <div class="kpi-grid">
-    <div class="kpi"><div class="t">Total Products</div><div class="v">{{ number_format($stats['product_count']) }}</div><div class="s">in catalog</div></div>
-    <div class="kpi"><div class="t">Active</div><div class="v">{{ number_format($stats['active_products']) }}</div><div class="s">published</div></div>
-    <div class="kpi"><div class="t">Brands</div><div class="v">{{ number_format($stats['brand_count']) }}</div><div class="s">registered</div></div>
-    <div class="kpi"><div class="t">Status</div><div class="v"><span class="badge {{ $mfr->is_active ? 'b-ok' : 'b-muted' }}">{{ $mfr->is_active ? 'Active' : 'Inactive' }}</span></div><div class="s">account</div></div>
+    <div class="kpi"><div class="t">Catalog SKUs</div><div class="v">{{ number_format($stats['product_count']) }}</div></div>
+    <div class="kpi"><div class="t">Active</div><div class="v">{{ number_format($stats['active_products']) }}</div></div>
+    <div class="kpi"><div class="t">Global on-hand</div><div class="v">{{ number_format($inventorySummary['quantity_on_hand'] ?? 0) }}</div></div>
+    <div class="kpi"><div class="t">Available</div><div class="v">{{ number_format($inventorySummary['quantity_available'] ?? 0) }}</div></div>
+    <div class="kpi"><div class="t">Allocations</div><div class="v">{{ number_format($allocationSummary['total'] ?? 0) }}</div></div>
+    <div class="kpi"><div class="t">Brands</div><div class="v">{{ number_format($stats['brand_count']) }}</div></div>
 </div>
-<div class="card"><h2 style="margin:0 0 12px;font-size:1rem">Quick Actions</h2>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <a href="/manufacturer/products" class="btn btn-ghost">Manage Products</a>
-        <a href="/manufacturer/profile" class="btn btn-ghost">Edit Profile</a>
-    </div>
-</div>
+<div class="card"><div class="card-h"><h2>Quick Actions</h2></div><div class="card-body actions-row">
+    <a href="/manufacturer/inventory" class="btn btn-primary">Global inventory</a>
+    <a href="/manufacturer/allocations" class="btn btn-ghost">Allocate to region</a>
+    <form method="post" action="/manufacturer/inventory/sync" style="display:inline">@csrf<button type="submit" class="btn btn-ghost">Sync from catalog</button></form>
+</div></div>
 @endsection

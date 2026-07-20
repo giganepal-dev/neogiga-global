@@ -1,19 +1,36 @@
 @extends('b2b.layout')
 @section('title','RFQs')
 @section('content')
-<h1 style="margin:0 0 24px">RFQ Requests</h1>
+<div class="page-intro page-intro--row">
+    <div>
+        <h1>Quote Requests</h1>
+        <p>Track institutional RFQs and official quotations from NeoGiga.</p>
+    </div>
+    <a href="/b2b/rfqs/create" class="btn btn-primary">New Quote Request</a>
+</div>
 @if($rfqs->isEmpty())
-    <div class="card" style="text-align:center;padding:40px"><p style="color:var(--muted)">No RFQs yet.</p></div>
+    <div class="card empty-card">
+        <p>No quote requests yet.</p>
+        <a href="/b2b/rfqs/create" class="btn btn-primary">Submit your first RFQ</a>
+    </div>
 @else
-    <div class="table-wrap"><table class="table">
-        <thead><tr><th>RFQ #</th><th>Items</th><th>Status</th><th>Date</th></tr></thead>
-        <tbody>@foreach($rfqs as $r)<tr>
-            <td class="mono"><strong>{{ $r->rfq_number ?? '#'.$r->id }}</strong></td>
-            <td>{{ $r->item_count ?? '—' }}</td>
-            <td><span class="badge b-info">{{ $r->status ?? 'pending' }}</span></td>
-            <td style="font-size:.78rem;color:var(--faint)">{{ $r->created_at ?? '—' }}</td>
-        </tr>@endforeach</tbody>
-    </table></div>
+    <div class="card">
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>RFQ #</th><th>Items</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody>
+                    @foreach($rfqs as $rfq)
+                    <tr>
+                        <td class="mono"><strong>{{ $rfq->rfq_number }}</strong></td>
+                        <td>{{ $rfq->items_count }}</td>
+                        <td><span class="badge b-info">{{ $rfq->status }}</span></td>
+                        <td class="sub">{{ $rfq->created_at?->format('M j, Y') }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
     {{ $rfqs->links() }}
 @endif
 @endsection

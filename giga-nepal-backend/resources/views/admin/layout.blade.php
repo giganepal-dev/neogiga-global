@@ -193,7 +193,6 @@
             </span>
             <span><b>NeoGiga</b><small>Admin Console</small></span>
         </a>
-        <nav class="nav" aria-label="Primary">
         @include('admin.partials.sidebar-nav')
     </aside>
 

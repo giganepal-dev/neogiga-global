@@ -6,8 +6,8 @@ use App\Http\Controllers\Admin\CustomerDataController as AdminCustomerData;
 use App\Http\Controllers\Admin\CustomerImportController as AdminCustomerImport;
 use App\Http\Controllers\Admin\DashboardController as AdminDash;
 use App\Http\Controllers\Admin\ElecforestImportController as AdminElecforestImport;
-use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
 use App\Http\Controllers\Admin\MarketplaceConfigController as AdminMarketplaceConfig;
+use App\Http\Controllers\Admin\PartnerApprovalsController;
 use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
 use App\Http\Controllers\Admin\PricingAdminController;
 use App\Http\Controllers\Admin\PosAdminController;
@@ -34,6 +34,8 @@ use App\Http\Controllers\Web\OrderTrackingController;
 use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Web\PcbPortalAuthController;
 use App\Http\Controllers\Web\PcbPortalController;
+use App\Http\Controllers\Web\POS\PosCashierController;
+use App\Http\Controllers\Web\POS\PosReceiptController;
 use App\Http\Controllers\Web\ProductPageController;
 use App\Http\Controllers\Web\RedesignController;
 use App\Http\Controllers\Web\Reseller\ResellerPortalController;
@@ -121,14 +123,30 @@ Route::prefix('seller')->group(function () {
 
 // Reseller web portal
 Route::prefix('reseller')->group(function () {
+    Route::get('apply', [ResellerPortalController::class, 'showApply'])->name('reseller.apply');
+    Route::post('apply', [ResellerPortalController::class, 'storeApply'])->middleware('throttle:6,1');
     Route::get('login', [ResellerPortalController::class, 'showLogin'])->name('reseller.login');
     Route::post('login', [ResellerPortalController::class, 'login'])->middleware('throttle:6,1');
     Route::post('logout', [ResellerPortalController::class, 'logout']);
-    Route::get('/', [ResellerPortalController::class, 'dashboard'])->middleware(EnsureResellerWeb::class);
-    Route::get('profile', [ResellerPortalController::class, 'profile'])->middleware(EnsureResellerWeb::class);
-    Route::post('profile', [ResellerPortalController::class, 'updateProfile'])->middleware(EnsureResellerWeb::class);
-    Route::get('orders', [ResellerPortalController::class, 'orders'])->middleware(EnsureResellerWeb::class);
-    Route::get('products', [ResellerPortalController::class, 'products'])->middleware(EnsureResellerWeb::class);
+    Route::middleware(EnsureResellerWeb::class)->group(function () {
+        Route::get('/', [ResellerPortalController::class, 'dashboard']);
+        Route::get('profile', [ResellerPortalController::class, 'profile']);
+        Route::post('profile', [ResellerPortalController::class, 'updateProfile']);
+        Route::get('products', [ResellerPortalController::class, 'products']);
+        Route::get('products/create', [ResellerPortalController::class, 'createProduct']);
+        Route::post('products', [ResellerPortalController::class, 'storeProduct']);
+        Route::post('products/import', [ResellerPortalController::class, 'importProducts']);
+        Route::get('orders', [ResellerPortalController::class, 'orders']);
+        Route::get('rfqs', [ResellerPortalController::class, 'rfqs']);
+        Route::post('rfqs/{assignment}/bid', [ResellerPortalController::class, 'bidRfq'])->whereNumber('assignment');
+        Route::get('territories', [ResellerPortalController::class, 'territories']);
+        Route::post('territories/request', [ResellerPortalController::class, 'requestTerritory']);
+        Route::get('support', [ResellerPortalController::class, 'support']);
+        Route::post('support', [ResellerPortalController::class, 'storeSupport']);
+        Route::get('messages', [ResellerPortalController::class, 'messages']);
+        Route::get('messages/{conversation}', [ResellerPortalController::class, 'showMessage'])->whereNumber('conversation');
+        Route::post('messages/{conversation}', [ResellerPortalController::class, 'replyMessage'])->whereNumber('conversation');
+    });
 });
 
 // Manufacturer web portal
@@ -136,20 +154,35 @@ Route::prefix('manufacturer')->group(function () {
     Route::get('login', [ManufacturerPortalController::class, 'showLogin'])->name('manufacturer.login');
     Route::post('login', [ManufacturerPortalController::class, 'login'])->middleware('throttle:6,1');
     Route::post('logout', [ManufacturerPortalController::class, 'logout']);
-    Route::get('/', [ManufacturerPortalController::class, 'dashboard'])->middleware(EnsureManufacturerWeb::class);
-    Route::get('profile', [ManufacturerPortalController::class, 'profile'])->middleware(EnsureManufacturerWeb::class);
-    Route::post('profile', [ManufacturerPortalController::class, 'updateProfile'])->middleware(EnsureManufacturerWeb::class);
-    Route::get('products', [ManufacturerPortalController::class, 'products'])->middleware(EnsureManufacturerWeb::class);
+
+    Route::middleware(EnsureManufacturerWeb::class)->group(function () {
+        Route::get('/', [ManufacturerPortalController::class, 'dashboard']);
+        Route::get('profile', [ManufacturerPortalController::class, 'profile']);
+        Route::post('profile', [ManufacturerPortalController::class, 'updateProfile']);
+        Route::get('products', [ManufacturerPortalController::class, 'products']);
+        Route::get('inventory', [ManufacturerPortalController::class, 'inventory']);
+        Route::post('inventory/sync', [ManufacturerPortalController::class, 'syncInventory'])->middleware('throttle:10,1');
+        Route::get('allocations', [ManufacturerPortalController::class, 'allocations']);
+        Route::post('allocations', [ManufacturerPortalController::class, 'storeAllocation'])->middleware('throttle:20,1');
+    });
 });
 
 // B2B / Business Customer portal
 Route::prefix('b2b')->group(function () {
+    Route::get('apply', [B2BPortalController::class, 'showApply'])->name('b2b.apply');
+    Route::post('apply', [B2BPortalController::class, 'storeApply'])->middleware('throttle:6,1');
     Route::get('login', [B2BPortalController::class, 'showLogin'])->name('b2b.login');
     Route::post('login', [B2BPortalController::class, 'login'])->middleware('throttle:6,1');
     Route::post('logout', [B2BPortalController::class, 'logout']);
     Route::get('/', [B2BPortalController::class, 'dashboard'])->middleware(EnsureB2BWeb::class);
     Route::get('orders', [B2BPortalController::class, 'orders'])->middleware(EnsureB2BWeb::class);
     Route::get('rfqs', [B2BPortalController::class, 'rfqs'])->middleware(EnsureB2BWeb::class);
+    Route::get('rfqs/create', [B2BPortalController::class, 'createRfq'])->middleware(EnsureB2BWeb::class);
+    Route::post('rfqs', [B2BPortalController::class, 'storeRfq'])->middleware(EnsureB2BWeb::class);
+    Route::get('quotations', [B2BPortalController::class, 'quotations'])->middleware(EnsureB2BWeb::class);
+    Route::get('quotations/{quotation}', [B2BPortalController::class, 'showQuotation'])->whereNumber('quotation')->middleware(EnsureB2BWeb::class);
+    Route::post('quotations/{quotation}/accept', [B2BPortalController::class, 'acceptQuotation'])->whereNumber('quotation')->middleware(EnsureB2BWeb::class);
+    Route::post('quotations/{quotation}/pay', [B2BPortalController::class, 'payQuotation'])->whereNumber('quotation')->middleware(EnsureB2BWeb::class);
     Route::get('products', [B2BPortalController::class, 'products'])->middleware(EnsureB2BWeb::class);
 });
 
@@ -159,11 +192,25 @@ Route::prefix('distributor')->group(function () {
     Route::post('login', [DistributorPortalController::class, 'login'])->middleware('throttle:6,1');
     Route::post('logout', [DistributorPortalController::class, 'logout']);
 
-    Route::get('/', [DistributorPortalController::class, 'dashboard'])->middleware(EnsureDistributorWeb::class);
-    Route::get('profile', [DistributorPortalController::class, 'profile'])->middleware(EnsureDistributorWeb::class);
-    Route::post('profile', [DistributorPortalController::class, 'updateProfile'])->middleware(EnsureDistributorWeb::class);
-    Route::get('orders', [DistributorPortalController::class, 'orders'])->middleware(EnsureDistributorWeb::class);
-    Route::get('products', [DistributorPortalController::class, 'products'])->middleware(EnsureDistributorWeb::class);
+    Route::middleware(EnsureDistributorWeb::class)->group(function () {
+        Route::get('/', [DistributorPortalController::class, 'dashboard']);
+        Route::get('profile', [DistributorPortalController::class, 'profile']);
+        Route::post('profile', [DistributorPortalController::class, 'updateProfile']);
+        Route::get('products', [DistributorPortalController::class, 'products']);
+        Route::get('orders', [DistributorPortalController::class, 'orders']);
+        Route::get('territory-stock', [DistributorPortalController::class, 'territoryStock']);
+        Route::get('territories', [DistributorPortalController::class, 'territories']);
+        Route::post('territories/request', [DistributorPortalController::class, 'requestTerritory'])->middleware('throttle:10,1');
+        Route::get('commissions', [DistributorPortalController::class, 'commissions']);
+        Route::get('payouts', [DistributorPortalController::class, 'payouts']);
+        Route::get('downlines', [DistributorPortalController::class, 'downlines']);
+        Route::get('leads', [DistributorPortalController::class, 'leads']);
+        Route::get('support', [DistributorPortalController::class, 'support']);
+        Route::post('support', [DistributorPortalController::class, 'storeSupport'])->middleware('throttle:20,1');
+        Route::get('messages', [DistributorPortalController::class, 'messages']);
+        Route::get('messages/{conversation}', [DistributorPortalController::class, 'showMessage'])->whereNumber('conversation');
+        Route::post('messages/{conversation}', [DistributorPortalController::class, 'replyMessage'])->whereNumber('conversation')->middleware('throttle:20,1');
+    });
 });
 Route::prefix('admin')->group(function () {
     Route::get('login', [AdminAuth::class, 'showLogin'])->name('admin.login');
@@ -382,6 +429,13 @@ Route::prefix('admin')->group(function () {
         Route::get('payments', [AdminDash::class, 'payments']);
         Route::get('support', [AdminDash::class, 'support']);
         Route::get('applications', [AdminDash::class, 'applications']);
+        Route::get('partner-approvals', [PartnerApprovalsController::class, 'index']);
+        Route::post('partner-approvals/reseller-applications/{application}/approve', [PartnerApprovalsController::class, 'approveResellerApplication'])->whereNumber('application')->middleware('throttle:20,1');
+        Route::post('partner-approvals/reseller-applications/{application}/reject', [PartnerApprovalsController::class, 'rejectResellerApplication'])->whereNumber('application')->middleware('throttle:20,1');
+        Route::post('partner-approvals/reseller-territories/{territoryRequest}/approve', [PartnerApprovalsController::class, 'approveResellerTerritory'])->whereNumber('territoryRequest')->middleware('throttle:20,1');
+        Route::post('partner-approvals/reseller-territories/{territoryRequest}/reject', [PartnerApprovalsController::class, 'rejectResellerTerritory'])->whereNumber('territoryRequest')->middleware('throttle:20,1');
+        Route::post('partner-approvals/distributor-territories/{territoryRequest}/approve', [PartnerApprovalsController::class, 'approveDistributorTerritory'])->whereNumber('territoryRequest')->middleware('throttle:20,1');
+        Route::post('partner-approvals/distributor-territories/{territoryRequest}/reject', [PartnerApprovalsController::class, 'rejectDistributorTerritory'])->whereNumber('territoryRequest')->middleware('throttle:20,1');
         Route::get('region-stock', [AdminDash::class, 'regionStock']);
 
         // Orders (permission placeholders pending web-console RBAC:
@@ -429,8 +483,16 @@ Route::get('/sso/start', [SsoController::class, 'start'])
 Route::get('/sso/consume', [SsoController::class, 'consume'])
     ->middleware('throttle:20,1')
     ->name('sso.consume');
-// POS cashier UI (authenticated)
-Route::get('/pos/cashier', fn () => view('pos.cashier'))->middleware('admin.web');
+// POS cashier UI + session-backed cashier API (admin)
+Route::get('/pos/receipt/{token}', [PosReceiptController::class, 'show'])->where('token', '[a-z0-9]{32}');
+Route::middleware('admin.web')->prefix('pos/cashier')->group(function () {
+    Route::get('/', [PosCashierController::class, 'show']);
+    Route::get('terminals', [PosCashierController::class, 'terminals']);
+    Route::post('session/open', [PosCashierController::class, 'openSession'])->middleware('throttle:30,1');
+    Route::get('customers/search', [PosCashierController::class, 'searchCustomers']);
+    Route::post('sales', [PosCashierController::class, 'createSale'])->middleware('throttle:60,1');
+    Route::post('sales/{sale}/refund', [PosCashierController::class, 'refund'])->whereNumber('sale')->middleware('throttle:30,1');
+});
 
 Route::redirect('/learn', '/en/lms', 301);
 Route::redirect('/learning', '/en/lms', 301);

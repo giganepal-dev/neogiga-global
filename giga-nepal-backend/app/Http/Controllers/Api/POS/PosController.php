@@ -4,13 +4,21 @@ namespace App\Http\Controllers\Api\POS;
 
 use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
+use App\Services\POS\PosCustomerAccountService;
+use App\Services\POS\PosReceiptService;
 use App\Services\POS\PosService;
+use App\Services\POS\PosTerminalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PosController extends Controller
 {
     use ApiResponses;
+
+    public function terminals(Request $request, PosTerminalService $terminals): JsonResponse
+    {
+        return $this->success($terminals->listForMarketplace($request->integer('marketplace_id') ?: null));
+    }
 
     public function openSession(Request $request, PosService $pos): JsonResponse
     {
@@ -50,6 +58,29 @@ class PosController extends Controller
         return $this->success($pos->searchProducts($data));
     }
 
+    public function searchCustomers(Request $request, PosCustomerAccountService $customers): JsonResponse
+    {
+        $data = $request->validate([
+            'q' => ['nullable', 'string', 'max:190'],
+            'marketplace_id' => ['nullable', 'integer'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        return $this->success($customers->search($data['q'] ?? null, $data['marketplace_id'] ?? null, (int) ($data['limit'] ?? 20)));
+    }
+
+    public function storeCustomer(Request $request, PosCustomerAccountService $customers): JsonResponse
+    {
+        $data = $request->validate([
+            'marketplace_id' => ['nullable', 'integer'],
+            'name' => ['required', 'string', 'max:190'],
+            'email' => ['nullable', 'email', 'max:190'],
+            'phone' => ['nullable', 'string', 'max:60'],
+        ]);
+
+        return $this->success($customers->create($data), 201);
+    }
+
     public function createSale(Request $request, PosService $pos): JsonResponse
     {
         $data = $request->validate([
@@ -60,6 +91,7 @@ class PosController extends Controller
             'customer_name' => ['nullable', 'string', 'max:190'],
             'customer_email' => ['nullable', 'email', 'max:190'],
             'customer_phone' => ['nullable', 'string', 'max:60'],
+            'pos_customer_account_id' => ['nullable', 'integer'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
@@ -82,6 +114,25 @@ class PosController extends Controller
         return $row ? $this->success($row) : $this->error('Sale not found.', 404);
     }
 
+    public function saleReceipt(int $sale, PosService $pos, PosReceiptService $receipts): JsonResponse
+    {
+        $row = $pos->sale($sale);
+        if (! $row) {
+            return $this->error('Sale not found.', 404);
+        }
+
+        $token = $row->receipt_qr_token ?? null;
+        if (! $token) {
+            $token = $receipts->issueToken($sale);
+        }
+
+        return $this->success([
+            'sale_id' => $sale,
+            'receipt_qr_token' => $token,
+            'receipt_url' => $receipts->receiptUrl($token),
+        ]);
+    }
+
     public function processPayment(Request $request, int $sale, PosService $pos): JsonResponse
     {
         $data = $request->validate([
@@ -99,8 +150,25 @@ class PosController extends Controller
         }
     }
 
-    public function processRefund(int $sale): JsonResponse
+    public function processRefund(Request $request, int $sale, PosService $pos): JsonResponse
     {
-        return $this->error('POS refunds require the ERP/payment phase and are not enabled yet.', 501);
+        if ($request->header('Idempotency-Key')) {
+            $request->merge(['idempotency_key' => trim((string) $request->header('Idempotency-Key'))]);
+        }
+
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'decimal:0,4', 'min:0.01'],
+            'refund_method' => ['required', 'string', 'max:80'],
+            'reason' => ['required', 'string', 'max:1000'],
+            'idempotency_key' => ['required', 'string', 'max:120', 'regex:/^[A-Za-z0-9._:-]+$/'],
+        ]);
+
+        try {
+            $result = $pos->refund($sale, $data, $request->user()?->id);
+
+            return $this->success($result, $result['replayed'] ?? false ? 200 : 201);
+        } catch (\Throwable $e) {
+            return $this->error($e->getMessage(), 422);
+        }
     }
 }

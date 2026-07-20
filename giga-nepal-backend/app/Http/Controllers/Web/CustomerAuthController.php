@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\Marketing\AccountCommunicationService;
+use App\Services\Marketplace\UserMarketplaceScopeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -62,7 +63,7 @@ class CustomerAuthController extends Controller
         return redirect()->intended($dashboard);
     }
 
-    public function register(Request $request): RedirectResponse
+    public function register(Request $request, UserMarketplaceScopeService $marketplaceScope): RedirectResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:120'],
@@ -87,6 +88,7 @@ class CustomerAuthController extends Controller
             'email' => $data['email'],
             'password' => $data['password'],
             'role_id' => $role->id,
+            'home_marketplace_id' => $marketplaceScope->homeMarketplaceIdForRegistration($request),
         ]);
 
         // Store company name in customer profile if provided

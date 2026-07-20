@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Models\Promotion\Coupon;
 use App\Services\Affiliate\AffiliateService;
 use App\Services\Marketing\OrderNotificationService;
+use App\Services\Marketplace\UserMarketplaceScopeService;
 use App\Services\Payments\PaymentMethodPolicyService;
 use App\Services\Promotion\CouponService;
 use App\Services\Promotion\GiftCardService;
@@ -57,6 +58,8 @@ class OrderController extends Controller
         }
 
         $this->paymentMethods->assertAllowed($validated['payment_method'], $cart->marketplace_id, $cart->currency_code);
+        app(UserMarketplaceScopeService::class)
+            ->assertCanPurchase($request->user(), $cart->marketplace_id);
 
         foreach ($cart->items as $item) {
             if (! $this->hasStock($item->product_id, $cart->marketplace_id, $item->quantity, $item->variant_id)) {

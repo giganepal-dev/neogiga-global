@@ -6,7 +6,9 @@ use App\Http\Controllers\Concerns\ApiResponses;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Distributor\DistributorLeadStoreRequest;
 use App\Models\Distributor\DistributorLead;
+use App\Models\Distributor\DistributorTerritoryRequest;
 use App\Services\Distributor\DistributorContextService;
+use App\Services\Distributor\DistributorTerritoryService;
 use App\Services\Distributor\DistributorTerritoryStockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,7 +21,8 @@ class DistributorResourceController extends Controller
 
     public function __construct(
         private readonly DistributorContextService $context,
-        private readonly DistributorTerritoryStockService $territoryStock
+        private readonly DistributorTerritoryStockService $territoryStock,
+        private readonly DistributorTerritoryService $territoryService,
     ) {}
 
     public function profile(Request $request): JsonResponse
@@ -30,12 +33,14 @@ class DistributorResourceController extends Controller
     public function territories(Request $request): JsonResponse
     {
         $distributor = $this->context->abortUnlessDistributor($request->user());
+
         return $this->success(DB::table('distributor_territories')->where('distributor_id', $distributor->id)->get());
     }
 
     public function leads(Request $request): JsonResponse
     {
         $distributor = $this->context->abortUnlessDistributor($request->user());
+
         return $this->success(DistributorLead::where('distributor_id', $distributor->id)->latest()->paginate(25));
     }
 
@@ -43,6 +48,7 @@ class DistributorResourceController extends Controller
     {
         $distributor = $this->context->abortUnlessDistributor($request->user());
         $lead = DistributorLead::create([...$request->validated(), 'distributor_id' => $distributor->id, 'status' => 'new']);
+
         return $this->success($lead, 201);
     }
 
@@ -55,6 +61,7 @@ class DistributorResourceController extends Controller
         }
         $distributor = $this->context->abortUnlessDistributor($request->user());
         $column = $table === 'distributor_downlines' ? 'parent_distributor_id' : 'distributor_id';
+
         return $this->success(DB::table($table)->where($column, $distributor->id)->latest('id')->paginate(25));
     }
 
@@ -66,5 +73,44 @@ class DistributorResourceController extends Controller
     public function territoryVendors(Request $request): JsonResponse
     {
         return $this->success($this->territoryStock->vendors($this->context->abortUnlessDistributor($request->user())));
+    }
+
+    public function territoryStockSummary(Request $request): JsonResponse
+    {
+        return $this->success($this->territoryStock->stockSummary($this->context->abortUnlessDistributor($request->user())));
+    }
+
+    public function territoryRequests(Request $request): JsonResponse
+    {
+        if (! Schema::hasTable('distributor_territory_requests')) {
+            return $this->error('Distributor territory request migration is pending.', 503);
+        }
+
+        $distributor = $this->context->abortUnlessDistributor($request->user());
+
+        return $this->success(DistributorTerritoryRequest::where('distributor_id', $distributor->id)->latest()->paginate(25));
+    }
+
+    public function storeTerritoryRequest(Request $request): JsonResponse
+    {
+        if (! Schema::hasTable('distributor_territory_requests')) {
+            return $this->error('Distributor territory request migration is pending.', 503);
+        }
+
+        $distributor = $this->context->abortUnlessDistributor($request->user());
+        $data = $request->validate([
+            'territory_name' => ['required', 'string', 'max:190'],
+            'country_id' => ['nullable', 'integer'],
+            'region_id' => ['nullable', 'integer'],
+            'city_id' => ['nullable', 'integer'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'document_company_reg' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'document_distributor_agreement' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'document_tax_certificate' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+        ]);
+
+        $territoryRequest = $this->territoryService->requestExpansion($distributor, $data, $request);
+
+        return $this->success($territoryRequest, 201);
     }
 }

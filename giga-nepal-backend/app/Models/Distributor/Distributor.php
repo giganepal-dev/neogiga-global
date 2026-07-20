@@ -31,4 +31,9 @@ class Distributor extends Model
     {
         return $this->hasMany(DistributorCommission::class);
     }
+
+    public function territoryRequests(): HasMany
+    {
+        return $this->hasMany(DistributorTerritoryRequest::class);
+    }
 }

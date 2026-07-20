@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Services\Marketing\OrderNotificationService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\RegionalCommerceService;
+use App\Services\Marketplace\UserMarketplaceScopeService;
 use App\Services\Payments\PaymentMethodPolicyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -129,13 +130,14 @@ class CartPageController extends Controller
         }
 
         app(PaymentMethodPolicyService::class)->assertAllowed($data['payment_method'], $cart->marketplace_id, $cart->currency_code);
+        app(UserMarketplaceScopeService::class)->assertCanPurchase($request->user(), $cart->marketplace_id);
 
-        $order = DB::transaction(function () use ($cart, $data) {
+        $order = DB::transaction(function () use ($cart, $data, $request) {
             $cart = app(RegionalCommerceService::class)->applyCartEstimates($cart, (int) ($data['country_id'] ?? 0));
 
             $order = Order::create([
                 'order_number' => 'NG-WEB-'.now()->format('YmdHis').'-'.Str::upper(Str::random(5)),
-                'user_id' => null,
+                'user_id' => $request->user()?->id,
                 'marketplace_id' => $cart->marketplace_id,
                 'status' => 'pending',
                 'currency_code' => $cart->currency_code,

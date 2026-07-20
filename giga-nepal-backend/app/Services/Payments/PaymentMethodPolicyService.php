@@ -5,6 +5,7 @@ namespace App\Services\Payments;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class PaymentMethodPolicyService
@@ -30,12 +31,34 @@ class PaymentMethodPolicyService
             return $this->legacyCollection();
         }
 
-        $providers = DB::table('payment_providers')
+        $query = DB::table('payment_providers')
             ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
+            ->orderBy('name');
+
+        if ($marketplaceId !== null && Schema::hasColumn('payment_providers', 'marketplace_id')) {
+            $scoped = (clone $query)
+                ->where('marketplace_id', $marketplaceId)
+                ->exists();
+
+            if ($scoped) {
+                $query->where('marketplace_id', $marketplaceId);
+            } elseif ($this->isGlobalMarketplace($marketplaceId)) {
+                $query->whereNull('marketplace_id');
+            } else {
+                return $this->configFallbackForMarketplace($marketplaceId, $currencyCode);
+            }
+        }
+
+        $providers = $query->get();
 
         if ($providers->isEmpty()) {
+            if ($marketplaceId !== null) {
+                $fallback = $this->configFallbackForMarketplace($marketplaceId, $currencyCode);
+                if ($fallback->isNotEmpty()) {
+                    return $fallback;
+                }
+            }
+
             return $this->legacyCollection();
         }
 
@@ -75,20 +98,58 @@ class PaymentMethodPolicyService
             ->values();
     }
 
+    /**
+     * @return Collection<int, array{code:string,name:string}>
+     */
+    private function configFallbackForMarketplace(int $marketplaceId, ?string $currencyCode): Collection
+    {
+        $prefix = DB::table('marketplaces')->where('id', $marketplaceId)->value('url_prefix');
+        if (! $prefix) {
+            return collect();
+        }
+
+        $gateways = config('neogiga_global.payment_gateways.'.strtolower((string) $prefix));
+        if (! is_array($gateways) || $gateways === []) {
+            return collect();
+        }
+
+        return collect($gateways)
+            ->values()
+            ->map(fn (string $name, int $index) => [
+                'code' => Str::slug(strtolower($name), '_'),
+                'name' => $name,
+            ]);
+    }
+
+    private function isGlobalMarketplace(int $marketplaceId): bool
+    {
+        $marketplace = DB::table('marketplaces')->where('id', $marketplaceId)->first(['code', 'global_fallback', 'is_default']);
+
+        if (! $marketplace) {
+            return false;
+        }
+
+        $code = strtolower((string) $marketplace->code);
+
+        return (bool) ($marketplace->global_fallback ?? false)
+            || (bool) ($marketplace->is_default ?? false)
+            || in_array($code, ['global', 'en'], true);
+    }
+
     private function supportsCurrency(mixed $supportedCurrencies, ?string $currencyCode): bool
     {
         if (! $currencyCode || $supportedCurrencies === null || $supportedCurrencies === '') {
             return true;
         }
 
-        $currencies = is_array($supportedCurrencies)
-            ? $supportedCurrencies
-            : json_decode((string) $supportedCurrencies, true);
+        if (is_string($supportedCurrencies)) {
+            $supportedCurrencies = json_decode($supportedCurrencies, true);
+        }
 
-        if (! is_array($currencies) || $currencies === []) {
+        if (! is_array($supportedCurrencies) || $supportedCurrencies === []) {
             return true;
         }
 
-        return in_array(strtoupper($currencyCode), array_map('strtoupper', $currencies), true);
+        return in_array(strtoupper($currencyCode), array_map('strtoupper', $supportedCurrencies), true);
     }
 }
