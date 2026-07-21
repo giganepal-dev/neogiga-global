@@ -164,7 +164,10 @@ class ImportSmdMarkingsCommand extends Command
         foreach ($matches as $i => $m) {
             $marking = trim(strip_tags($m[1]));
             $mpn = trim(strip_tags($m[2]));
-            $mfrPkg = trim(strip_tags($m[3]));
+            // Split on <br> BEFORE stripping tags
+            $mfrPkgRaw = preg_split('/<br\s*\/?>/i', $m[3], 2);
+            $manufacturer = trim(strip_tags($mfrPkgRaw[0] ?? ''));
+            $packageText = trim(strip_tags($mfrPkgRaw[1] ?? ''));
             $function = trim(strip_tags($m[4]));
             $function = html_entity_decode($function, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
@@ -179,13 +182,7 @@ class ImportSmdMarkingsCommand extends Command
                 $pkgImageUrl = $imgMatch[1];
             }
 
-            // Parse "Manufacturer<br>Package<img>" field
-            $mfrPkgClean = strip_tags($mfrPkg, '<br>'); // keep <br> for splitting
-            $mfrPkgParts = preg_split('/<br\s*\/?>/i', $mfrPkgClean);
-            $manufacturer = trim($mfrPkgParts[0] ?? '');
-            $packageText = trim($mfrPkgParts[1] ?? '');
-
-            // Split "Manufacturer / Case" as fallback
+            // Split "Manufacturer / Case" as fallback if no <br> found
             if (empty($packageText) && str_contains($manufacturer, '/')) {
                 $parts = array_map('trim', explode('/', $manufacturer, 2));
                 $manufacturer = $parts[0] ?? '';
@@ -296,6 +293,7 @@ class ImportSmdMarkingsCommand extends Command
             'smd_marking_code_id' => $codeId,
             'product_id' => $productId,
             'manufacturer_id' => $manufacturerId,
+            'manufacturer_text' => $row['manufacturer'] ?? null,
             'candidate_mpn' => $row['mpn'],
             'normalized_mpn' => $normalizedMpn,
             'package_id' => $packageId,
