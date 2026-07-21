@@ -49,8 +49,20 @@ class ImportEnrichedProductsCommand extends Command
 
     public function handle(): int
     {
-        $filePath = $this->option('file')
-            ?? getenv('HOME') . '/Downloads/product/NeoGiga_MPN_Enrichment_Dataset.json';
+        $filePath = $this->option('file');
+        if (! $filePath) {
+            $candidates = [
+                base_path('storage/app/neogiga_enriched_products.json'),
+                getenv('HOME') . '/Downloads/product/NeoGiga_MPN_Enrichment_Dataset.json',
+                '/tmp/NeoGiga_MPN_Enrichment_Dataset.json',
+            ];
+            foreach ($candidates as $candidate) {
+                if (file_exists($candidate)) {
+                    $filePath = $candidate;
+                    break;
+                }
+            }
+        }
 
         if (! file_exists($filePath)) {
             $this->error("File not found: {$filePath}");
