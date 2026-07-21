@@ -491,9 +491,19 @@ class ImportEnrichedProductsCommand extends Command
             $this->downloadImage($product, $imgUrl);
         }
 
-        // Add missing regional pricing
-        if (! MarketplaceProductPrice::where('product_id', $product->id)->exists()) {
-            $this->createPricing($product, $item);
+        // Add missing regional pricing (check per marketplace, not globally)
+        $pricing = $item['pricing'] ?? [];
+        $usdCost = (float) ($pricing['purchase_cost'] ?? $item['technical_specs']['Purchase_Cost_USD'] ?? 0);
+        $usdPrice = (float) ($pricing['resale_price'] ?? $item['technical_specs']['Resale_Price_USD'] ?? 0);
+        if ($usdPrice > 0) {
+            $existingMarketplaceIds = MarketplaceProductPrice::where('product_id', $product->id)
+                ->pluck('marketplace_id')->toArray();
+            $allMarketplaces = Marketplace::where('is_active', true)->get();
+            foreach ($allMarketplaces as $mp) {
+                if (! in_array($mp->id, $existingMarketplaceIds, true)) {
+                    $this->createPricingForMarketplace($product, $mp, $usdCost, $usdPrice);
+                }
+            }
         }
 
         // Add missing SEO
@@ -567,65 +577,68 @@ class ImportEnrichedProductsCommand extends Command
         }
     }
 
+    private array $exchangeRates = [];
+
+    private function loadExchangeRates(): array
+    {
+        if (! empty($this->exchangeRates)) {
+            return $this->exchangeRates;
+        }
+        $marketplaces = Marketplace::where('is_active', true)->get();
+        $currencyCodes = $marketplaces->pluck('currency_code')->unique()->filter()->toArray();
+        if (empty($currencyCodes)) {
+            return $this->exchangeRates = [];
+        }
+        $rateRows = ExchangeRate::where('from_currency_code', 'USD')
+            ->whereIn('to_currency_code', $currencyCodes)
+            ->where('is_active', true)
+            ->orderBy('fetched_at', 'desc')
+            ->get();
+        foreach ($rateRows as $row) {
+            $key = $row->to_currency_code;
+            if (! isset($this->exchangeRates[$key])) {
+                $this->exchangeRates[$key] = (float) $row->rate;
+            }
+        }
+        return $this->exchangeRates;
+    }
+
+    private function createPricingForMarketplace(Product $product, Marketplace $marketplace, float $usdCost, float $usdPrice): void
+    {
+        $exists = MarketplaceProductPrice::where('product_id', $product->id)
+            ->where('marketplace_id', $marketplace->id)
+            ->exists();
+        if ($exists) {
+            return;
+        }
+        $rates = $this->loadExchangeRates();
+        $currencyCode = $marketplace->currency_code ?? 'USD';
+        $rate = $rates[$currencyCode] ?? 1.0;
+        MarketplaceProductPrice::create([
+            'marketplace_id' => $marketplace->id,
+            'product_id' => $product->id,
+            'base_price' => round($usdPrice * $rate, 2),
+            'sale_price' => round($usdPrice * $rate, 2),
+            'cost_price' => round($usdCost * $rate, 2),
+            'currency_code' => $currencyCode,
+            'is_active' => true,
+            'source_name' => 'neogiga_mpn_enrichment',
+            'imported_at' => now(),
+        ]);
+        $this->stats['prices_created']++;
+    }
+
     private function createPricing(Product $product, array $item): void
     {
         $pricing = $item['pricing'] ?? [];
         $usdCost = (float) ($pricing['purchase_cost'] ?? $item['technical_specs']['Purchase_Cost_USD'] ?? 0);
         $usdPrice = (float) ($pricing['resale_price'] ?? $item['technical_specs']['Resale_Price_USD'] ?? 0);
-
-        // Get all active marketplaces with their currencies
-        $marketplaces = Marketplace::where('is_active', true)->get();
-        if ($marketplaces->isEmpty()) {
+        if ($usdPrice <= 0) {
             return;
         }
-
-        // Preload exchange rates for all relevant currency pairs
-        $currencyCodes = $marketplaces->pluck('currency_code')->unique()->filter()->toArray();
-        $rates = [];
-        if (! empty($currencyCodes)) {
-            $rateRows = ExchangeRate::where('from_currency_code', 'USD')
-                ->whereIn('to_currency_code', $currencyCodes)
-                ->where('is_active', true)
-                ->orderBy('fetched_at', 'desc')
-                ->get();
-
-            foreach ($rateRows as $row) {
-                // Keep the latest rate per currency pair
-                $key = $row->to_currency_code;
-                if (! isset($rates[$key])) {
-                    $rates[$key] = (float) $row->rate;
-                }
-            }
-        }
-
+        $marketplaces = Marketplace::where('is_active', true)->get();
         foreach ($marketplaces as $marketplace) {
-            // Skip if pricing already exists for this product+marketplace
-            $exists = MarketplaceProductPrice::where('product_id', $product->id)
-                ->where('marketplace_id', $marketplace->id)
-                ->exists();
-            if ($exists) {
-                continue;
-            }
-
-            $currencyCode = $marketplace->currency_code ?? 'USD';
-            $rate = $rates[$currencyCode] ?? 1.0;
-
-            $localCost = round($usdCost * $rate, 2);
-            $localPrice = round($usdPrice * $rate, 2);
-
-            MarketplaceProductPrice::create([
-                'marketplace_id' => $marketplace->id,
-                'product_id' => $product->id,
-                'base_price' => $localPrice,
-                'sale_price' => $localPrice,
-                'cost_price' => $localCost,
-                'currency_code' => $currencyCode,
-                'is_active' => true,
-                'source_name' => 'neogiga_mpn_enrichment',
-                'imported_at' => now(),
-            ]);
-
-            $this->stats['prices_created']++;
+            $this->createPricingForMarketplace($product, $marketplace, $usdCost, $usdPrice);
         }
     }
 
