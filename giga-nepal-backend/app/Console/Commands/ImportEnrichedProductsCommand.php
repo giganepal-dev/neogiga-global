@@ -111,9 +111,10 @@ class ImportEnrichedProductsCommand extends Command
         $mpn = $item['mpn'];
         $normalizedMpn = Str::upper(trim($mpn));
 
-        // Check for existing product by MPN
+        // Check for existing product by MPN or SKU
         $existing = Product::where('mpn', $mpn)
             ->orWhere('normalized_mpn', $normalizedMpn)
+            ->orWhere('sku', $mpn)
             ->first();
 
         if ($existing) {
