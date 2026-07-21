@@ -9,8 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('smd_marking_matches', function (Blueprint $table) {
-            $table->string('manufacturer_text')->nullable()->after('manufacturer_id');
+            if (! Schema::hasColumn('smd_marking_matches', 'manufacturer_text')) {
+                $table->string('manufacturer_text')->nullable()->after('manufacturer_id');
+            }
         });
+
+        if (Schema::hasTable('smd_import_runs')) {
+            return;
+        }
 
         Schema::create('smd_import_runs', function (Blueprint $table) {
             $table->id();
