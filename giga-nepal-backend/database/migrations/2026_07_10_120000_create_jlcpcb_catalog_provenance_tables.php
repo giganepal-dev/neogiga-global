@@ -50,7 +50,13 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->foreignId('source_id')->constrained('catalog_sources')->cascadeOnDelete();
             $table->string('source_part_id');
-            $table->string('import_batch_id')->nullable();
+            // Must match catalog_import_batches.id type per driver (uuid on
+            // pgsql, string on sqlite) or Postgres rejects the FK (42804).
+            if (DB::getDriverName() === 'sqlite') {
+                $table->string('import_batch_id')->nullable();
+            } else {
+                $table->uuid('import_batch_id')->nullable();
+            }
             $table->text('source_url')->nullable();
             $table->string('source_payload_hash', 64)->index();
             $table->timestamp('source_updated_at')->nullable();
@@ -68,7 +74,11 @@ return new class extends Migration
 
         Schema::create('catalog_import_errors', function (Blueprint $table) {
             $table->id();
-            $table->string('batch_id');
+            if (DB::getDriverName() === 'sqlite') {
+                $table->string('batch_id');
+            } else {
+                $table->uuid('batch_id');
+            }
             $table->string('source_part_id')->nullable()->index();
             $table->text('reason');
             // Use JSON for SQLite instead of JSONB
@@ -80,7 +90,11 @@ return new class extends Migration
         Schema::create('catalog_distributor_offers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-            $table->string('import_batch_id')->nullable();
+            if (DB::getDriverName() === 'sqlite') {
+                $table->string('import_batch_id')->nullable();
+            } else {
+                $table->uuid('import_batch_id')->nullable();
+            }
             $table->string('distributor');
             $table->string('sku');
             // Use JSON for SQLite instead of JSONB
