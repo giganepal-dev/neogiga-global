@@ -118,13 +118,15 @@ class DistributorTerritoryStockService
     {
         $query = DB::table('inventory_stocks')
             ->where(function ($inner) {
-                $inner->whereNull('inventory_stocks.status')->orWhere('inventory_stocks.status', 'active');
+                // inventory_stocks has is_active (bool), not a status column.
+                $inner->whereNull('inventory_stocks.is_active')->orWhere('inventory_stocks.is_active', true);
             });
 
         $territories = $this->territories($distributor);
 
         if ($territories === []) {
             $query->whereRaw('1 = 0');
+
             return $query;
         }
 
@@ -133,7 +135,7 @@ class DistributorTerritoryStockService
                 $outer->orWhere(function ($inner) use ($territory) {
                     foreach (['country_id', 'region_id', 'city_id'] as $column) {
                         if (! empty($territory[$column])) {
-                            $inner->where('inventory_stocks.' . $column, $territory[$column]);
+                            $inner->where('inventory_stocks.'.$column, $territory[$column]);
                         }
                     }
                 });
