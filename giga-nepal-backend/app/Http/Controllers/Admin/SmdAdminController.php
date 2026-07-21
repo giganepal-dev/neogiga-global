@@ -27,7 +27,7 @@ class SmdAdminController extends Controller
                 'smd_marking_matches.*',
                 'smd_marking_codes.display_marking',
                 'products.name as product_name',
-                'manufacturers.name as manufacturer_name'
+                DB::raw('COALESCE(manufacturers.name, smd_marking_matches.manufacturer_text) as manufacturer_name')
             )
             ->orderByDesc('smd_marking_matches.id')
             ->limit(50)
@@ -53,7 +53,7 @@ class SmdAdminController extends Controller
             ->leftJoin('products', 'smd_marking_matches.product_id', '=', 'products.id')
             ->leftJoin('manufacturers', 'smd_marking_matches.manufacturer_id', '=', 'manufacturers.id')
             ->whereIn('smd_marking_matches.verification_status', ['unverified', 'reported'])
-            ->select('smd_marking_matches.*', 'smd_marking_codes.display_marking', 'products.name as product_name', 'manufacturers.name as manufacturer_name')
+            ->select('smd_marking_matches.*', 'smd_marking_codes.display_marking', 'products.name as product_name', DB::raw('COALESCE(manufacturers.name, smd_marking_matches.manufacturer_text) as manufacturer_name'))
             ->orderByDesc('smd_marking_matches.match_confidence')
             ->paginate(50);
 

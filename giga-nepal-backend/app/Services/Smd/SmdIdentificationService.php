@@ -58,7 +58,7 @@ class SmdIdentificationService
                 'smd_marking_codes.display_marking',
                 'smd_packages.canonical_name as package_name',
                 'smd_packages.pin_count',
-                'manufacturers.name as manufacturer_name',
+                DB::raw('COALESCE(manufacturers.name, smd_marking_matches.manufacturer_text) as manufacturer_name'),
                 'products.name as product_name',
                 'products.slug as product_slug',
             );
@@ -78,7 +78,10 @@ class SmdIdentificationService
         }
 
         if (! empty($params['manufacturer'])) {
-            $query->where('manufacturers.name', 'ILIKE', '%' . $params['manufacturer'] . '%');
+            $query->where(function ($q) use ($params) {
+                $q->where('manufacturers.name', 'ILIKE', '%' . $params['manufacturer'] . '%')
+                  ->orWhere('smd_marking_matches.manufacturer_text', 'ILIKE', '%' . $params['manufacturer'] . '%');
+            });
         }
 
         if (! empty($params['function'])) {

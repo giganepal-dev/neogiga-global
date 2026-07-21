@@ -107,6 +107,48 @@ class SmdIdentificationController extends Controller
         return response()->json(['data' => ['status' => 'linked']]);
     }
 
+    /** Admin: trigger SMD import run. */
+    public function adminImport(Request $request): JsonResponse
+    {
+        $id = DB::table('smd_import_runs')->insertGetId([
+            'source' => $request->input('source', 'yooneed'),
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Dispatch import in the background
+        $args = ['--source' => $request->input('source', 'yooneed')];
+        if ($request->has('limit')) {
+            $args['--limit'] = (int) $request->input('limit');
+        }
+        if ($request->has('prefix')) {
+            $args['--prefix'] = $request->input('prefix');
+        }
+
+        \Illuminate\Support\Facades\Artisan::queue('neogiga:smd-import', $args);
+
+        // Mark as running (the command doesn't update this table yet — ponytail: poll for completion)
+        DB::table('smd_import_runs')->where('id', $id)->update([
+            'status' => 'running',
+            'started_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['data' => ['id' => $id, 'status' => 'running']], 202);
+    }
+
+    /** Admin: check import run status. */
+    public function adminImportStatus(int $id): JsonResponse
+    {
+        $run = DB::table('smd_import_runs')->find($id);
+        if (! $run) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        return response()->json(['data' => $run]);
+    }
+
     /** Admin: get verification queue. */
     public function adminQueue(): JsonResponse
     {
@@ -114,7 +156,7 @@ class SmdIdentificationController extends Controller
             ->join('smd_marking_codes', 'smd_marking_matches.smd_marking_code_id', '=', 'smd_marking_codes.id')
             ->leftJoin('manufacturers', 'smd_marking_matches.manufacturer_id', '=', 'manufacturers.id')
             ->whereIn('smd_marking_matches.verification_status', ['unverified', 'reported'])
-            ->select('smd_marking_matches.*', 'smd_marking_codes.display_marking', 'manufacturers.name as manufacturer_name')
+            ->select('smd_marking_matches.*', 'smd_marking_codes.display_marking', DB::raw('COALESCE(manufacturers.name, smd_marking_matches.manufacturer_text) as manufacturer_name'))
             ->orderBy('smd_marking_matches.match_confidence', 'desc')
             ->limit(50)
             ->get();
