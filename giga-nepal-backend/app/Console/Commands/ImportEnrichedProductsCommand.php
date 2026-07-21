@@ -443,7 +443,6 @@ class ImportEnrichedProductsCommand extends Command
         }
 
         $group = ProductSpecGroup::create([
-            'product_id' => $product->id,
             'category_id' => $product->category_id,
             'name' => 'Technical Specifications',
             'sort_order' => 1,
