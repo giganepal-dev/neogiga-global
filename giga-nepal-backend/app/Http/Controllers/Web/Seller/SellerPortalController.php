@@ -21,7 +21,7 @@ class SellerPortalController extends Controller
             return redirect('/seller');
         }
 
-return view('seller.login');
+        return view('seller.login');
     }
 
     public function login(Request $r, SellerContextService $c): RedirectResponse
@@ -52,7 +52,11 @@ return view('seller.login');
     public function dashboard(Request $r, SellerDashboardService $d): View
     {
         $v = $r->attributes->get('vendor');
-        $stats = ['product_count' => DB::table('products')->where('vendor_id', $v->id)->count(), 'order_count' => DB::table('orders')->where('vendor_id', $v->id)->count()];
+        // Orders link to vendors through vendor_orders (orders has no vendor_id).
+        $orderCount = Schema::hasTable('vendor_orders')
+            ? DB::table('vendor_orders')->where('vendor_id', $v->id)->count()
+            : 0;
+        $stats = ['product_count' => DB::table('products')->where('vendor_id', $v->id)->count(), 'order_count' => $orderCount];
 
         return view('seller.dashboard', compact('v', 'stats'));
     }
@@ -92,6 +96,6 @@ return view('seller.login');
                 ->orderByDesc('id')->paginate(20)->withQueryString()
             : null;
 
-        return view('seller.orders', ['v' => $v, 'orders' => $orders, 'filters' => ['status' => (string) $r->query('status','')]]);
+        return view('seller.orders', ['v' => $v, 'orders' => $orders, 'filters' => ['status' => (string) $r->query('status', '')]]);
     }
 }
