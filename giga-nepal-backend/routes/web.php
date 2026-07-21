@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
 use App\Http\Controllers\Admin\PricingAdminController;
 use App\Http\Controllers\Admin\PosAdminController;
 use App\Http\Controllers\Admin\ProductImageController as AdminProductImage;
+use App\Http\Controllers\Admin\SmdAdminController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Pcb\PcbPublicQuoteController;
 use App\Http\Controllers\Web\AiCommercePageController;
@@ -259,6 +260,13 @@ Route::prefix('admin')->group(function () {
         Route::post('marketplaces/{id}/disable', [AdminMarketplaceConfig::class, 'disable'])->whereNumber('id')->middleware('throttle:20,1');
         Route::post('marketplaces/{id}/generate-domain', [AdminMarketplaceConfig::class, 'generateDomain'])->whereNumber('id')->middleware('throttle:20,1');
         Route::post('marketplaces/{id}/verify-domain', [AdminMarketplaceConfig::class, 'verifyDomain'])->whereNumber('id')->middleware('throttle:20,1');
+
+        // SMD Marking Code Identification
+        Route::get('smd', [SmdAdminController::class, 'index']);
+        Route::get('smd/markings', [SmdAdminController::class, 'markings']);
+        Route::get('smd/queue', [SmdAdminController::class, 'queue']);
+        Route::post('smd/verify/{id}', [SmdAdminController::class, 'verify'])->whereNumber('id');
+        Route::post('smd/reject/{id}', [SmdAdminController::class, 'reject'])->whereNumber('id');
         Route::post('marketplaces/{id}/generate-seo', [AdminMarketplaceConfig::class, 'generateSeo'])->whereNumber('id')->middleware('throttle:20,1');
         Route::post('marketplaces/{id}/clear-cache', [AdminMarketplaceConfig::class, 'clearCache'])->whereNumber('id')->middleware('throttle:20,1');
         Route::get('vendors', [AdminDash::class, 'vendors']);
