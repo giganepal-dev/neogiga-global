@@ -414,50 +414,53 @@ class ImportEnrichedProductsCommand extends Command
             return;
         }
 
+        // 1. Global product_seo_meta record (one per product — unique constraint)
+        ProductSeoMeta::create([
+            'product_id' => $product->id,
+            'title' => $seo['title'] ?? "{$mpn} — {$mfr} | NeoGiga",
+            'meta_title' => $seo['title'] ?? "{$mpn} — {$mfr} | NeoGiga",
+            'meta_description' => $seo['description'] ?? $product->short_description,
+            'canonical_url' => "https://neogiga.com/products/{$product->slug}",
+            'schema_type' => 'Product',
+            'schema_json' => $item['structured_data'] ?? null,
+            'confidence_level' => 80,
+            'generated_title' => $seo['title'] ?? null,
+            'generated_description' => $seo['description'] ?? null,
+            'generated_canonical_url' => "https://neogiga.com/products/{$product->slug}",
+            'is_manual_override' => false,
+            'is_locked' => false,
+            'active_source' => 'neogiga_mpn_enrichment',
+            'generated_at' => now(),
+            'metadata' => [
+                'keywords' => $seo['keywords'] ?? [],
+                'marketplace_code' => 'GLOBAL',
+            ],
+        ]);
+        $this->stats['seo_created']++;
+
+        // 2. Regional SEO version history per active marketplace
         $marketplaces = Marketplace::where('is_active', true)->get();
-        if ($marketplaces->isEmpty()) {
-            $marketplaces = collect([null]); // fallback: one global record
-        }
-
         foreach ($marketplaces as $marketplace) {
-            $countryName = $marketplace?->name ?? 'Global';
-            $countryCode = $marketplace?->country_iso2 ?? 'global';
-            $domain = $marketplace?->canonical_domain ?? $marketplace?->domain ?? 'neogiga.com';
-            $locale = $marketplace?->locale ?? 'en';
+            if (strtoupper($marketplace->code) === 'GLOBAL') {
+                continue; // already created above
+            }
 
-            // Localize title per region
-            $regionalTitle = match (true) {
-                $marketplace === null => ($seo['title'] ?? "{$mpn} — {$mfr} | NeoGiga"),
-                default => "Buy {$mpn} Online in {$countryName} — {$mfr} | NeoGiga",
-            };
+            $countryName = $marketplace->name;
+            $domain = $marketplace->canonical_domain ?? $marketplace->domain ?? 'neogiga.com';
 
-            $regionalDesc = match (true) {
-                $marketplace === null => ($seo['description'] ?? null),
-                default => "Buy {$mpn} by {$mfr} online in {$countryName}. Fast shipping, competitive pricing & bulk discounts available. Technical specifications and datasheet included.",
-            };
-
-            ProductSeoMeta::create([
-                'product_id' => $product->id,
-                'title' => $regionalTitle,
-                'meta_title' => $regionalTitle,
-                'meta_description' => $regionalDesc,
-                'canonical_url' => "https://{$domain}/products/{$product->slug}",
-                'schema_type' => 'Product',
-                'schema_json' => $item['structured_data'] ?? null,
-                'confidence_level' => 80,
-                'generated_title' => $regionalTitle,
-                'generated_description' => $regionalDesc,
-                'generated_canonical_url' => "https://{$domain}/products/{$product->slug}",
-                'is_manual_override' => false,
-                'is_locked' => false,
+            DB::table('catalog_seo_versions')->insert([
+                'entity_type' => 'product',
+                'entity_id' => $product->id,
+                'marketplace_id' => $marketplace->id,
+                'locale' => $marketplace->locale ?? 'en',
+                'version' => 1,
                 'active_source' => 'neogiga_mpn_enrichment',
-                'generated_at' => now(),
-                'metadata' => [
-                    'keywords' => $seo['keywords'] ?? [],
-                    'marketplace_code' => $marketplace?->code ?? 'global',
-                    'country_iso2' => $countryCode,
-                    'locale' => $locale,
-                ],
+                'title' => "Buy {$mpn} Online in {$countryName} — {$mfr} | NeoGiga",
+                'description' => "Buy {$mpn} by {$mfr} online in {$countryName}. Fast shipping, competitive pricing & bulk discounts available.",
+                'canonical_url' => "https://{$domain}/products/{$product->slug}",
+                'change_type' => 'generated',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             $this->stats['seo_created']++;
