@@ -87,40 +87,41 @@ class SmdIdentificationService
 
         $matches = $query->orderByDesc('smd_marking_matches.match_confidence')->limit(30)->get();
 
-        return $matches->map(function ($match) use ($params, $normalized) {
+        return $matches->map(function ($match) use ($params) {
+            $m = (array) $match;
             $scored = $this->scorer->score(
                 [
-                    'marking_matches_exact' => $match->display_marking === $params['marking'],
+                    'marking_matches_exact' => ($m['display_marking'] ?? '') === $params['marking'],
                     'package_matches' => ! empty($params['package']),
-                    'package_conflict' => false, // handled at query level
+                    'package_conflict' => false,
                     'manufacturer_matches' => ! empty($params['manufacturer']),
                     'manufacturer_conflict' => false,
-                    'pin_count_matches' => ! empty($params['pins']) && $match->pin_count == (int) $params['pins'],
+                    'pin_count_matches' => ! empty($params['pins']) && ($m['pin_count'] ?? 0) == (int) $params['pins'],
                     'function_matches' => ! empty($params['function']),
                     'electrical_context_match' => false,
                 ],
-                $match,
-                (bool) $match->product_id,
-                $match->verification_status === 'verified',
+                $m,
+                (bool) ($m['product_id'] ?? false),
+                ($m['verification_status'] ?? '') === 'verified',
             );
 
             return [
-                'id' => $match->id,
-                'marking' => $match->display_marking,
-                'mpn' => $match->candidate_mpn,
-                'manufacturer' => $match->manufacturer_name,
-                'package' => $match->package_name ?? $match->package_text,
-                'pins' => $match->pin_count,
-                'function' => $match->component_function,
-                'characteristics' => $match->characteristic_text,
+                'id' => $m['id'] ?? null,
+                'marking' => $m['display_marking'] ?? '',
+                'mpn' => $m['candidate_mpn'] ?? '',
+                'manufacturer' => $m['manufacturer_name'] ?? null,
+                'package' => $m['package_name'] ?? $m['package_text'] ?? null,
+                'pins' => $m['pin_count'] ?? null,
+                'function' => $m['component_function'] ?? null,
+                'characteristics' => $m['characteristic_text'] ?? null,
                 'confidence_score' => $scored['score'],
                 'confidence_class' => $scored['class'],
                 'confidence_factors' => $scored['factors'],
-                'has_product' => (bool) $match->product_id,
-                'product_name' => $match->product_name,
-                'product_slug' => $match->product_slug,
-                'verification_status' => $match->verification_status,
-                'source_url' => $match->source_url,
+                'has_product' => (bool) ($m['product_id'] ?? false),
+                'product_name' => $m['product_name'] ?? null,
+                'product_slug' => $m['product_slug'] ?? null,
+                'verification_status' => $m['verification_status'] ?? 'unverified',
+                'source_url' => $m['source_url'] ?? null,
             ];
         })->all();
     }
