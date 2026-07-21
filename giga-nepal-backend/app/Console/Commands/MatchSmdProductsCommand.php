@@ -7,112 +7,87 @@ use Illuminate\Support\Facades\DB;
 
 class MatchSmdProductsCommand extends Command
 {
-    protected $signature = 'neogiga:smd-match-products
-                            {--limit=0 : Max matches to process}
-                            {--min-confidence=50 : Minimum score to auto-link}';
-
-    protected $description = 'Match imported SMD marking candidates against existing NeoGiga products.';
+    protected $signature = 'neogiga:smd-match-products';
+    protected $description = 'Match SMD marking candidates against NeoGiga products with batch SQL JOINs.';
 
     public function handle(): int
     {
-        $limit = (int) $this->option('limit');
-        $minConfidence = (int) $this->option('min-confidence');
+        $this->info('Strategy 1: Exact MPN/SKU match (75% confidence)...');
 
-        $this->info('Matching SMD candidates against NeoGiga catalog...');
+        // Single UPDATE: JOIN smd_marking_matches ↔ products on normalized MPN
+        $exact = DB::statement('
+            UPDATE smd_marking_matches
+            SET product_id = p.id,
+                manufacturer_id = p.manufacturer_id,
+                match_confidence = 75,
+                verification_status = \'matched\',
+                updated_at = NOW()
+            FROM products p
+            WHERE smd_marking_matches.product_id IS NULL
+              AND smd_marking_matches.verification_status = \'unverified\'
+              AND p.status IN (\'active\', \'approved\')
+              AND UPPER(p.mpn) = smd_marking_matches.normalized_mpn
+        ');
 
-        // Get unverified matches
-        $query = DB::table('smd_marking_matches')
-            ->where('verification_status', 'unverified')
-            ->whereNull('product_id')
-            ->orderBy('id');
+        $this->info("  Exact MPN matches: {$exact}");
 
-        if ($limit > 0) {
-            $query->limit($limit);
-        }
+        // Strategy 2: SKU match (75% confidence)
+        $sku = DB::statement('
+            UPDATE smd_marking_matches
+            SET product_id = p.id,
+                manufacturer_id = p.manufacturer_id,
+                match_confidence = 75,
+                verification_status = \'matched\',
+                updated_at = NOW()
+            FROM products p
+            WHERE smd_marking_matches.product_id IS NULL
+              AND smd_marking_matches.verification_status = \'unverified\'
+              AND p.status IN (\'active\', \'approved\')
+              AND UPPER(p.sku) = smd_marking_matches.normalized_mpn
+        ');
 
-        $matches = $query->get();
-        $total = $matches->count();
-        $linked = 0;
-        $skipped = 0;
+        $this->info("  Exact SKU matches: {$sku}");
 
-        $bar = $this->output->createProgressBar($total);
+        // Strategy 3: Case-insensitive MPN match (60% confidence)
+        $ci = DB::statement('
+            UPDATE smd_marking_matches
+            SET product_id = p.id,
+                manufacturer_id = p.manufacturer_id,
+                match_confidence = 60,
+                verification_status = \'matched\',
+                updated_at = NOW()
+            FROM products p
+            WHERE smd_marking_matches.product_id IS NULL
+              AND smd_marking_matches.verification_status = \'unverified\'
+              AND p.status IN (\'active\', \'approved\')
+              AND p.mpn ILIKE smd_marking_matches.candidate_mpn
+        ');
 
-        foreach ($matches as $match) {
-            $result = $this->tryMatch($match);
+        $this->info("  Case-insensitive MPN matches: {$ci}");
 
-            if ($result['linked']) {
-                DB::table('smd_marking_matches')->where('id', $match->id)->update([
-                    'product_id' => $result['product_id'],
-                    'manufacturer_id' => $result['manufacturer_id'],
-                    'match_confidence' => $result['confidence'],
-                    'verification_status' => $result['confidence'] >= $minConfidence ? 'matched' : 'unverified',
-                    'updated_at' => now(),
-                ]);
-                $linked++;
-            } else {
-                $skipped++;
-            }
+        // Strategy 4: MPN contains candidate (55% confidence, min 4 chars)
+        $contains = DB::statement("
+            UPDATE smd_marking_matches
+            SET product_id = p.id,
+                manufacturer_id = p.manufacturer_id,
+                match_confidence = 55,
+                verification_status = 'matched',
+                updated_at = NOW()
+            FROM products p
+            WHERE smd_marking_matches.product_id IS NULL
+              AND smd_marking_matches.verification_status = 'unverified'
+              AND p.status IN ('active', 'approved')
+              AND length(smd_marking_matches.candidate_mpn) >= 4
+              AND (p.mpn ILIKE '%' || smd_marking_matches.candidate_mpn || '%'
+                   OR p.sku ILIKE '%' || smd_marking_matches.candidate_mpn || '%')
+        ");
 
-            $bar->advance();
-        }
+        $this->info("  Partial MPN/SKU matches: {$contains}");
 
-        $bar->finish();
-        $this->newLine(2);
-        $this->info("Done. Linked: {$linked}, Skipped: {$skipped}");
+        // Final stats
+        $total = DB::table('smd_marking_matches')->whereNotNull('product_id')->count();
+        $this->info("Done. {$total} matches now linked to NeoGiga products.");
 
         return self::SUCCESS;
-    }
-
-    private function tryMatch(object $match): array
-    {
-        $mpn = $match->normalized_mpn;
-        $candidateMpn = $match->candidate_mpn;
-
-        // Strategy 1: Exact MPN match in products table
-        $product = DB::table('products')
-            ->where(function ($q) use ($mpn, $candidateMpn) {
-                $q->whereRaw('upper(mpn) = ?', [$mpn])
-                  ->orWhereRaw('upper(sku) = ?', [$mpn])
-                  ->orWhere('mpn', 'ILIKE', $candidateMpn)
-                  ->orWhere('sku', 'ILIKE', $candidateMpn);
-            })
-            ->whereIn('status', ['active', 'approved'])
-            ->select('id', 'name', 'mpn', 'manufacturer_id', 'brand_id')
-            ->first();
-
-        if ($product) {
-            // Verify: check if the function matches what we'd expect
-            $mfrId = $product->manufacturer_id;
-            $confidence = 75; // MPN found in catalog
-
-            return [
-                'linked' => true,
-                'product_id' => $product->id,
-                'manufacturer_id' => $mfrId,
-                'confidence' => $confidence,
-            ];
-        }
-
-        // Strategy 2: MPN contains match (partial)
-        $product2 = DB::table('products')
-            ->where(function ($q) use ($candidateMpn, $mpn) {
-                $q->where('mpn', 'ILIKE', '%' . $candidateMpn . '%')
-                  ->orWhere('sku', 'ILIKE', '%' . $candidateMpn . '%')
-                  ->orWhere('name', 'ILIKE', '%' . $candidateMpn . '%');
-            })
-            ->whereIn('status', ['active', 'approved'])
-            ->select('id', 'name', 'mpn', 'manufacturer_id')
-            ->first();
-
-        if ($product2 && strlen($candidateMpn) >= 4) {
-            return [
-                'linked' => true,
-                'product_id' => $product2->id,
-                'manufacturer_id' => $product2->manufacturer_id,
-                'confidence' => 55, // partial match
-            ];
-        }
-
-        return ['linked' => false, 'product_id' => null, 'manufacturer_id' => null, 'confidence' => 0];
     }
 }
