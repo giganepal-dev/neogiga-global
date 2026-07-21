@@ -11,6 +11,8 @@ use App\Models\Marketplace\ProductCategory;
 use App\Models\Marketplace\ProductImage;
 use App\Models\Marketplace\ProductResource;
 use App\Models\Marketplace\ProductSeoMeta;
+use App\Models\Marketplace\ProductSpec;
+use App\Models\Marketplace\ProductSpecGroup;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -115,6 +117,8 @@ class ImportEnrichedProductsCommand extends Command
             ->first();
 
         if ($existing) {
+            // Existing product — fill in missing specs, datasheets, images, pricing
+            $this->fixupExistingProduct($existing, $item);
             $this->stats['skipped_duplicate']++;
 
             return;
@@ -141,10 +145,13 @@ class ImportEnrichedProductsCommand extends Command
                 $this->linkDatasheet($product, $item['urls']['datasheet'], $item['manufacturer']);
             }
 
+            // 5b. Create specs in product_specs table
+            $this->createSpecs($product, $item);
+
             // 6. Create SEO metadata
             $this->createSeoMeta($product, $item);
 
-            // 7. Create marketplace pricing
+            // 7. Create regional marketplace pricing
             $this->createPricing($product, $item);
 
             $this->stats['created']++;
@@ -401,6 +408,86 @@ class ImportEnrichedProductsCommand extends Command
         ]);
 
         $this->stats['datasheets_linked']++;
+    }
+
+    private function createSpecs(Product $product, array $item): void
+    {
+        $specs = $item['technical_specs'] ?? [];
+        if (empty($specs)) {
+            return;
+        }
+
+        // Skip these keys — stored in other tables/columns
+        $skipKeys = [
+            'Purchase_Cost_USD', 'Resale_Price_USD', 'Margin_Percent',
+            'Product_Page_URL', 'Datasheet_URL', 'Product_Image_URL',
+        ];
+
+        // Check if specs already exist for this product
+        $exists = ProductSpec::where('product_id', $product->id)->exists();
+        if ($exists) {
+            return;
+        }
+
+        $group = ProductSpecGroup::create([
+            'product_id' => $product->id,
+            'category_id' => $product->category_id,
+            'name' => 'Technical Specifications',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $sortOrder = 0;
+        foreach ($specs as $key => $value) {
+            if (in_array($key, $skipKeys, true)) {
+                continue;
+            }
+            if (empty($value) || $value === 'See Manufacturer Datasheet') {
+                continue;
+            }
+
+            // Clean up the key for display
+            $displayName = str_replace('_', ' ', $key);
+
+            ProductSpec::create([
+                'product_id' => $product->id,
+                'spec_group_id' => $group->id,
+                'name' => $displayName,
+                'value' => (string) $value,
+                'unit' => null,
+                'sort_order' => $sortOrder++,
+            ]);
+        }
+    }
+
+    private function fixupExistingProduct(Product $product, array $item): void
+    {
+        // Add missing specs
+        if (! ProductSpec::where('product_id', $product->id)->exists()) {
+            $this->createSpecs($product, $item);
+        }
+
+        // Add missing datasheet
+        $dsUrl = $item['urls']['datasheet'] ?? null;
+        if ($dsUrl && ! ProductResource::where('product_id', $product->id)->where('type', 'datasheet')->exists()) {
+            $this->linkDatasheet($product, $dsUrl, $item['manufacturer']);
+        }
+
+        // Add missing image
+        $imgUrl = $item['urls']['image'] ?? null;
+        if ($imgUrl && ! ProductImage::where('product_id', $product->id)->exists()) {
+            $this->downloadImage($product, $imgUrl);
+        }
+
+        // Add missing regional pricing
+        if (! MarketplaceProductPrice::where('product_id', $product->id)->exists()) {
+            $this->createPricing($product, $item);
+        }
+
+        // Add missing SEO
+        if (! ProductSeoMeta::where('product_id', $product->id)->exists()) {
+            $this->createSeoMeta($product, $item);
+        }
     }
 
     private function createSeoMeta(Product $product, array $item): void
