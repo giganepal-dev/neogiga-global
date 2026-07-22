@@ -176,7 +176,9 @@ class ImportCatalogJsonlCommand extends Command
                 'mpn' => $mpn,
                 'normalized_mpn' => $normalizedMpn,
                 'type' => 'simple',
-                'status' => 'published',
+                // products.status has a CHECK constraint: draft|pending|pending_approval|approved|rejected|archived.
+                // 'approved' is the live/visible status the storefront filters on (all 631k existing rows use it).
+                'status' => 'approved',
                 'manufacturer_id' => $manufacturerId,
                 'manufacturer_name' => $item['manufacturer'] ?? null,
                 'category_id' => $categoryId,
@@ -190,7 +192,7 @@ class ImportCatalogJsonlCommand extends Command
                 'low_stock_threshold' => 50,
                 'weight' => $item['weight_kg'] ?? null,
                 'weight_unit' => 'kg',
-                'marketplace_visibility' => ['global'],
+                'marketplace_visibility' => ['global' => true, 'nepal' => false, 'india' => false],
                 'source_name' => 'neogiga_catalog_xlsx',
                 'imported_at' => now(),
                 'approved_at' => now(),
