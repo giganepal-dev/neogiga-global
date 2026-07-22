@@ -48,7 +48,9 @@ use App\Http\Controllers\Web\SeoLandingController;
 use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\TwoFactorController;
 use App\Http\Controllers\Web\SsoController;
+use App\Http\Controllers\Api\Onboarding\DistributorApplicationController as PublicDistributorApplicationController;
 use App\Http\Controllers\Api\Onboarding\PartnerCountryController;
+use App\Http\Controllers\Api\Onboarding\SellerApplicationController as PublicSellerApplicationController;
 use App\Http\Middleware\CanonicalizeRegionalMarketplacePath;
 use App\Http\Middleware\EnsureB2BWeb;
 use App\Http\Middleware\EnsureDistributorWeb;
@@ -70,6 +72,8 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 */
 Route::domain('admin.neogiga.com')->get('/', fn () => redirect('/admin'));
 Route::get('/partner-country-options', [PartnerCountryController::class, 'index'])->middleware('throttle:60,1');
+Route::post('/partner-applications/seller', [PublicSellerApplicationController::class, 'store'])->middleware('throttle:writes');
+Route::post('/partner-applications/distributor', [PublicDistributorApplicationController::class, 'store'])->middleware('throttle:writes');
 
 // PCB Platform — pcb.neogiga.com
 if (config('pcb.enabled', true)) {

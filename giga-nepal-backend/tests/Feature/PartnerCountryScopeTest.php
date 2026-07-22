@@ -67,7 +67,7 @@ class PartnerCountryScopeTest extends TestCase
     {
         [$nepal, $india] = $this->countries();
 
-        $this->withHeader('CF-IPCountry', 'NP')->postJson('/api/seller-applications', [
+        $this->withHeader('CF-IPCountry', 'NP')->postJson('/partner-applications/seller', [
             'business_name' => 'Public Seller', 'contact_person' => 'Seller Owner',
             'email' => 'neogiga.public.seller@gmail.com', 'phone' => '+9779800000001',
             'country_id' => $india, 'operating_scope' => 'global',
@@ -77,7 +77,7 @@ class PartnerCountryScopeTest extends TestCase
             'email' => 'neogiga.public.seller@gmail.com', 'country_id' => $nepal, 'operating_scope' => 'global',
         ]);
 
-        $this->withHeader('CF-IPCountry', 'US')->postJson('/api/distributor-applications', [
+        $this->withHeader('CF-IPCountry', 'US')->postJson('/partner-applications/distributor', [
             'business_name' => 'Public Distributor', 'contact_person' => 'Distributor Owner',
             'email' => 'neogiga.public.distributor@gmail.com', 'phone' => '+919800000001',
             'country_id' => $india, 'operating_scope' => 'country',
@@ -86,6 +86,19 @@ class PartnerCountryScopeTest extends TestCase
         $this->assertDatabaseHas('distributor_applications', [
             'email' => 'neogiga.public.distributor@gmail.com', 'country_id' => $india, 'operating_scope' => 'country',
         ]);
+    }
+
+    public function test_public_partner_pages_use_same_origin_csrf_protected_submission_routes(): void
+    {
+        $this->get('/en/sell-on-neogiga')->assertOk()
+            ->assertSee('data-endpoint="/partner-applications/seller"', false)
+            ->assertSee('name="_token"', false)
+            ->assertDontSee('data-endpoint="/api/seller-applications"', false);
+
+        $this->get('/en/distributors')->assertOk()
+            ->assertSee('data-endpoint="/partner-applications/distributor"', false)
+            ->assertSee('name="_token"', false)
+            ->assertDontSee('data-endpoint="/api/distributor-applications"', false);
     }
 
     private function countries(): array

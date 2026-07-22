@@ -1,6 +1,7 @@
 <h2>Join Distributor Network</h2>
 <p class="muted">Applications are reviewed manually. Approval is not automatic.</p>
-<form class="ng-json-form" data-endpoint="/api/distributor-applications">
+<form class="ng-json-form" data-endpoint="/partner-applications/distributor">
+    @csrf
     <input type="hidden" name="source" value="public_distributor_network">
     <div class="form-grid">
         <div><label>Business name</label><input name="business_name" required></div>

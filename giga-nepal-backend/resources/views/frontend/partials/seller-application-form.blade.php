@@ -1,6 +1,7 @@
 <h2>Apply for Seller Early Access</h2>
 <p class="muted">Coming Soon / Early Access. This application creates a pending review record only.</p>
-<form class="ng-json-form" data-endpoint="/api/seller-applications">
+<form class="ng-json-form" data-endpoint="/partner-applications/seller">
+    @csrf
     <input type="hidden" name="source" value="public_sell_on_neogiga">
     <div class="form-grid">
         <div><label>Business name</label><input name="business_name" required></div>
