@@ -4,14 +4,17 @@
 __pycache__/
 *.o
 *.obj
-dist/
-build/
-target/
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
 
 # Dependencies
 node_modules/
-vendor/
-composer.lock
+venv/
+.venv/
 .env
 .env.local
 .env.*
@@ -20,28 +23,26 @@ composer.lock
 *.log
 *.tmp
 *.swp
+*.swo
 
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
 
 # OS generated files
 .DS_Store
 Thumbs.db
 
-# Coverage reports
+# Testing
+.coverage
 coverage/
 htmlcov/
-.coverage
 
-# Database migrations backup (if any)
-*.sql.bak
-*.dump
-
-# Cache directories
-.cache/
+# Build systems
+dist/
+build/
+target/
+.gradle/
 .mypy_cache/
 .pytest_cache/
 ```
