@@ -568,6 +568,7 @@ use App\Http\Controllers\Pcb\PcbQuoteController;
 use App\Http\Controllers\RegionStockVisibilityController;
 use App\Http\Controllers\StockReservationController;
 use App\Http\Controllers\TerritoryStockAllocationController;
+use App\Http\Controllers\Api\BarcodeController;
 
 $marketingPublic = function () {
     Route::post('/email/webhooks/{provider}', EmailWebhookController::class)
@@ -1054,4 +1055,36 @@ Route::prefix('v1/pcb/public')->group(function () {
     Route::post('quote/calculate', [PcbPublicQuoteController::class, 'calculate'])
         ->middleware('throttle:60,1');
     Route::get('capabilities', [PcbCapabilitiesController::class, 'index']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Barcode Management API Routes (Phase 1)
+|--------------------------------------------------------------------------
+|
+| Complete barcode system for POS, inventory, and warehouse management.
+| Supports multiple barcode types, scanning, label generation, and import.
+*/
+
+Route::prefix('v1/barcode')->middleware(['api.token'])->group(function () {
+    // Barcode scanning - lookup product by barcode
+    Route::post('/scan', [BarcodeController::class, 'scan']);
+    
+    // Barcode CRUD
+    Route::post('/', [BarcodeController::class, 'store']);
+    Route::get('/{id}', [BarcodeController::class, 'show'])->whereNumber('id');
+    Route::delete('/{id}', [BarcodeController::class, 'destroy'])->whereNumber('id');
+    
+    // Barcode generation
+    Route::get('/{id}/generate', [BarcodeController::class, 'generate'])->whereNumber('id');
+    
+    // Label generation
+    Route::post('/label/generate', [BarcodeController::class, 'generateLabel']);
+    Route::post('/labels/bulk', [BarcodeController::class, 'bulkLabels']);
+    
+    // Bulk operations
+    Route::post('/import', [BarcodeController::class, 'import']);
+    
+    // Scan logs and analytics
+    Route::get('/scan-logs', [BarcodeController::class, 'scanLogs']);
 });

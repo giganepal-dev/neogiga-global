@@ -2,13 +2,22 @@
 
 namespace App\Services\Labels;
 
+use App\Models\Marketplace\ProductBarcode;
+use App\Models\Marketplace\ProductBarcodeScanLog;
+use App\Models\Marketplace\Product;
+use App\Models\Marketplace\ProductVariant;
+use App\Models\Marketplace\ProductWarehouse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\QueryException;
+
 /**
  * Barcode + QR generation service.
  *
  * Uses SVG rendering (zero external deps) for CODE-128 barcodes and
  * QR codes. Outputs data URIs for inline HTML use or standalone SVG
  * for PDF/print layouts.
- *
+ * 
  * ponytail: SVG-only, no PNG/PDF raster. Add when thermal printers need bitmap.
  */
 class BarcodeService
@@ -175,5 +184,258 @@ class BarcodeService
             '10111101110','11101011110','11110101110','11010000100','11010010000',
             '11010011100','11000111010',
         ];
+    }
+
+    /**
+     * Create a new barcode for a product with validation.
+     * 
+     * @throws \Exception if barcode already exists
+     */
+    public function createBarcode(
+        int $productId,
+        string $barcodeValue,
+        string $type = ProductBarcode::TYPE_CODE128,
+        string $source = ProductBarcode::SOURCE_INTERNAL,
+        ?int $variantId = null,
+        ?int $warehouseId = null,
+        ?bool $isPrimary = false,
+        ?array $metadata = null
+    ): ProductBarcode {
+        // Validate barcode value
+        $this->validateBarcodeValue($barcodeValue, $type);
+
+        // Check for duplicates
+        $existing = ProductBarcode::where('barcode_value', $barcodeValue)
+            ->where('is_active', true)
+            ->first();
+
+        if ($existing) {
+            throw new \Exception("Barcode '{$barcodeValue}' already exists for product ID {$existing->product_id}");
+        }
+
+        return DB::transaction(function () use (
+            $productId,
+            $barcodeValue,
+            $type,
+            $source,
+            $variantId,
+            $warehouseId,
+            $isPrimary,
+            $metadata
+        ) {
+            // If setting as primary, unset other primaries
+            if ($isPrimary) {
+                ProductBarcode::where('product_id', $productId)
+                    ->whereNull('product_variant_id')
+                    ->update(['is_primary' => false]);
+            }
+
+            $checkDigit = null;
+            if (in_array($type, [ProductBarcode::TYPE_EAN13, ProductBarcode::TYPE_EAN8, ProductBarcode::TYPE_UPCA])) {
+                $checkDigit = $this->calculateCheckDigit($barcodeValue, $type);
+            }
+
+            $barcode = ProductBarcode::create([
+                'product_id' => $productId,
+                'product_variant_id' => $variantId,
+                'product_warehouse_id' => $warehouseId,
+                'barcode_value' => $barcodeValue,
+                'barcode_type' => $type,
+                'barcode_format' => 'svg',
+                'source' => $source,
+                'is_primary' => $isPrimary ?? false,
+                'is_active' => true,
+                'gs1_company_prefix' => $metadata['gs1_prefix'] ?? null,
+                'check_digit' => $checkDigit,
+                'metadata' => $metadata,
+            ]);
+
+            // Update product's primary barcode reference
+            if ($isPrimary && !$variantId && !$warehouseId) {
+                Product::where('id', $productId)->update(['barcode_primary' => $barcodeValue]);
+            }
+
+            Log::info("Barcode created", [
+                'barcode_id' => $barcode->id,
+                'product_id' => $productId,
+                'barcode_value' => $barcodeValue,
+                'type' => $type,
+            ]);
+
+            return $barcode;
+        });
+    }
+
+    /**
+     * Find product by barcode value.
+     * Returns product with barcode info.
+     */
+    public function findByBarcode(string $barcodeValue): ?array
+    {
+        $startTime = microtime(true);
+
+        $barcode = ProductBarcode::with(['product', 'variant', 'productWarehouse'])
+            ->where('barcode_value', $barcodeValue)
+            ->where('is_active', true)
+            ->first();
+
+        $responseTime = (microtime(true) - $startTime) * 1000;
+
+        if (!$barcode) {
+            return null;
+        }
+
+        return [
+            'barcode' => $barcode,
+            'product' => $barcode->product,
+            'variant' => $barcode->variant,
+            'warehouse' => $barcode->productWarehouse,
+            'response_time_ms' => round($responseTime, 2),
+        ];
+    }
+
+    /**
+     * Log a barcode scan attempt.
+     */
+    public function logScan(
+        string $barcodeValue,
+        bool $wasSuccessful,
+        ?int $barcodeId = null,
+        ?int $userId = null,
+        ?int $posTerminalId = null,
+        ?int $marketplaceId = null,
+        ?int $warehouseId = null,
+        string $source = ProductBarcodeScanLog::SOURCE_SCANNER,
+        ?string $failureReason = null,
+        ?array $context = null
+    ): ProductBarcodeScanLog {
+        return ProductBarcodeScanLog::create([
+            'product_barcode_id' => $barcodeId,
+            'barcode_value' => $barcodeValue,
+            'user_id' => $userId,
+            'pos_terminal_id' => $posTerminalId,
+            'marketplace_id' => $marketplaceId,
+            'warehouse_id' => $warehouseId,
+            'scan_source' => $source,
+            'was_successful' => $wasSuccessful,
+            'failure_reason' => $failureReason,
+            'scanner_device_id' => $context['device_id'] ?? null,
+            'context' => $context,
+        ]);
+    }
+
+    /**
+     * Import barcodes from CSV or array.
+     * Returns results with success/failure counts.
+     */
+    public function importBarcodes(array $barcodes, int $triggeredBy): array
+    {
+        $results = [
+            'total' => count($barcodes),
+            'success' => 0,
+            'failed' => 0,
+            'duplicates' => 0,
+            'errors' => [],
+        ];
+
+        foreach ($barcodes as $index => $barcodeData) {
+            try {
+                $this->createBarcode(
+                    productId: $barcodeData['product_id'],
+                    barcodeValue: $barcodeData['barcode_value'],
+                    type: $barcodeData['barcode_type'] ?? ProductBarcode::TYPE_CODE128,
+                    source: $barcodeData['source'] ?? ProductBarcode::SOURCE_INTERNAL,
+                    variantId: $barcodeData['variant_id'] ?? null,
+                    warehouseId: $barcodeData['warehouse_id'] ?? null,
+                    isPrimary: $barcodeData['is_primary'] ?? false,
+                    metadata: $barcodeData['metadata'] ?? null
+                );
+                $results['success']++;
+            } catch (\Exception $e) {
+                if (str_contains($e->getMessage(), 'already exists')) {
+                    $results['duplicates']++;
+                } else {
+                    $results['failed']++;
+                    $results['errors'][] = [
+                        'row' => $index + 1,
+                        'error' => $e->getMessage(),
+                        'data' => $barcodeData,
+                    ];
+                }
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Validate barcode value based on type.
+     * 
+     * @throws \InvalidArgumentException
+     */
+    private function validateBarcodeValue(string $value, string $type): void
+    {
+        if (empty($value)) {
+            throw new \InvalidArgumentException("Barcode value cannot be empty");
+        }
+
+        switch ($type) {
+            case ProductBarcode::TYPE_EAN13:
+                if (!preg_match('/^\d{12}\d?$/', $value)) {
+                    throw new \InvalidArgumentException("EAN-13 must be 13 digits");
+                }
+                break;
+            case ProductBarcode::TYPE_EAN8:
+                if (!preg_match('/^\d{7}\d?$/', $value)) {
+                    throw new \InvalidArgumentException("EAN-8 must be 8 digits");
+                }
+                break;
+            case ProductBarcode::TYPE_UPCA:
+                if (!preg_match('/^\d{11}\d?$/', $value)) {
+                    throw new \InvalidArgumentException("UPC-A must be 12 digits");
+                }
+                break;
+            case ProductBarcode::TYPE_UPCE:
+                if (!preg_match('/^\d{7}\d?$/', $value)) {
+                    throw new \InvalidArgumentException("UPC-E must be 8 digits");
+                }
+                break;
+            case ProductBarcode::TYPE_CODE128:
+            case ProductBarcode::TYPE_CODE39:
+                if (strlen($value) > 80) {
+                    throw new \InvalidArgumentException("Code-128/39 cannot exceed 80 characters");
+                }
+                break;
+        }
+    }
+
+    /**
+     * Calculate check digit for EAN/UPC barcodes.
+     */
+    private function calculateCheckDigit(string $value, string $type): ?string
+    {
+        // Remove existing check digit if present
+        $lengths = [
+            ProductBarcode::TYPE_EAN13 => 13,
+            ProductBarcode::TYPE_EAN8 => 8,
+            ProductBarcode::TYPE_UPCA => 12,
+            ProductBarcode::TYPE_UPCE => 8,
+        ];
+
+        if (!isset($lengths[$type])) {
+            return null;
+        }
+
+        $digits = str_split(substr($value, 0, $lengths[$type] - 1));
+        $sum = 0;
+
+        foreach ($digits as $i => $digit) {
+            $weight = ($type === ProductBarcode::TYPE_EAN13 || $type === ProductBarcode::TYPE_EAN8)
+                ? (($i % 2 === 0) ? 1 : 3)
+                : (($i % 2 === 0) ? 3 : 1);
+            $sum += (int) $digit * $weight;
+        }
+
+        return (string) ((10 - ($sum % 10)) % 10);
     }
 }
