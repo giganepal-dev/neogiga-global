@@ -1,7 +1,7 @@
 @extends('frontend.layout')
 
 @section('title', $marketplaceSeo['title'] ?? 'NeoGiga — Global Engineering Marketplace')
-@section('description', $marketplaceSeo['description'] ?? 'Discover electronics, semiconductors, IoT, robotics and industrial components on NeoGiga. Browse verified products or request bulk quotes.')
+@section('description', $marketplaceSeo['description'] ?? 'Source electronics, semiconductors, IoT, robotics and industrial components on the NeoGiga marketplace. Browse verified products or request bulk quotes.')
 
 @php
     $activePrefix = strtolower((string) request()->segment(1));

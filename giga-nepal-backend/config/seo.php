@@ -16,7 +16,7 @@ return [
 
     'default_title' => 'NeoGiga — Engineering the Future | Semiconductors, Electronics, IoT, Robotics',
     'title_template' => '%s | NeoGiga',
-    'default_description' => 'Discover electronics, semiconductors, IoT, robotics and industrial components on NeoGiga. Browse verified products or request bulk quotes.',
+    'default_description' => 'Source electronics, semiconductors, IoT, robotics and industrial components on the NeoGiga marketplace. Browse verified products or request bulk quotes.',
 
     'social' => [
         'handle' => '@NeoGigaGlobal',
