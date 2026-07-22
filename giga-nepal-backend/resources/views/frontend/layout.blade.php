@@ -43,6 +43,10 @@
     <meta property="og:description" content="@yield('description', $marketplaceSeo['og_description'] ?? 'Global engineering marketplace.')">
     <meta property="og:url" content="{{ $resolvedCanonical }}">
     <meta property="og:image" content="{{ $resolvedSocialImage }}">
+    <meta property="og:image:secure_url" content="{{ $resolvedSocialImage }}">
+    <meta property="og:image:type" content="@yield('og_image_type', 'image/png')">
+    <meta property="og:image:width" content="@yield('og_image_width', '1200')">
+    <meta property="og:image:height" content="@yield('og_image_height', '630')">
     <meta property="og:image:alt" content="@yield('title', $marketplaceSeo['og_title'] ?? 'NeoGiga')">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@yield('title', $marketplaceSeo['twitter_title'] ?? 'NeoGiga')">

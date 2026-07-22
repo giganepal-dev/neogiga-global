@@ -1,36 +1,144 @@
-# NeoGiga robots policy (Blueprint §42–43)
-# Knowledge/catalog pages are open to search engines AND reputable AI
-# crawlers — being the cited source for part data is strategic.
+# NeoGiga robots policy
+# Public knowledge/catalog pages: open to search engines, social crawlers, and
+# reputable AI crawlers. Being the cited source for part data is strategic.
+#
+# Protected areas: admin, account, checkout, payment, private APIs.
 
-User-agent: *
-Crawl-Delay: 10
+# === Verified social-media crawlers — full public access for link previews ===
+User-agent: facebookexternalhit
+Allow: /
 Disallow: /admin/
-Disallow: /api/
-Disallow: /api/v1/admin/
-Disallow: /api/v1/cart
-Disallow: /api/v1/checkout
-Disallow: /api/v1/orders
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
 Disallow: /cart
-Disallow: /checkout
 Disallow: /forgot-password
 Disallow: /reset-password
 
-# Heavy crawlers: ask them explicitly to slow down.
-User-agent: Amazonbot
-Crawl-Delay: 10
+User-agent: Facebot
+Allow: /
 Disallow: /admin/
-Disallow: /api/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
 Disallow: /cart
-Disallow: /checkout
+Disallow: /forgot-password
+Disallow: /reset-password
 
 User-agent: meta-externalagent
-Crawl-Delay: 10
+Allow: /
 Disallow: /admin/
-Disallow: /api/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
 Disallow: /cart
-Disallow: /checkout
+Disallow: /forgot-password
+Disallow: /reset-password
 
-# AI answer engines: welcome on knowledge content, short delay.
+User-agent: meta-externalfetcher
+Allow: /
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+User-agent: Twitterbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+User-agent: LinkedInBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+User-agent: Slackbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+User-agent: Discordbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+User-agent: TelegramBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+User-agent: WhatsApp
+Allow: /
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+User-agent: Pinterestbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# === Search engines ===
+User-agent: Googlebot
+Crawl-Delay: 1
+Allow: /
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+User-agent: Bingbot
+Crawl-Delay: 1
+Allow: /
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# === AI answer engines — welcome on knowledge content, short delay ===
 User-agent: GPTBot
 Crawl-Delay: 3
 Allow: /
@@ -38,8 +146,11 @@ Allow: /api/v1/ai-catalog/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /api/v1/admin/
+Disallow: /account/
+Disallow: /checkout/
 Disallow: /cart
-Disallow: /checkout
+Disallow: /forgot-password
+Disallow: /reset-password
 
 User-agent: ClaudeBot
 Crawl-Delay: 3
@@ -48,8 +159,11 @@ Allow: /api/v1/ai-catalog/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /api/v1/admin/
+Disallow: /account/
+Disallow: /checkout/
 Disallow: /cart
-Disallow: /checkout
+Disallow: /forgot-password
+Disallow: /reset-password
 
 User-agent: PerplexityBot
 Crawl-Delay: 3
@@ -58,7 +172,26 @@ Allow: /api/v1/ai-catalog/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /api/v1/admin/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# === Everyone else ===
+User-agent: *
+Crawl-Delay: 10
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /api/v1/admin/
+Disallow: /api/v1/cart
+Disallow: /api/v1/checkout
+Disallow: /api/v1/orders
+Disallow: /account/
 Disallow: /cart
 Disallow: /checkout
+Disallow: /forgot-password
+Disallow: /reset-password
 
 Sitemap: https://neogiga.com/sitemap.xml
