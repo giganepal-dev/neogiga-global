@@ -153,37 +153,46 @@ class ProductPageController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
-        // Related: same-category first, then same-brand, limited to avoid query timeout
-        $related = Product::with([
+        // Related products: prioritize same-category AND same-brand, then same-category, then top featured
+        $relatedQuery = Product::with([
             'brand',
             'images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1),
         ])
             ->published()
-            ->where('id', '!=', $product->id)
-            ->where(function ($q) use ($product) {
-                $q->where('category_id', $product->category_id)
-                  ->orWhere('brand_id', $product->brand_id);
-            })
+            ->where('id', '!=', $product->id);
+
+        // Tier 1: same category AND same brand (most relevant)
+        $tier1 = (clone $relatedQuery)
+            ->where('category_id', $product->category_id)
+            ->where('brand_id', $product->brand_id)
             ->orderByDesc('is_featured')
             ->orderByDesc('id')
-            ->limit(8)
+            ->limit(4)
             ->get();
 
-        // Fallback: if not enough, pad with same-category only
-        if ($related->count() < 4 && $product->category_id) {
+        // Tier 2: same category, different brand
+        $tier1Ids = $tier1->pluck('id')->push($product->id)->all();
+        $tier2 = (clone $relatedQuery)
+            ->whereNotIn('id', $tier1Ids)
+            ->where('category_id', $product->category_id)
+            ->orderByDesc('is_featured')
+            ->orderByDesc('id')
+            ->limit(4)
+            ->get();
+
+        $related = $tier1->concat($tier2);
+
+        // Tier 3: same brand, different category (if still not enough)
+        if ($related->count() < 4) {
             $existingIds = $related->pluck('id')->push($product->id)->all();
-            $more = Product::with([
-                'brand',
-                'images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1),
-            ])
-                ->published()
+            $tier3 = (clone $relatedQuery)
                 ->whereNotIn('id', $existingIds)
-                ->where('category_id', $product->category_id)
+                ->where('brand_id', $product->brand_id)
                 ->orderByDesc('is_featured')
                 ->orderByDesc('id')
-                ->limit(8 - $related->count())
+                ->limit(4)
                 ->get();
-            $related = $related->concat($more);
+            $related = $related->concat($tier3);
         }
 
         $pageSeo = app(CatalogSeoTemplateService::class)->activeProduct(

@@ -1,8 +1,13 @@
 @extends('frontend.layout')
-@section('title', $pageSeo['title'] ?? $product->name.' - NeoGiga')
-@section('description', $pageSeo['description'] ?? \Illuminate\Support\Str::limit(strip_tags($product->short_description ?: ($product->description ?: 'Datasheet, technical specifications, stock and RFQ for '.$product->name.' on NeoGiga.')), 155))
+@section('title', $pageSeo['title'] ?? html_entity_decode($displayName).' - NeoGiga')
+@section('description', $pageSeo['description'] ?? \Illuminate\Support\Str::limit(strip_tags($product->short_description ?: ($product->description ?: 'Datasheet, technical specifications, stock and RFQ for '.$displayName.' on NeoGiga.')), 155))
 @section('og_type','product')
 
+@php
+    // Clean names — used in both head (schema) and content
+    $cleanName = function(string $s): string { return trim(html_entity_decode($s, ENT_QUOTES|ENT_HTML5, 'UTF-8'), " \t\n\r\0\x0B\"'"); };
+    $displayName = $cleanName($product->name);
+@endphp
 @push('head')
 @php
     $activePrefix = strtolower((string) request()->segment(1));
@@ -36,7 +41,7 @@
     if ($product->category) {
         $schemaBreadcrumb[] = ['name' => $product->category->name, 'item' => $canonicalOrigin.$publicBase.'/categories/'.$product->category->slug];
     }
-    $schemaBreadcrumb[] = ['name' => $product->name, 'item' => $productCanonical];
+    $schemaBreadcrumb[] = ['name' => $displayName, 'item' => $productCanonical];
 @endphp
 <script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode($productSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
@@ -59,16 +64,17 @@
     $manufacturerRecord = $product->relationLoaded('manufacturer') ? $product->manufacturer : null;
     $brandManufacturer = $product->brand && $product->brand->relationLoaded('manufacturer') ? $product->brand->manufacturer : null;
     $manufacturerRecord ??= $brandManufacturer;
-    $manufacturerName = $manufacturerRecord?->name ?: ($product->manufacturer_name ?: null);
+    $rawMfrName = $manufacturerRecord?->name ?: ($product->manufacturer_name ?: null);
+    $displayMfrName = $rawMfrName ? $cleanName($rawMfrName) : null;
     $brandUrl = $product->brand ? $publicBase.'/brand/'.$product->brand->slug : null;
-    $manufacturerUrl = $manufacturerRecord ? $publicBase.'/manufacturer/'.$manufacturerRecord->slug : ($manufacturerName ? $publicBase.'/manufacturer/'.\Illuminate\Support\Str::slug($manufacturerName) : null);
+    $manufacturerUrl = $manufacturerRecord ? $publicBase.'/manufacturer/'.$manufacturerRecord->slug : ($displayMfrName ? $publicBase.'/manufacturer/'.\Illuminate\Support\Str::slug($displayMfrName) : null);
     $priceCurrency = $marketplacePrice?->currency_native_symbol ?: ($marketplacePrice?->currency_symbol ?: ($marketplacePrice?->currency_code ?: ($marketplaceContext['currency_code'] ?? 'USD')));
     $displayPrice = $marketplacePrice ? ($marketplacePrice->sale_price ?: $marketplacePrice->base_price) : ($product->sale_price ?: $product->base_price);
     $displayCurrency = $marketplacePrice ? $priceCurrency : ($marketplaceContext['currency_code'] ?? 'USD');
     $galleryImages = $productImages->filter(fn ($image) => $image->is_active)->values();
     $primaryImage = $galleryImages->firstWhere('is_primary', true) ?: $galleryImages->first();
     $primaryImageUrl = $primaryImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png');
-    $primaryImageAlt = $primaryImage?->alt_text ?: $product->name.' product image';
+    $primaryImageAlt = $primaryImage?->alt_text ?: $displayName.' product image';
     $skuSearchUrl = $publicBase.'/products?q='.urlencode((string) $product->sku);
     $mpnUrl = $product->mpn ? '/mpn/'.str_replace('/','--', urlencode($product->mpn)) : null;
     $categoryUrl = $product->category ? $publicBase.'/categories/'.$product->category->slug : null;
@@ -95,7 +101,7 @@
         <a href="{{ $publicBase }}">Home</a><span>/</span>
         <a href="{{ $publicBase }}/products">Products</a>
         @if($product->category)<span>/</span><a href="{{ $publicBase }}/categories/{{ $product->category->slug }}">{{ $product->category->name }}</a>@endif
-        <span>/</span><strong>{{ \Illuminate\Support\Str::limit($product->name, 60) }}</strong>
+        <span>/</span><strong>{{ \Illuminate\Support\Str::limit($displayName, 60) }}</strong>
     </nav>
 </div>
 
@@ -124,7 +130,7 @@
             @if($galleryImages->count() > 1)
             <div class="prod-gallery-thumbs" aria-label="Product image gallery">
                 @foreach($galleryImages as $image)
-                    <button class="prod-gallery-thumb {{ $image->id === $primaryImage?->id ? 'active' : '' }}" type="button" data-gallery-src="{{ $image->publicUrl() }}" data-gallery-alt="{{ $image->alt_text ?: $product->name.' image '.$loop->iteration }}" aria-label="View image {{ $loop->iteration }}" data-index="{{ $loop->index }}">
+                    <button class="prod-gallery-thumb {{ $image->id === $primaryImage?->id ? 'active' : '' }}" type="button" data-gallery-src="{{ $image->publicUrl() }}" data-gallery-alt="{{ $image->alt_text ?: $displayName.' image '.$loop->iteration }}" aria-label="View image {{ $loop->iteration }}" data-index="{{ $loop->index }}">
                         <img src="{{ $image->publicUrl() }}" alt="" loading="lazy" width="80" height="80">
                     </button>
                 @endforeach
@@ -139,10 +145,10 @@
                 <span class="badge {{ $inStock ? 'b-ok' : 'b-warn' }}">{{ $inStock ? 'In Stock' : 'RFQ Only' }}</span>
                 @if($product->status)<span class="badge b-muted">{{ ucfirst($product->status) }}</span>@endif
             </div>
-            <h1 class="prod-title">{{ $product->name }}</h1>
+            <h1 class="prod-title">{{ $displayName }}</h1>
             <div class="prod-meta-line">
                 @if($product->brand)<span>Brand: <a href="{{ $brandUrl }}">{{ $product->brand->name }}</a></span>@endif
-                @if($manufacturerName && $manufacturerName !== ($product->brand->name ?? ''))<span>Mfr: <a href="{{ $manufacturerUrl }}">{{ $manufacturerName }}</a></span>@endif
+                @if($displayMfrName && $displayMfrName !== ($product->brand->name ?? ''))<span>Mfr: <a href="{{ $manufacturerUrl }}">{{ $displayMfrName }}</a></span>@endif
                 @if($product->mpn)<span class="mono">MPN: {{ $product->mpn }}</span>@endif
                 <span class="mono">SKU: {{ $product->sku ?? 'TBA' }}</span>
             </div>
@@ -168,9 +174,9 @@
             @else<tr><th>Manufacturer Part Number</th><td class="prod-na">Not provided</td></tr>@endif
             <tr><th>NeoGiga SKU</th><td><a class="mono" href="{{ $skuSearchUrl }}">{{ $product->sku ?? 'TBA' }}</a></td></tr>
             @if($product->brand)<tr><th>Brand</th><td><a href="{{ $brandUrl }}">{{ $product->brand->name }}</a></td></tr>@endif
-            @if($manufacturerName)<tr><th>Manufacturer</th><td>@if($manufacturerUrl)<a href="{{ $manufacturerUrl }}">{{ $manufacturerName }}</a>@else{{ $manufacturerName }}@endif</td></tr>@endif
+            @if($displayMfrName)<tr><th>Manufacturer</th><td>@if($manufacturerUrl)<a href="{{ $manufacturerUrl }}">{{ $displayMfrName }}</a>@else{{ $displayMfrName }}@endif</td></tr>@endif
             @if($product->category)<tr><th>Category</th><td><a href="{{ $categoryUrl }}">{{ $product->category->name }}</a>@if($product->category->parent)<span class="prod-sub"> / {{ $product->category->parent->name }}</span>@endif</td></tr>@endif
-            @if($product->manufacturer_name && $manufacturerName && strtolower($product->manufacturer_name) !== strtolower($manufacturerName))<tr><th>Source Manufacturer</th><td>{{ $product->manufacturer_name }}</td></tr>@endif
+            @if($product->manufacturer_name && $displayMfrName && strtolower($product->manufacturer_name) !== strtolower($displayMfrName))<tr><th>Source Manufacturer</th><td>{{ $product->manufacturer_name }}</td></tr>@endif
             @php $lifecycle = data_get($product->metadata, 'lifecycle_status') ?: data_get($product->metadata, 'product_lifecycle'); @endphp
             @if($lifecycle)<tr><th>Lifecycle Status</th><td><span class="badge {{ in_array(strtolower($lifecycle), ['active','production','available']) ? 'b-ok' : 'b-warn' }}">{{ $lifecycle }}</span></td></tr>@endif
             @if(data_get($product->metadata, 'country_of_origin'))<tr><th>Country of Origin</th><td>{{ data_get($product->metadata, 'country_of_origin') }}</td></tr>@endif
@@ -456,7 +462,7 @@
             Request Bulk Quote
         </a>
         <div class="prod-action-row">
-            <button class="btn btn-ghost prod-action-sm" onclick="addToBom({{ $product->id }}, '{{ $product->slug }}', '{{ addslashes($product->name) }}')">
+            <button class="btn btn-ghost prod-action-sm" onclick="addToBom({{ $product->id }}, '{{ $product->slug }}', '{{ addslashes($displayName) }}')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2v0a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 Add to BOM
             </button>
@@ -473,7 +479,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
             Chat with Seller
         </button>
-        <a class="btn btn-ghost" href="/ai-commerce?part={{ urlencode($product->mpn ?: $product->sku ?: $product->name) }}" style="width:100%;justify-content:center">
+        <a class="btn btn-ghost" href="/ai-commerce?part={{ urlencode($product->mpn ?: $product->sku ?: $displayName) }}" style="width:100%;justify-content:center">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0110 10M12 2a10 10 0 000 20M12 2A10 10 0 002 12M12 2a10 10 0 000 20"/></svg>
             Ask AI Engineer
         </a>
@@ -538,7 +544,7 @@
 
 <script nonce="{{ $csp_nonce ?? '' }}">
 // Gallery navigation
-var galleryImages = @json($galleryImages->map(fn($i) => ['src'=>$i->publicUrl(),'alt'=>$i->alt_text ?: $product->name.' image'])->values()->all());
+var galleryImages = @json($galleryImages->map(fn($i) => ['src'=>$i->publicUrl(),'alt'=>$i->alt_text ?: $displayName.' image'])->values()->all());
 var galleryIndex = 0;
 
 function setGalleryImage(idx) {
@@ -628,163 +634,179 @@ if(mobileBar && window.innerWidth < 768) {
 </script>
 
 <style nonce="{{ $csp_nonce ?? '' }}">
-/* ===== PRODUCT PAGE DESIGN SYSTEM ===== */
-.prod-wrap{width:min(1280px,calc(100% - 32px));margin-inline:auto}
-.prod-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start;padding:18px 0}
-.prod-main{min-width:0;display:grid;gap:16px}
-.prod-breadcrumb{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.78rem;color:var(--muted);padding:8px 0}
-.prod-breadcrumb a{color:var(--muted)}.prod-breadcrumb a:hover{color:var(--cyan)}
+/* ===== PROFESSIONAL PRODUCT PAGE — ENGINEERING MARKETPLACE ===== */
+.prod-wrap{width:min(1280px,calc(100% - 36px));margin-inline:auto}
+.prod-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start;padding:14px 0}
+.prod-main{min-width:0;display:grid;gap:14px}
+.prod-breadcrumb{display:flex;gap:4px;align-items:center;flex-wrap:wrap;font-size:.76rem;color:var(--muted);padding:6px 0 2px}
+.prod-breadcrumb a{color:var(--muted);transition:color .15s}.prod-breadcrumb a:hover{color:var(--cyan)}
+.prod-breadcrumb strong{color:var(--on);font-weight:600}
 
-/* Top section */
-.prod-top{padding:18px}.prod-top-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px;align-items:start}
+/* Top section — tighter, balanced */
+.prod-top{padding:16px 18px}
+.prod-top-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:18px;align-items:start}
 
-/* Gallery */
+/* Gallery — compact square */
 .prod-gallery{min-width:0}
-.prod-gallery-main-wrap{position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:#f8fafc;border:1px solid var(--line)}
+.prod-gallery-main-wrap{position:relative;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:var(--bg2,#f8fafc);border:1px solid var(--line)}
 .prod-gallery-main{display:grid;place-items:center;width:100%;height:100%;position:relative}
 .prod-gallery-main img{width:100%;height:100%;object-fit:contain;background:transparent}
-.prod-gallery-prev,.prod-gallery-next{position:absolute;top:50%;transform:translateY(-50%);z-index:5;background:#fff;border:1px solid var(--line);border-radius:50%;width:36px;height:36px;display:grid;place-items:center;cursor:pointer;color:var(--slate);box-shadow:0 2px 8px rgba(0,0,0,.08);transition:all .15s}
-.prod-gallery-prev:hover,.prod-gallery-next:hover{border-color:var(--cyan);color:var(--cyan)}
-.prod-gallery-prev{left:8px}.prod-gallery-next{right:8px}
-.prod-gallery-count{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.65);color:#fff;font-size:.7rem;padding:2px 8px;border-radius:999px}
-.prod-gallery-thumbs{display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding:2px 0}
-.prod-gallery-thumb{flex:none;width:64px;height:64px;border:2px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer;background:#fff;padding:0;transition:border-color .15s}
-.prod-gallery-thumb.active{border-color:var(--cyan)}
+.prod-gallery-prev,.prod-gallery-next{position:absolute;top:50%;transform:translateY(-50%);z-index:5;background:var(--s1,#fff);border:1px solid var(--line);border-radius:50%;width:32px;height:32px;display:grid;place-items:center;cursor:pointer;color:var(--slate,#334155);box-shadow:0 1px 4px rgba(0,0,0,.06);transition:all .15s;opacity:.9}
+.prod-gallery-prev:hover,.prod-gallery-next:hover{border-color:var(--cyan);color:var(--cyan);opacity:1}
+.prod-gallery-prev{left:6px}.prod-gallery-next{right:6px}
+.prod-gallery-count{position:absolute;bottom:6px;right:6px;background:rgba(15,23,42,.75);color:#fff;font-size:.66rem;padding:2px 7px;border-radius:999px;font-weight:600}
+.prod-gallery-thumbs{display:flex;gap:5px;margin-top:7px;overflow-x:auto;padding:1px 0}
+.prod-gallery-thumb{flex:none;width:56px;height:56px;border:2px solid var(--line);border-radius:6px;overflow:hidden;cursor:pointer;background:var(--s1,#fff);padding:0;transition:border-color .15s}
+.prod-gallery-thumb.active{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(15,98,230,.15)}
 .prod-gallery-thumb img{width:100%;height:100%;object-fit:contain}
 
-/* Identity */
-.prod-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.prod-title{font-size:clamp(1.35rem,2.5vw,1.75rem);font-weight:700;line-height:1.15;margin:0 0 10px;letter-spacing:-.01em}
-.prod-meta-line{display:flex;gap:8px 16px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-bottom:8px}
-.prod-meta-line a{color:var(--cyan)}.prod-meta-line .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.78rem}
-.prod-rating{display:flex;align-items:center;gap:6px;font-size:.84rem;margin-bottom:10px}.prod-rating .star{color:#d1d5db;font-size:1rem}.prod-rating .star.filled{color:#f59e0b}
-.prod-excerpt{font-size:.9rem;color:var(--soft);line-height:1.55;margin:0}
+/* Identity — refined typography */
+.prod-badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.prod-title{font-size:clamp(1.25rem,2.2vw,1.6rem);font-weight:700;line-height:1.18;margin:0 0 8px;letter-spacing:-.01em;color:var(--ink,var(--on))}
+.prod-meta-line{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:.8rem;color:var(--slate,var(--muted));margin-bottom:8px;line-height:1.5}
+.prod-meta-line a{color:var(--cyan);font-weight:500}.prod-meta-line .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.76rem;color:var(--muted)}
+.prod-rating{display:flex;align-items:center;gap:6px;font-size:.82rem;margin-bottom:8px;color:var(--slate)}
+.prod-rating .star{color:#d1d5db;font-size:.95rem}.prod-rating .star.filled{color:#f59e0b}
+.prod-excerpt{font-size:.88rem;color:var(--slate,var(--soft));line-height:1.58;margin:0}
 
-/* Sections */
-.prod-section{padding:18px}.prod-section-title{font-size:1rem;font-weight:700;margin:0 0 12px;letter-spacing:-.01em}
+/* Sections — tighter */
+.prod-section{padding:14px 18px}
+.prod-section-title{font-size:.95rem;font-weight:700;margin:0 0 10px;letter-spacing:-.01em;color:var(--ink,var(--on))}
 .prod-section-title:only-child{margin-bottom:0}
 
-/* Identity table */
-.prod-id-table{width:100%;border-collapse:collapse;font-size:.86rem}
-.prod-id-table th{text-align:left;color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;padding:6px 14px 6px 0;width:200px;vertical-align:top;border-bottom:1px solid #f1f5f9}
-.prod-id-table td{padding:6px 0;border-bottom:1px solid #f1f5f9;word-break:break-word}
+/* Identity table — engineering spec style */
+.prod-id-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.prod-id-table th{text-align:left;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;padding:5px 12px 5px 0;width:190px;vertical-align:top;border-bottom:1px solid #f1f5f9}
+.prod-id-table td{padding:5px 0;border-bottom:1px solid #f1f5f9;word-break:break-word;color:var(--on)}
 .prod-id-table .prod-na{color:var(--faint);font-style:italic}
-.prod-id-table .prod-sub{color:var(--faint);font-size:.76rem}
+.prod-id-table .prod-sub{color:var(--faint);font-size:.74rem}
 
 /* Specs table */
-.prod-spec-group{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--slate);margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-.prod-spec-table{width:100%;border-collapse:collapse;font-size:.86rem}
-.prod-spec-table tr:nth-child(even){background:#f8fafc}
-.prod-spec-table th{text-align:left;color:var(--muted);font-weight:500;padding:6px 14px 6px 0;width:220px;vertical-align:top;font-size:.8rem}
-.prod-spec-table td{padding:6px 0;vertical-align:top}
-.prod-unit{color:var(--faint);font-size:.76rem;margin-left:4px}
+.prod-spec-group{font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--slate);margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.prod-spec-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.prod-spec-table tr:nth-child(even){background:rgba(0,0,0,.012)}
+.prod-spec-table th{text-align:left;color:var(--muted);font-weight:500;padding:5px 12px 5px 0;width:210px;vertical-align:top;font-size:.78rem}
+.prod-spec-table td{padding:5px 0;vertical-align:top;color:var(--on)}
+.prod-unit{color:var(--faint);font-size:.74rem;margin-left:3px}
 
-/* Description */
-.prod-description{font-size:.9rem;line-height:1.65;color:var(--soft)}
+/* Description — strong contrast, readable */
+.prod-description{font-size:.9rem;line-height:1.68;color:var(--on,#1e2a36)}
 .prod-description p{margin:0 0 10px}.prod-description ul,.prod-description ol{padding-left:20px;margin:8px 0}
+.prod-description li{margin-bottom:4px}
 
 /* Certifications */
-.prod-cert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
-.prod-cert-badge{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#fafcfd}
-.prod-cert-icon{flex:none;width:48px;height:48px;display:grid;place-items:center;background:#fff;border-radius:8px;border:1px solid #eef2f6}
-.prod-cert-icon img{width:40px;height:40px;object-fit:contain}
-.prod-cert-text-badge{font-size:.72rem;font-weight:700;color:var(--slate);text-align:center;line-height:1.2}
-.prod-cert-info strong{display:block;font-size:.84rem}.prod-cert-info .sub{font-size:.72rem}
+.prod-cert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.prod-cert-badge{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--s1,#fff)}
+.prod-cert-icon{flex:none;width:44px;height:44px;display:grid;place-items:center;background:var(--s1,#fff);border-radius:6px;border:1px solid #eef2f6}
+.prod-cert-icon img{width:36px;height:36px;object-fit:contain}
+.prod-cert-text-badge{font-size:.7rem;font-weight:700;color:var(--slate);text-align:center;line-height:1.2}
+.prod-cert-info strong{display:block;font-size:.82rem;color:var(--on)}.prod-cert-info .sub{font-size:.7rem}
+.prod-cert-info a{font-size:.72rem}
 
-/* Downloads */
-.prod-downloads{display:grid;gap:6px}
-.prod-download-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:8px}
-.prod-download-icon{font-size:1.3rem;flex:none}
-.prod-download-info{flex:1;min-width:0}.prod-download-info strong{display:block;font-size:.84rem}.prod-download-info .sub{font-size:.72rem}
+/* Downloads — professional file rows */
+.prod-downloads{display:grid;gap:4px}
+.prod-download-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:7px;transition:border-color .15s}
+.prod-download-item:hover{border-color:var(--cyan)}
+.prod-download-icon{font-size:1.2rem;flex:none;opacity:.8}
+.prod-download-info{flex:1;min-width:0}.prod-download-info strong{display:block;font-size:.82rem;color:var(--on)}.prod-download-info .sub{font-size:.7rem}
 
 /* Alternatives */
-.prod-alt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
-.prod-alt-item{padding:10px 14px;border:1px solid var(--line);border-radius:8px}
-.prod-alt-item strong{display:block;font-size:.84rem}.prod-alt-item strong a{color:var(--cyan)}
-.prod-alt-item .sub{font-size:.74rem}
+.prod-alt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.prod-alt-item{padding:9px 12px;border:1px solid var(--line);border-radius:7px}
+.prod-alt-item strong{display:block;font-size:.82rem}.prod-alt-item strong a{color:var(--cyan)}
+.prod-alt-item .sub{font-size:.72rem}
 
 /* Reviews */
-.prod-review{padding:12px 0;border-bottom:1px solid #f1f5f9}
+.prod-review{padding:10px 0;border-bottom:1px solid #f1f5f9}
 .prod-review:last-child{border-bottom:0}
-.prod-review-form{display:grid;gap:8px}
-.prod-form-grid{display:grid;gap:8px}
+.prod-review p{margin:4px 0;color:var(--on);font-size:.88rem;line-height:1.55}
+.prod-review-form{display:grid;gap:6px}
+.prod-form-grid{display:grid;gap:6px}
 
 /* Empty state */
-.prod-empty{padding:16px;text-align:center;color:var(--muted)}
+.prod-empty{padding:14px 18px;text-align:center}
+.prod-empty p{color:var(--muted);font-size:.86rem;margin:0 0 6px}
+.prod-empty .btn{margin-top:4px}
 
-/* ===== SIDEBAR ===== */
-.prod-sidebar{position:sticky;top:80px;display:grid;gap:14px}
-.prod-sidebar-card{padding:16px}
-.prod-price-block{margin-bottom:12px}
-.prod-price{font-size:1.55rem;font-weight:800;display:block;margin:2px 0}
-.prod-stock-status{display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600;color:var(--muted);margin-bottom:12px}
+/* ===== SIDEBAR — POLISHED ===== */
+.prod-sidebar{position:sticky;top:80px;display:grid;gap:12px}
+.prod-sidebar-card{padding:14px 16px;background:var(--s1,#fff)}
+.prod-price-block{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.prod-price{font-size:1.5rem;font-weight:800;display:block;margin:1px 0;color:var(--ink,var(--on))}
+.prod-price-block .sub{color:var(--muted);font-size:.76rem}
+.prod-stock-status{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:10px}
 .prod-stock-dot{width:8px;height:8px;border-radius:50%;background:#d1d5db;flex:none}
 .prod-stock-status.in-stock{color:#059669}.prod-stock-status.in-stock .prod-stock-dot{background:#059669}
 
-.prod-warehouse-pills{display:grid;gap:4px;margin-bottom:14px}
-.prod-wh-pill{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#f8fafc;border-radius:6px;font-size:.78rem}
-.prod-wh-pill.empty{opacity:.5}
+.prod-warehouse-pills{display:grid;gap:3px;margin-bottom:12px}
+.prod-wh-pill{display:flex;justify-content:space-between;align-items:center;padding:5px 9px;background:var(--bg2,#f8fafc);border-radius:5px;font-size:.76rem}
+.prod-wh-pill.empty{opacity:.45}
 
-.prod-qty-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.prod-qty-label{font-size:.78rem;font-weight:700;text-transform:uppercase;color:var(--muted)}
+.prod-qty-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px}
+.prod-qty-label{font-size:.74rem;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.04em}
 .prod-qty-input{display:flex;align-items:center;gap:0}
-.prod-qty-input input{width:64px;text-align:center;min-height:38px;border-radius:0;border-left:0;border-right:0;font-weight:700}
-.prod-qty-btn{width:38px;height:38px;border:1px solid var(--line);background:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;display:grid;place-items:center;transition:all .15s}
-.prod-qty-btn:first-child{border-radius:7px 0 0 7px}
-.prod-qty-btn:last-child{border-radius:0 7px 7px 0}
-.prod-qty-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.prod-qty-input input{width:60px;text-align:center;min-height:36px;border-radius:0;border-left:0;border-right:0;font-weight:700;font-size:.9rem}
+.prod-qty-btn{width:36px;height:36px;border:1px solid var(--line);background:var(--s1,#fff);font-size:1rem;font-weight:700;cursor:pointer;display:grid;place-items:center;transition:all .12s;color:var(--slate)}
+.prod-qty-btn:first-child{border-radius:6px 0 0 6px}
+.prod-qty-btn:last-child{border-radius:0 6px 6px 0}
+.prod-qty-btn:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(15,98,230,.04)}
 
-.prod-actions{display:grid;gap:6px}
+.prod-actions{display:grid;gap:5px}
+.prod-actions .btn{min-height:40px;font-size:.86rem;font-weight:600;border-radius:7px}
+.prod-actions .btn-primary{background:var(--cyan,#0f62e6);color:#fff;font-weight:700}
+.prod-actions .btn-gold{background:var(--gold,#f59e0b);color:#3b2300;font-weight:700}
+.prod-actions .btn-ghost{background:var(--s1,#fff);border-color:var(--line);color:var(--slate)}
+.prod-actions .btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
 .prod-cart-form{display:contents}
-.prod-action-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.prod-action-sm{font-size:.78rem !important;justify-content:center !important;padding:0 8px !important;min-height:36px !important}
-.saved-btn.saved{color:#ef4444;border-color:#fecaca}
-.prod-secure-note{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--faint);margin:10px 0 0;text-align:center;justify-content:center}
+.prod-action-row{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.prod-action-sm{font-size:.76rem !important;justify-content:center !important;padding:0 8px !important;min-height:34px !important;border-radius:6px !important}
+.saved-btn.saved{color:#ef4444 !important;border-color:#fecaca !important}
+.prod-secure-note{display:flex;align-items:center;gap:5px;font-size:.68rem;color:var(--faint);margin:8px 0 0;text-align:center;justify-content:center}
 
-.prod-seller-row{padding:8px 0;border-bottom:1px solid #f1f5f9}
+.prod-seller-row{padding:7px 0;border-bottom:1px solid #f1f5f9}
 .prod-seller-row:last-child{border-bottom:0}
-.prod-seller-row strong{font-size:.82rem}.prod-seller-row .sub{font-size:.74rem}
+.prod-seller-row strong{font-size:.8rem}.prod-seller-row .sub{font-size:.72rem}
 
-/* Related products */
-.prod-related-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
-.prod-related-head h3{font-size:1.1rem;margin:0}
-.prod-related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
-.prod-related-card{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:transform .15s,box-shadow .15s}
-.prod-related-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
-.prod-related-img{aspect-ratio:4/3;background:#f8fafc;display:grid;place-items:center;padding:12px}
+/* Related products — compact professional cards */
+.prod-related-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.prod-related-head h3{font-size:1.05rem;margin:0;font-weight:700;color:var(--ink,var(--on))}
+.prod-related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.prod-related-card{display:block;background:var(--s1,#fff);border:1px solid var(--line);border-radius:8px;overflow:hidden;transition:box-shadow .15s,border-color .15s}
+.prod-related-card:hover{border-color:rgba(15,98,230,.35);box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.prod-related-img{aspect-ratio:4/3;background:var(--bg2,#f8fafc);display:grid;place-items:center;padding:10px}
 .prod-related-img img{width:100%;height:100%;object-fit:contain}
-.prod-related-info{padding:10px 12px}
-.prod-related-info strong{display:block;font-size:.82rem;line-height:1.3;margin-bottom:2px}
-.prod-related-info .sub{font-size:.72rem}
+.prod-related-info{padding:9px 10px}
+.prod-related-info strong{display:block;font-size:.8rem;line-height:1.3;margin-bottom:2px;color:var(--on);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.prod-related-info .sub{font-size:.7rem;color:var(--faint)}
 
 /* Mobile sticky bar */
-.prod-mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:100;padding:10px 16px;box-shadow:0 -4px 20px rgba(0,0,0,.08)}
-.prod-mobile-bar-inner{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.prod-mobile-bar-inner strong{font-size:.95rem}
-.prod-mobile-stock{font-size:.72rem;color:var(--muted);margin-left:8px}
+.prod-mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s1,#fff);border-top:1px solid var(--line);z-index:100;padding:10px 14px;box-shadow:0 -4px 24px rgba(0,0,0,.1)}
+.prod-mobile-bar-inner{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.prod-mobile-bar-inner strong{font-size:.92rem;color:var(--on)}
+.prod-mobile-stock{font-size:.7rem;color:var(--muted);margin-left:6px}
 .prod-mobile-stock.in-stock{color:#059669}
+.prod-mobile-bar .btn{min-height:38px;padding:0 16px;font-size:.84rem}
 
-/* Tablet adjustments */
+/* Tablet */
 @media (max-width:1024px){
-    .prod-layout{grid-template-columns:1fr;gap:14px}
+    .prod-layout{grid-template-columns:1fr;gap:12px}
     .prod-sidebar{position:static;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 }
 @media (max-width:768px){
-    .prod-top-grid{grid-template-columns:1fr;gap:14px}
+    .prod-top-grid{grid-template-columns:1fr;gap:12px}
     .prod-mobile-bar{display:block}
-    .prod-sidebar-card:first-child .prod-actions{display:grid}
-    .prod-id-table th{width:140px}
-    .prod-spec-table th{width:140px}
+    .prod-id-table th{width:130px}
+    .prod-spec-table th{width:130px}
     .prod-cert-grid{grid-template-columns:1fr}
-    .prod-related-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+    .prod-related-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
 }
 @media (max-width:480px){
-    .prod-wrap{width:calc(100% - 20px)}
-    .prod-layout{padding:10px 0}
-    .prod-top{padding:12px}
-    .prod-section{padding:12px}
-    .prod-title{font-size:1.2rem}
-    .prod-meta-line{font-size:.74rem}
+    .prod-wrap{width:calc(100% - 18px)}
+    .prod-layout{padding:8px 0}
+    .prod-top{padding:10px 12px}
+    .prod-section{padding:10px 12px}
+    .prod-title{font-size:1.15rem}
+    .prod-meta-line{font-size:.72rem}
     .prod-action-row{grid-template-columns:1fr}
     .prod-related-grid{grid-template-columns:repeat(2,1fr)}
 }
