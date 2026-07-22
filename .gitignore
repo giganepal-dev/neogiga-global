@@ -1,4 +1,4 @@
-```
+```gitignore
 # Compiled and build artifacts
 *.pyc
 __pycache__/
@@ -13,9 +13,8 @@ __pycache__/
 
 # Dependencies
 node_modules/
-vendor/
-composer.lock
-*.lock
+venv/
+.venv/
 .env
 .env.local
 .env.*
@@ -29,43 +28,37 @@ composer.lock
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# OS generated files
+# System files
 .DS_Store
 Thumbs.db
 
-# Coverage reports
+# Coverage and testing
+.coverage
 coverage/
 htmlcov/
-.coverage
 
 # Build directories
 dist/
 build/
 target/
-*.jar
-*.war
-*.zip
-*.tar.gz
+.gradle/
 
 # Python specific
 *.pyc
 __pycache__/
-.pytest_cache/
-.mypy_cache/
+*.pyo
+*.pyd
+.Python
+*.so
+.Python
 *.egg-info/
-
-# PHP specific
-*.phar
-vendor/
-
-# Laravel specific
-storage/
-bootstrap/cache/
+.eggs/
+.mypy_cache/
+.pytest_cache/
 
 # Compressed files
+*.zip
 *.gz
 *.tar
 *.tgz
@@ -83,4 +76,8 @@ bootstrap/cache/
 *.Z
 *.lz
 *.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 ```
