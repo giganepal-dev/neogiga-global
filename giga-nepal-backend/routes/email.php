@@ -29,7 +29,7 @@ Route::prefix('email')->name('email.')->group(function () {
 });
 
 // Admin email management routes
-Route::prefix('admin/email')->name('admin.email.')->middleware(['admin.web'])->group(function () {
+Route::prefix('email')->name('admin.email.')->middleware(['admin.web'])->group(function () {
     
     // Dashboard
     Route::get('/', [EmailDashboardController::class, 'index'])->name('dashboard');

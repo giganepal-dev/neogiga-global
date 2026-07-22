@@ -191,6 +191,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h16M8 15l3-3 3 2 5-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Marketing &amp; CRM
         </a>
+        <a href="/admin/email" class="{{ str_starts_with($r,'admin/email') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email Campaigns
+        </a>
         @endif
         @if(auth()->user()?->hasPermission('customers.view'))
         <a href="/admin/marketing/crm" class="{{ str_starts_with($r,'admin/marketing/crm') ? 'active':'' }}">CRM &amp; Segments</a>

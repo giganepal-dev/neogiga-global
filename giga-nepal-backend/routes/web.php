@@ -530,6 +530,9 @@ Route::prefix('admin')->group(function () {
         Route::post('support/tickets/{ticket}', [AdminCommerce::class, 'updateSupportTicket'])->whereNumber('ticket')->middleware('throttle:20,1');
         Route::post('support/tickets/{ticket}/escalate', [AdminCommerce::class, 'escalateSupportTicket'])->whereNumber('ticket')->middleware('throttle:20,1');
         Route::post('support/tickets/{ticket}/messages', [AdminCommerce::class, 'storeSupportTicketMessage'])->whereNumber('ticket')->middleware('throttle:20,1');
+
+        // Email Campaign Manager
+        require __DIR__.'/../routes/email.php';
     });
 });
 
