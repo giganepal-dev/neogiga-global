@@ -19,7 +19,7 @@ class CategoryTaxonomySeeder extends Seeder
     {
         $sort = 0;
 
-        foreach ($this->taxonomy() as $root) {
+        foreach (self::taxonomy() as $root) {
             $parent = $this->upsert($root, null, $sort += 10);
 
             foreach ($root['children'] ?? [] as $i => $child) {
@@ -32,7 +32,7 @@ class CategoryTaxonomySeeder extends Seeder
     {
         $slug = $data['slug'] ?? Str::slug($data['name']);
 
-        return ProductCategory::firstOrCreate(
+        $category = ProductCategory::firstOrCreate(
             ['slug' => $slug],
             [
                 'name' => $data['name'],
@@ -44,7 +44,7 @@ class CategoryTaxonomySeeder extends Seeder
                 'is_featured' => $data['featured'] ?? false,
                 'marketplace_visibility' => ['global' => true, 'in' => true, 'np' => true],
                 'seo_meta' => [
-                    'title' => ($data['seo_title'] ?? $data['name']) . ' | NeoGiga',
+                    'title' => ($data['seo_title'] ?? $data['name']).' | NeoGiga',
                     'description' => $data['seo_description']
                         ?? ($data['description'] ?? "Shop {$data['name']} on NeoGiga — genuine parts, regional stock, engineering support."),
                     'lms_topics' => $data['lms_topics'] ?? [],
@@ -52,12 +52,29 @@ class CategoryTaxonomySeeder extends Seeder
                 ],
             ],
         );
+
+        // Converge only the governed structural fields. Existing copy, images,
+        // translations and SEO edits are intentionally preserved.
+        $structural = [
+            'parent_id' => $parentId,
+            'sort_order' => $sort,
+            'is_active' => true,
+            'seo_meta' => array_merge($category->seo_meta ?? [], [
+                'neogiga_taxonomy_level' => $parentId === null ? 'root' : 'subcategory',
+            ]),
+        ];
+
+        if ($category->only(array_keys($structural)) !== $structural) {
+            $category->update($structural);
+        }
+
+        return $category;
     }
 
     /**
      * @return array<int, array<string, mixed>>
      */
-    protected function taxonomy(): array
+    public static function taxonomy(): array
     {
         return [
             ['name' => 'Semiconductors', 'icon' => 'semiconductors', 'featured' => true,

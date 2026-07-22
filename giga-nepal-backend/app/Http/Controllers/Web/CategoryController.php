@@ -18,35 +18,46 @@ class CategoryController extends Controller
 {
     /** Allowed sort values mapped to DB columns/expressions */
     private const SORT_MAP = [
-        'newest'        => ['products.created_at', 'desc'],
-        'price_asc'     => ['marketplace_product_prices.base_price', 'asc'],
-        'price_desc'    => ['marketplace_product_prices.base_price', 'desc'],
-        'name_asc'      => ['products.name', 'asc'],
-        'name_desc'     => ['products.name', 'desc'],
-        'rating_desc'   => ['products.rating_avg', 'desc'],
+        'newest' => ['products.created_at', 'desc'],
+        'price_asc' => ['marketplace_product_prices.base_price', 'asc'],
+        'price_desc' => ['marketplace_product_prices.base_price', 'desc'],
+        'name_asc' => ['products.name', 'asc'],
+        'name_desc' => ['products.name', 'desc'],
+        'rating_desc' => ['products.rating_avg', 'desc'],
     ];
 
     private const DEFAULT_SORT = 'newest';
+
     private const PER_PAGE = 100;
 
     public function index(): View
     {
         $q = trim((string) request()->query('q', ''));
+        $canonicalRootSlugs = config('neogiga_categories.root_slugs', []);
         $roots = ProductCategory::query()
             ->whereNull('parent_id')
             ->where('is_active', true)
-            ->where('sort_order', '>', 0)
-            ->where('slug', '!=', 'uncategorized')
+            ->whereIn('slug', $canonicalRootSlugs)
             ->when($q !== '', fn ($query) => $query->where(function ($inner) use ($q) {
                 $inner->where('name', 'ilike', "%{$q}%")
                     ->orWhere('description', 'ilike', "%{$q}%")
-                    ->orWhereHas('children', fn ($c) => $c->where('name', 'ilike', "%{$q}%"));
+                    ->orWhereHas('children', fn ($c) => $c
+                        ->where('seo_meta->neogiga_taxonomy_level', 'subcategory')
+                        ->where(fn ($branch) => $branch
+                            ->where('name', 'ilike', "%{$q}%")
+                            ->orWhereHas('children', fn ($child) => $child->where('name', 'ilike', "%{$q}%"))));
             }))
             ->with(['children' => fn ($c) => $c
                 ->where('is_active', true)
+                ->where('seo_meta->neogiga_taxonomy_level', 'subcategory')
                 ->where('name', 'not like', '%|%')
                 ->orderBy('sort_order')
-                ->orderBy('name')])
+                ->orderBy('name')
+                ->with(['children' => fn ($child) => $child
+                    ->where('is_active', true)
+                    ->where('name', 'not like', '%|%')
+                    ->orderBy('sort_order')
+                    ->orderBy('name')])])
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -72,6 +83,8 @@ class CategoryController extends Controller
         $children = ProductCategory::query()
             ->where('parent_id', $category->id)
             ->where('is_active', true)
+            ->when(in_array($category->slug, config('neogiga_categories.root_slugs', []), true), fn ($query) => $query
+                ->where('seo_meta->neogiga_taxonomy_level', 'subcategory'))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -115,9 +128,9 @@ class CategoryController extends Controller
 
         // --- Apply sort ---
         if ($sortCol === 'marketplace_product_prices.base_price' && $marketplace) {
-            $productsQuery->orderByRaw('COALESCE(price.base_price, 999999999) ' . $sortDir);
+            $productsQuery->orderByRaw('COALESCE(price.base_price, 999999999) '.$sortDir);
         } elseif ($sortCol === 'products.rating_avg') {
-            $productsQuery->orderByRaw('COALESCE(products.rating_avg, 0) ' . $sortDir);
+            $productsQuery->orderByRaw('COALESCE(products.rating_avg, 0) '.$sortDir);
         } else {
             $productsQuery->orderBy($sortCol, $sortDir);
         }
@@ -152,19 +165,19 @@ class CategoryController extends Controller
         );
 
         return view('frontend.categories.show', [
-            'category'         => $category,
-            'children'         => $children,
-            'products'         => $paginator,
-            'directCount'      => $directCount,
-            'inclusiveCount'   => $inclusiveCount,
-            'currentSort'      => $sort,
-            'currentStock'     => $stock,
-            'breadcrumb'       => $breadcrumb,
-            'relatedLessons'   => $relatedLessons,
-            'pageSeo'          => $pageSeo,
-            'canonical'        => $pageSeo['canonical'],
-            'robots'           => $pageSeo['robots'],
-            'robotsReason'     => $pageSeo['robots_reason'],
+            'category' => $category,
+            'children' => $children,
+            'products' => $paginator,
+            'directCount' => $directCount,
+            'inclusiveCount' => $inclusiveCount,
+            'currentSort' => $sort,
+            'currentStock' => $stock,
+            'breadcrumb' => $breadcrumb,
+            'relatedLessons' => $relatedLessons,
+            'pageSeo' => $pageSeo,
+            'canonical' => $pageSeo['canonical'],
+            'robots' => $pageSeo['robots'],
+            'robotsReason' => $pageSeo['robots_reason'],
         ]);
     }
 

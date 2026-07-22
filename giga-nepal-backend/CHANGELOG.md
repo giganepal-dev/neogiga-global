@@ -455,3 +455,13 @@
 - Protected incomplete `/api/v1/ai/*` POST endpoints with the existing API token middleware.
 - Added optional hashed admin token support via `ADMIN_API_TOKEN_HASH` while preserving current `ADMIN_API_TOKEN` behavior.
 - Updated `.env.example` for `neogiga_prod` and documented a safe production DB cutover plan without modifying live `.env` or data.
+## 2026-07-22 — Governed three-level category directory
+
+- Restricted the public category directory to NeoGiga's 27 governed engineering root domains.
+- Added child-category navigation beneath each approved subcategory (Category → Subcategory → Child category).
+- Added `catalog:enforce-category-hierarchy`, a dry-run-first, plan-hash- and backup-gated command that converges canonical roots/subcategories without deleting categories or changing product assignments.
+- Updated the canonical taxonomy seeder to repair only structural fields while preserving existing IDs, slugs, content, images, translations, and SEO edits.
+- Marked governed root/subcategory rows in existing SEO metadata so supplier taxonomy cannot leak into public NeoGiga navigation.
+- Prevented the generic supplier importer from creating ungoverned root categories; unresolved labels now enter the existing taxonomy review queue.
+- Matched the category directory to the dark NeoGiga product palette and removed white image/card backgrounds.
+- Persisted the product-detail dark palette and transparent related-product image backgrounds in the source release.

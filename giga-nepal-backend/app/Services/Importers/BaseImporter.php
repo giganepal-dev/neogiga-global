@@ -2,25 +2,30 @@
 
 namespace App\Services\Importers;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use App\Models\Marketplace\ImportJob;
 use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductBrand;
 use App\Models\Marketplace\ProductCategory;
-use App\Models\Supplier\Supplier;
 use App\Models\Supplier\ProductSupplier;
+use App\Models\Supplier\Supplier;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 abstract class BaseImporter
 {
     protected ImportJob $job;
+
     protected array $stats = ['created' => 0, 'updated' => 0, 'failed' => 0];
-    protected ?\Illuminate\Console\Command $command = null;
+
+    protected ?Command $command = null;
 
     abstract public function fetchCategories(): array;
+
     abstract public function fetchProducts(array $options = []): \Generator;
+
     abstract protected function normalizeProduct(array $rawProduct): array;
 
     public function getSupplierSlug(): string
@@ -37,7 +42,7 @@ abstract class BaseImporter
     {
         $tier = $this->supplierTier ?? 'tier_1';
 
-        return is_numeric($tier) ? 'tier_' . (int) $tier : (string) $tier;
+        return is_numeric($tier) ? 'tier_'.(int) $tier : (string) $tier;
     }
 
     protected function getSupplierDescription(): ?string
@@ -55,9 +60,10 @@ abstract class BaseImporter
         return $this->supplierCountry ?? null;
     }
 
-    public function setCommand(\Illuminate\Console\Command $command): self
+    public function setCommand(Command $command): self
     {
         $this->command = $command;
+
         return $this;
     }
 
@@ -79,7 +85,7 @@ abstract class BaseImporter
                     }
                 } catch (\Exception $e) {
                     $this->stats['failed']++;
-                    \Log::error("Import failed", ['supplier' => $this->getSupplierSlug(), 'error' => $e->getMessage()]);
+                    \Log::error('Import failed', ['supplier' => $this->getSupplierSlug(), 'error' => $e->getMessage()]);
                 }
             }
 
@@ -116,6 +122,7 @@ abstract class BaseImporter
             ]);
             $imported++;
         }
+
         return $imported;
     }
 
@@ -130,6 +137,7 @@ abstract class BaseImporter
             ]);
             $imported++;
         }
+
         return $imported;
     }
 
@@ -137,8 +145,8 @@ abstract class BaseImporter
     {
         $result = ['imported' => 0, 'skipped' => 0];
         $supplier = Supplier::where('slug', $this->getSupplierSlug())->first();
-        
-        if (!$supplier) {
+
+        if (! $supplier) {
             $supplier = $this->importSupplier();
         }
 
@@ -148,10 +156,10 @@ abstract class BaseImporter
                 $result['imported']++;
             } catch (\Exception $e) {
                 $result['skipped']++;
-                \Log::error("Product import failed", ['supplier' => $this->getSupplierSlug(), 'error' => $e->getMessage()]);
+                \Log::error('Product import failed', ['supplier' => $this->getSupplierSlug(), 'error' => $e->getMessage()]);
             }
         }
-        
+
         return $result;
     }
 
@@ -178,14 +186,17 @@ abstract class BaseImporter
 
     protected function findDuplicateProduct(array $normalized, Supplier $supplier): ?Product
     {
-        if (!empty($normalized['mpn'])) {
+        if (! empty($normalized['mpn'])) {
             $existingSupplier = ProductSupplier::where('mpn', $normalized['mpn'])
                 ->where('supplier_id', '!=', $supplier->id)->first();
-            if ($existingSupplier) return $existingSupplier->product;
+            if ($existingSupplier) {
+                return $existingSupplier->product;
+            }
         }
-        if (!empty($normalized['sku'])) {
+        if (! empty($normalized['sku'])) {
             return Product::where('sku', $normalized['sku'])->first();
         }
+
         return null;
     }
 
@@ -193,7 +204,7 @@ abstract class BaseImporter
     {
         $product = Product::create([
             'name' => $normalized['name'],
-            'slug' => Str::slug($normalized['name']) . '-' . Str::random(6),
+            'slug' => Str::slug($normalized['name']).'-'.Str::random(6),
             'sku' => $normalized['sku'],
             'mpn' => $normalized['mpn'] ?? null,
             'brand_id' => $this->getOrCreateBrand($normalized['brand'] ?? null),
@@ -216,8 +227,12 @@ abstract class BaseImporter
             'is_primary' => true,
         ]);
 
-        if (!empty($normalized['images'])) $this->importImages($product, $normalized['images']);
-        if (!empty($normalized['resources'])) $this->importResources($product, $normalized['resources']);
+        if (! empty($normalized['images'])) {
+            $this->importImages($product, $normalized['images']);
+        }
+        if (! empty($normalized['resources'])) {
+            $this->importResources($product, $normalized['resources']);
+        }
 
         return $product;
     }
@@ -233,22 +248,40 @@ abstract class BaseImporter
         ProductSupplier::updateOrCreate(
             ['product_id' => $product->id, 'supplier_id' => $supplier->id],
             ['supplier_sku' => $normalized['supplier_sku'] ?? null, 'mpn' => $normalized['mpn'] ?? null,
-             'cost_price' => $normalized['cost_price'] ?? null, 'last_synced_at' => now()]
+                'cost_price' => $normalized['cost_price'] ?? null, 'last_synced_at' => now()]
         );
     }
 
     protected function getOrCreateBrand(?string $brandName): ?int
     {
-        if (empty($brandName)) return null;
+        if (empty($brandName)) {
+            return null;
+        }
         $brand = ProductBrand::firstOrCreate(['slug' => Str::slug($brandName)], ['name' => $brandName]);
+
         return $brand->id;
     }
 
     protected function getOrCreateCategory(?string $categoryName): ?int
     {
-        if (empty($categoryName)) return null;
-        $category = ProductCategory::firstOrCreate(['slug' => Str::slug($categoryName)], ['name' => $categoryName]);
-        return $category->id;
+        if (empty($categoryName)) {
+            return null;
+        }
+
+        $category = ProductCategory::query()
+            ->where('slug', Str::slug($categoryName))
+            ->first();
+
+        if ($category) {
+            return $category->id;
+        }
+
+        // Supplier labels may not become public roots implicitly. Preserve the
+        // product and route unresolved taxonomy through NeoGiga's review queue.
+        return ProductCategory::query()
+            ->whereIn('slug', config('neogiga_categories.review_slugs', []))
+            ->orderByRaw("CASE WHEN slug = '205-needs-review' THEN 0 ELSE 1 END")
+            ->value('id');
     }
 
     protected function importImages(Product $product, array $images): void
@@ -257,12 +290,12 @@ abstract class BaseImporter
             try {
                 $response = Http::get($imageUrl);
                 if ($response->successful()) {
-                    $filename = 'product-' . $product->id . '-' . time() . '-' . $index . '.jpg';
-                    Storage::disk('public')->put('products/' . $filename, $response->body());
-                    $product->images()->create(['file_path' => 'products/' . $filename, 'sort_order' => $index, 'is_primary' => $index === 0]);
+                    $filename = 'product-'.$product->id.'-'.time().'-'.$index.'.jpg';
+                    Storage::disk('public')->put('products/'.$filename, $response->body());
+                    $product->images()->create(['file_path' => 'products/'.$filename, 'sort_order' => $index, 'is_primary' => $index === 0]);
                 }
             } catch (\Exception $e) {
-                \Log::warning("Failed to download image", ['url' => $imageUrl, 'error' => $e->getMessage()]);
+                \Log::warning('Failed to download image', ['url' => $imageUrl, 'error' => $e->getMessage()]);
             }
         }
     }
@@ -271,18 +304,18 @@ abstract class BaseImporter
     {
         foreach ($resources as $resource) {
             try {
-                if (!empty($resource['external_url'])) {
+                if (! empty($resource['external_url'])) {
                     $product->resources()->create($resource);
-                } elseif (!empty($resource['file_url'])) {
+                } elseif (! empty($resource['file_url'])) {
                     $response = Http::get($resource['file_url']);
                     if ($response->successful()) {
                         $filename = basename(parse_url($resource['file_url'], PHP_URL_PATH));
-                        $path = Storage::disk('public')->put('resources/' . $product->id, $response->body());
+                        $path = Storage::disk('public')->put('resources/'.$product->id, $response->body());
                         $product->resources()->create(array_merge($resource, ['file_path' => $path, 'file_name' => $filename]));
                     }
                 }
             } catch (\Exception $e) {
-                \Log::warning("Failed to import resource", ['resource' => $resource, 'error' => $e->getMessage()]);
+                \Log::warning('Failed to import resource', ['resource' => $resource, 'error' => $e->getMessage()]);
             }
         }
     }

@@ -92,13 +92,49 @@
         @media(max-width:430px){.category-grid{grid-template-columns:1fr}.product-grid{grid-template-columns:1fr}.search{grid-template-columns:1fr auto}.search button{padding:0 12px}}
         @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.category-card:hover,.product-card:hover,.btn:hover,.float-ai:hover{transform:none}}
         @media(prefers-color-scheme:dark){:root{--bg:#0f1724;--bg2:#131d2e;--s1:#18273a;--s2:#152032;--s3:#1a2b40;--on:#e2e8f0;--muted:#94a3b8;--faint:#64748b;--line:#243450;--ink:#f1f5f9;--glass:#18273a}.site-head{background:rgba(15,23,36,.94)}.top-strip{background:#0b1d3a;color:#94a3b8;border-color:#1a2f50}.hero{background:linear-gradient(135deg,#0f1d32,#131d2e 55%,#0f1724);color:var(--on)}.footer{background:#0f1d32;border-color:var(--line)}.search,.panel,.category-card,.product-card,.info-card,.filter,.category-directory-card,.pcard{background:var(--s1);border-color:var(--line)}.search select{background:#152032}.search input{color:var(--on)}.product-img{background-color:var(--bg2)}.btn-ghost{background:var(--s1);border-color:var(--line);color:var(--on)}.btn-dark{background:var(--s2)}.search-panel,.mega-panel{background:var(--s1);box-shadow:0 20px 60px rgba(0,0,0,.4)}.footer{background:var(--bg2)}.category-card:hover,.product-card:hover,.category-directory-card:hover{border-color:rgba(15,98,230,.55);box-shadow:0 14px 30px rgba(0,0,0,.3)}}
+        /* Product detail pages intentionally use one consistent dark engineering palette. */
+        body.product-detail-page{--bg:#0b1727;--bg2:#0f1d2e;--s1:#152a40;--s2:#12253a;--s3:#19324b;--on:#e6edf7;--muted:#9badc4;--faint:#6f849e;--ink:#f1f5f9;--line:#294866;--glass:#152a40;background:var(--bg);color:var(--on);color-scheme:dark}
+        body.product-detail-page .site-head{background:rgba(10,20,36,.96);border-color:var(--line)}
+        body.product-detail-page .nav-row,
+        body.product-detail-page .search,
+        body.product-detail-page .search-panel,
+        body.product-detail-page .mega-panel,
+        body.product-detail-page .select-lite,
+        body.product-detail-page .icon-btn:not(.gold),
+        body.product-detail-page .switch-btn,
+        body.product-detail-page .panel,
+        body.product-detail-page .info-card,
+        body.product-detail-page .product-card,
+        body.product-detail-page .control,
+        body.product-detail-page .btn-ghost{background:var(--s1);border-color:var(--line);color:var(--on)}
+        body.product-detail-page .search select,
+        body.product-detail-page .product-gallery-main,
+        body.product-detail-page .product-gallery-thumb,
+        body.product-detail-page .spec-table th,
+        body.product-detail-page .product-price-card{background:var(--s2);border-color:var(--line);color:var(--muted)}
+        body.product-detail-page .search input,
+        body.product-detail-page .control,
+        body.product-detail-page .spec-table td,
+        body.product-detail-page .spec-table a{color:var(--on)}
+        body.product-detail-page .search input::placeholder,
+        body.product-detail-page .control::placeholder{color:#8095ad;opacity:1}
+        body.product-detail-page .spec-group th{background:#102b49;color:#72adff}
+        body.product-detail-page .product-price-card strong{color:var(--on)}
+        body.product-detail-page .product-detail-section{background:var(--bg2)}
+        body.product-detail-page .product-img{background:transparent;border-color:var(--line)}
+        body.product-detail-page .b-info{background:#102b49;color:#72adff;border-color:#2164ac}
+        body.product-detail-page .b-muted{background:#10253a;color:#acbdd1;border-color:#355473}
+        body.product-detail-page .b-warn{background:#352a1a;color:#ffc15a;border-color:#81581c}
+        body.product-detail-page .b-ok{background:#12362f;color:#71d8b9;border-color:#246653}
+        body.product-detail-page .footer{background:var(--bg2);border-color:var(--line)}
+        body.product-detail-page .mobile-bottom{background:rgba(15,29,46,.97);border-color:var(--line)}
         :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:4px}
         @keyframes skel-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
         .skel{background:linear-gradient(90deg,var(--s3) 25%,var(--s2) 50%,var(--s3) 75%);background-size:200% 100%;animation:skel-shimmer 1.5s ease-in-out infinite;border-radius:8px;min-height:16px}
         .skel-card{height:320px}.skel-img{height:180px;margin-bottom:12px}.skel-text{height:14px;width:80%;margin-bottom:8px}.skel-text.short{width:50%}
     </style>
 </head>
-<body>
+<body class="@yield('body_class')">
 	    <!-- Google Tag Manager (noscript) -->
 	    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NNXFK668"
 	    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
