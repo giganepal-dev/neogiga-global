@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Product;
+use App\Models\Marketplace\ProductBrand;
 use App\Models\Marketplace\ProductCategory;
 use App\Services\Catalog\BrandVisibilityService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
@@ -11,7 +12,7 @@ use App\Services\Marketplace\MarketplaceUrlGenerator;
 use App\Services\Product\ProductPublicationGate;
 use App\Services\Seo\CatalogSeoTemplateService;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -23,25 +24,103 @@ class BrandPageController extends Controller
     public function index(Request $request): View
     {
         $context = app(GlobalMarketplaceContextService::class)->context($request);
-        $all = $this->brands->visibleFor($context['current'] ?? null, false, $context['locale'] ?? 'en', $request->getHost());
-        $page = max(1, (int) $request->query('page', 1));
-        $perPage = 24;
-        $brands = new LengthAwarePaginator(
-            $all->forPage($page, $perPage)->values(),
-            $all->count(),
-            $perPage,
-            $page,
-            ['path' => $request->url(), 'query' => $request->query()],
-        );
+        $locale = $context['locale'] ?? 'en';
+        $marketplace = $context['current'] ?? null;
+
+        // Invalid/MPN-like names are already rejected inside the (cached) service.
+        $all = $this->brands->visibleFor($marketplace, false, $locale, $request->getHost());
+
+        // Collapse duplicate identities (e.g. "SparkFun" / "SparkFun Electronics")
+        // into one canonical card. Every underlying brand page still resolves, so
+        // existing URLs never 404 — true record merges are an audited admin task.
+        $brands = $this->sortBrands($this->dedupeForDisplay($all), $this->resolveSort($request));
+
+        // First-letter buckets that actually have brands (drives the A–Z nav's
+        // disabled state). Everything else (letter/search/sort) is client-side.
+        $availableLetters = $brands
+            ->map(fn (ProductBrand $brand) => $this->firstLetterBucket((string) $brand->name))
+            ->unique()
+            ->values()
+            ->all();
 
         return view('frontend.brands.index', [
             'brands' => $brands,
+            'availableLetters' => $availableLetters,
+            'activeLetter' => strtoupper((string) $request->query('letter', 'all')),
+            'activeSort' => $this->resolveSort($request),
+            'searchQuery' => trim((string) $request->query('q', '')),
+            'totalBrands' => $brands->count(),
             'marketplaceContext' => $context,
-            'canonical' => $context['current']
-                ? app(MarketplaceUrlGenerator::class)->forMarketplace($context['current'], '/'.($context['locale'] ?? 'en').'/brands')
-                : 'https://neogiga.com/'.($context['locale'] ?? 'en').'/brands',
-            'robots' => ($context['current']?->is_active && $context['current']?->is_visible && $context['current']?->indexable) ? 'index,follow' : 'noindex,nofollow',
+            'publicBase' => '/'.$locale,
+            // Canonical stays the clean directory URL; letter/search/sort are view
+            // state, not separate indexable pages.
+            'canonical' => $marketplace
+                ? app(MarketplaceUrlGenerator::class)->forMarketplace($marketplace, '/'.$locale.'/brands')
+                : 'https://neogiga.com/'.$locale.'/brands',
+            'robots' => ($marketplace?->is_active && $marketplace?->is_visible && $marketplace?->indexable) ? 'index,follow' : 'noindex,nofollow',
         ]);
+    }
+
+    private function resolveSort(Request $request): string
+    {
+        $sort = (string) $request->query('sort', 'az');
+
+        return in_array($sort, ['az', 'za', 'products', 'recent'], true) ? $sort : 'az';
+    }
+
+    /**
+     * @param  Collection<int, ProductBrand>  $brands
+     * @return Collection<int, ProductBrand>
+     */
+    private function dedupeForDisplay(Collection $brands): Collection
+    {
+        return $brands
+            ->groupBy(fn (ProductBrand $brand) => $this->normalizeName((string) $brand->name))
+            ->map(function (Collection $group) {
+                // Canonical = most products, then the shortest (usually official
+                // short) name. Clone before mutating so the CACHED model instance
+                // is never altered, then show the combined product count.
+                $canonical = clone $group->sort(fn (ProductBrand $a, ProductBrand $b) => [(int) $b->public_products_count, mb_strlen((string) $a->name)]
+                    <=> [(int) $a->public_products_count, mb_strlen((string) $b->name)])->first();
+                $canonical->public_products_count = (int) $group->sum('public_products_count');
+
+                return $canonical;
+            })
+            ->values();
+    }
+
+    /**
+     * @param  Collection<int, ProductBrand>  $brands
+     * @return Collection<int, ProductBrand>
+     */
+    private function sortBrands(Collection $brands, string $sort): Collection
+    {
+        return match ($sort) {
+            'za' => $brands->sortByDesc(fn (ProductBrand $b) => mb_strtolower((string) $b->name))->values(),
+            'products' => $brands->sortByDesc(fn (ProductBrand $b) => (int) $b->public_products_count)->values(),
+            'recent' => $brands->sortByDesc(fn (ProductBrand $b) => $b->created_at?->getTimestamp() ?? 0)->values(),
+            default => $brands->sortBy(fn (ProductBrand $b) => mb_strtolower((string) $b->name))->values(),
+        };
+    }
+
+    private function firstLetterBucket(string $name): string
+    {
+        $char = mb_strtoupper(mb_substr(trim($name), 0, 1));
+        if ($char >= '0' && $char <= '9') {
+            return '0-9';
+        }
+
+        return ($char >= 'A' && $char <= 'Z') ? $char : '0-9';
+    }
+
+    private function normalizeName(string $name): string
+    {
+        $normalized = mb_strtolower(trim($name));
+        // Drop common corporate suffixes so "SparkFun" == "SparkFun Electronics".
+        $normalized = preg_replace('/\b(electronics?|incorporated|inc|corporation|corp|company|co|technologies|technology|semiconductors?|international|limited|ltd|llc|gmbh|group)\b/u', '', $normalized);
+        $normalized = preg_replace('/[^a-z0-9]+/u', '', (string) $normalized);
+
+        return $normalized !== '' ? $normalized : mb_strtolower(trim($name));
     }
 
     public function show(Request $request, string $slug): View

@@ -38,6 +38,7 @@ class BrandVisibilityService
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get()
+                ->reject(fn (ProductBrand $brand) => $this->looksInvalid((string) $brand->name))
                 ->filter(fn (ProductBrand $brand) => $this->matches($brand->marketplace_visibility, $marketplace?->id, $marketplace?->code)
                     && $this->matches($brand->country_visibility, $marketplace?->country_id, $marketplace?->country?->iso_code_2))
                 ->values();
@@ -58,6 +59,44 @@ class BrandVisibilityService
     {
         Cache::forever('catalog:brand-version', (string) now()->getTimestampMs());
         Cache::forever('seo:sitemap-version', (string) now()->getTimestampMs());
+    }
+
+    /**
+     * True when a brand name is really imported junk — an MPN, SKU, order/package
+     * code, numeric-only value or parenthesized fragment — that must never appear
+     * publicly as a manufacturer (it stays in the DB for product FK integrity and
+     * an admin review queue). Deliberately conservative: real brands like "3M",
+     * "M5Stack" or "TE Connectivity" pass. Examples that must fail: 3-794619-4,
+     * 01550900DR, 2311766-1, (PUYA).
+     */
+    public function looksInvalid(string $name): bool
+    {
+        $name = trim($name);
+
+        if ($name === '' || mb_strlen($name) < 2) {
+            return true;
+        }
+        if (preg_match('/^\(.*\)$/', $name)) {
+            return true; // parenthesized fragment e.g. (PUYA)
+        }
+        if (! preg_match('/\p{L}/u', $name)) {
+            return true; // numeric-only or symbols-only
+        }
+        if (preg_match('/^\d[\d\-]{3,}$/', $name)) {
+            return true; // dash-separated digit codes e.g. 3-794619-4, 2311766-1
+        }
+        if (preg_match('/^\d{5,}[A-Za-z]{0,3}$/', $name)) {
+            return true; // long digit run + short suffix e.g. 01550900DR
+        }
+
+        $letters = preg_match_all('/\p{L}/u', $name);
+        $digits = preg_match_all('/\d/', $name);
+        // Short, digit-dominant alphanumeric codes (MPN-like) with few letters.
+        if ($digits > 0 && $letters > 0 && $digits >= $letters * 2 && mb_strlen($name) <= 12) {
+            return true;
+        }
+
+        return false;
     }
 
     private function matches(mixed $visibility, ?int $id, ?string $code): bool
