@@ -1,51 +1,45 @@
-@extends('frontend.layout')
+@extends('frontend.account.layout')
 @section('title','My Account — NeoGiga')
-@section('content')
+@section('account-content')
+<header class="account-topbar">
+    <div><h1>Account overview</h1><p>Orders, sourcing and approved partner operations in one workspace.</p></div>
+    <span class="account-region">{{ ($marketplaceContext['current']?->regional_brand_name ?? $marketplaceContext['current']?->name ?? 'NeoGiga Global') }} · {{ $marketplaceContext['currency_code'] ?? 'USD' }}</span>
+</header>
 
-<h1 style="margin-bottom:24px">My Account</h1>
-
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px">
-    <section class="card" style="padding:20px">
-        <h2 style="margin:0 0 12px;font-size:1.1rem">Profile</h2>
-        <p style="color:var(--soft);margin:0">{{ $user->name ?? 'Customer' }}</p>
-        <p class="mono" style="color:var(--muted);font-size:.82rem;margin:4px 0 0">{{ $user->email }}</p>
-    </section>
-
-    <section class="card" style="padding:20px">
-        <h2 style="margin:0 0 12px;font-size:1.1rem">Recent Orders</h2>
-        @if ($orders->isEmpty())
-            <p style="color:var(--muted)">No orders yet.</p>
-        @else
-            <div style="display:grid;gap:8px">
-                @foreach ($orders->take(5) as $order)
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
-                        <span class="mono" style="font-size:.82rem">{{ $order->order_number ?? '#' . $order->id }}</span>
-                        <span class="badge" style="font-size:.72rem">{{ $order->status ?? 'processing' }}</span>
-                    </div>
-                @endforeach
-            </div>
-        @endif
-    </section>
-
-    <section class="card" style="padding:20px">
-        <h2 style="margin:0 0 12px;font-size:1.1rem">RFQ Requests</h2>
-        @if ($rfqs->isEmpty())
-            <p style="color:var(--muted)">No RFQ requests yet. <a href="/en/rfq" style="color:var(--cyan)">Create one</a>.</p>
-        @else
-            <div style="display:grid;gap:8px">
-                @foreach ($rfqs->take(5) as $rfq)
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
-                        <span class="mono" style="font-size:.82rem">{{ $rfq->rfq_number ?? 'RFQ #' . $rfq->id }}</span>
-                        <span class="badge" style="font-size:.72rem">{{ $rfq->status ?? 'pending' }}</span>
-                    </div>
-                @endforeach
-            </div>
-        @endif
-    </section>
+<div class="account-stats">
+    @foreach($stats as $stat)
+        <article class="account-stat"><span>{{ $stat['label'] }}</span><strong>{{ number_format($stat['value']) }}</strong><a href="{{ $stat['url'] }}">View details →</a></article>
+    @endforeach
 </div>
 
-<form method="post" action="/logout" style="margin-top:24px">
-    @csrf
-    <button class="btn btn-ghost" type="submit">Sign Out</button>
-</form>
+<div class="account-grid">
+    <section class="account-card">
+        <div class="account-card-head"><h2>Recent orders</h2><a href="/account/orders">View all</a></div>
+        @forelse($orders as $order)
+            <div class="account-list-row"><div><strong>{{ $order->order_number ?? '#'.$order->id }}</strong><small>{{ optional(\Carbon\Carbon::parse($order->created_at ?? null))->diffForHumans() }}</small></div><span class="account-badge {{ $order->status ?? '' }}">{{ str_replace('_',' ',$order->status ?? 'pending') }}</span></div>
+        @empty <div class="account-empty">No orders yet. <a href="/en/products">Browse parts</a></div> @endforelse
+    </section>
+    <section class="account-card">
+        <div class="account-card-head"><h2>RFQ requests</h2><a href="/account/rfqs">View all</a></div>
+        @forelse($rfqs as $rfq)
+            <div class="account-list-row"><div><strong>{{ $rfq->rfq_number ?? 'RFQ #'.$rfq->id }}</strong><small>{{ $rfq->company_name ?? 'Personal request' }}</small></div><span class="account-badge {{ $rfq->status ?? '' }}">{{ str_replace('_',' ',$rfq->status ?? 'open') }}</span></div>
+        @empty <div class="account-empty">No RFQs yet. <a href="/en/rfq">Create an RFQ</a></div> @endforelse
+    </section>
+    <section class="account-card">
+        <div class="account-card-head"><h2>Quotations</h2><a href="/account/quotations">View all</a></div>
+        @forelse($quotations as $quote)
+            <div class="account-list-row"><div><strong>{{ $quote->quote_number ?? 'Quote #'.$quote->id }}</strong><small>{{ $quote->currency ?? 'USD' }} {{ number_format((float)($quote->grand_total ?? 0),2) }}</small></div><span class="account-badge {{ $quote->status ?? '' }}">{{ str_replace('_',' ',$quote->status ?? 'draft') }}</span></div>
+        @empty <div class="account-empty">Quotations issued to your account will appear here.</div> @endforelse
+    </section>
+    <section class="account-card">
+        <div class="account-card-head"><h2>Partner roles</h2><a href="/account/applications">Manage</a></div>
+        @forelse($applications as $application)
+            <div class="account-list-row"><div><strong>{{ ucwords(str_replace('_',' ',$application->role_key)) }}</strong><small>{{ $application->application_number }}</small></div><span class="account-badge {{ $application->status }}">{{ str_replace('_',' ',$application->status) }}</span></div>
+        @empty <div class="account-empty">Apply for institutional, seller, distributor, manufacturer or fulfilment access.</div> @endforelse
+    </section>
+    <section class="account-card wide">
+        <div class="account-card-head"><h2>Quick actions</h2></div>
+        <div class="account-actions"><a class="account-button" href="/en/rfq">Create RFQ</a><a class="account-button secondary" href="/en/bom">Upload BOM</a><a class="account-button secondary" href="/account/support">Get support</a><a class="account-button gold" href="/account/applications">Add partner role</a></div>
+    </section>
+</div>
 @endsection

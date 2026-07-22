@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-07-22 - Unified Multi-Role Account Hub
+
+- Replaced the minimal customer account screen with a responsive dark account workspace for owned orders, RFQs, quotations, BOM work, saved parts, notifications, support, payments, profile, security and addresses; every data query remains scoped to the authenticated user.
+- Added an additive multi-role entitlement layer that discovers approved legacy B2B, reseller, seller, distributor and manufacturer relationships while preserving each existing portal, middleware and dataset.
+- Added one compliance application workflow for institutional, reseller, seller, regional/global distributor, manufacturer, brand-owner and warehouse/fulfilment roles, including private documents, SHA-256 evidence, review history and immutable application events.
+- Extended the existing partner-approvals console with document review, needs-information/rejection decisions and transactional approval that provisions the appropriate existing partner context plus an approved role entitlement.
+- Corrected missing admin-controller route imports that prevented route inspection, and corrected the two-factor-management return route to the unified security page.
+- Added regression coverage for authentication, customer ownership isolation, private document handling, forbidden unapproved role switching, rendering of every account section and provisioning of every supported partner role.
+
 ## 2026-07-19 - Catalog Brand Identity Normalization
 
 - Added the dry-run-first `catalog:normalize-brands` command, guarded by a verified backup reference, explicit confirmation, and an exact plan hash. It deactivates reviewed source aliases rather than deleting them, preserves manufacturer aliases, and relinks products to the canonical brand/manufacturer identity.

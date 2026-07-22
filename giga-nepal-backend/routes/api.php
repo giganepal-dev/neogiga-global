@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\B2BAdminController;
+use App\Http\Controllers\Api\Admin\AdminConsoleController;
 use App\Http\Controllers\Api\Admin\BomAdminController;
 use App\Http\Controllers\Api\Admin\DistributorAdminController;
 use App\Http\Controllers\Api\Admin\ImportExportController;

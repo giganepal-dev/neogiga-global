@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CustomerImportController as AdminCustomerImport;
 use App\Http\Controllers\Admin\DashboardController as AdminDash;
 use App\Http\Controllers\Admin\ElecforestImportController as AdminElecforestImport;
 use App\Http\Controllers\Admin\MarketplaceConfigController as AdminMarketplaceConfig;
+use App\Http\Controllers\Admin\MarketingActionController as AdminMarketing;
 use App\Http\Controllers\Admin\PartnerApprovalsController;
 use App\Http\Controllers\Admin\PcbAdminController as AdminPcb;
 use App\Http\Controllers\Admin\PricingAdminController;
@@ -438,6 +439,9 @@ Route::prefix('admin')->group(function () {
         Route::get('support', [AdminDash::class, 'support']);
         Route::get('applications', [AdminDash::class, 'applications']);
         Route::get('partner-approvals', [PartnerApprovalsController::class, 'index']);
+        Route::post('partner-approvals/account-applications/{application}/approve', [PartnerApprovalsController::class, 'approveAccountApplication'])->whereNumber('application')->middleware('throttle:20,1');
+        Route::post('partner-approvals/account-applications/{application}/review', [PartnerApprovalsController::class, 'reviewAccountApplication'])->whereNumber('application')->middleware('throttle:20,1');
+        Route::get('partner-approvals/account-documents/{document}', [PartnerApprovalsController::class, 'downloadAccountDocument'])->whereNumber('document');
         Route::post('partner-approvals/reseller-applications/{application}/approve', [PartnerApprovalsController::class, 'approveResellerApplication'])->whereNumber('application')->middleware('throttle:20,1');
         Route::post('partner-approvals/reseller-applications/{application}/reject', [PartnerApprovalsController::class, 'rejectResellerApplication'])->whereNumber('application')->middleware('throttle:20,1');
         Route::post('partner-approvals/reseller-territories/{territoryRequest}/approve', [PartnerApprovalsController::class, 'approveResellerTerritory'])->whereNumber('territoryRequest')->middleware('throttle:20,1');
@@ -548,18 +552,27 @@ Route::get('/login', [CustomerAuthController::class, 'showLogin'])->name('login'
 Route::post('/login', [CustomerAuthController::class, 'login'])->middleware('throttle:6,1');
 Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [CustomerAuthController::class, 'register'])->middleware('throttle:6,1');
-Route::get('/account', [CustomerDashboardController::class, 'index'])->middleware('auth')->name('account');
-Route::get('/account/saved', function () {
-    $saved = \Illuminate\Support\Facades\DB::table('saved_products')
-        ->join('products', 'saved_products.product_id', '=', 'products.id')
-        ->where('saved_products.user_id', auth()->id())
-        ->select('products.id', 'products.name', 'products.slug', 'products.sku', 'products.mpn', 'products.list_price', 'saved_products.created_at as saved_at', 'saved_products.list_name')
-        ->orderByDesc('saved_products.created_at')
-        ->get();
-    return view('frontend.account.saved', ['saved' => $saved]);
-})->middleware('auth')->name('account.saved');
-Route::patch('/account/profile', [CustomerDashboardController::class, 'updateProfile'])->middleware(['auth', 'throttle:10,1'])->name('account.profile.update');
-Route::patch('/account/password', [CustomerDashboardController::class, 'updatePassword'])->middleware(['auth', 'throttle:6,1'])->name('account.password.update');
+Route::prefix('account')->middleware('auth')->name('account.')->group(function () {
+    Route::get('/', [CustomerDashboardController::class, 'index'])->name('dashboard');
+    Route::get('orders', [CustomerDashboardController::class, 'orders'])->name('orders');
+    Route::get('rfqs', [CustomerDashboardController::class, 'rfqs'])->name('rfqs');
+    Route::get('quotations', [CustomerDashboardController::class, 'quotations'])->name('quotations');
+    Route::get('bom', [CustomerDashboardController::class, 'bom'])->name('bom');
+    Route::get('saved', [CustomerDashboardController::class, 'saved'])->name('saved');
+    Route::get('notifications', [CustomerDashboardController::class, 'notifications'])->name('notifications');
+    Route::get('support', [CustomerDashboardController::class, 'support'])->name('support');
+    Route::get('payments', [CustomerDashboardController::class, 'payments'])->name('payments');
+    Route::get('profile', [CustomerDashboardController::class, 'profile'])->name('profile');
+    Route::patch('profile', [CustomerDashboardController::class, 'updateProfile'])->middleware('throttle:10,1')->name('profile.update');
+    Route::get('security', [CustomerDashboardController::class, 'security'])->name('security');
+    Route::patch('password', [CustomerDashboardController::class, 'updatePassword'])->middleware('throttle:6,1')->name('password.update');
+    Route::get('addresses', [CustomerDashboardController::class, 'addresses'])->name('addresses');
+    Route::post('addresses', [CustomerDashboardController::class, 'storeAddress'])->middleware('throttle:10,1')->name('addresses.store');
+    Route::delete('addresses/{address}', [CustomerDashboardController::class, 'deleteAddress'])->whereNumber('address')->name('addresses.delete');
+    Route::get('applications', [CustomerDashboardController::class, 'applications'])->name('applications');
+    Route::post('applications', [CustomerDashboardController::class, 'storeApplication'])->middleware('throttle:4,1')->name('applications.store');
+    Route::post('role', [CustomerDashboardController::class, 'switchRole'])->middleware('throttle:20,1')->name('role.switch');
+});
 Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 Route::get('/logout', fn () => redirect('/login'))->name('logout.get');
 Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');

@@ -142,6 +142,6 @@ class TwoFactorController extends Controller
         $this->tfa->disable($user);
         session()->forget('2fa.confirmed');
 
-        return redirect()->route('frontend.account')->with('success', 'Two-factor authentication disabled.');
+        return redirect()->route('account.security')->with('success', 'Two-factor authentication disabled.');
     }
 }
