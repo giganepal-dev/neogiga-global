@@ -35,6 +35,7 @@ class SellerApplicationRequest extends FormRequest
             'has_existing_inventory' => ['nullable', 'boolean'],
             'has_physical_store' => ['nullable', 'boolean'],
             'monthly_order_capacity' => ['nullable', 'string', 'max:80'],
+            'annual_turnover_range' => ['required', Rule::in(['under_25000', '25000_100000', '100000_500000', '500000_1000000', '1000000_5000000', 'over_5000000', 'prefer_not_to_say'])],
             'website' => ['nullable', 'url', 'max:255'],
             'message' => ['nullable', 'string', 'max:3000'],
             'source' => ['nullable', 'string', 'max:80'],

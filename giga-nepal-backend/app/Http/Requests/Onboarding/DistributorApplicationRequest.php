@@ -33,6 +33,7 @@ class DistributorApplicationRequest extends FormRequest
             'existing_dealer_network' => ['nullable', 'boolean'],
             'warehouse_available' => ['nullable', 'boolean'],
             'monthly_capacity' => ['nullable', 'string', 'max:80'],
+            'annual_turnover_range' => ['required', Rule::in(['under_25000', '25000_100000', '100000_500000', '500000_1000000', '1000000_5000000', 'over_5000000', 'prefer_not_to_say'])],
             'message' => ['nullable', 'string', 'max:3000'],
             'source' => ['nullable', 'string', 'max:80'],
         ];

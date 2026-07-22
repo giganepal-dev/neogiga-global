@@ -10,7 +10,7 @@ class DistributorApplication extends Model
         'business_name', 'contact_person', 'email', 'phone', 'whatsapp', 'country_id', 'region_id', 'city_id',
         'distributor_type', 'territory_interest', 'current_business_categories', 'existing_dealer_network',
         'warehouse_available', 'monthly_capacity', 'message', 'status', 'reviewed_by', 'reviewed_at',
-        'admin_notes', 'source', 'operating_scope', 'full_name', 'company_name', 'target_marketplace_ids',
+        'admin_notes', 'source', 'operating_scope', 'full_name', 'company_name', 'target_marketplace_ids', 'annual_turnover_range',
     ];
 
     protected $casts = [

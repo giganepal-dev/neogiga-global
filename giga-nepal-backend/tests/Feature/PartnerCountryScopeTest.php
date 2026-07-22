@@ -74,11 +74,13 @@ class PartnerCountryScopeTest extends TestCase
             'email' => 'neogiga.public.seller@gmail.com', 'phone' => '+9779800000001',
             'country_id' => $india, 'operating_scope' => 'global',
             'target_marketplace_ids' => [$nepalMarketplace, $indiaMarketplace],
+            'annual_turnover_range' => '100000_500000',
             'business_type' => 'Company', 'seller_type' => 'manufacturer',
         ])->assertCreated();
         $this->assertDatabaseHas('seller_applications', [
             'email' => 'neogiga.public.seller@gmail.com', 'country_id' => $nepal, 'operating_scope' => 'global',
             'target_marketplace_ids' => json_encode([$nepalMarketplace, $indiaMarketplace]),
+            'annual_turnover_range' => '100000_500000',
         ]);
 
         $this->withHeader('CF-IPCountry', 'US')->postJson('/partner-applications/distributor', [
@@ -86,11 +88,13 @@ class PartnerCountryScopeTest extends TestCase
             'email' => 'neogiga.public.distributor@gmail.com', 'phone' => '+919800000001',
             'country_id' => $india, 'operating_scope' => 'country',
             'target_marketplace_ids' => [$indiaMarketplace],
+            'annual_turnover_range' => '500000_1000000',
             'distributor_type' => 'regional_distributor',
         ])->assertCreated();
         $this->assertDatabaseHas('distributor_applications', [
             'email' => 'neogiga.public.distributor@gmail.com', 'country_id' => $india, 'operating_scope' => 'country',
             'target_marketplace_ids' => json_encode([$indiaMarketplace]),
+            'annual_turnover_range' => '500000_1000000',
         ]);
     }
 
@@ -100,14 +104,18 @@ class PartnerCountryScopeTest extends TestCase
             ->assertSee('data-endpoint="/partner-applications/seller"', false)
             ->assertSee('name="_token"', false)
             ->assertSee('Seller base country')
-            ->assertSee('name="target_marketplace_ids[]"', false)
+            ->assertSee('data-marketplace-toggle', false)
+            ->assertSee('name="annual_turnover_range"', false)
+            ->assertDontSee('data-partner-marketplaces multiple', false)
             ->assertDontSee('data-endpoint="/api/seller-applications"', false);
 
         $this->get('/en/distributors')->assertOk()
             ->assertSee('data-endpoint="/partner-applications/distributor"', false)
             ->assertSee('name="_token"', false)
             ->assertSee('Distributor base country')
-            ->assertSee('name="target_marketplace_ids[]"', false)
+            ->assertSee('data-marketplace-toggle', false)
+            ->assertSee('name="annual_turnover_range"', false)
+            ->assertDontSee('data-partner-marketplaces multiple', false)
             ->assertDontSee('data-endpoint="/api/distributor-applications"', false);
     }
 
@@ -121,6 +129,7 @@ class PartnerCountryScopeTest extends TestCase
             'email' => 'neogiga.invalid.targets@gmail.com', 'phone' => '+9779800000002',
             'country_id' => $nepal, 'operating_scope' => 'country',
             'target_marketplace_ids' => $marketplaces,
+            'annual_turnover_range' => 'under_25000',
             'business_type' => 'Company', 'seller_type' => 'manufacturer',
         ])->assertUnprocessable()->assertJsonValidationErrors('target_marketplace_ids');
     }

@@ -10,7 +10,7 @@ class SellerApplication extends Model
         'business_name', 'contact_person', 'email', 'phone', 'whatsapp', 'country_id', 'region_id', 'city_id',
         'business_type', 'seller_type', 'product_categories', 'brands_carried', 'has_existing_inventory',
         'has_physical_store', 'monthly_order_capacity', 'website', 'message', 'status', 'reviewed_by',
-        'reviewed_at', 'admin_notes', 'source', 'operating_scope', 'country', 'target_marketplace_ids',
+        'reviewed_at', 'admin_notes', 'source', 'operating_scope', 'country', 'target_marketplace_ids', 'annual_turnover_range',
     ];
 
     protected $casts = [
