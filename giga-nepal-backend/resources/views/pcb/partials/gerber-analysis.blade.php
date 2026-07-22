@@ -7,7 +7,7 @@
         default => 'b-muted'
     };
     $layerColors = [
-        'top_copper' => '#ef4444', 'bottom_copper' => '#3b82f6', 'inner_copper_1' => '#8b5cf6',
+        'top_copper' => '#ef4444', 'bottom_copper' => '#3b82f6', 'inner_copper' => '#8b5cf6',
         'top_solder_mask' => '#10b981', 'bottom_solder_mask' => '#059669',
         'top_silkscreen' => '#f9bd2c', 'bottom_silkscreen' => '#d97706',
         'top_paste' => '#94a3b8', 'bottom_paste' => '#64748b',
@@ -21,7 +21,7 @@
             Parser {{ $run->parser_version }} · {{ ucfirst($run->confidence_level) }} confidence
             · {{ $run->created_at->diffForHumans() }}
         </div></div>
-        <span class="badge {{ $run->status === 'completed' ? 'b-ok' : ($run->status === 'failed' ? 'b-danger' : 'b-warn') }}">{{ $run->status }}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="badge {{ $run->status === 'completed' ? 'b-ok' : ($run->status === 'failed' ? 'b-danger' : 'b-warn') }}">{{ $run->status }}</span>@if($run->file && $project->canBeEditedBy(auth()->user()))<form method="post" action="/en/projects/{{ $project->id }}/gerber/{{ $run->file->id }}/analyze">@csrf<button type="submit" class="btn btn-ghost" style="min-height:32px;padding:0 10px;font-size:.75rem">Refresh analysis</button></form>@endif</div>
     </div>
     <div class="card-body">
         @if($run->detectedLayers->count())

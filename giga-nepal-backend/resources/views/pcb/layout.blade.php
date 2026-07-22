@@ -171,5 +171,6 @@
         <div><h3>Regional</h3><a href="https://neogiga.com/en">Global</a><a href="https://neogiga.in/en">India</a><a href="https://np.neogiga.com/en">Nepal</a><a href="https://neogiga.com/en#regional">26+ markets</a></div>
     </div>
 </footer>
+@stack('scripts')
 </body>
 </html>

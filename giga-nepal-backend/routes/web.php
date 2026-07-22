@@ -96,6 +96,8 @@ if (config('pcb.enabled', true)) {
             Route::post('/en/projects/{project}/cancel', [PcbPortalController::class, 'cancel'])->middleware('throttle:10,1')->name('pcb.projects.cancel');
             Route::post('/en/projects/{project}/files', [PcbPortalController::class, 'upload'])->middleware('throttle:10,1')->name('pcb.files.store');
             Route::get('/en/projects/{project}/files/{file}/download', [PcbPortalController::class, 'download'])->middleware('signed')->name('pcb.files.download');
+            Route::get('/en/projects/{project}/gerber/{analysis}/layers/{layer}', [PcbPortalController::class, 'gerberLayer'])->middleware('signed')->name('pcb.layers.view');
+            Route::post('/en/projects/{project}/gerber/{file}/analyze', [PcbPortalController::class, 'analyzeGerber'])->middleware('throttle:6,1')->name('pcb.gerber.analyze');
             Route::post('/en/projects/{project}/quotes', [PcbPortalController::class, 'submitQuote'])->middleware('throttle:10,1')->name('pcb.quotes.store');
             Route::post('/en/projects/{project}/quotes/{quote}/approve', [PcbPortalController::class, 'approveQuote'])->middleware('throttle:10,1')->name('pcb.quotes.approve');
             Route::post('/en/projects/{project}/quotes/{quote}/reject', [PcbPortalController::class, 'rejectQuote'])->middleware('throttle:10,1')->name('pcb.quotes.reject');

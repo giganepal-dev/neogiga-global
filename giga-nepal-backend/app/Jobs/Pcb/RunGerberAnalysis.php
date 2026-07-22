@@ -34,6 +34,10 @@ class RunGerberAnalysis implements ShouldQueue
                 ]);
             }
         } catch (\Throwable $e) {
+            $this->file->update([
+                'processing_status' => 'failed',
+                'processing_error' => mb_substr($e->getMessage(), 0, 1000),
+            ]);
             Log::error('PCB DFM analysis failed.', [
                 'file_id' => $this->file->id,
                 'error' => $e->getMessage(),

@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Pcb\RunGerberAnalysis;
+use App\Models\Pcb\PcbDetectedLayer;
 use App\Models\Pcb\PcbFile;
+use App\Models\Pcb\PcbGerberAnalysisRun;
 use App\Models\Pcb\PcbProject;
 use App\Models\Pcb\PcbQuoteConfiguration;
+use App\Services\Pcb\PcbDfmService;
 use App\Services\Pcb\PcbFileService;
 use App\Services\Pcb\PcbOrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -112,8 +117,9 @@ class PcbPortalController extends Controller
         $project->load([
             'files' => fn ($query) => $query->latest(),
             'files.scanResults',
-            'gerberAnalysisRuns.detectedLayers',
-            'gerberAnalysisRuns.warnings',
+            'gerberAnalysisRuns' => fn ($query) => $query
+                ->with(['detectedLayers', 'warnings', 'file'])
+                ->latest(),
             'quoteConfigurations' => fn ($query) => $query->with(['lineItems', 'order'])->latest(),
             'activityLogs' => fn ($query) => $query->latest()->limit(30),
             'componentMatches' => fn ($query) => $query->latest()->limit(50),
@@ -127,7 +133,37 @@ class PcbPortalController extends Controller
             ),
         ]);
 
-        return view('pcb.projects.show', compact('project', 'downloadUrls'));
+        $latestGerberRun = $project->gerberAnalysisRuns->firstWhere('status', 'completed');
+        $gerberLayerUrls = $latestGerberRun
+            ? $latestGerberRun->detectedLayers->mapWithKeys(fn (PcbDetectedLayer $layer) => [
+                $layer->id => URL::temporarySignedRoute(
+                    'pcb.layers.view',
+                    now()->addMinutes((int) config('pcb.download_link_minutes', 15)),
+                    ['project' => $project->id, 'analysis' => $latestGerberRun->id, 'layer' => $layer->id],
+                ),
+            ])
+            : collect();
+        $detectedLayerCount = (int) ($latestGerberRun?->detected_layer_count ?? 0);
+        $gerberDefaults = $latestGerberRun ? [
+            'board_type' => match (true) {
+                $detectedLayerCount === 1 => 'single_sided',
+                $detectedLayerCount > 2 => 'multilayer',
+                default => 'double_sided',
+            },
+            'length_mm' => $latestGerberRun->detected_width_mm,
+            'width_mm' => $latestGerberRun->detected_height_mm,
+            'layer_count' => $detectedLayerCount ?: null,
+            'edge_plating' => $latestGerberRun->has_edge_plating_indicator,
+            'castellated_holes' => $latestGerberRun->has_castellated_indicator,
+            'panelization_type' => $latestGerberRun->has_panelization_indicator ? 'routing' : 'none',
+            'confidence_level' => $latestGerberRun->confidence_level,
+            'source_notes' => 'Gerber archive analysis · parser '.$latestGerberRun->parser_version,
+            'last_updated' => $latestGerberRun->updated_at,
+        ] : [];
+
+        return view('pcb.projects.show', compact(
+            'project', 'downloadUrls', 'latestGerberRun', 'gerberLayerUrls', 'gerberDefaults'
+        ));
     }
 
     public function update(Request $request, PcbProject $project): RedirectResponse
@@ -199,6 +235,37 @@ class PcbPortalController extends Controller
             $file->filename_original,
             ['Content-Type' => $file->mime_type, 'X-Robots-Tag' => 'noindex, nofollow, noarchive'],
         );
+    }
+
+    public function gerberLayer(
+        Request $request,
+        PcbProject $project,
+        PcbGerberAnalysisRun $analysis,
+        PcbDetectedLayer $layer,
+        PcbDfmService $dfm,
+    ): Response {
+        $this->authorizeProject($request, $project);
+        abort_unless($analysis->project_id === $project->id, 404);
+        abort_unless((string) $layer->analysis_run_id === (string) $analysis->id, 404);
+        abort_unless($analysis->file && $analysis->file->project_id === $project->id, 404);
+
+        return response($dfm->layerContents($analysis->file, $layer), 200, [
+            'Content-Type' => 'text/plain; charset=UTF-8',
+            'Cache-Control' => 'private, max-age=600',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Robots-Tag' => 'noindex, nofollow, noarchive',
+        ]);
+    }
+
+    public function analyzeGerber(Request $request, PcbProject $project, PcbFile $file): RedirectResponse
+    {
+        $this->authorizeProject($request, $project, edit: true);
+        abort_unless($file->project_id === $project->id && $file->file_type === 'gerber', 404);
+
+        $file->update(['processing_status' => 'pending', 'processing_error' => null]);
+        RunGerberAnalysis::dispatch($file, $request->user()->id);
+
+        return back()->with('status', 'Gerber analysis queued. Refresh the workspace shortly to view detected layers and technical suggestions.');
     }
 
     public function submitQuote(Request $request, PcbProject $project): RedirectResponse

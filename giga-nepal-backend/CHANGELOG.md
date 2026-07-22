@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-22 - Gerber Viewer and Technical Request Autofill
+
+- Connected the existing private Gerber viewer to individually authorized archive layers instead of attempting to render an entire ZIP, fixed its CSP-safe controls and UUID handling, and limited the project workspace to the latest completed analysis.
+- Added bounded RS-274X outline parsing for advisory board dimensions, copper-layer/type detection and filename-based panel, castellated-hole and edge-plating indicators; only those defensible values prefill the editable engineering quote request.
+- Added private signed layer responses, an owner/editor refresh-analysis action for existing uploads, archive path/expansion/ratio safeguards, explicit analysis-failure state and regression coverage for nested Gerber archives, detected dimensions, layer authorization, viewer rendering hooks and advisory form defaults.
+
 ## 2026-07-22 - Unified Customer PCB Dashboard
 
 - Integrated PCB projects into the existing customer account with a matching responsive dashboard for owned, actively shared and organization-visible projects, including live quote, production, file and project summaries.

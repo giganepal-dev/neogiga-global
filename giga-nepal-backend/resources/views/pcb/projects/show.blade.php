@@ -64,10 +64,12 @@
                 </div>
 
                 <!-- Gerber Analysis -->
-                @foreach($project->gerberAnalysisRuns as $run)
-                    @include('pcb.partials.gerber-analysis', ['run' => $run])
-                @include('pcb.partials.gerber-viewer')
-                @endforeach
+                @if($latestGerberRun)
+                    @include('pcb.partials.gerber-analysis', ['run' => $latestGerberRun])
+                    @include('pcb.partials.gerber-viewer', ['run' => $latestGerberRun, 'layerUrls' => $gerberLayerUrls])
+                @elseif($project->files->where('file_type','gerber')->count())
+                    <div class="card"><div class="card-body"><div class="notice">Gerber analysis is queued. Layer preview and technical suggestions will appear here after processing.</div></div></div>
+                @endif
 
                 <!-- Component Sourcing -->
                 @include('pcb.partials.component-matches')
@@ -80,27 +82,30 @@
                             <div class="notice">Upload a Gerber ZIP to unlock the engineering quote request.</div>
                         @elseif(!$quote || in_array($quote->status,['draft','rejected'],true))
                             @if($quote?->status === 'rejected')<div class="notice">Your requested quote changes are recorded. Update the specification and submit again.</div>@endif
+                            @if($gerberDefaults)
+                                <div class="security-note" style="margin-bottom:14px"><span class="security-icon">G</span><div><b style="color:var(--cyan)">Technical fields suggested from Gerber</b><div class="muted" style="font-size:.8rem">{{ $gerberDefaults['source_notes'] }} · Confidence: {{ $gerberDefaults['confidence_level'] }} · Last updated: {{ $gerberDefaults['last_updated']->format('M j, Y H:i') }}. Advisory only—verify every value before requesting a quote.</div></div></div>
+                            @endif
                             <form method="post" action="/en/projects/{{ $project->id }}/quotes">
                                 @csrf
                                 <div class="form-grid">
-                                    <div class="field"><label for="board_type">Board type</label><select class="control" id="board_type" name="board_type" required>@foreach(['double_sided'=>'Double sided','single_sided'=>'Single sided','multilayer'=>'Multilayer','rigid_flex'=>'Rigid-flex','flex'=>'Flex','aluminum'=>'Aluminum','ceramic'=>'Ceramic'] as $value=>$label)<option value="{{ $value }}" @selected(old('board_type',$quote?->board_type ?? 'double_sided')===$value)>{{ $label }}</option>@endforeach</select></div>
+                                    <div class="field"><label for="board_type">Board type</label><select class="control" id="board_type" name="board_type" required>@foreach(['double_sided'=>'Double sided','single_sided'=>'Single sided','multilayer'=>'Multilayer','rigid_flex'=>'Rigid-flex','flex'=>'Flex','aluminum'=>'Aluminum','ceramic'=>'Ceramic'] as $value=>$label)<option value="{{ $value }}" @selected(old('board_type',$quote?->board_type ?? ($gerberDefaults['board_type'] ?? 'double_sided'))===$value)>{{ $label }}</option>@endforeach</select></div>
                                     <div class="field"><label for="quantity">Board quantity</label><input class="control" id="quantity" type="number" name="quantity" min="1" max="1000000" value="{{ old('quantity',$quote?->quantity ?? $project->target_quantity) }}" required></div>
-                                    <div class="field"><label for="length_mm">Length (mm)</label><input class="control" id="length_mm" type="number" step="0.01" min="1" max="2000" name="length_mm" value="{{ old('length_mm',$quote?->length_mm) }}" required></div>
-                                    <div class="field"><label for="width_mm">Width (mm)</label><input class="control" id="width_mm" type="number" step="0.01" min="1" max="2000" name="width_mm" value="{{ old('width_mm',$quote?->width_mm) }}" required></div>
+                                    <div class="field"><label for="length_mm">Length (mm)</label><input class="control" id="length_mm" type="number" step="0.01" min="1" max="2000" name="length_mm" value="{{ old('length_mm',$quote?->length_mm ?? ($gerberDefaults['length_mm'] ?? null)) }}" required></div>
+                                    <div class="field"><label for="width_mm">Width (mm)</label><input class="control" id="width_mm" type="number" step="0.01" min="1" max="2000" name="width_mm" value="{{ old('width_mm',$quote?->width_mm ?? ($gerberDefaults['width_mm'] ?? null)) }}" required></div>
                                     <div class="field"><label for="thickness_mm">Thickness (mm)</label><input class="control" id="thickness_mm" type="number" step="0.1" min="0.2" max="10" name="thickness_mm" value="{{ old('thickness_mm',$quote?->thickness_mm ?? 1.6) }}" required></div>
-                                    <div class="field"><label for="layer_count">Copper layers</label><input class="control" id="layer_count" type="number" min="1" max="64" name="layer_count" value="{{ old('layer_count',$quote?->layer_count ?? 2) }}" required></div>
+                                    <div class="field"><label for="layer_count">Copper layers</label><input class="control" id="layer_count" type="number" min="1" max="64" name="layer_count" value="{{ old('layer_count',$quote?->layer_count ?? ($gerberDefaults['layer_count'] ?? 2)) }}" required></div>
                                     <div class="field"><label for="substrate_material">Material</label><select class="control" id="substrate_material" name="substrate_material"><option>FR-4</option><option>High-Tg FR-4</option><option>Aluminum</option><option>Polyimide</option><option>Ceramic</option></select></div>
                                     <div class="field"><label for="outer_copper_oz">Outer copper</label><select class="control" id="outer_copper_oz" name="outer_copper_oz"><option value="1">1 oz</option><option value="2">2 oz</option><option value="3">3 oz</option></select></div>
                                     <div class="field"><label for="solder_mask_color">Solder mask</label><select class="control" id="solder_mask_color" name="solder_mask_color">@foreach(['green','black','blue','red','white','yellow'] as $color)<option @selected(($quote?->solder_mask_color ?? 'green')===$color)>{{ $color }}</option>@endforeach</select></div>
                                     <div class="field"><label for="silkscreen_color">Silkscreen</label><select class="control" id="silkscreen_color" name="silkscreen_color"><option>white</option><option>black</option></select></div>
                                     <div class="field"><label for="surface_finish">Surface finish</label><select class="control" id="surface_finish" name="surface_finish"><option value="HASL_Lead_Free">Lead-free HASL</option><option value="ENIG">ENIG</option><option value="OSP">OSP</option><option value="Immersion_Silver">Immersion silver</option><option value="Immersion_Tin">Immersion tin</option><option value="Gold_Fingers">Gold fingers</option><option value="HASL">HASL</option></select></div>
                                     <div class="field"><label for="via_covering">Via covering</label><select class="control" id="via_covering" name="via_covering"><option value="tented">Tented</option><option value="plugged">Plugged</option><option value="filled">Filled</option><option value="open">Open</option></select></div>
-                                    <div class="field"><label for="panelization_type">Panelization</label><select class="control" id="panelization_type" name="panelization_type"><option value="none">None</option><option value="v_score">V-score</option><option value="routing">Routing</option><option value="tab_route">Tab route</option></select></div>
+                                    <div class="field"><label for="panelization_type">Panelization</label><select class="control" id="panelization_type" name="panelization_type">@foreach(['none'=>'None','v_score'=>'V-score','routing'=>'Routing','tab_route'=>'Tab route'] as $value=>$label)<option value="{{ $value }}" @selected(old('panelization_type',$quote?->panelization_type ?? ($gerberDefaults['panelization_type'] ?? 'none'))===$value)>{{ $label }}</option>@endforeach</select></div>
                                     <div class="field"><label for="production_speed">Production speed</label><select class="control" id="production_speed" name="production_speed"><option value="standard">Standard</option><option value="fast">Fast</option><option value="express">Express review</option></select></div>
                                 </div>
                                 <details class="advanced" style="margin-top:14px"><summary>Testing and advanced fabrication</summary><div class="check-grid" style="padding-top:8px">
                                     @foreach(['aoi_testing'=>'AOI testing','electrical_test'=>'Electrical test','impedance_control'=>'Controlled impedance','blind_buried_vias'=>'Blind / buried vias','hdi'=>'HDI process','edge_plating'=>'Edge plating','castellated_holes'=>'Castellated holes'] as $name=>$label)
-                                        <label class="check"><input type="checkbox" name="{{ $name }}" value="1" @checked(in_array($name,['aoi_testing','electrical_test'],true) || old($name) || $quote?->{$name})> {{ $label }}</label>
+                                        <label class="check"><input type="checkbox" name="{{ $name }}" value="1" @checked(old($name, $quote?->{$name} ?? ($gerberDefaults[$name] ?? in_array($name,['aoi_testing','electrical_test'],true))))> {{ $label }}</label>
                                     @endforeach
                                 </div></details>
                                 <div class="form-actions"><button class="btn btn-primary" type="submit">Request engineering quote</button></div>
