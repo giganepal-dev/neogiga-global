@@ -8,6 +8,7 @@
 - Restored the transparent NeoGiga fallback image for governed categories without media and aligned SEO coverage with the three-level public taxonomy rules.
 - Completed the account-hub follow-up with ownership-scoped order, RFQ and quotation detail pages, customer support ticket creation/replies, regional notification preferences with mandatory security alerts, and audited resubmission for applications awaiting information.
 - Upgraded Guzzle from 7.14.1 to 7.15.1 and PSR-7 from 2.12.5 to 2.13.0, clearing all Composer security advisories reported at release time.
+- Replaced deprecated PHPUnit doc-comment test metadata with PHPUnit 11 attributes, eliminating all metadata deprecation warnings while preserving the same privacy-masking coverage.
 
 ## 2026-07-22 - Unified Multi-Role Account Hub
 

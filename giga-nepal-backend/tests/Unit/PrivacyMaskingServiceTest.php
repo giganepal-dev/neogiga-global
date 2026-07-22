@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\Messaging\PrivacyMaskingService;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class PrivacyMaskingServiceTest extends TestCase
@@ -15,7 +16,7 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->masker = new PrivacyMaskingService();
     }
 
-    /** @test */
+    #[Test]
     public function it_masks_email_addresses(): void
     {
         $input = 'Contact me at john.doe@example.com for details.';
@@ -25,7 +26,7 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->assertStringContainsString('[email hidden]', $masked);
     }
 
-    /** @test */
+    #[Test]
     public function it_masks_phone_numbers(): void
     {
         $input = 'Call me at +977-9841-123456 or 01-4123456.';
@@ -36,7 +37,7 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->assertStringContainsString('[phone hidden]', $masked);
     }
 
-    /** @test */
+    #[Test]
     public function it_masks_urls(): void
     {
         $input = 'Visit https://example.com/page for more info.';
@@ -46,7 +47,7 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->assertStringContainsString('[url hidden]', $masked);
     }
 
-    /** @test */
+    #[Test]
     public function it_masks_whatsapp_numbers(): void
     {
         $input = 'Reach me on WhatsApp: +977 9841123456.';
@@ -55,7 +56,7 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->assertStringNotContainsString('+977', $masked);
     }
 
-    /** @test */
+    #[Test]
     public function it_masks_payment_identifiers(): void
     {
         $input = 'Pay via UPI: merchant@bank or account 1234567890.';
@@ -64,7 +65,7 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->assertStringNotContainsString('merchant@bank', $masked);
     }
 
-    /** @test */
+    #[Test]
     public function it_masks_addresses(): void
     {
         $input = 'Ship to: 42 Main Street, Kathmandu 44600.';
@@ -73,7 +74,7 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->assertStringNotContainsString('44600', $masked);
     }
 
-    /** @test */
+    #[Test]
     public function it_masks_social_handles(): void
     {
         $input = 'DM me @johndoe on Twitter for faster response.';
@@ -82,7 +83,7 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->assertStringNotContainsString('@johndoe on Twitter', $masked);
     }
 
-    /** @test */
+    #[Test]
     public function partial_mask_level_only_masks_email_and_phone(): void
     {
         $input = 'Email: test@example.com, Phone: 9841123456, URL: https://example.com.';
@@ -93,7 +94,7 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->assertStringContainsString('https://example.com', $masked);  // URL preserved
     }
 
-    /** @test */
+    #[Test]
     public function none_mask_level_preserves_everything(): void
     {
         $input = 'Email: test@example.com, Phone: 9841123456.';
@@ -102,7 +103,7 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->assertEquals($input, $masked);
     }
 
-    /** @test */
+    #[Test]
     public function clean_text_is_unchanged(): void
     {
         $input = 'This is a normal message about product specifications.';
@@ -111,14 +112,14 @@ class PrivacyMaskingServiceTest extends TestCase
         $this->assertEquals($input, $masked);
     }
 
-    /** @test */
+    #[Test]
     public function it_detects_pii_in_text(): void
     {
         $this->assertTrue($this->masker->containsPii('Email me at test@example.com'));
         $this->assertFalse($this->masker->containsPii('This is a normal message.'));
     }
 
-    /** @test */
+    #[Test]
     public function it_reports_what_was_masked(): void
     {
         $original = 'Email: test@example.com, Phone: 9841123456';
