@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-22 - Unified Customer PCB Dashboard
+
+- Integrated PCB projects into the existing customer account with a matching responsive dashboard for owned, actively shared and organization-visible projects, including live quote, production, file and project summaries.
+- Consolidated PCB visibility into one reusable access scope used by both the customer account and the full PCB workspace, and enforced member-access expiry consistently for project viewing and editing.
+- Added bidirectional navigation between the unified NeoGiga account and `pcb.neogiga.com` while preserving the existing PCB engineering workspace, authentication, private files, routes and data.
+
 ## 2026-07-22 - Product Certification Marks and Standards References
 
 - Added a reusable certification/compliance shield to product cards across catalog, category, brand, related-product, comparison and identity landing views; products without a verified record show a neutral documentation-on-request state rather than an unsupported certification claim.

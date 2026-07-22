@@ -316,18 +316,7 @@ class PcbPortalController extends Controller
 
     private function visibleProjects(Request $request)
     {
-        $user = $request->user();
-
-        return PcbProject::query()->where(function ($query) use ($user) {
-            $query->where('user_id', $user->id)
-                ->orWhereHas('members', fn ($members) => $members
-                    ->where('user_id', $user->id)
-                    ->where(fn ($expiry) => $expiry->whereNull('access_expires_at')->orWhere('access_expires_at', '>', now())));
-
-            if ($user->organization_id ?? null) {
-                $query->orWhere('organization_id', $user->organization_id);
-            }
-        });
+        return PcbProject::query()->visibleTo($request->user());
     }
 
     private function authorizeProject(Request $request, PcbProject $project, bool $edit = false): void

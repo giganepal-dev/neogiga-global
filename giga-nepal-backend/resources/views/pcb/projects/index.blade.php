@@ -9,7 +9,7 @@
     <div class="wrap">
         <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px;flex-wrap:wrap">
             <div><div class="eyebrow">Private engineering workspace</div><h1 class="page-title" style="margin:5px 0 6px">PCB projects</h1><p class="lead" style="max-width:72ch">Manage design files, specifications, engineering quotes and production status.</p></div>
-            <div class="form-actions" style="margin-top:0"><a class="btn btn-primary" href="/en/projects/create">New PCB project</a></div>
+            <div class="form-actions" style="margin-top:0"><a class="btn btn-ghost" href="https://neogiga.com/account/pcb">Customer dashboard</a><a class="btn btn-primary" href="/en/projects/create">New PCB project</a></div>
         </header>
 
         <div class="grid kpis">

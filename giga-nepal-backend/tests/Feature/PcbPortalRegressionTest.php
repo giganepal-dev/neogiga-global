@@ -24,6 +24,13 @@ class PcbPortalRegressionTest extends TestCase
             'role' => 'viewer',
             'nda_accepted' => true,
         ]);
+        $expired = PcbProject::create(['user_id' => $owner->id, 'name' => 'Expired shared controller']);
+        $expired->members()->create([
+            'user_id' => $user->id,
+            'role' => 'viewer',
+            'nda_accepted' => true,
+            'access_expires_at' => now()->subMinute(),
+        ]);
         $version = $owned->versions()->create([
             'version_number' => 1,
             'created_by_id' => $user->id,
@@ -34,7 +41,9 @@ class PcbPortalRegressionTest extends TestCase
             ->get('http://pcb.neogiga.com/en/projects')
             ->assertOk()
             ->assertSee($owned->name)
-            ->assertSee($shared->name);
+            ->assertSee($shared->name)
+            ->assertSee('Customer dashboard')
+            ->assertDontSee($expired->name);
         $this->actingAs($user)
             ->get('http://pcb.neogiga.com/en/projects/'.$owned->id)
             ->assertOk()

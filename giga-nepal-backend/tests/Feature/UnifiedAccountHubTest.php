@@ -2,10 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Pcb\PcbProject;
 use App\Models\User;
 use App\Services\Account\PartnerApplicationService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Session\TokenMismatchException;
@@ -22,6 +23,7 @@ class UnifiedAccountHubTest extends TestCase
         $this->get('/account')->assertRedirect('/login');
         $this->get('/account/orders')->assertRedirect('/login');
         $this->get('/account/applications')->assertRedirect('/login');
+        $this->get('/account/pcb')->assertRedirect('/login');
     }
 
     public function test_expired_logout_submission_recovers_at_login_instead_of_rendering_419(): void
@@ -77,9 +79,39 @@ class UnifiedAccountHubTest extends TestCase
     public function test_all_customer_account_sections_render_without_placeholder_errors(): void
     {
         $user = User::factory()->create();
-        foreach (['orders', 'rfqs', 'quotations', 'bom', 'saved', 'notifications', 'support', 'payments', 'profile', 'security', 'addresses', 'applications'] as $section) {
+        foreach (['orders', 'rfqs', 'quotations', 'bom', 'pcb', 'saved', 'notifications', 'support', 'payments', 'profile', 'security', 'addresses', 'applications'] as $section) {
             $this->actingAs($user)->get('/account/'.$section)->assertOk();
         }
+    }
+
+    public function test_pcb_dashboard_uses_the_same_owner_and_active_member_visibility_as_the_pcb_workspace(): void
+    {
+        config()->set('pcb.domain', 'pcb.neogiga.com');
+        $customer = User::factory()->create();
+        $other = User::factory()->create();
+        $owned = PcbProject::create(['user_id' => $customer->id, 'name' => 'Customer PCB controller']);
+        $shared = PcbProject::create(['user_id' => $other->id, 'name' => 'Shared PCB sensor']);
+        $expired = PcbProject::create(['user_id' => $other->id, 'name' => 'Expired PCB archive']);
+        $hidden = PcbProject::create(['user_id' => $other->id, 'name' => 'Private PCB project']);
+        $shared->members()->create(['user_id' => $customer->id, 'role' => 'viewer', 'nda_accepted' => true]);
+        $expired->members()->create([
+            'user_id' => $customer->id, 'role' => 'viewer', 'nda_accepted' => true,
+            'access_expires_at' => now()->subMinute(),
+        ]);
+
+        $this->actingAs($customer)->get('/account/pcb')
+            ->assertOk()
+            ->assertSee('PCB project dashboard')
+            ->assertSee($owned->name)
+            ->assertSee($shared->name)
+            ->assertSee('https://pcb.neogiga.com/en/projects/'.$owned->id)
+            ->assertDontSee($expired->name)
+            ->assertDontSee($hidden->name);
+
+        $this->actingAs($customer)->get('/account')
+            ->assertOk()
+            ->assertSee('PCB engineering projects')
+            ->assertSee($owned->name);
     }
 
     public function test_owned_commerce_details_are_visible_and_other_accounts_are_hidden(): void

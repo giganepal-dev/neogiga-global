@@ -38,8 +38,14 @@
         @empty <div class="account-empty">Apply for institutional, seller, distributor, manufacturer or fulfilment access.</div> @endforelse
     </section>
     <section class="account-card wide">
+        <div class="account-card-head"><h2>PCB engineering projects</h2><a href="/account/pcb">View dashboard</a></div>
+        @forelse($pcbProjects as $project)
+            <div class="account-list-row"><div><strong>{{ $project->name }}</strong><small>{{ $project->code }} · Updated {{ $project->updated_at->diffForHumans() }}</small></div><span class="account-badge {{ $project->status }}">{{ str_replace('_',' ',$project->status) }}</span></div>
+        @empty <div class="account-empty">No PCB projects yet. <a href="https://{{ config('pcb.domain', 'pcb.neogiga.com') }}/en/projects/create">Start a PCB project</a></div> @endforelse
+    </section>
+    <section class="account-card wide">
         <div class="account-card-head"><h2>Quick actions</h2></div>
-        <div class="account-actions"><a class="account-button" href="/en/rfq">Create RFQ</a><a class="account-button secondary" href="/en/bom">Upload BOM</a><a class="account-button secondary" href="/account/support">Get support</a><a class="account-button gold" href="/account/applications">Add partner role</a></div>
+        <div class="account-actions"><a class="account-button" href="/en/rfq">Create RFQ</a><a class="account-button secondary" href="/en/bom">Upload BOM</a><a class="account-button secondary" href="https://{{ config('pcb.domain', 'pcb.neogiga.com') }}/en/projects/create">Start PCB project</a><a class="account-button secondary" href="/account/support">Get support</a><a class="account-button gold" href="/account/applications">Add partner role</a></div>
     </section>
 </div>
 @endsection

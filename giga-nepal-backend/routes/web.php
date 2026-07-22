@@ -578,6 +578,7 @@ Route::prefix('account')->middleware('auth')->name('account.')->group(function (
     Route::get('quotations', [CustomerDashboardController::class, 'quotations'])->name('quotations');
     Route::get('quotations/{quotation}', [CustomerDashboardController::class, 'showQuotation'])->whereNumber('quotation')->name('quotations.show');
     Route::get('bom', [CustomerDashboardController::class, 'bom'])->name('bom');
+    Route::get('pcb', [CustomerDashboardController::class, 'pcb'])->name('pcb');
     Route::get('saved', [CustomerDashboardController::class, 'saved'])->name('saved');
     Route::get('notifications', [CustomerDashboardController::class, 'notifications'])->name('notifications');
     Route::patch('notifications', [CustomerDashboardController::class, 'updateNotificationPreferences'])->middleware('throttle:10,1')->name('notifications.update');

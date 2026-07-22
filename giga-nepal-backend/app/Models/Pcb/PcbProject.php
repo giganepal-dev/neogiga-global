@@ -5,6 +5,7 @@ namespace App\Models\Pcb;
 use App\Models\Manufacturer;
 use App\Models\Organization;
 use App\Models\Warehouse;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -124,6 +125,26 @@ class PcbProject extends Model
             ->where('version_number', $this->current_version);
     }
 
+    public function scopeVisibleTo(Builder $query, $user): Builder
+    {
+        if (! $user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where(function (Builder $visible) use ($user): void {
+            $visible->where('user_id', $user->id)
+                ->orWhereHas('members', fn (Builder $members) => $members
+                    ->where('user_id', $user->id)
+                    ->where(fn (Builder $expiry) => $expiry
+                        ->whereNull('access_expires_at')
+                        ->orWhere('access_expires_at', '>', now())));
+
+            if ($user->organization_id ?? null) {
+                $visible->orWhere('organization_id', $user->organization_id);
+            }
+        });
+    }
+
     public function canBeAccessedBy($user): bool
     {
         if (! $user) {
@@ -131,17 +152,22 @@ class PcbProject extends Model
         }
 
         // Owner can always access
-        if ($this->user_id === $user->id) {
+        if ((int) $this->user_id === (int) $user->id) {
             return true;
         }
 
         // Check organization membership
-        if ($this->organization_id && $user->organization_id === $this->organization_id) {
+        if ($this->organization_id && (int) ($user->organization_id ?? 0) === (int) $this->organization_id) {
             return true;
         }
 
         // Check explicit project membership
-        return $this->members()->where('user_id', $user->id)->exists();
+        return $this->members()
+            ->where('user_id', $user->id)
+            ->where(fn (Builder $expiry) => $expiry
+                ->whereNull('access_expires_at')
+                ->orWhere('access_expires_at', '>', now()))
+            ->exists();
     }
 
     public function canBeEditedBy($user): bool
@@ -151,7 +177,7 @@ class PcbProject extends Model
         }
 
         // Owner can always edit
-        if ($this->user_id === $user->id) {
+        if ((int) $this->user_id === (int) $user->id) {
             return true;
         }
 
@@ -159,6 +185,9 @@ class PcbProject extends Model
         return $this->members()
             ->where('user_id', $user->id)
             ->whereIn('role', ['owner', 'admin', 'editor'])
+            ->where(fn (Builder $expiry) => $expiry
+                ->whereNull('access_expires_at')
+                ->orWhere('access_expires_at', '>', now()))
             ->exists();
     }
 

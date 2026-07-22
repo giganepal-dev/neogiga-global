@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Pcb\PcbProject;
 use App\Services\Account\AccountHubService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Partner\PartnerCountryService;
@@ -42,17 +43,53 @@ class CustomerDashboardController extends Controller
         $rfqs = $this->hub->owned('rfq_requests', $user->id, 5);
         $quotations = $this->hub->owned('quotations', $user->id, 5);
         $applications = $this->hub->owned('account_applications', $user->id, 5);
+        $pcbProjects = PcbProject::query()->visibleTo($user)->latest()->limit(4)->get();
 
         $stats = [
             ['label' => 'Orders', 'value' => $this->ownedCount('orders', $user->id), 'url' => '/account/orders'],
             ['label' => 'Open RFQs', 'value' => $this->ownedCount('rfq_requests', $user->id, ['status' => ['open', 'pending', 'submitted', 'quoted']]), 'url' => '/account/rfqs'],
             ['label' => 'Quotations', 'value' => $this->ownedCount('quotations', $user->id), 'url' => '/account/quotations'],
             ['label' => 'Saved parts', 'value' => $this->ownedCount('saved_products', $user->id), 'url' => '/account/saved'],
+            ['label' => 'PCB projects', 'value' => PcbProject::query()->visibleTo($user)->count(), 'url' => '/account/pcb'],
         ];
 
         return view('frontend.account.dashboard', $this->shell($request) + compact(
-            'user', 'orders', 'rfqs', 'quotations', 'applications', 'stats'
+            'user', 'orders', 'rfqs', 'quotations', 'applications', 'pcbProjects', 'stats'
         ));
+    }
+
+    public function pcb(Request $request): View
+    {
+        $user = $request->user();
+        $visibleProjects = fn () => PcbProject::query()->visibleTo($user);
+        $projects = $visibleProjects()
+            ->withCount(['files', 'quoteConfigurations'])
+            ->with(['members' => fn ($query) => $query
+                ->where('user_id', $user->id)
+                ->where(fn ($expiry) => $expiry
+                    ->whereNull('access_expires_at')
+                    ->orWhere('access_expires_at', '>', now()))])
+            ->latest()
+            ->paginate(12);
+
+        $projects->getCollection()->each(function (PcbProject $project) use ($user): void {
+            $project->account_access_role = match (true) {
+                (int) $project->user_id === (int) $user->id => 'Owner',
+                $project->members->isNotEmpty() => ucfirst((string) $project->members->first()->role),
+                (bool) (($user->organization_id ?? null) && (int) $project->organization_id === (int) $user->organization_id) => 'Organization',
+                default => 'Member',
+            };
+        });
+
+        $summary = [
+            'total' => $visibleProjects()->count(),
+            'active' => $visibleProjects()->whereNotIn('status', ['completed', 'cancelled'])->count(),
+            'quotes' => $visibleProjects()->whereIn('status', ['quote_pending', 'quoted', 'awaiting_approval'])->count(),
+            'production' => $visibleProjects()->whereIn('status', ['ordered', 'manufacturing', 'inspection', 'shipped'])->count(),
+        ];
+        $pcbBaseUrl = 'https://'.config('pcb.domain', 'pcb.neogiga.com').'/en';
+
+        return view('frontend.account.pcb', $this->shell($request) + compact('projects', 'summary', 'pcbBaseUrl'));
     }
 
     public function orders(Request $request): View
@@ -247,7 +284,9 @@ class CustomerDashboardController extends Controller
                 'support_ticket_id' => $ticketRow->id, 'user_id' => $request->user()->id, 'sender_type' => 'customer',
                 'message' => $data['message'], 'created_at' => now(), 'updated_at' => now(),
             ]);
-            $status = match ($ticketRow->status) { 'resolved', 'closed' => 'open', 'waiting_customer' => 'in_progress', default => $ticketRow->status };
+            $status = match ($ticketRow->status) {
+                'resolved', 'closed' => 'open', 'waiting_customer' => 'in_progress', default => $ticketRow->status
+            };
             DB::table('support_tickets')->where('id', $ticketRow->id)->update(['status' => $status, 'updated_at' => now()]);
         });
 
@@ -387,6 +426,7 @@ class CustomerDashboardController extends Controller
     public function applications(Request $request, PartnerCountryService $partnerCountries): View
     {
         $countryOptions = $partnerCountries->options($request);
+
         return view('frontend.account.applications', $this->shell($request) + [
             'catalog' => $this->hub->roleCatalog(),
             'applications' => $this->hub->owned('account_applications', $request->user()->id),

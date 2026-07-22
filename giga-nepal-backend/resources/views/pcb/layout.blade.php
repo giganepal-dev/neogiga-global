@@ -123,6 +123,7 @@
         <div class="head-actions">
             @auth
                 <span style="color:var(--muted);font-size:.82rem;margin-right:8px">{{ auth()->user()->name }}</span>
+                <a class="icon-btn" href="https://neogiga.com/account/pcb">Customer account</a>
                 <form method="post" action="/en/logout">@csrf<button class="icon-btn" type="submit">Sign out</button></form>
             @else
                 <a class="icon-btn" href="/en/login">Sign in</a>
@@ -145,6 +146,7 @@
                 <a href="/en/capabilities">Capabilities</a>
                 <a href="/en/design-rules">Design Rules</a>
                 <a href="/en/projects" @if(request()->is('en/projects*')) class="active" @endif>Projects</a>
+                @auth<a href="https://neogiga.com/account/pcb">Account dashboard</a>@endauth
                 <a href="https://neogiga.com/en/products">Components</a>
                 <a href="https://neogiga.com/en/rfq">RFQ</a>
             </nav>

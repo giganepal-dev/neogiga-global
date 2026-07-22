@@ -1,12 +1,12 @@
 @extends('frontend.layout')
 @push('head')
-<link rel="stylesheet" href="{{ asset('css/account-hub.css') }}?v=20260722">
+<link rel="stylesheet" href="{{ asset('css/account-hub.css') }}?v=20260722pcb">
 @endpush
 @section('content')
 @php
     $accountNav = [
         ['/account', 'Overview'], ['/account/orders', 'Orders'], ['/account/rfqs', 'RFQs'],
-        ['/account/quotations', 'Quotations'], ['/account/bom', 'BOM projects'], ['/account/saved', 'Saved parts'],
+        ['/account/quotations', 'Quotations'], ['/account/bom', 'BOM projects'], ['/account/pcb', 'PCB projects'], ['/account/saved', 'Saved parts'],
         ['/account/notifications', 'Notifications'], ['/account/support', 'Support'], ['/account/payments', 'Payments'],
         ['/account/applications', 'Partner roles'], ['/account/addresses', 'Addresses'], ['/account/profile', 'Profile'],
         ['/account/security', 'Security'],
