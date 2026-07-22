@@ -75,7 +75,7 @@ class BrandPageController extends Controller
     private function dedupeForDisplay(Collection $brands): Collection
     {
         return $brands
-            ->groupBy(fn (ProductBrand $brand) => $this->normalizeName((string) $brand->name))
+            ->groupBy(fn (ProductBrand $brand) => $this->brands->normalizeName((string) $brand->name))
             ->map(function (Collection $group) {
                 // Canonical = most products, then the shortest (usually official
                 // short) name. Clone before mutating so the CACHED model instance
@@ -111,16 +111,6 @@ class BrandPageController extends Controller
         }
 
         return ($char >= 'A' && $char <= 'Z') ? $char : '0-9';
-    }
-
-    private function normalizeName(string $name): string
-    {
-        $normalized = mb_strtolower(trim($name));
-        // Drop common corporate suffixes so "SparkFun" == "SparkFun Electronics".
-        $normalized = preg_replace('/\b(electronics?|incorporated|inc|corporation|corp|company|co|technologies|technology|semiconductors?|international|limited|ltd|llc|gmbh|group)\b/u', '', $normalized);
-        $normalized = preg_replace('/[^a-z0-9]+/u', '', (string) $normalized);
-
-        return $normalized !== '' ? $normalized : mb_strtolower(trim($name));
     }
 
     public function show(Request $request, string $slug): View

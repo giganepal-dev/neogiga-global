@@ -99,6 +99,20 @@ class BrandVisibilityService
         return false;
     }
 
+    /**
+     * Canonical grouping key for duplicate-brand detection ("SparkFun" ==
+     * "SparkFun Electronics"). Shared by the public directory display and the
+     * brand:audit report so they always agree.
+     */
+    public function normalizeName(string $name): string
+    {
+        $normalized = mb_strtolower(trim($name));
+        $normalized = preg_replace('/\b(electronics?|incorporated|inc|corporation|corp|company|co|technologies|technology|semiconductors?|international|limited|ltd|llc|gmbh|group)\b/u', '', $normalized);
+        $normalized = preg_replace('/[^a-z0-9]+/u', '', (string) $normalized);
+
+        return $normalized !== '' ? $normalized : mb_strtolower(trim($name));
+    }
+
     private function matches(mixed $visibility, ?int $id, ?string $code): bool
     {
         $visibility = is_string($visibility) ? json_decode($visibility, true) : $visibility;
