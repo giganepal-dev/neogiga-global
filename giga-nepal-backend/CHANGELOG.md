@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-22 - Product Certification Marks and Standards References
+
+- Added a reusable certification/compliance shield to product cards across catalog, category, brand, related-product, comparison and identity landing views; products without a verified record show a neutral documentation-on-request state rather than an unsupported certification claim.
+- Added a schema-compatible certification resolver that publishes only explicitly verified, current product resources, legacy certificates or verified catalog metadata and safely supports both deployed certificate-table variants.
+- Added a dedicated product-detail compliance panel and a responsive footer strip for IPC/IEEE resources and CE, RoHS, FCC and ISO documentation categories, with an explicit statement that reference marks do not claim NeoGiga membership or corporate certification.
+
 ## 2026-07-22 - PCB Workspace and Customer Intake Reliability
 
 - Corrected the existing PCB model relationship graph to use its deployed `project_id`, `file_id`, `analysis_run_id`, `quote_id`, `cpl_import_id` and `component_match_id` foreign keys, restoring customer project lists, workspace detail, private files, Gerber analysis, BOM/CPL matching, quotes and orders without replacing or deleting existing data.

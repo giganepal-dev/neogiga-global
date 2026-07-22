@@ -187,6 +187,7 @@
                         @if($p->sku)SKU: <a class="mono" href="{{ $publicBase }}/products?q={{ urlencode($p->sku) }}">{{ $p->sku }}</a>@endif
                         @if($p->category) · <a href="{{ $cardCategoryUrl }}">{{ $p->category->name }}</a>@endif
                     </div>
+                    <x-product-certification-marks />
                     @if($p->track_inventory)
                         <span class="pstock {{ $p->stock_quantity > 0 ? 'in' : 'out' }}">{{ $p->stock_quantity > 0 ? 'In stock' : 'Out of stock' }}</span>
                     @endif

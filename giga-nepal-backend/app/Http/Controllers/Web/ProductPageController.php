@@ -7,9 +7,12 @@ use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductCategory;
 use App\Services\Catalog\CatalogSearchService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
-use App\Services\Product\ProductSpecificationResolver;
 use App\Services\Marketplace\MarketplaceSeoRenderer;
+use App\Services\Product\ProductCertificationService;
+use App\Services\Product\ProductSpecificationResolver;
 use App\Services\Seo\CatalogSeoTemplateService;
+use App\Support\Sql;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -66,8 +69,8 @@ class ProductPageController extends Controller
             ->when($category, fn ($query) => $query->where('category_id', $category->id))
             ->when($brandId > 0, fn ($query) => $query->where('brand_id', $brandId))
             ->when($manufacturer !== '', fn ($query) => $query->where(function ($w) use ($manufacturer) {
-                $w->where('manufacturer_name', \App\Support\Sql::ilike(), "%{$manufacturer}%")
-                    ->orWhere('mpn', \App\Support\Sql::ilike(), "%{$manufacturer}%");
+                $w->where('manufacturer_name', Sql::ilike(), "%{$manufacturer}%")
+                    ->orWhere('mpn', Sql::ilike(), "%{$manufacturer}%");
             }))
             ->when($stock === 'low', fn ($query) => $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold'))
             ->when($stock === 'out', fn ($query) => $query->where('stock_quantity', '<=', 0))
@@ -119,7 +122,7 @@ class ProductPageController extends Controller
             'catalogTotal' => $hasFilters ? null : ($catalogSearch->cachedPublicProductCount() ?? 0),
             'filters' => compact('brandId', 'manufacturer', 'stock', 'countryId', 'datasheet', 'package', 'quality', 'priceMin', 'priceMax', 'ratingMin', 'sort'),
             'facetGroups' => $hasFilters ? $catalogSearch->publicFacetGroups(compact('q')) : collect(),
-            'indexedSummary' => $hasFilters ? $catalogSearch->indexedSummary() : ['documents'=>0,'facets'=>0,'approved_documents'=>0],
+            'indexedSummary' => $hasFilters ? $catalogSearch->indexedSummary() : ['documents' => 0, 'facets' => 0, 'approved_documents' => 0],
             'rootCategories' => ProductCategory::whereNull('parent_id')
                 ->orderBy('sort_order')->orderBy('name')->limit(80)->get(),
             'brands' => DB::table('product_brands')->orderBy('name')->limit(120)->get(['id', 'name']),
@@ -174,6 +177,7 @@ class ProductPageController extends Controller
             'marketplacePrice' => $this->marketplacePrice($product->id, (int) ($marketplaceContext['current']?->id ?? 0)),
             'sellerOffers' => $this->sellerOffers($product->id, (int) ($marketplaceContext['current']?->id ?? 0)),
             'documents' => $this->productDocuments($product->id),
+            'certifications' => app(ProductCertificationService::class)->verifiedFor($product),
             'lmsLinks' => $this->productLmsLinks($product->id),
             'alternatives' => $this->alternatives($product->id),
             'advancedSpecs' => $this->advancedSpecs($product->id),
@@ -262,19 +266,19 @@ class ProductPageController extends Controller
             ->get();
     }
 
-    public function suggest(Request $request): \Illuminate\Http\JsonResponse
+    public function suggest(Request $request): JsonResponse
     {
         $q = trim((string) $request->query('q', ''));
         if (strlen($q) < 2) {
             return response()->json(['data' => []]);
         }
 
-        $products = \App\Models\Marketplace\Product::query()
+        $products = Product::query()
             ->published()
             ->where(function ($w) use ($q) {
-                $w->where('name', \App\Support\Sql::ilike(), "%{$q}%")
-                  ->orWhere('mpn', \App\Support\Sql::ilike(), "%{$q}%")
-                  ->orWhere('sku', \App\Support\Sql::ilike(), "%{$q}%");
+                $w->where('name', Sql::ilike(), "%{$q}%")
+                    ->orWhere('mpn', Sql::ilike(), "%{$q}%")
+                    ->orWhere('sku', Sql::ilike(), "%{$q}%");
             })
             ->with(['category:id,name', 'images' => fn ($qImg) => $qImg->where('is_active', true)->where('is_primary', true)->limit(1)])
             ->limit(8)

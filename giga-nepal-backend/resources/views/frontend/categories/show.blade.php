@@ -162,6 +162,7 @@
                 <a class="category-product-media" href="{{ $publicBase }}/products/{{ $p->slug }}"><x-product-image-badges :product="$p" /><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($cardImage?->srcset()) srcset="{{ $cardImage->srcset() }}" sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, 20vw" @endif alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async"></a>
                 <a href="{{ $publicBase }}/products/{{ $p->slug }}"><strong>{{ $p->name }}</strong></a>
                 <div class="category-product-meta mono">@if($p->sku)<a href="{{ $publicBase }}/products?q={{ urlencode($p->sku) }}">{{ $p->sku }}</a>@endif @if($p->mpn)· <a href="/mpn/{{ str_replace('/','--', urlencode($p->mpn)) }}">{{ $p->mpn }}</a>@endif</div>
+                <x-product-certification-marks />
             </article>
         @endforeach
     </div>

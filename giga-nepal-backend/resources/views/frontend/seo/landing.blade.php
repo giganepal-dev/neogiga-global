@@ -66,6 +66,7 @@
                         <span class="badge {{ ($product->stock_quantity ?? 0) > 0 ? 'b-ok' : 'b-warn' }}">{{ ($product->stock_quantity ?? 0) > 0 ? 'In stock' : 'RFQ ready' }}</span>
                         <h3><a href="{{ $publicBase }}/products/{{ $product->slug }}">{{ $product->name }}</a></h3>
                         <p class="sub">MPN {{ $product->mpn ?: 'Pending' }} · SKU {{ $product->sku ?: 'TBA' }}</p>
+                        <x-product-certification-marks />
                         <a class="btn btn-ghost" href="{{ $publicBase }}/products/{{ $product->slug }}">Open product</a>
                     </article>
                 @empty

@@ -18,6 +18,7 @@
 <img src="{{ $img?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" style="width:80px;height:60px;object-fit:contain;background:#081527;border-radius:6px;margin:0 auto 8px" alt="">
 <a href="/en/products/{{ $p->slug }}" style="color:var(--cyan);font-weight:600;font-size:.85rem">{{ \Illuminate\Support\Str::limit($p->name, 40) }}</a>
 <div style="font-size:.7rem;color:var(--faint);margin-top:4px">{{ $p->mpn }}</div>
+<x-product-certification-marks />
 </th>@endforeach</tr></thead>
 <tbody>
 @foreach(['MPN'=>'mpn','SKU'=>'sku','Manufacturer'=>'manufacturer_name','Brand'=>'brand.name','Category'=>'category.name'] as $label => $field)
