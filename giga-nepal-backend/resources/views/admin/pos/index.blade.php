@@ -27,7 +27,7 @@
                         <td>{{ \Carbon\Carbon::parse($shift->started_at)->diffForHumans() }}</td>
                         <td>${{ number_format($shift->opening_cash, 2) }}</td>
                         <td>
-                            <button class="btn btn-sm btn-primary" onclick="document.getElementById('close-shift-{{ $shift->id }}').style.display='block'">Close Shift</button>
+                            <button class="btn btn-sm btn-primary" data-show="close-shift-{{ $shift->id }}">Close Shift</button>
                             <form id="close-shift-{{ $shift->id }}" method="POST" action="{{ route('admin.pos.close-shift') }}" style="display:none;margin-top:8px">
                                 @csrf
                                 <input type="hidden" name="shift_id" value="{{ $shift->id }}">

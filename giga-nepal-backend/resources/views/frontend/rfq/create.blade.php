@@ -86,12 +86,12 @@
                     <div class="rfq-field"><label>Part name / description *</label><input name="item_name" required maxlength="190" value="{{ old('item_name', $product->name ?? '') }}" placeholder="e.g. STM32F103C8T6 microcontroller"></div>
                     <div class="rfq-field"><label>Qty *</label><input type="number" name="quantity" min="1" value="{{ old('quantity', 1) }}" required></div>
                     <div class="rfq-field"><label>Target price</label><input type="number" name="target_price" min="0" step="0.01" value="{{ old('target_price') }}" placeholder="Opt"></div>
-<button type="button" class="btn-remove" title="Remove this part" aria-label="Remove this part" onclick="removeRfqLine(this)"><x-icon name="x-circle" size="18"/> Remove</button>
+<button type="button" class="btn-remove rfq-remove-btn" title="Remove this part" aria-label="Remove this part"><x-icon name="x-circle" size="18"/> Remove</button>
                 </div>
             </div>
 
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-                <button type="button" class="btn btn-ghost btn-sm" onclick="addRfqLine()">+ Add another part</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="rfq-add-line-btn">+ Add another part</button>
                 <a href="/en/bom" class="btn btn-ghost btn-sm">Upload BOM instead</a>
             </div>
             <input type="hidden" name="mpn" value="{{ old('mpn', $product->mpn ?? '') }}">
@@ -143,6 +143,11 @@ function removeRfqLine(btn) {
     var row = btn.closest('.rfq-line');
     if (row) row.remove();
 }
+// CSP-safe event listeners (no inline onclick)
+document.getElementById('rfq-add-line-btn').addEventListener('click', addRfqLine);
+document.querySelectorAll('.rfq-remove-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { removeRfqLine(this); });
+});
 </script>
 @endif
 @endsection

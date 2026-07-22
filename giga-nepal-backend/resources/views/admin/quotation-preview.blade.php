@@ -16,7 +16,7 @@
     </style>
 </head>
 <body>
-    <button onclick="window.print()">Print / Save PDF</button>
+    <button data-print="1">Print / Save PDF</button>
     <div class="head">
         <div><h1>NeoGiga Quotation</h1><div class="muted">B2B marketplace quotation preview</div></div>
         <div>

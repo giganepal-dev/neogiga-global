@@ -98,7 +98,7 @@
                     <label class="sub"><input form="bulkImportApprove" type="checkbox" name="publish_public" value="1"> Publish public</label>
                     <label class="sub"><input form="bulkImportApprove" type="checkbox" name="queue_rebuild" value="1" checked> Queue search rebuild</label>
                     <input form="bulkImportApprove" class="control" name="note" placeholder="Review note" style="min-width:220px">
-                    <button form="bulkImportApprove" class="btn btn-primary" type="submit" onclick="return confirm('Approve selected imported products?')">Bulk Approve</button>
+                    <button form="bulkImportApprove" class="btn btn-primary" type="submit" data-confirm="Approve selected imported products?">Bulk Approve</button>
                 </div>
             </div>
             <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
@@ -106,7 +106,7 @@
                 <div class="actions">
                     <label class="sub"><input form="bulkImportPublish" type="checkbox" name="queue_rebuild" value="1" checked> Queue search rebuild</label>
                     <input form="bulkImportPublish" class="control" name="note" placeholder="Publication note" style="min-width:220px">
-                    <button form="bulkImportPublish" class="btn btn-primary" type="submit" onclick="return confirm('Publish selected approved imports publicly?')">Bulk Publish</button>
+                    <button form="bulkImportPublish" class="btn btn-primary" type="submit" data-confirm="Publish selected approved imports publicly?">Bulk Publish</button>
                 </div>
             </div>
         </div>
@@ -168,7 +168,7 @@
                                         <input type="hidden" name="publish_public" value="1">
                                         <input type="hidden" name="queue_rebuild" value="1">
                                         <textarea class="control" name="note" placeholder="Review note"></textarea>
-                                        <button class="btn btn-primary" type="submit" onclick="return confirm('Approve and make this imported product public?')">Approve & Publish</button>
+                                        <button class="btn btn-primary" type="submit" data-confirm="Approve and make this imported product public?">Approve & Publish</button>
                                     </form>
                                 </div>
                             </details>
@@ -182,7 +182,7 @@
                                         <input type="hidden" name="queue_rebuild" value="1">
                                         <textarea class="control" name="note" placeholder="Publication note"></textarea>
                                         <div class="sub">This makes the approved product visible on public catalog surfaces and queues a search/facet rebuild.</div>
-                                        <button class="btn btn-primary" type="submit" onclick="return confirm('Publish this approved imported product publicly?')">Publish Public</button>
+                                        <button class="btn btn-primary" type="submit" data-confirm="Publish this approved imported product publicly?">Publish Public</button>
                                     </form>
                                 </div>
                             </details>
@@ -194,7 +194,7 @@
                                     <div class="modal-h"><h3>Reject Import</h3></div>
                                     <form class="modal-b form-stack" method="post" action="/admin/imports/jlcpcb/{{ $row->id }}/reject">@csrf
                                         <textarea class="control" name="reason" required placeholder="Reason"></textarea>
-                                        <button class="btn btn-primary" type="submit" onclick="return confirm('Reject and hide this imported product?')">Reject Import</button>
+                                        <button class="btn btn-primary" type="submit" data-confirm="Reject and hide this imported product?">Reject Import</button>
                                     </form>
                                 </div>
                             </details>
@@ -213,7 +213,7 @@
     <div class="card-h">
         <div><h2>Search / Facet Rebuild</h2><div class="sub">Indexes all JLCPCB imports into product search/facet tables used by catalog search. SEO publication remains controlled separately.</div></div>
         <form method="post" action="/admin/imports/jlcpcb/search-rebuild">@csrf
-            <button class="btn btn-primary" type="submit" onclick="return confirm('Queue search/facet rebuild for approved imported products?')">Queue Rebuild</button>
+            <button class="btn btn-primary" type="submit" data-confirm="Queue search/facet rebuild for approved imported products?">Queue Rebuild</button>
         </form>
     </div>
     <div class="scroll-x"><table class="tbl">

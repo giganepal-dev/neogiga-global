@@ -284,7 +284,27 @@
     var app=document.getElementById('app');
     document.querySelectorAll('[data-open]').forEach(function(b){b.addEventListener('click',function(){app.classList.add('open')})});
     document.querySelectorAll('[data-close]').forEach(function(b){b.addEventListener('click',function(){app.classList.remove('open')})});
+    // CSP-safe confirm: replace onclick="return confirm('...')" with data-confirm="..."
+    document.addEventListener('click',function(e){
+        var btn = e.target.closest('[data-confirm]');
+        if(btn && !confirm(btn.getAttribute('data-confirm'))){ e.preventDefault(); e.stopPropagation(); }
+    });
+    // CSP-safe clipboard copy
+    document.addEventListener('click',function(e){
+        var btn = e.target.closest('[data-copy]');
+        if(btn && navigator.clipboard){ navigator.clipboard.writeText(btn.getAttribute('data-copy')); }
+    });
+    // CSP-safe print
+    document.addEventListener('click',function(e){
+        if(e.target.closest('[data-print]')){ window.print(); }
+    });
+    // CSP-safe show/hide elements
+    document.addEventListener('click',function(e){
+        var btn = e.target.closest('[data-show]');
+        if(btn){ var el = document.getElementById(btn.getAttribute('data-show')); if(el) el.style.display='block'; }
+    });
 })();
+</script>
 </script>
 </body>
 </html>

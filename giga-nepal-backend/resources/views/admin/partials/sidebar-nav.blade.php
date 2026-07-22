@@ -3,7 +3,7 @@
 
 {{-- ===== DASHBOARD ===== --}}
 <div class="nav-section">
-    <div class="nav-section-header" onclick="this.parentElement.classList.toggle('collapsed')">Dashboard</div>
+    <div class="nav-section-header" data-nav-toggle>Dashboard</div>
     <div class="nav-section-body">
         <a href="/admin" class="{{ $r==='admin' ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
@@ -18,7 +18,7 @@
 
 {{-- ===== CATALOG ===== --}}
 <div class="nav-section">
-    <div class="nav-section-header" onclick="this.parentElement.classList.toggle('collapsed')">Catalog</div>
+    <div class="nav-section-header" data-nav-toggle>Catalog</div>
     <div class="nav-section-body">
         <a href="/admin/categories" class="{{ str_starts_with($r,'admin/categories') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M3 12h18M3 18h12" stroke-linecap="round"/></svg>
@@ -65,7 +65,7 @@
 
 {{-- ===== PRICING & TAX ===== --}}
 <div class="nav-section">
-    <div class="nav-section-header" onclick="this.parentElement.classList.toggle('collapsed')">Pricing &amp; Tax</div>
+    <div class="nav-section-header" data-nav-toggle>Pricing &amp; Tax</div>
     <div class="nav-section-body">
         <a href="/admin/pricing" class="{{ str_starts_with($r,'admin/pricing') ? 'active':'' }}">Pricing Engine</a>
         <a href="/admin/tax" class="{{ str_starts_with($r,'admin/tax') ? 'active':'' }}">Tax &amp; Tariff</a>
@@ -74,7 +74,7 @@
 
 {{-- ===== COMMERCE ===== --}}
 <div class="nav-section">
-    <div class="nav-section-header" onclick="this.parentElement.classList.toggle('collapsed')">Commerce</div>
+    <div class="nav-section-header" data-nav-toggle>Commerce</div>
     <div class="nav-section-body">
         <a href="/admin/orders" class="{{ str_starts_with($r,'admin/orders') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2l1.5 3M18 2l-1.5 3M3 6h18l-2 12H5L3 6z" stroke-linejoin="round"/></svg>
@@ -121,7 +121,7 @@
 
 {{-- ===== INVENTORY & OPS ===== --}}
 <div class="nav-section">
-    <div class="nav-section-header" onclick="this.parentElement.classList.toggle('collapsed')">Operations</div>
+    <div class="nav-section-header" data-nav-toggle>Operations</div>
     <div class="nav-section-body">
         <a href="/admin/inventory" class="{{ str_starts_with($r,'admin/inventory') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7" stroke-linejoin="round"/></svg>
@@ -153,7 +153,7 @@
 
 {{-- ===== NETWORK ===== --}}
 <div class="nav-section">
-    <div class="nav-section-header" onclick="this.parentElement.classList.toggle('collapsed')">Network</div>
+    <div class="nav-section-header" data-nav-toggle>Network</div>
     <div class="nav-section-body">
         <a href="/admin/vendors" class="{{ str_starts_with($r,'admin/vendors') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" stroke-linecap="round"/><circle cx="9" cy="7" r="4"/></svg>
@@ -184,7 +184,7 @@
 
 {{-- ===== MARKETING ===== --}}
 <div class="nav-section">
-    <div class="nav-section-header" onclick="this.parentElement.classList.toggle('collapsed')">Marketing</div>
+    <div class="nav-section-header" data-nav-toggle>Marketing</div>
     <div class="nav-section-body">
         @if(auth()->user()?->hasPermission('campaigns.view'))
         <a href="/admin/marketing" class="{{ $r==='admin/marketing' ? 'active':'' }}">
@@ -223,7 +223,7 @@
 
 {{-- ===== SYSTEM ===== --}}
 <div class="nav-section">
-    <div class="nav-section-header" onclick="this.parentElement.classList.toggle('collapsed')">System</div>
+    <div class="nav-section-header" data-nav-toggle>System</div>
     <div class="nav-section-body">
         <a href="/admin/settings" class="{{ str_starts_with($r,'admin/settings') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/></svg>
@@ -235,6 +235,12 @@
 </nav>
 
 <script nonce="{{ $csp_nonce ?? '' }}">
+// Toggle nav sections on header click
+document.querySelectorAll('[data-nav-toggle]').forEach(function(header) {
+    header.addEventListener('click', function() {
+        this.parentElement.classList.toggle('collapsed');
+    });
+});
 // Collapse all sections except the one containing the active page
 document.querySelectorAll('.nav-section').forEach(function(section) {
     if (section.querySelector('.active')) {

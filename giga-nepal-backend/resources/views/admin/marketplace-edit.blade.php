@@ -106,7 +106,7 @@
         <div class="inline-actions">
             <form method="post" action="/admin/marketplaces/{{ $m->id }}/enable">@csrf<button class="btn btn-primary" type="submit" @disabled(!$validation['can_activate'] && (auth()->user()->role->name ?? null)!=='super_admin')>Enable</button></form>
             @if((auth()->user()->role->name ?? null)==='super_admin' && !$validation['can_activate'])
-                <form method="post" action="/admin/marketplaces/{{ $m->id }}/enable">@csrf<input type="hidden" name="force" value="1"><button class="btn" type="submit" onclick="return confirm('Force-enable despite failed validation?')">Force enable</button></form>
+                <form method="post" action="/admin/marketplaces/{{ $m->id }}/enable">@csrf<input type="hidden" name="force" value="1"><button class="btn" type="submit" data-confirm="Force-enable despite failed validation?">Force enable</button></form>
             @endif
             <form method="post" action="/admin/marketplaces/{{ $m->id }}/disable" style="display:flex;gap:6px">@csrf<input type="text" name="reason" placeholder="Reason to disable" required><button class="btn" type="submit">Disable</button></form>
         </div>

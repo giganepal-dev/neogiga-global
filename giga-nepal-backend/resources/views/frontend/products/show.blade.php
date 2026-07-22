@@ -120,8 +120,8 @@
             <div class="prod-gallery-main-wrap">
                 <a id="prod-gallery-zoom" class="prod-gallery-main" href="{{ $primaryImageUrl }}" target="_blank" rel="noopener" aria-label="Enlarge product image">
                     @if($galleryImages->count() > 1)
-                    <button class="prod-gallery-prev" type="button" aria-label="Previous image" onclick="galleryNav(-1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round"/></svg></button>
-                    <button class="prod-gallery-next" type="button" aria-label="Next image" onclick="galleryNav(1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke-linecap="round"/></svg></button>
+                    <button class="prod-gallery-prev" type="button" aria-label="Previous image" data-gallery-nav="-1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round"/></svg></button>
+                    <button class="prod-gallery-next" type="button" aria-label="Next image" data-gallery-nav="1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke-linecap="round"/></svg></button>
                     @endif
                     <img id="prod-gallery-main-img" src="{{ $primaryImageUrl }}" @if($primaryImage?->srcset()) srcset="{{ $primaryImage->srcset() }}" sizes="(max-width: 768px) 100vw, 50vw" @endif alt="{{ $primaryImageAlt }}" width="1200" height="1200" fetchpriority="high">
                 </a>
@@ -437,9 +437,9 @@
     <div class="prod-qty-row" id="prod-sidebar-add">
         <label class="prod-qty-label">Quantity</label>
         <div class="prod-qty-input">
-            <button type="button" class="prod-qty-btn" onclick="qtyChange(-1)" aria-label="Decrease quantity">−</button>
+            <button type="button" class="prod-qty-btn" data-qty-change="-1" aria-label="Decrease quantity">−</button>
             <input type="number" id="prod-qty" class="control" value="1" min="1" max="{{ max(1, (int)($product->stock_quantity ?: 500)) }}" aria-label="Quantity">
-            <button type="button" class="prod-qty-btn" onclick="qtyChange(1)" aria-label="Increase quantity">+</button>
+            <button type="button" class="prod-qty-btn" data-qty-change="1" aria-label="Increase quantity">+</button>
         </div>
     </div>
 
@@ -470,7 +470,7 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v14c0 1.1.9 2 2 2h3m8-18h3a2 2 0 012 2v14a2 2 0 01-2 2h-3M3 12h18"/></svg>
                 Compare
             </button>
-            <button class="btn btn-ghost prod-action-sm saved-btn" data-product="{{ $product->id }}" onclick="toggleSave(this)">
+            <button class="btn btn-ghost prod-action-sm saved-btn" data-product="{{ $product->id }}" data-toggle-save="1">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 000-7.8z"/></svg>
                 Save
             </button>

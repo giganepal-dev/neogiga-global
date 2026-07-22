@@ -54,7 +54,7 @@
                     <strong>{{ $asset->title ?: $asset->original_name }}</strong>
                     <div class="sub mono">{{ $asset->folder ?: 'general' }} · {{ number_format($asset->size) }} bytes</div>
                     <div class="actions" style="margin-top:10px">
-                        <button class="btn btn-ghost" type="button" onclick="navigator.clipboard && navigator.clipboard.writeText('{{ $url }}')">Copy URL</button>
+                        <button class="btn btn-ghost" type="button" data-copy="{{ $url }}">Copy URL</button>
                         <details class="modal"><summary class="btn btn-ghost">View</summary><div class="modal-panel"><div class="modal-h"><h3>{{ $asset->original_name }}</h3><span class="badge b-info">metadata</span></div><div class="modal-b"><p class="mono">{{ $url }}</p><p>{{ $asset->alt_text ?: 'No alt text yet.' }}</p><p class="mono">{{ $asset->metadata }}</p></div></div></details>
                         <form method="post" action="/admin/media/assets/{{ $asset->id }}" onsubmit="return confirm('Delete this asset?')">@csrf @method('DELETE')<button class="btn btn-ghost danger" type="submit">Delete</button></form>
                     </div>

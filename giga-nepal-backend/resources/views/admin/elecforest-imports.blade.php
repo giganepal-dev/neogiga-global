@@ -45,7 +45,7 @@
                 <label class="sub">Limit (0 = all)<input class="control" type="number" min="0" max="3178" name="limit" value="20"></label>
             </div>
             <label class="sub"><input type="checkbox" name="download_images" value="1"> Queue secure image downloads for internal rights review</label>
-            <button class="btn btn-primary" type="submit" onclick="return confirm('Start this ElecForest operation?')">Start Operation</button>
+            <button class="btn btn-primary" type="submit" data-confirm="Start this ElecForest operation?">Start Operation</button>
         </form>
         <div class="form-stack">
             <h3>Maintenance</h3>
@@ -56,7 +56,7 @@
                 <input type="hidden" name="limit" value="0"><button class="btn btn-ghost" type="submit">Queue Pending Images</button>
             </form>
             <form method="post" action="/admin/imports/elecforest/publish-qualified">@csrf
-                <button class="btn btn-ghost" type="submit" onclick="return confirm('Run strict publication gates? Unqualified products remain draft.')">Publish Qualified Only</button>
+                <button class="btn btn-ghost" type="submit" data-confirm="Run strict publication gates? Unqualified products remain draft.">Publish Qualified Only</button>
             </form>
             <div class="sub">Isolation check: <span class="badge {{ $validation['isolation_passed'] ? 'b-ok' : 'b-warn' }}">{{ $validation['isolation_passed'] ? 'passed' : 'failed' }}</span></div>
             <div class="sub">Warehouse {{ number_format($validation['warehouse_stock_rows']) }} · marketplace price {{ number_format($validation['marketplace_price_rows']) }} · vendor price {{ number_format($validation['vendor_price_rows']) }} · country price {{ number_format($validation['country_price_rows']) }}</div>
