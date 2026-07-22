@@ -30,7 +30,7 @@
     </div>
 </form>
 
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 (function () {
     let index = 1;
     document.getElementById('add-rfq-row')?.addEventListener('click', function () {

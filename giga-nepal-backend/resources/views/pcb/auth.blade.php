@@ -4,7 +4,7 @@
 @section('robots', 'noindex,nofollow')
 
 @push('styles')
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     .auth-shell{min-height:calc(100vh - 180px);display:grid;place-items:center;padding:56px 0}
     .auth-panel{width:min(480px,100%)}.auth-panel h1{font-size:1.7rem;margin:0 0 8px}.auth-switch{text-align:center;color:var(--muted);font-size:.86rem;margin-top:18px}.auth-switch a{color:var(--cyan);font-weight:700}
 </style>

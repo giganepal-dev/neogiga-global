@@ -7,7 +7,7 @@
     <title>@yield('title', 'Dashboard') · NeoGiga Admin</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url('/images/brand/neogiga-favicon-32.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url('/images/brand/neogiga-apple-touch-icon-180.png') }}">
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         :root{
             --navy:#0F172A;--navy-2:#111f38;--slate:#334155;--line:#E2E8F0;
             --bg:#F8FAFC;--surface:#FFFFFF;--fg:#020617;--muted:#64748B;
@@ -279,7 +279,7 @@
         </main>
     </div>
 </div>
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 (function(){
     var app=document.getElementById('app');
     document.querySelectorAll('[data-open]').forEach(function(b){b.addEventListener('click',function(){app.classList.add('open')})});

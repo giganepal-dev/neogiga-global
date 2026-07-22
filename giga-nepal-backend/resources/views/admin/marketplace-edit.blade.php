@@ -6,7 +6,7 @@
 @endsection
 @section('content')
 @php $tab = session('tab', 'general'); @endphp
-<style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
     .mtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
     .mtabs button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;font-weight:700;color:var(--slate);cursor:pointer}
     .mtabs button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
@@ -225,7 +225,7 @@
     </div></div>
 </div>
 
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 (function(){
     var btns=document.querySelectorAll('.mtab-btn'), tabs=document.querySelectorAll('.mtab');
     function show(name){

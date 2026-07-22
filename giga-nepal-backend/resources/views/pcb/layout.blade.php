@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="yandex-verification" content="208c27f08c871e90" />
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6LCPY27D9N"></script>
-    <script>
+    <script nonce="{{ $csp_nonce ?? '' }}" async src="https://www.googletagmanager.com/gtag/js?id=G-6LCPY27D9N"></script>
+    <script nonce="{{ $csp_nonce ?? '' }}">
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
@@ -18,7 +18,7 @@
     <link rel="canonical" href="{{ url()->current() }}">
     <link rel="icon" type="image/png" sizes="32x32" href="https://neogiga.com/images/brand/neogiga-favicon-32.png">
     <link rel="icon" type="image/png" sizes="192x192" href="https://neogiga.com/images/brand/neogiga-icon-192.png">
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         /* NeoGiga "Precision Engineering" design system — shared with neogiga.com */
         :root{--bg:#101417;--bg2:#0b0f11;--s1:#181c1f;--s2:#1d2023;--s3:#272a2d;--blue:#123a6b;--cyan:#28d8fb;--gold:#f9bd2c;--white:#fff;--soft:#d7e2ef;--on:#e0e3e6;--muted:#c5c6cd;--faint:#8f9097;--ink:#e0e3e6;--line:rgba(255,255,255,.08);--glass:rgba(255,255,255,.03);--success:#10b981;--danger:#ef4444;--max:1280px;--r:14px}
         *{box-sizing:border-box}html{scroll-behavior:smooth}

@@ -1,7 +1,7 @@
 {{-- Shared styles for the icon component system. Include once per layout <head>.
      Theme-neutral: colours come from currentColor + a few CSS vars with fallbacks,
      so the same components render correctly on the dark storefront and admin. --}}
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     .ng-icon{display:inline-block;flex:none}
     .ng-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 

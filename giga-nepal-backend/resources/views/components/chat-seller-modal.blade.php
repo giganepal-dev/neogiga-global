@@ -56,7 +56,7 @@
 </div>
 </div>
 
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 function handleChatSubmit(form, targetId) {
     event.preventDefault();
     var status = document.getElementById('chat-status-' + targetId);

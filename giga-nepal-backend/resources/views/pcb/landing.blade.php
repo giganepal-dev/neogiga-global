@@ -4,7 +4,7 @@
 @section('description', 'Get an instant PCB fabrication quote. Upload Gerber files, review layers online, check DFM, and track production. PCB engineering platform from NeoGiga.')
 
 @push('styles')
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     .pcb-hero{position:relative;min-height:min(680px,calc(100vh - 77px));display:flex;align-items:center;background:linear-gradient(135deg,#0b1220 0%,#101417 50%,#0b0f11 100%);overflow:hidden;border-bottom:1px solid var(--line)}
     .pcb-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 30%,rgba(40,216,251,.12),transparent 50rem),radial-gradient(circle at 80% 20%,rgba(249,189,44,.08),transparent 40rem)}
     .hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;position:relative;z-index:1;padding:64px 0}
@@ -117,7 +117,7 @@
     </div>
 </section>
 
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
     async function calculateQuote() {
         const els = (id) => document.getElementById(id);
         const result = els('quote-result');

@@ -3,7 +3,7 @@
 @section('description', $pageSeo['description'])
 
 @push('head')
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'Brand',

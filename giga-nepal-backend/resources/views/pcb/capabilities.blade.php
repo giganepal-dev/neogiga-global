@@ -5,7 +5,7 @@
 @section('description', 'Detailed PCB fabrication specifications: layer counts, materials, tolerances, surface finishes, copper weights, drill specs, and quality standards.')
 
 @push('styles')
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     .specs-section{margin-bottom:36px}.specs-section h2{font-size:1.25rem;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
     .specs-table{width:100%;border-collapse:collapse}.specs-table th,.specs-table td{text-align:left;padding:9px 15px;border-bottom:1px solid var(--line);font-size:.86rem}.specs-table th{background:var(--s1);color:var(--faint);font-size:.71rem;text-transform:uppercase;font-weight:700;width:38%}.specs-table td{color:var(--on)}
     .specs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px}

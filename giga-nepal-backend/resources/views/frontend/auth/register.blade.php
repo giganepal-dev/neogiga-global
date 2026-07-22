@@ -3,7 +3,7 @@
 @section('description','Join NeoGiga to access engineering tools, RFQ sourcing, BOM management and global parts marketplace.')
 
 @section('content')
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     .auth-card{max-width:440px;margin:48px auto;padding:32px;border:1px solid var(--line);border-radius:var(--r);background:var(--glass);backdrop-filter:blur(12px)}
     .auth-card h1{font-size:1.4rem;margin:0 0 8px;color:var(--soft)}
     .auth-card p{color:var(--muted);margin:0 0 20px}

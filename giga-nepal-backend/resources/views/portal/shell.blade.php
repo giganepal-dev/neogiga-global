@@ -7,7 +7,7 @@
     <title>@yield('title', $portal['name']) · NeoGiga</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23081527'/><path d='M9 22V10l14 12V10' stroke='%23f9bd2c' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
     <x-icon-styles/>
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         :root{
             --navy:#0F172A;--navy-soft:#1E293B;--line:rgba(148,163,184,.18);--muted:#64748B;
             --accent:#f9bd2c;--accent-soft:rgba(249,189,44,.14);--ok:#16a34a;--warn:#d97706;
@@ -118,7 +118,7 @@
         @yield('content')
     </main>
 </div>
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 document.getElementById('portal-menu-toggle')?.addEventListener('click', function () {
     document.getElementById('portal-side')?.classList.toggle('is-open');
 });

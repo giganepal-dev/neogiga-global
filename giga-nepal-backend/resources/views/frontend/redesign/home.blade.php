@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
 /* NeoGiga "Precision Engineering" — self-contained (no runtime CDN dependency) */
 :root{
   --bg:#101417;--surface:#0b0f11;--surface-1:#181c1f;--surface-2:#1d2023;--surface-3:#272a2d;
@@ -331,7 +331,7 @@ footer .copy{color:var(--muted);font-size:.78rem;max-width:36ch}
 <div class="footbar"><div class="wrap"><span>© {{ date('Y') }} NeoGiga. All rights reserved.</span><span class="mono">Precision engineering for global innovation.</span></div></div>
 </footer>
 
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 document.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();document.querySelector('input[name=q]')?.focus();}});
 </script>
 </body>

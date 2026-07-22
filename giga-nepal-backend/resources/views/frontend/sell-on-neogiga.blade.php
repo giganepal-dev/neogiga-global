@@ -4,8 +4,8 @@
 @section('description', $description)
 @section('body_class', 'partner-page')
 @push('head')
-<script type="application/ld+json">@json($jsonLd, JSON_UNESCAPED_SLASHES)</script>
-<style>
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">@json($jsonLd, JSON_UNESCAPED_SLASHES)</script>
+<style nonce="{{ $csp_nonce ?? '' }}">
 .partner-page .page-hero,.partner-page .two-col{width:min(var(--max),calc(100% - 40px));margin-inline:auto}.partner-page .page-hero{padding:28px 0 18px}.eyebrow{color:var(--gold);font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:.76rem}.partner-page .page-hero h1{margin:5px 0 6px;color:var(--on)}
 .partner-page .two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:start;padding-bottom:64px}.partner-page .panel{background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
 .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:24px 0}.feature{border:1px solid var(--line);border-radius:10px;padding:16px;background:rgba(255,255,255,.025)}

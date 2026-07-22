@@ -45,7 +45,7 @@
     </div>
 </div>
 
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
 .confirm-card{max-width:640px;margin:40px auto;padding:40px 32px;background:var(--s1);border:1px solid var(--line);border-radius:16px;text-align:center}
 .confirm-icon{font-size:3rem;margin-bottom:12px}
 .confirm-title{font-size:1.5rem;margin:0 0 8px;color:var(--on)}

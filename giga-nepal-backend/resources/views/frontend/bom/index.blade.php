@@ -147,12 +147,12 @@
 </div>
 </section>
 
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
 .bom-tab{flex:1;border:0;background:#f4f7fb;color:var(--muted);font-weight:700;font-size:.9rem;padding:14px 12px;border-bottom:2px solid transparent;transition:.15s}
 .bom-tab.active{background:#fff;color:var(--cyan);border-bottom-color:var(--cyan)}
 #bom-drop.dragover{border-color:var(--cyan);background:#f3f8ff}
 </style>
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 (function(){
 var tabU=document.getElementById('tab-upload'),tabP=document.getElementById('tab-paste'),
     paneU=document.getElementById('pane-upload'),paneP=document.getElementById('pane-paste'),

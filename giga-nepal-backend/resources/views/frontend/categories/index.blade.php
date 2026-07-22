@@ -11,7 +11,7 @@
 @endphp
 
 @push('head')
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
@@ -21,7 +21,7 @@
     ],
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'ItemList',
@@ -36,7 +36,7 @@
     ])->all(),
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     body.category-directory-page{background:#081522;color:#e6edf7}
     body.category-directory-page main{background:#081522}
     body.category-directory-page .crumbs{color:#8294aa}

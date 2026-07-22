@@ -3,7 +3,7 @@
 @section('description','Request a password reset link for your NeoGiga account.')
 
 @section('content')
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     .auth-card{max-width:440px;margin:48px auto;padding:32px;border:1px solid rgba(15,23,42,.12);border-radius:14px;background:#fff}
     .auth-card h1{font-size:1.4rem;margin:0 0 8px}
     .auth-card p{color:#475569;margin:0 0 20px}

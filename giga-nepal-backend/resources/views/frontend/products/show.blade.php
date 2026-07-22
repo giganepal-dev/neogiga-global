@@ -45,11 +45,11 @@
     }
     $schemaBreadcrumb[] = ['name' => $product->name, 'item' => $productCanonical];
 @endphp
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode($productSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 document.querySelectorAll(".spec-group").forEach(function(g){g.addEventListener("click",function(){g.classList.toggle("collapsed")})});
 </script>
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
@@ -295,7 +295,7 @@ document.querySelectorAll(".spec-group").forEach(function(g){g.addEventListener(
         </div>
     </div>
 </section>
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 (function(){var main=document.getElementById('product-gallery-main-image'),zoom=document.getElementById('product-gallery-zoom');if(!main||!zoom)return;document.querySelectorAll('[data-gallery-src]').forEach(function(button){button.addEventListener('click',function(){document.querySelectorAll('[data-gallery-src]').forEach(function(item){item.classList.remove('active')});button.classList.add('active');main.src=button.dataset.gallerySrc;main.alt=button.dataset.galleryAlt;zoom.href=button.dataset.gallerySrc;zoom.setAttribute('aria-label','Open enlarged image: '+button.dataset.galleryAlt)})})})();
 document.querySelectorAll(".spec-group").forEach(function(g){g.addEventListener("click",function(){g.classList.toggle("collapsed")})});
 </script>

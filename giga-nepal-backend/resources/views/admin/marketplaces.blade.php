@@ -4,7 +4,7 @@
 @section('content')
 
 @php $f = $filters ?? []; @endphp
-<style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
     .mfilter{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
     .mfilter .fld{display:grid;gap:4px}.mfilter label{font-size:.72rem;font-weight:700;color:var(--slate)}
     .mfilter input,.mfilter select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;min-width:120px}
@@ -69,7 +69,7 @@
     </div>
 </div>
 </form>
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 (function(){var s=document.getElementById('selall');if(s)s.addEventListener('change',function(){document.querySelectorAll('.mrow').forEach(function(c){c.checked=s.checked;});});})();
 </script>
 

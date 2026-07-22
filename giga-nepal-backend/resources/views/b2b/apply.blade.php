@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Institutional Application · NeoGiga</title>
     <x-icon-styles/>
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         :root{--line:rgba(148,163,184,.18);--muted:#64748B;--accent:#f9bd2c}
         *{box-sizing:border-box}body{margin:0;font:15px/1.55 ui-sans-serif,system-ui;background:#eef2f7;color:#0f172a}
         .wrap{max-width:640px;margin:0 auto;padding:32px 16px 48px}

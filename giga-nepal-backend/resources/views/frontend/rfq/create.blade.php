@@ -23,7 +23,7 @@
         ]"
     />
 @else
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     .rfq-wrap{max-width:860px;margin:0 auto;padding:24px 0 64px}
     .rfq-hero{text-align:center;margin-bottom:28px}
     .rfq-hero h1{font-size:1.6rem;margin:0 0 8px}
@@ -125,7 +125,7 @@
     </form>
 </div>
 
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 function addRfqLine() {
     var lines = document.getElementById('rfq-lines');
     var first = lines.querySelector('.rfq-line');

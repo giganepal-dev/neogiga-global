@@ -50,5 +50,5 @@
         <div class="card"><div class="card-h"><h2>Quick actions</h2></div><div class="card-body actions-row"><a href="/seller/products" class="btn btn-primary">Manage products</a><a href="/seller/inventory" class="btn btn-ghost">Check inventory</a><a href="/seller/support" class="btn btn-ghost">Get support</a></div></div>
     </div>
 </div>
-<style>@media(max-width:980px){.dashboard-grid{grid-template-columns:1fr!important}}</style>
+<style nonce="{{ $csp_nonce ?? '' }}">@media(max-width:980px){.dashboard-grid{grid-template-columns:1fr!important}}</style>
 @endsection

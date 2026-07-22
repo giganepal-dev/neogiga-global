@@ -71,7 +71,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 async function search() {
     const marking = document.getElementById('marking').value.trim();
     if (!marking) return;

@@ -3,7 +3,7 @@
 @section('crumb','Regional Commerce / Tax & Tariff')
 @section('content')
 
-<style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
 .tax-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 @media(max-width:768px){.tax-grid{grid-template-columns:1fr}}
 </style>

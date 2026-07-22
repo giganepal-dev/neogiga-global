@@ -6,7 +6,7 @@
     <meta name="robots" content="index, follow">
     <title>NeoGiga Learning Projects and Courses</title>
     <meta name="description" content="Learn electronics, IoT, robotics, and marketplace product projects with NeoGiga courses and tutorials.">
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         body{margin:0;background:#f8fafc;color:#0f172a;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55}
         .wrap{max-width:1120px;margin:0 auto;padding:32px 20px}
         header{padding:28px 0 20px;border-bottom:1px solid #e2e8f0;margin-bottom:24px}

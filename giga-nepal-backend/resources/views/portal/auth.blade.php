@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow">
     <title>{{ $auth['title'] }} · NeoGiga</title>
     <x-icon-styles/>
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         :root{--ng-accent:#f9bd2c;--ng-focus:#f9bd2c}
         *{box-sizing:border-box}body{margin:0;font:15px/1.5 ui-sans-serif,system-ui;background:#0F172A;color:#0f172a;display:grid;place-items:center;min-height:100dvh}
         .box{background:#fff;border-radius:14px;padding:32px;width:min(400px,92vw)}

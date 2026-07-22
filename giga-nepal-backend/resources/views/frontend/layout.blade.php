@@ -48,7 +48,7 @@
     <meta name="twitter:title" content="@yield('title', $marketplaceSeo['twitter_title'] ?? 'NeoGiga')">
     <meta name="twitter:description" content="@yield('description', $marketplaceSeo['twitter_description'] ?? 'Global engineering marketplace.')">
     <meta name="twitter:image" content="{{ $twitterImage ?? ($marketplaceSeo['twitter_image'] ?? null) ?: $resolvedSocialImage }}">
-    @if(!empty($marketplaceSeo['schema_json']))<script type="application/ld+json">{!! $marketplaceSeo['schema_json'] !!}</script>@endif
+    @if(!empty($marketplaceSeo['schema_json']))<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">{!! $marketplaceSeo['schema_json'] !!}</script>@endif
     @foreach(($marketplaceContext['hreflang'] ?? []) as $alternate)
         <link rel="alternate" hreflang="{{ $alternate['hreflang'] }}" href="{{ $alternate['url'] }}">
     @endforeach
@@ -251,7 +251,7 @@
     <a href="{{ $publicBase }}/bom"><x-icon name="rfq" size="20"/><span>BOM</span></a>
 </nav>
 @stack('foot')
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 (function(){
 var input=document.getElementById('search-input'),panel=document.getElementById('search-panel'),active=-1,timer,abort;
 if(!input||!panel)return;

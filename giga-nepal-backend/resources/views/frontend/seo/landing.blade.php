@@ -2,7 +2,7 @@
 @section('title', $copy['title'])
 @section('description', \Illuminate\Support\Str::limit($copy['description'], 158))
 @push('head')
-<script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}</script>
 @endpush
 @section('content')
 @php

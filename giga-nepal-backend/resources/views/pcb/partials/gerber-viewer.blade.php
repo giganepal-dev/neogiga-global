@@ -19,10 +19,10 @@
     </div>
 </div>
 @push('scripts')
-<script type="importmap">
+<script nonce="{{ $csp_nonce ?? '' }}" type="importmap">
 { "imports": { "gerber-to-svg": "https://cdn.jsdelivr.net/npm/gerber-to-svg@2/+esm" } }
 </script>
-<script type="module">
+<script nonce="{{ $csp_nonce ?? '' }}" type="module">
 import gerberToSvg from 'gerber-to-svg';
 const C = {top_copper:'#ef4444',bottom_copper:'#3b82f6',top_solder_mask:'#10b981',bottom_solder_mask:'#059669',top_silkscreen:'#f9bd2c',bottom_silkscreen:'#d97706',top_paste:'#94a3b8',bottom_paste:'#64748b',drill:'#ec4899',board_outline:'#f8fafc',unknown:'#4b5563'};
 class V{constructor(id){this.e=document.getElementById(id);this.l=new Map();this.v=new Set();this.s=1;this.x=0;this.y=0;this.svg=this.e.querySelector('.gv-svg');this.ld=this.e.querySelector('.gv-loading');this.st=this.e.querySelector('.gv-status');this.sc=this.e.querySelector('.gv-scale');this.tg=this.e.querySelector('.gv-toggles');this._b();}

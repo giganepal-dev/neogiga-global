@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>POS Cashier — NeoGiga</title>
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         :root { --bg:#f5f5f5; --card:#fff; --text:#1a1a1a; --muted:#666; --accent:#2563eb; --danger:#dc2626; --success:#16a34a; --border:#e5e5e5; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
@@ -63,7 +63,7 @@
     </div>
 </div>
 <div class="receipt" id="receipt"><div class="receipt-content" id="receiptContent"></div></div>
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 let cart = [], saleId = null, sessionId = null, receiptUrl = null, selectedCustomerId = null;
 const base = '/pos/cashier';
 

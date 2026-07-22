@@ -31,7 +31,7 @@
 @section('description', \Illuminate\Support\Str::limit(strip_tags($metaDesc), 158))
 
 @push('head')
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
@@ -40,7 +40,7 @@
     ])->all(),
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'ItemList',
@@ -56,7 +56,7 @@
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
 @if ($children->isNotEmpty())
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'ItemList',

@@ -409,7 +409,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 (function(){
     var input=document.getElementById('product-image-files'), zone=document.getElementById('product-image-dropzone'), previews=document.getElementById('product-image-previews');
     function render(files){previews.innerHTML='';Array.from(files||[]).forEach(function(file){var box=document.createElement('div');box.style.cssText='border:1px solid var(--line);border-radius:9px;padding:7px;overflow:hidden';var img=document.createElement('img');img.style.cssText='width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:6px';img.alt=file.name;img.src=URL.createObjectURL(file);var label=document.createElement('div');label.className='sub';label.textContent=file.name;box.append(img,label);previews.append(box)})}

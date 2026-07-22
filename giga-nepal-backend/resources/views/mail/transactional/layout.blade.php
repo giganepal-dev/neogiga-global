@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
 <title>{{ $subject ?? 'NeoGiga' }}</title>
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
   body { margin:0; padding:0; background:#f5f7fa; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif; -webkit-font-smoothing:antialiased; color:#1e2a36; line-height:1.55 }
   .wrap { max-width:600px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #dfe6ef }
   .header { background:linear-gradient(135deg,#0f5bd7,#0f62e6); padding:28px 24px; text-align:center }

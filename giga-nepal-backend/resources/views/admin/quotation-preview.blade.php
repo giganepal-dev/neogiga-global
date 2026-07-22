@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
     <title>{{ $quote->quote_number }} · NeoGiga Quotation</title>
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         body{font-family:Arial,sans-serif;color:#0f172a;margin:32px;background:#fff}
         .head{display:flex;justify-content:space-between;gap:24px;border-bottom:2px solid #0f172a;padding-bottom:18px}
         h1{margin:0;font-size:28px}.muted{color:#64748b}.mono{font-family:Menlo,Consolas,monospace}

@@ -9,7 +9,7 @@
 @endpush
 
 @section('content')
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     .mkt-card{max-width:560px;margin:48px auto;padding:32px;border:1px solid rgba(15,23,42,.12);border-radius:14px;background:#fff;text-align:center}
     .mkt-card h1{font-size:1.5rem;margin:0 0 6px}
     .mkt-card .sub{color:#64748B;margin:0 0 20px}

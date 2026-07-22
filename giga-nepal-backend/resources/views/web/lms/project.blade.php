@@ -6,7 +6,7 @@
     <meta name="robots" content="index, follow">
     <title>{{ $project->title }} · NeoGiga Learning</title>
     <meta name="description" content="{{ \Illuminate\Support\Str::limit($project->summary ?? $project->description ?? 'NeoGiga learning project tutorial.', 155) }}">
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         body{margin:0;background:#f8fafc;color:#0f172a;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55}
         .wrap{max-width:980px;margin:0 auto;padding:32px 20px}
         a{color:#0369a1;text-decoration:none} a:hover{text-decoration:underline}

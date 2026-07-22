@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>Invoice {{ $order->order_number }} — NeoGiga</title>
 <meta name="robots" content="noindex">
-<style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
     :root{--navy:#0F172A;--cyan:#19D3F5;--gold:#EAB308;--gray:#64748B;--line:#E2E8F0}
     *{box-sizing:border-box}
     body{font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0F172A;margin:0;background:#F8FAFC}

@@ -100,7 +100,8 @@ class PartnerCountryScopeTest extends TestCase
 
     public function test_public_partner_pages_use_same_origin_csrf_protected_submission_routes(): void
     {
-        $this->get('/en/sell-on-neogiga')->assertOk()
+        $sellerPage = $this->get('/en/sell-on-neogiga');
+        $sellerPage->assertOk()
             ->assertSee('data-endpoint="/partner-applications/seller"', false)
             ->assertSee('name="_token"', false)
             ->assertSee('Seller base country')
@@ -108,8 +109,10 @@ class PartnerCountryScopeTest extends TestCase
             ->assertSee('name="annual_turnover_range"', false)
             ->assertDontSee('data-partner-marketplaces multiple', false)
             ->assertDontSee('data-endpoint="/api/seller-applications"', false);
+        $this->assertResponseInlineAssetsMatchCspNonce($sellerPage);
 
-        $this->get('/en/distributors')->assertOk()
+        $distributorPage = $this->get('/en/distributors');
+        $distributorPage->assertOk()
             ->assertSee('data-endpoint="/partner-applications/distributor"', false)
             ->assertSee('name="_token"', false)
             ->assertSee('Distributor base country')
@@ -117,6 +120,20 @@ class PartnerCountryScopeTest extends TestCase
             ->assertSee('name="annual_turnover_range"', false)
             ->assertDontSee('data-partner-marketplaces multiple', false)
             ->assertDontSee('data-endpoint="/api/distributor-applications"', false);
+        $this->assertResponseInlineAssetsMatchCspNonce($distributorPage);
+    }
+
+    private function assertResponseInlineAssetsMatchCspNonce($response): void
+    {
+        $csp = (string) $response->headers->get('Content-Security-Policy');
+        $this->assertMatchesRegularExpression("/nonce-([A-Za-z0-9]+)'/", $csp);
+        preg_match("/nonce-([A-Za-z0-9]+)'/", $csp, $matches);
+        $nonce = $matches[1];
+        $html = $response->getContent();
+
+        $this->assertStringContainsString('<style nonce="'.$nonce.'">', $html);
+        $this->assertStringContainsString('<script nonce="'.$nonce.'">', $html);
+        $this->assertDoesNotMatchRegularExpression('/<(style|script)(?![^>]*\\bnonce=)[^>]*>/i', $html);
     }
 
     public function test_single_country_application_rejects_multiple_target_marketplaces(): void

@@ -7,7 +7,7 @@
     <title>Sign in · NeoGiga Admin</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url('/images/brand/neogiga-favicon-32.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url('/images/brand/neogiga-apple-touch-icon-180.png') }}">
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         *{box-sizing:border-box}
         body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:20px;
             font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#f7fbff;

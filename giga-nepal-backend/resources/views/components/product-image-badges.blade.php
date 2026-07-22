@@ -1,7 +1,7 @@
 @props(['product'])
 
 @once
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         .product-img,.product-gallery-main{position:relative}
         .product-image-badges{position:absolute;z-index:2;top:8px;left:8px;display:flex;flex-wrap:wrap;gap:5px;max-width:calc(100% - 16px);pointer-events:none}
         .product-image-badge{display:inline-flex;align-items:center;min-height:22px;padding:2px 7px;border-radius:6px;font-size:.66rem;font-weight:800;letter-spacing:.02em;line-height:1;background:rgba(8,21,39,.92);border:1px solid rgba(255,255,255,.16);color:#fff;text-shadow:none;box-shadow:0 2px 9px rgba(0,0,0,.22)}

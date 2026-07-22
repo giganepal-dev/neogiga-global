@@ -3,7 +3,7 @@
 @section('description', 'Browse active engineering manufacturers and brands available through the NeoGiga global and regional marketplace.')
 
 @push('head')
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'ItemList',

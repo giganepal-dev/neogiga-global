@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Reseller Application · NeoGiga</title>
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         body{margin:0;font:15px/1.55 ui-sans-serif,system-ui;background:#eef2f7;color:#0f172a}
         .wrap{max-width:680px;margin:0 auto;padding:32px 16px}
         .card{background:#fff;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:24px}

@@ -13,7 +13,7 @@
 @endphp
 
 @push('head')
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'ItemList',
@@ -28,7 +28,7 @@
     ])->all(),
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
 </script>
-<script type="application/ld+json">
+<script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
     '@context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
@@ -41,7 +41,7 @@
 @endpush
 
 @section('content')
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     .plist-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:24px 0 16px}
     .plist-head h1{margin:0;font-size:1.5rem}
     .psearch{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;width:100%}

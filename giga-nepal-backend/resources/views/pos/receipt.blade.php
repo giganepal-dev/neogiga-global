@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receipt {{ $sale->sale_reference ?? '' }}</title>
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         body { font-family: system-ui, sans-serif; background: #f5f5f5; margin: 0; padding: 24px; }
         .receipt { max-width: 420px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
         h1 { font-size: 1.1rem; margin: 0 0 8px; text-align: center; }

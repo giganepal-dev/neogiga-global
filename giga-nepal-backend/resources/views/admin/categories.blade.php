@@ -99,6 +99,6 @@
 
 <div class="note stack-gap">Create, edit, activate, filter, reorder by sort value, and manage category-linked specifications and learning content from the live admin workflows.</div>
 
-<script src="{{ url('/js/admin-categories.js') }}" defer></script>
+<script nonce="{{ $csp_nonce ?? '' }}" src="{{ url('/js/admin-categories.js') }}" defer></script>
 
 @endsection

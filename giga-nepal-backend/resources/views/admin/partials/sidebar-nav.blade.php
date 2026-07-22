@@ -194,7 +194,7 @@
 
 </nav>
 
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 // Collapse all sections except the one containing the active page
 document.querySelectorAll('.nav-section').forEach(function(section) {
     if (section.querySelector('.active')) {
