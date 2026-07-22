@@ -1,0 +1,13 @@
+{
+    "name": "NeoGiga — Global Electronics Engineering Marketplace",
+    "short_name": "NeoGiga",
+    "description": "Semiconductors, IoT, robotics, automation, battery technology and industrial engineering tools.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f1724",
+    "theme_color": "#0f1724",
+    "icons": [
+        { "src": "/images/brand/neogiga-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/images/brand/neogiga-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    ]
+}

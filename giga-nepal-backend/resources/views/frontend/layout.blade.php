@@ -52,9 +52,13 @@
     @foreach(($marketplaceContext['hreflang'] ?? []) as $alternate)
         <link rel="alternate" hreflang="{{ $alternate['hreflang'] }}" href="{{ $alternate['url'] }}">
     @endforeach
+    <link rel="icon" href="{{ url('/favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url('/images/brand/neogiga-icon-16.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url('/images/brand/neogiga-favicon-32.png') }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url('/images/brand/neogiga-icon-192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url('/images/brand/neogiga-apple-touch-icon-180.png') }}">
+    <link rel="manifest" href="{{ url('/site.webmanifest') }}">
+    <meta name="theme-color" content="#0f1724">
     <x-icon-styles/>
     @stack('head')
     <style nonce="{{ $csp_nonce ?? '' }}">
