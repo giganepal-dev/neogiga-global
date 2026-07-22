@@ -20,7 +20,7 @@ class PcbProjectMember extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(PcbProject::class);
+        return $this->belongsTo(PcbProject::class, 'project_id');
     }
 
     public function user(): BelongsTo
@@ -35,6 +35,6 @@ class PcbProjectMember extends Model
 
     public function canAccess(): bool
     {
-        return !$this->hasExpired() && (!$this->nda_required || $this->nda_accepted);
+        return ! $this->hasExpired() && (! $this->nda_required || $this->nda_accepted);
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Marketplace\MarketplaceProductPrice;
 use App\Models\Marketplace\Product;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\Account\CustomerIdentityService;
 use App\Services\Marketing\OrderNotificationService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
 use App\Services\Marketplace\RegionalCommerceService;
@@ -107,6 +108,7 @@ class CartPageController extends Controller
             'countries' => DB::table('countries')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'routes' => app(RegionalCommerceService::class)->cartRoutes($cart),
             'paymentMethods' => app(PaymentMethodPolicyService::class)->allowedMethods($cart->marketplace_id, $cart->currency_code),
+            'customer' => app(CustomerIdentityService::class)->defaults($request->user()),
         ]);
     }
 

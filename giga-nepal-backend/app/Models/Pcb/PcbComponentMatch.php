@@ -2,6 +2,7 @@
 
 namespace App\Models\Pcb;
 
+use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PcbComponentMatch extends Model
 {
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected static function boot()
@@ -44,12 +46,12 @@ class PcbComponentMatch extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(PcbProject::class);
+        return $this->belongsTo(PcbProject::class, 'project_id');
     }
 
     public function matchedProduct(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Product::class, 'matched_product_id');
+        return $this->belongsTo(Product::class, 'matched_product_id');
     }
 
     public function approvedBy(): BelongsTo
@@ -64,6 +66,6 @@ class PcbComponentMatch extends Model
 
     public function substitutions(): HasMany
     {
-        return $this->hasMany(PcbComponentSubstitution::class);
+        return $this->hasMany(PcbComponentSubstitution::class, 'component_match_id');
     }
 }

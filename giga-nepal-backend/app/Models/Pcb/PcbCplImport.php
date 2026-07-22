@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PcbCplImport extends Model
 {
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected static function boot()
@@ -37,7 +38,7 @@ class PcbCplImport extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(PcbProject::class);
+        return $this->belongsTo(PcbProject::class, 'project_id');
     }
 
     public function user(): BelongsTo
@@ -47,11 +48,11 @@ class PcbCplImport extends Model
 
     public function lines(): HasMany
     {
-        return $this->hasMany(PcbCplLine::class);
+        return $this->hasMany(PcbCplLine::class, 'cpl_import_id');
     }
 
     public function validationErrors(): HasMany
     {
-        return $this->hasMany(PcbCplValidationError::class);
+        return $this->hasMany(PcbCplValidationError::class, 'cpl_import_id');
     }
 }

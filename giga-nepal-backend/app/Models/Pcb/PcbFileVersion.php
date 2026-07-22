@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PcbFileVersion extends Model
 {
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected static function boot()
@@ -34,7 +35,7 @@ class PcbFileVersion extends Model
 
     public function file(): BelongsTo
     {
-        return $this->belongsTo(PcbFile::class);
+        return $this->belongsTo(PcbFile::class, 'file_id');
     }
 
     public function uploadedBy(): BelongsTo

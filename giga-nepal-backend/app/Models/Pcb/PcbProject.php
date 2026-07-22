@@ -2,10 +2,13 @@
 
 namespace App\Models\Pcb;
 
+use App\Models\Manufacturer;
+use App\Models\Organization;
+use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -14,6 +17,7 @@ class PcbProject extends Model
     use SoftDeletes;
 
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected static function boot()
@@ -25,7 +29,7 @@ class PcbProject extends Model
                 $model->id = (string) Str::uuid();
             }
             if (empty($model->code)) {
-                $model->code = 'PCB-' . strtoupper(Str::random(6));
+                $model->code = 'PCB-'.strtoupper(Str::random(6));
             }
         });
     }
@@ -56,7 +60,7 @@ class PcbProject extends Model
 
     public function organization(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Organization::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function assignedEngineer(): BelongsTo
@@ -66,62 +70,63 @@ class PcbProject extends Model
 
     public function preferredManufacturer(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Manufacturer::class, 'preferred_manufacturer_id');
+        return $this->belongsTo(Manufacturer::class, 'preferred_manufacturer_id');
     }
 
     public function preferredWarehouse(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Warehouse::class, 'preferred_warehouse_id');
+        return $this->belongsTo(Warehouse::class, 'preferred_warehouse_id');
     }
 
     public function members(): HasMany
     {
-        return $this->hasMany(PcbProjectMember::class);
+        return $this->hasMany(PcbProjectMember::class, 'project_id');
     }
 
     public function versions(): HasMany
     {
-        return $this->hasMany(PcbProjectVersion::class);
+        return $this->hasMany(PcbProjectVersion::class, 'project_id');
     }
 
     public function files(): HasMany
     {
-        return $this->hasMany(PcbFile::class);
+        return $this->hasMany(PcbFile::class, 'project_id');
     }
 
     public function activityLogs(): HasMany
     {
-        return $this->hasMany(PcbProjectActivityLog::class);
+        return $this->hasMany(PcbProjectActivityLog::class, 'project_id');
     }
 
     public function gerberAnalysisRuns(): HasMany
     {
-        return $this->hasMany(PcbGerberAnalysisRun::class);
+        return $this->hasMany(PcbGerberAnalysisRun::class, 'project_id');
     }
 
     public function quoteConfigurations(): HasMany
     {
-        return $this->hasMany(PcbQuoteConfiguration::class);
+        return $this->hasMany(PcbQuoteConfiguration::class, 'project_id');
     }
 
     public function cplImports(): HasMany
     {
-        return $this->hasMany(PcbCplImport::class);
+        return $this->hasMany(PcbCplImport::class, 'project_id');
     }
 
     public function componentMatches(): HasMany
     {
-        return $this->hasMany(PcbComponentMatch::class);
+        return $this->hasMany(PcbComponentMatch::class, 'project_id');
     }
 
-    public function currentVersion(): BelongsTo
+    public function currentVersion(): HasOne
     {
-        return $this->belongsTo(PcbProjectVersion::class, 'current_version');
+        return $this->hasOne(PcbProjectVersion::class, 'project_id')
+            ->where('version_number', $this->current_version);
     }
 
     public function canBeAccessedBy($user): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -141,7 +146,7 @@ class PcbProject extends Model
 
     public function canBeEditedBy($user): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

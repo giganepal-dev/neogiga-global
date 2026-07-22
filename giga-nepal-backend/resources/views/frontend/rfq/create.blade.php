@@ -101,7 +101,7 @@
         <div class="rfq-card">
             <h2><span class="step">2</span> Delivery &amp; Requirements</h2>
             <div class="rfq-grid">
-                <div class="rfq-field"><label>Country / Region *</label><input name="country" required maxlength="100" value="{{ old('country') }}" placeholder="e.g. Nepal"></div>
+                <div class="rfq-field"><label>Country / Region *</label><input name="country" required maxlength="100" value="{{ old('country', $customer['country'] ?? '') }}" placeholder="e.g. Nepal"></div>
                 <div class="rfq-field"><label>Required by</label><input type="date" name="required_date" value="{{ old('required_date') }}"></div>
             </div>
             <div class="rfq-field"><label>Message / special instructions</label><textarea name="message" rows="3" maxlength="2000" placeholder="Any specific requirements, delivery preferences, or notes...">{{ old('message') }}</textarea></div>
@@ -111,10 +111,10 @@
         <div class="rfq-card">
             <h2><span class="step">3</span> Your Contact Information</h2>
             <div class="rfq-grid">
-                <div class="rfq-field"><label>Your name *</label><input name="contact_name" required maxlength="190" value="{{ old('contact_name') }}"></div>
-                <div class="rfq-field"><label>Email *</label><input type="email" name="contact_email" required maxlength="190" value="{{ old('contact_email') }}"></div>
-                <div class="rfq-field"><label>Phone</label><input name="contact_phone" maxlength="40" value="{{ old('contact_phone') }}"></div>
-                <div class="rfq-field"><label>Company</label><input name="company_name" maxlength="190" value="{{ old('company_name') }}"></div>
+                <div class="rfq-field"><label>Your name *</label><input name="contact_name" required maxlength="190" value="{{ old('contact_name', $customer['name'] ?? '') }}"></div>
+                <div class="rfq-field"><label>Email *</label><input type="email" name="contact_email" required maxlength="190" value="{{ old('contact_email', $customer['email'] ?? '') }}"></div>
+                <div class="rfq-field"><label>Phone</label><input name="contact_phone" maxlength="40" value="{{ old('contact_phone', $customer['phone'] ?? '') }}"></div>
+                <div class="rfq-field"><label>Company</label><input name="company_name" maxlength="190" value="{{ old('company_name', $customer['company_name'] ?? '') }}"></div>
             </div>
         </div>
 

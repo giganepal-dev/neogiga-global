@@ -3,17 +3,26 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Services\Account\CustomerIdentityService;
 use App\Services\Bom\BomComponentMatcher;
 use App\Services\Bom\BomImportParser;
+use App\Services\Bom\BomImportService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class BomPageController extends Controller
 {
-    public function index(): View
+    public function __construct(
+        private readonly BomImportService $imports,
+        private readonly CustomerIdentityService $identity,
+    ) {}
+
+    public function index(Request $request): View
     {
-        return view('frontend.bom.index');
+        return view('frontend.bom.index', [
+            'customer' => $this->identity->defaults($request->user()),
+        ]);
     }
 
     public function match(Request $request): View
@@ -37,7 +46,7 @@ class BomPageController extends Controller
             } else {
                 try {
                     if (in_array($ext, ['xlsx', 'xls'], true)) {
-                        $sheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getRealPath())->getActiveSheet();
+                        $sheet = IOFactory::load($file->getRealPath())->getActiveSheet();
                         $rows = [];
                         foreach ($sheet->toArray(null, true, false) as $row) {
                             // ponytail: commas inside cells become spaces so the
@@ -69,7 +78,7 @@ class BomPageController extends Controller
                 // parse() returns a wrapper: ['lines' => [...], 'delimiter', 'mapped', 'has_header']
                 $lines = $parsed['lines'] ?? [];
             } catch (\Throwable $e) {
-                $error = 'Could not parse input: ' . $e->getMessage();
+                $error = 'Could not parse input: '.$e->getMessage();
             }
         }
 
@@ -98,6 +107,24 @@ class BomPageController extends Controller
         $totalLines = count($lines);
         $matched = count(array_filter($results, fn ($r) => $r['product_id'] !== null));
         $partial = count(array_filter($results, fn ($r) => $r['product_id'] === null && ($r['candidates'] !== [] || $r['suggestions'] !== [])));
+        $savedImport = null;
+
+        if ($request->user() && $lines && ! $error) {
+            $uploaded = $request->file('bom_file');
+            $name = $uploaded
+                ? pathinfo($uploaded->getClientOriginalName(), PATHINFO_FILENAME)
+                : 'BOM '.now()->format('Y-m-d H:i');
+            $sourceFormat = $uploaded
+                ? strtolower((string) $uploaded->getClientOriginalExtension())
+                : 'paste';
+
+            $savedImport = $this->imports->createFromContent(
+                $request->user()->id,
+                mb_substr($name, 0, 160),
+                $input,
+                $sourceFormat,
+            );
+        }
 
         return view('frontend.bom.index', [
             'input' => $input,
@@ -108,6 +135,8 @@ class BomPageController extends Controller
             'matched' => $matched,
             'partial' => $partial,
             'unmatched' => $totalLines - $matched,
+            'savedImport' => $savedImport,
+            'customer' => $this->identity->defaults($request->user()),
         ]);
     }
 }

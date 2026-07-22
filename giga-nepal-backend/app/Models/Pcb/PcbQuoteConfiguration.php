@@ -2,6 +2,7 @@
 
 namespace App\Models\Pcb;
 
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class PcbQuoteConfiguration extends Model
 {
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected static function boot()
@@ -86,7 +88,7 @@ class PcbQuoteConfiguration extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(PcbProject::class);
+        return $this->belongsTo(PcbProject::class, 'project_id');
     }
 
     public function createdBy(): BelongsTo
@@ -96,12 +98,12 @@ class PcbQuoteConfiguration extends Model
 
     public function organization(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Organization::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function lineItems(): HasMany
     {
-        return $this->hasMany(PcbQuoteLineItem::class);
+        return $this->hasMany(PcbQuoteLineItem::class, 'quote_id');
     }
 
     public function order(): HasOne
@@ -114,7 +116,7 @@ class PcbQuoteConfiguration extends Model
         $basePrice = $this->total_fabrication_price ?? 0;
         $setupCharge = $this->setup_charge ?? 0;
         $engineeringCharge = $this->engineering_charge ?? 0;
-        
+
         $lineItemsTotal = $this->lineItems()->sum('total_price');
 
         return $basePrice + $setupCharge + $engineeringCharge + $lineItemsTotal;
@@ -122,8 +124,8 @@ class PcbQuoteConfiguration extends Model
 
     public function requiresReview(): bool
     {
-        return $this->requires_engineering_quote || 
-               $this->hdi || 
+        return $this->requires_engineering_quote ||
+               $this->hdi ||
                $this->blind_buried_vias ||
                $this->edge_plating ||
                in_array($this->board_type, ['rigid_flex', 'flex', 'ceramic']);

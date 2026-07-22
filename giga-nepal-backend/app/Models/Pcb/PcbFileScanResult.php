@@ -21,6 +21,6 @@ class PcbFileScanResult extends Model
 
     public function file(): BelongsTo
     {
-        return $this->belongsTo(PcbFile::class);
+        return $this->belongsTo(PcbFile::class, 'file_id');
     }
 }

@@ -22,12 +22,12 @@ class PcbCplValidationError extends Model
 
     public function cplImport(): BelongsTo
     {
-        return $this->belongsTo(PcbCplImport::class);
+        return $this->belongsTo(PcbCplImport::class, 'cpl_import_id');
     }
 
     public function cplLine(): BelongsTo
     {
-        return $this->belongsTo(PcbCplLine::class);
+        return $this->belongsTo(PcbCplLine::class, 'cpl_line_id');
     }
 
     public function resolvedBy(): BelongsTo

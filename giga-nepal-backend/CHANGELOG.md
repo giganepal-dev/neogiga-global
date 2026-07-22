@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-22 - PCB Workspace and Customer Intake Reliability
+
+- Corrected the existing PCB model relationship graph to use its deployed `project_id`, `file_id`, `analysis_run_id`, `quote_id`, `cpl_import_id` and `component_match_id` foreign keys, restoring customer project lists, workspace detail, private files, Gerber analysis, BOM/CPL matching, quotes and orders without replacing or deleting existing data.
+- Registered the pre-existing customer project edit, cancel, quote approval and quote-change routes so every action already presented by the PCB workspace has a functional endpoint.
+- Connected signed-in public RFQs to the authenticated customer and audit history, and prefilled RFQ and checkout identity fields from the unified customer profile while preserving validation input after errors.
+- Saved successful signed-in BOM matching runs to the existing owned BOM-import module and used authenticated profile defaults when a saved BOM is converted to an RFQ.
+- Added regression coverage for PCB owner/member visibility, project workspace rendering, foreign-key compatibility, registered project actions, signed-in RFQ identity/ownership and owned BOM persistence.
+
 ## 2026-07-22 - Production Session and Commerce Stability
 
 - Added one active-marketplace country policy across seller and distributor public applications, direct API registration, unified account applications, admin conversion and partner profile updates; active Cloudflare/locale geolocation is authoritative at signup and otherwise only active countries are selectable.

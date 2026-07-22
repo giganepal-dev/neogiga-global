@@ -53,6 +53,50 @@ class RfqSupportReviewsTest extends TestCase
         $this->assertSame(0, DB::table('rfq_requests')->count());
     }
 
+    public function test_signed_in_rfq_prefills_profile_and_belongs_to_customer(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Asha Engineer',
+            'email' => 'asha@example.com',
+        ]);
+        DB::table('customer_profiles')->insert([
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'phone' => '+9779800000000',
+            'company_name' => 'Asha Labs',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)->get('/en/rfq')
+            ->assertOk()
+            ->assertSee('value="Asha Engineer"', false)
+            ->assertSee('value="asha@example.com"', false)
+            ->assertSee('value="+9779800000000"', false)
+            ->assertSee('value="Asha Labs"', false);
+
+        $this->actingAs($user)->post('/rfq', [
+            'contact_name' => 'Asha Engineer',
+            'contact_email' => 'asha@example.com',
+            'contact_phone' => '+9779800000000',
+            'company_name' => 'Asha Labs',
+            'country' => 'Nepal',
+            'item_name' => 'PCB assembly',
+            'quantity' => 10,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('rfq_requests', [
+            'user_id' => $user->id,
+            'contact_email' => 'asha@example.com',
+        ]);
+        $rfqId = DB::table('rfq_requests')->where('user_id', $user->id)->value('id');
+        $this->assertDatabaseHas('rfq_status_histories', [
+            'rfq_request_id' => $rfqId,
+            'changed_by_user_id' => $user->id,
+        ]);
+    }
+
     // ---- Customer support / chat ---------------------------------------------
 
     public function test_support_ticket_lifecycle_create_reply_reopen_handoff(): void
@@ -139,7 +183,7 @@ class RfqSupportReviewsTest extends TestCase
     {
         $token = bin2hex(random_bytes(32));
         $user = User::forceCreate([
-            'name' => 'QA ' . strtok($email, '@'),
+            'name' => 'QA '.strtok($email, '@'),
             'email' => $email,
             'password' => bcrypt('secret-password'),
             'api_token_hash' => hash('sha256', $token),
@@ -152,8 +196,8 @@ class RfqSupportReviewsTest extends TestCase
     {
         return (int) DB::table('products')->insertGetId([
             'name' => 'QA Review Part',
-            'slug' => 'qa-review-part-' . uniqid(),
-            'sku' => 'QA-' . random_int(1000, 9999),
+            'slug' => 'qa-review-part-'.uniqid(),
+            'sku' => 'QA-'.random_int(1000, 9999),
             'status' => 'approved',
             'created_at' => now(),
             'updated_at' => now(),

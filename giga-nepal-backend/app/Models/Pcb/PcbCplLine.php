@@ -2,6 +2,7 @@
 
 namespace App\Models\Pcb;
 
+use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -29,11 +30,11 @@ class PcbCplLine extends Model
 
     public function cplImport(): BelongsTo
     {
-        return $this->belongsTo(PcbCplImport::class);
+        return $this->belongsTo(PcbCplImport::class, 'cpl_import_id');
     }
 
     public function matchedProduct(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Product::class, 'matched_product_id');
+        return $this->belongsTo(Product::class, 'matched_product_id');
     }
 }

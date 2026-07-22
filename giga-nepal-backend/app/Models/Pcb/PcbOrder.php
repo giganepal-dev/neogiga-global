@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 class PcbOrder extends Model
 {
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected static function boot()
@@ -57,12 +58,13 @@ class PcbOrder extends Model
     public function getMilestonesAttribute($value): array
     {
         $decoded = is_string($value) ? json_decode($value, true) : $value;
+
         return is_array($decoded) ? $decoded : self::defaultMilestones();
     }
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(PcbProject::class);
+        return $this->belongsTo(PcbProject::class, 'project_id');
     }
 
     public function quote(): BelongsTo

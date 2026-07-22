@@ -4,7 +4,6 @@ namespace App\Models\Pcb;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PcbQuoteLineItem extends Model
 {
@@ -24,6 +23,6 @@ class PcbQuoteLineItem extends Model
 
     public function quote(): BelongsTo
     {
-        return $this->belongsTo(PcbQuoteConfiguration::class);
+        return $this->belongsTo(PcbQuoteConfiguration::class, 'quote_id');
     }
 }

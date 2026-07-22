@@ -12,6 +12,9 @@
             <p class="eyebrow">BOM Tool</p>
             <h1 class="page-title" style="font-size:clamp(1.9rem,4vw,2.9rem);margin:6px 0 10px">Upload your BOM, get instant matches</h1>
             <p class="lead">Drop in your bill of materials — NeoGiga matches every manufacturer part number against 600,000+ live parts with stock, pricing, datasheets and RFQ sourcing.</p>
+            @auth
+                <p class="sub" style="margin:10px 0 0"><strong>{{ $customer['name'] }}</strong> · {{ $customer['email'] }} · completed matches are saved to <a href="/account/bom" style="color:var(--cyan);font-weight:700">your BOM projects</a>.</p>
+            @endauth
 
             <form method="post" action="/en/bom" enctype="multipart/form-data" style="margin:22px 0" id="bom-form">
                 @csrf
@@ -68,6 +71,11 @@
     @endif
 
     @if(!empty($results))
+        @if(!empty($savedImport))
+            <div class="panel" style="padding:14px 18px;border-color:#9bd5bd;background:#effaf5;margin:4px 0 16px">
+                <p style="color:#067a55;margin:0;font-weight:700">Saved as BOM #{{ $savedImport->id }} for {{ $customer['email'] }}.</p>
+            </div>
+        @endif
         <div class="panel" style="margin:8px 0 16px">
             <div style="display:flex;gap:22px;flex-wrap:wrap;padding:16px 18px;align-items:center">
                 <div><strong style="font-size:1.2rem">{{ $totalLines }}</strong> <span class="sub">lines</span></div>

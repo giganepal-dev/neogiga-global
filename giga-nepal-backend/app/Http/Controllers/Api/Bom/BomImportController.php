@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Bom;
 use App\Http\Controllers\Controller;
 use App\Models\Bom\BomImport;
 use App\Models\Bom\BomImportLine;
+use App\Services\Account\CustomerIdentityService;
 use App\Services\Bom\BomImportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,9 +20,10 @@ use RuntimeException;
  */
 class BomImportController extends Controller
 {
-    public function __construct(private readonly BomImportService $service)
-    {
-    }
+    public function __construct(
+        private readonly BomImportService $service,
+        private readonly CustomerIdentityService $identity,
+    ) {}
 
     /** GET /api/v1/bom/imports */
     public function index(Request $request): JsonResponse
@@ -119,9 +121,14 @@ class BomImportController extends Controller
             'marketplace_id' => ['nullable', 'integer'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
+        $defaults = $this->identity->rfqDefaults($request->user());
+        $contact = array_replace($defaults, array_filter(
+            $data,
+            static fn ($value) => $value !== null && $value !== '',
+        ));
 
         try {
-            $rfq = $this->service->convertToRfq($import, $data);
+            $rfq = $this->service->convertToRfq($import, $contact);
         } catch (RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }

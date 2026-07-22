@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Product;
+use App\Services\Account\CustomerIdentityService;
 use App\Services\Erp\RfqService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,8 @@ use Illuminate\View\View;
  */
 class RfqPageController extends Controller
 {
+    public function __construct(private readonly CustomerIdentityService $identity) {}
+
     public function create(Request $request): View
     {
         $product = null;
@@ -27,7 +30,10 @@ class RfqPageController extends Controller
             $product = Product::with('brand')->published()->where('slug', $slug)->first();
         }
 
-        return view('frontend.rfq.create', ['product' => $product]);
+        return view('frontend.rfq.create', [
+            'product' => $product,
+            'customer' => $this->identity->defaults($request->user()),
+        ]);
     }
 
     public function store(Request $request, RfqService $rfqs): RedirectResponse
@@ -52,6 +58,7 @@ class RfqPageController extends Controller
             : null;
 
         $rfq = $rfqs->create([
+            'user_id' => $request->user()?->id,
             'company_name' => $data['company_name'] ?? null,
             'contact_name' => $data['contact_name'],
             'contact_email' => $data['contact_email'],
@@ -79,7 +86,7 @@ class RfqPageController extends Controller
             'previous_status' => null,
             'status' => 'open',
             'notes' => 'Submitted via public RFQ form',
-            'changed_by_user_id' => null,
+            'changed_by_user_id' => $request->user()?->id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

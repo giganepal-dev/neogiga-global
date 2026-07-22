@@ -2,6 +2,7 @@
 
 namespace App\Models\Pcb;
 
+use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -22,17 +23,17 @@ class PcbComponentSubstitution extends Model
 
     public function componentMatch(): BelongsTo
     {
-        return $this->belongsTo(PcbComponentMatch::class);
+        return $this->belongsTo(PcbComponentMatch::class, 'component_match_id');
     }
 
     public function originalProduct(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Product::class, 'original_product_id');
+        return $this->belongsTo(Product::class, 'original_product_id');
     }
 
     public function substituteProduct(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Product::class, 'substitute_product_id');
+        return $this->belongsTo(Product::class, 'substitute_product_id');
     }
 
     public function approvedBy(): BelongsTo

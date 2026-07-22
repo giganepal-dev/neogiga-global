@@ -8,11 +8,11 @@
         <form class="panel" style="padding:20px" method="post" action="/checkout">@csrf
             @if($errors->any())<div class="badge b-warn">Please fix highlighted fields.</div>@endif
             <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
-                <div class="field"><label>Name</label><input class="control" name="name" value="{{ old('name') }}" required></div>
-                <div class="field"><label>Email</label><input class="control" type="email" name="email" value="{{ old('email') }}" required></div>
-                <div class="field"><label>Phone</label><input class="control" name="phone" value="{{ old('phone') }}"></div>
-                <div class="field"><label>Company</label><input class="control" name="company" value="{{ old('company') }}"></div>
-                <div class="field"><label>Country</label><select class="control" name="country_id"><option value="">Global / not set</option>@foreach($countries as $country)<option value="{{ $country->id }}" @selected(old('country_id')==$country->id)>{{ $country->name }}</option>@endforeach</select></div>
+                <div class="field"><label>Name</label><input class="control" name="name" value="{{ old('name', $customer['name'] ?? '') }}" required></div>
+                <div class="field"><label>Email</label><input class="control" type="email" name="email" value="{{ old('email', $customer['email'] ?? '') }}" required></div>
+                <div class="field"><label>Phone</label><input class="control" name="phone" value="{{ old('phone', $customer['phone'] ?? '') }}"></div>
+                <div class="field"><label>Company</label><input class="control" name="company" value="{{ old('company', $customer['company_name'] ?? '') }}"></div>
+                <div class="field"><label>Country</label><select class="control" name="country_id"><option value="">Global / not set</option>@foreach($countries as $country)<option value="{{ $country->id }}" @selected((int)old('country_id', $customer['country_id'] ?? 0)===(int)$country->id)>{{ $country->name }}</option>@endforeach</select></div>
                 <div class="field"><label>Payment method</label><select class="control" name="payment_method" @disabled($paymentMethods->isEmpty())>@forelse($paymentMethods as $method)<option value="{{ $method['code'] }}" @selected(old('payment_method')===$method['code'])>{{ $method['name'] }}</option>@empty<option value="">No payment method enabled</option>@endforelse</select>@if($paymentMethods->isEmpty())<p class="sub">No checkout payment method is enabled for {{ $cart->currency_code }} yet. Contact NeoGiga for manual assistance.</p>@endif</div>
             </div>
             <div class="field"><label>Address / delivery notes</label><textarea class="control" name="address">{{ old('address') }}</textarea></div>
