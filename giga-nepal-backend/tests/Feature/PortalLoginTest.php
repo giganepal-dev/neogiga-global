@@ -21,10 +21,18 @@ class PortalLoginTest extends TestCase
 
     public function test_login_pages_render(): void
     {
-        $this->get('/reseller/login')->assertOk()->assertSee('Reseller sign in');
-        $this->get('/manufacturer/login')->assertOk()->assertSee('Manufacturer sign in');
-        $this->get('/b2b/login')->assertOk()->assertSee('Business sign in');
-        $this->get('/distributor/login')->assertOk()->assertSee('Distributor sign in');
+        foreach ([
+            '/reseller/login' => 'Reseller sign in',
+            '/manufacturer/login' => 'Manufacturer sign in',
+            '/b2b/login' => 'Business sign in',
+            '/distributor/login' => 'Distributor sign in',
+        ] as $path => $heading) {
+            $this->get($path)
+                ->assertOk()
+                ->assertSee($heading)
+                ->assertHeader('X-Page-Cache', 'BYPASS')
+                ->assertHeader('Cache-Control', 'no-cache, private');
+        }
     }
 
     public function test_guests_are_redirected_to_login(): void
@@ -109,9 +117,42 @@ class PortalLoginTest extends TestCase
         $this->post('/distributor/login', ['email' => $user->email, 'password' => 'secret'])
             ->assertRedirect('/distributor');
         $this->get('/distributor')->assertOk()->assertSee('Terai Distribution');
-        $this->get('/distributor/products')->assertOk();
-        $this->get('/distributor/orders')->assertOk();
-        $this->get('/distributor/profile')->assertOk();
+        foreach (['products', 'orders', 'territory-stock', 'territories', 'commissions', 'payouts', 'downlines', 'leads', 'support', 'messages', 'profile'] as $page) {
+            $this->get('/distributor/'.$page)->assertOk();
+        }
+    }
+
+    public function test_distributor_dashboard_summaries_are_distributor_scoped(): void
+    {
+        $user = $this->user('scope-dist@example.com');
+        $other = $this->user('scope-other@example.com');
+        $distributorId = DB::table('distributors')->insertGetId([
+            'user_id' => $user->id, 'name' => 'Scoped Distribution', 'slug' => 'scoped-distribution',
+            'email' => 'scope@dist.example.com', 'status' => 'approved',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $otherId = DB::table('distributors')->insertGetId([
+            'user_id' => $other->id, 'name' => 'Other Distribution', 'slug' => 'other-distribution',
+            'email' => 'other@dist.example.com', 'status' => 'approved',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        foreach ([[$distributorId, 'OWN-ORDER', 'Own Lead'], [$otherId, 'OTHER-ORDER', 'Other Private Lead']] as [$ownerId, $reference, $leadName]) {
+            DB::table('distributor_orders')->insert([
+                'distributor_id' => $ownerId, 'order_reference' => $reference,
+                'status' => 'pending', 'currency_code' => 'USD',
+                'gross_amount' => 100, 'commission_amount' => 5,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+            DB::table('distributor_leads')->insert([
+                'distributor_id' => $ownerId, 'name' => $leadName, 'status' => 'new',
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+
+        $response = $this->actingAs($user)->get('/distributor');
+        $response->assertOk()->assertSee('OWN-ORDER')->assertSee('Own Lead');
+        $response->assertDontSee('OTHER-ORDER')->assertDontSee('Other Private Lead');
+        $response->assertViewHas('overview', fn ($overview) => $overview['orders'] === 1 && $overview['leads'] === 1);
     }
 
     private function user(string $email): User

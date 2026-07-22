@@ -68,6 +68,15 @@ class DistributorPortalController extends Controller
         $stockSummary = $stock->stockSummary($distributor);
         $commissionSummary = $commissions->summary($distributor);
         $downlineStats = $commissions->downlineStats($distributor);
+        $recentOrders = Schema::hasTable('distributor_orders')
+            ? DB::table('distributor_orders')->where('distributor_id', $distributor->id)->latest('created_at')->limit(5)->get()
+            : collect();
+        $recentLeads = Schema::hasTable('distributor_leads')
+            ? DB::table('distributor_leads')->where('distributor_id', $distributor->id)->latest('created_at')->limit(5)->get()
+            : collect();
+        $openTickets = Schema::hasTable('distributor_support_tickets')
+            ? DB::table('distributor_support_tickets')->where('distributor_id', $distributor->id)->whereIn('status', ['open', 'pending', 'in_progress'])->count()
+            : 0;
 
         return view('distributor.dashboard', compact(
             'distributor',
@@ -75,6 +84,9 @@ class DistributorPortalController extends Controller
             'stockSummary',
             'commissionSummary',
             'downlineStats',
+            'recentOrders',
+            'recentLeads',
+            'openTickets',
         ));
     }
 

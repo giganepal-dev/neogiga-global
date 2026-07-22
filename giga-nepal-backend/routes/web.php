@@ -121,6 +121,10 @@ Route::prefix('seller')->group(function () {
     Route::post('profile', [SellerPortalController::class, 'updateProfile'])->middleware(EnsureSellerWeb::class);
     Route::get('orders', [SellerPortalController::class, 'orders'])->middleware(EnsureSellerWeb::class);
     Route::get('products', [SellerPortalController::class, 'products'])->middleware(EnsureSellerWeb::class);
+    Route::get('inventory', [SellerPortalController::class, 'inventory'])->middleware(EnsureSellerWeb::class);
+    Route::get('payouts', [SellerPortalController::class, 'payouts'])->middleware(EnsureSellerWeb::class);
+    Route::get('support', [SellerPortalController::class, 'support'])->middleware(EnsureSellerWeb::class);
+    Route::post('support', [SellerPortalController::class, 'storeSupport'])->middleware([EnsureSellerWeb::class, 'throttle:10,1']);
 });
 
 // Reseller web portal

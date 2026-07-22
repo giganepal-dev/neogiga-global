@@ -28,11 +28,15 @@ class CachePublicPages
 
             $cached = Cache::get($key);
             if ($cached) {
-                return response($cached, 200, [
-                    'X-Page-Cache' => 'HIT',
-                    'Content-Type' => 'text/html; charset=UTF-8',
-                    'Cache-Control' => 'public, max-age=0, s-maxage=300, stale-while-revalidate=600',
-                ]);
+                if ($this->containsSessionToken((string) $cached)) {
+                    Cache::forget($key);
+                } else {
+                    return response($cached, 200, [
+                        'X-Page-Cache' => 'HIT',
+                        'Content-Type' => 'text/html; charset=UTF-8',
+                        'Cache-Control' => 'public, max-age=0, s-maxage=300, stale-while-revalidate=600',
+                    ]);
+                }
             }
 
             // Crawlers never trigger UNCACHED faceted-listing renders — the
@@ -48,24 +52,31 @@ class CachePublicPages
 
             $response = $next($request);
 
-            if ($response->isSuccessful() && ! $response->isRedirection()) {
-                $content = (string) $response->getContent();
+            $content = (string) $response->getContent();
+            $cacheable = $response->isSuccessful()
+                && ! $response->isRedirection()
+                && ! $this->containsSessionToken($content);
 
-                // Never cache pages embedding a CSRF token: the token belongs to
-                // one visitor's session, so serving it to others 419s every form
-                // submit (BOM upload, add-to-cart, reviews). Token-free pages
-                // (home, listings, categories, brands) still cache normally.
-                if (! str_contains($content, 'name="_token"') && ! str_contains($content, 'csrf-token')) {
-                    Cache::put($key, $content, 300); // 5 min
-                }
+            if ($cacheable) {
+                Cache::put($key, $content, 300); // 5 min
+                $response->headers->set('X-Page-Cache', 'MISS');
+                $response->headers->set('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
+            } else {
+                // Forms and redirects remain private even when their route was
+                // not anticipated by the path denylist. This protects every
+                // partner login and CSRF-backed workflow from shared caching.
+                $response->headers->set('X-Page-Cache', 'BYPASS');
+                $response->headers->set('Cache-Control', 'no-cache, private');
             }
-
-            $response->headers->set('X-Page-Cache', 'MISS');
-            $response->headers->set('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
 
             return $response;
         }
 
         return $next($request);
+    }
+
+    private function containsSessionToken(string $content): bool
+    {
+        return str_contains($content, 'name="_token"') || str_contains($content, 'csrf-token');
     }
 }

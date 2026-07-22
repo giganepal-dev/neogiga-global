@@ -36,6 +36,10 @@ class DistributorTerritoryStockService
             return [];
         }
 
+        $quoteOnlyAggregate = Schema::hasColumn('inventory_stocks', 'quote_only')
+            ? 'max(case when coalesce(inventory_stocks.quote_only, false) then 1 else 0 end) as quote_only'
+            : '0 as quote_only';
+
         return $this->territoryStockQuery($distributor)
             ->join('products', 'products.id', '=', 'inventory_stocks.product_id')
             ->select([
@@ -46,7 +50,7 @@ class DistributorTerritoryStockService
                 'products.status',
                 DB::raw('sum(inventory_stocks.quantity_available) as available_quantity'),
                 DB::raw('sum(inventory_stocks.quantity_incoming) as incoming_quantity'),
-                DB::raw('bool_or(coalesce(inventory_stocks.quote_only, false)) as quote_only'),
+                DB::raw($quoteOnlyAggregate),
             ])
             ->groupBy('products.id', 'products.name', 'products.slug', 'products.sku', 'products.status')
             ->orderBy('products.name')
@@ -122,7 +126,12 @@ class DistributorTerritoryStockService
                 $inner->whereNull('inventory_stocks.is_active')->orWhere('inventory_stocks.is_active', true);
             });
 
-        $territories = $this->territories($distributor);
+        $territories = array_values(array_filter(
+            $this->territories($distributor),
+            fn (array $territory) => ! empty($territory['country_id'])
+                || ! empty($territory['region_id'])
+                || ! empty($territory['city_id']),
+        ));
 
         if ($territories === []) {
             $query->whereRaw('1 = 0');

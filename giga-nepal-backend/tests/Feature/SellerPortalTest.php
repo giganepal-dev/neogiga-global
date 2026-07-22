@@ -21,13 +21,18 @@ class SellerPortalTest extends TestCase
 
     public function test_login_page_renders(): void
     {
-        $this->get('/seller/login')->assertOk()->assertSee('Seller sign in');
+        $this->get('/seller/login')
+            ->assertOk()
+            ->assertSee('Seller sign in')
+            ->assertHeader('X-Page-Cache', 'BYPASS')
+            ->assertHeader('Cache-Control', 'no-cache, private');
     }
 
     public function test_unauthenticated_portal_access_redirects_to_login(): void
     {
-        $this->get('/seller')->assertRedirect('/seller/login');
-        $this->get('/seller/products')->assertRedirect('/seller/login');
+        foreach (['', '/products', '/orders', '/inventory', '/payouts', '/support', '/profile'] as $path) {
+            $this->get('/seller'.$path)->assertRedirect('/seller/login');
+        }
     }
 
     public function test_user_without_vendor_cannot_enter(): void
@@ -50,7 +55,47 @@ class SellerPortalTest extends TestCase
         $res = $this->get('/seller');
         $res->assertOk();
         $res->assertSee('Acme Components');
+        $res->assertSee('Gross sales');
+        $res->assertSee('Seller readiness');
+        $res->assertViewHas('overview', fn ($overview) => $overview['products']['total_products'] === 1);
         $res->assertViewHas('stats', fn ($s) => $s['product_count'] === 1);
+    }
+
+    public function test_seller_operational_pages_and_support_are_vendor_scoped(): void
+    {
+        [$userA, $vendorA] = $this->seller('ops-a@example.com', 'Operations A');
+        [, $vendorB] = $this->seller('ops-b@example.com', 'Operations B');
+        DB::table('vendor_support_tickets')->insert([
+            'vendor_id' => $vendorB,
+            'ticket_number' => 'VST-OTHER',
+            'subject' => 'Private ticket for vendor B',
+            'category' => 'general',
+            'priority' => 'normal',
+            'status' => 'open',
+            'message' => 'This must remain private.',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($userA);
+        $this->get('/seller/inventory')->assertOk()->assertSee('Stock positions');
+        $this->get('/seller/payouts')->assertOk()->assertSee('Payout history');
+        $this->get('/seller/support')->assertOk()->assertDontSee('Private ticket for vendor B');
+        $this->post('/seller/support', [
+            'subject' => 'Order settlement question',
+            'category' => 'payouts',
+            'priority' => 'normal',
+            'message' => 'Please confirm the settlement schedule.',
+        ])->assertRedirect()->assertSessionHas('status');
+
+        $this->assertDatabaseHas('vendor_support_tickets', [
+            'vendor_id' => $vendorA,
+            'subject' => 'Order settlement question',
+        ]);
+        $this->assertDatabaseMissing('vendor_support_tickets', [
+            'vendor_id' => $vendorB,
+            'subject' => 'Order settlement question',
+        ]);
     }
 
     public function test_seller_sees_only_own_products(): void
