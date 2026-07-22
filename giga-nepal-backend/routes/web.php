@@ -48,6 +48,7 @@ use App\Http\Controllers\Web\RfqPageController;
 use App\Http\Controllers\Web\Seller\SellerPortalController;
 use App\Http\Controllers\Web\SellOnNeoGigaController;
 use App\Http\Controllers\Web\SeoLandingController;
+use App\Http\Controllers\Web\GoogleMerchantFeedController;
 use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\SsoController;
 use App\Http\Controllers\Web\TwoFactorController;
@@ -342,6 +343,15 @@ Route::prefix('admin')->group(function () {
         Route::post('pos/shifts/open', [PosAdminController::class, 'openShift'])->name('admin.pos.open-shift');
         Route::post('pos/shifts/close', [PosAdminController::class, 'closeShift'])->name('admin.pos.close-shift');
 
+        // POS advanced: register history, Z-reports, rewards, instalments
+        Route::get('pos/history', [PosAdminController::class, 'registerHistory'])->name('admin.pos.history');
+        Route::get('pos/z-reports', [PosAdminController::class, 'zReports'])->name('admin.pos.zreports');
+        Route::get('pos/rewards', [PosAdminController::class, 'rewards'])->name('admin.pos.rewards');
+        Route::post('pos/rewards/systems', [AdminCommerce::class, 'storeRewardSystem'])->middleware('throttle:20,1');
+        Route::post('pos/rewards/systems/{id}/toggle', [AdminCommerce::class, 'toggleRewardSystem'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::get('pos/instalments', [PosAdminController::class, 'instalments'])->name('admin.pos.instalments');
+        Route::post('pos/instalments/{id}/mark-paid', [AdminCommerce::class, 'markInstalmentPaid'])->whereNumber('id')->middleware('throttle:20,1');
+
         Route::post('products/{product}/toggle', [AdminCommerce::class, 'deactivateProduct'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/stock', [AdminCommerce::class, 'adjustProductStock'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/regional-stock', [AdminCommerce::class, 'storeProductRegionalStock'])->whereNumber('product')->middleware('throttle:20,1');
@@ -401,6 +411,25 @@ Route::prefix('admin')->group(function () {
         Route::post('pos/sales/{sale}/refunds', [AdminCommerce::class, 'storePosRefund'])->whereNumber('sale')->middleware('throttle:20,1');
         Route::post('pos/offline-sync-events', [AdminCommerce::class, 'storePosOfflineSyncEvent'])->middleware('throttle:20,1');
         Route::post('pos/offline-sync-events/{event}/status', [AdminCommerce::class, 'updatePosOfflineSyncEvent'])->whereNumber('event')->middleware('throttle:20,1');
+
+        // === Warehouse sub-location management ===
+        Route::get('warehouse', [AdminDash::class, 'warehouse']);
+        Route::post('warehouse/zones', [AdminCommerce::class, 'storeWarehouseZone'])->middleware('throttle:20,1');
+        Route::post('warehouse/zones/{zone}/toggle', [AdminCommerce::class, 'toggleWarehouseZone'])->whereNumber('zone')->middleware('throttle:20,1');
+        Route::post('warehouse/aisles', [AdminCommerce::class, 'storeWarehouseAisle'])->middleware('throttle:20,1');
+        Route::post('warehouse/racks', [AdminCommerce::class, 'storeWarehouseRack'])->middleware('throttle:20,1');
+        Route::post('warehouse/shelves', [AdminCommerce::class, 'storeWarehouseShelf'])->middleware('throttle:20,1');
+        Route::post('warehouse/bins', [AdminCommerce::class, 'storeWarehouseBin'])->middleware('throttle:20,1');
+
+        // === Barcode system ===
+        Route::get('barcode', [AdminDash::class, 'barcode']);
+        Route::post('barcode/definitions', [AdminCommerce::class, 'storeBarcodeDefinition'])->middleware('throttle:20,1');
+        Route::post('barcode/generate', [AdminCommerce::class, 'generateBarcodes'])->middleware('throttle:10,1');
+        Route::post('barcode/definitions/{def}/toggle', [AdminCommerce::class, 'toggleBarcodeDefinition'])->whereNumber('def')->middleware('throttle:20,1');
+
+        // === Supplier catalog importers ===
+        Route::get('imports/suppliers', [AdminDash::class, 'supplierImports']);
+        Route::post('imports/suppliers/{supplier}/run', [AdminCommerce::class, 'runSupplierImport'])->whereIn('supplier', ['adafruit','dfrobot','seeed','sparkfun','waveshare','okystar'])->middleware('throttle:4,1');
 
         Route::get('marketing', [AdminDash::class, 'marketing'])->middleware('admin.web.permission:campaigns.view');
         Route::get('marketing/crm', [AdminDash::class, 'crm'])->middleware('admin.web.permission:customers.view');
@@ -561,6 +590,7 @@ Route::post('/checkout', [CartPageController::class, 'placeOrder'])->middleware(
 Route::get('/checkout/thank-you/{orderNumber}', [CartPageController::class, 'thankYou'])->where('orderNumber', '[A-Z0-9\\-]+')->name('checkout.thank-you');
 Route::get('/rfq', fn (Request $request) => redirect()->to('/en/rfq'.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->name('rfq.create');
 Route::post('/rfq', [RfqPageController::class, 'store'])->middleware('throttle:6,1')->name('rfq.store');
+Route::get('/feeds/google-merchant.xml', GoogleMerchantFeedController::class)->name('feeds.google-merchant');
 Route::get('/sitemap.xml', SitemapController::class);
 Route::get('/sitemaps/{section}-{page}.xml', [SitemapController::class, 'section'])
     ->whereIn('section', ['pages', 'categories', 'brands', 'manufacturers', 'products'])

@@ -3701,4 +3701,108 @@ class CommerceOpsController extends Controller
         ]);
         return back()->with('status', 'Import duty rule added.');
     }
+
+    // === Warehouse sub-location management ===
+
+    public function storeWarehouseZone(Request $request): RedirectResponse
+    {
+        $d = $request->validate(['warehouse_id' => 'required|integer|exists:warehouses,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20']);
+        DB::table('warehouse_zones')->insert(['warehouse_id' => $d['warehouse_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        return back()->with('status', 'Zone added.');
+    }
+
+    public function toggleWarehouseZone(Request $request, int $zone): RedirectResponse
+    {
+        $z = DB::table('warehouse_zones')->find($zone);
+        DB::table('warehouse_zones')->where('id', $zone)->update(['is_active' => !($z->is_active ?? true), 'updated_at' => now()]);
+        return back()->with('status', 'Zone updated.');
+    }
+
+    public function storeWarehouseAisle(Request $request): RedirectResponse
+    {
+        $d = $request->validate(['zone_id' => 'required|integer|exists:warehouse_zones,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20']);
+        DB::table('warehouse_aisles')->insert(['zone_id' => $d['zone_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        return back()->with('status', 'Aisle added.');
+    }
+
+    public function storeWarehouseRack(Request $request): RedirectResponse
+    {
+        $d = $request->validate(['aisle_id' => 'required|integer|exists:warehouse_aisles,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20']);
+        DB::table('warehouse_racks')->insert(['aisle_id' => $d['aisle_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        return back()->with('status', 'Rack added.');
+    }
+
+    public function storeWarehouseShelf(Request $request): RedirectResponse
+    {
+        $d = $request->validate(['rack_id' => 'required|integer|exists:warehouse_racks,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20']);
+        DB::table('warehouse_shelves')->insert(['rack_id' => $d['rack_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        return back()->with('status', 'Shelf added.');
+    }
+
+    public function storeWarehouseBin(Request $request): RedirectResponse
+    {
+        $d = $request->validate(['shelf_id' => 'required|integer|exists:warehouse_shelves,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20', 'capacity' => 'nullable|numeric']);
+        DB::table('warehouse_bins')->insert(['shelf_id' => $d['shelf_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'capacity' => $d['capacity'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        return back()->with('status', 'Bin added.');
+    }
+
+    // === Barcode system ===
+
+    public function storeBarcodeDefinition(Request $request): RedirectResponse
+    {
+        $d = $request->validate(['name' => 'required|string|max:100', 'type' => 'required|string|in:ean13,code128,qr,datamatrix,upc', 'prefix' => 'nullable|string|max:20']);
+        DB::table('barcode_definitions')->insert(['name' => $d['name'], 'type' => $d['type'], 'prefix' => $d['prefix'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        return back()->with('status', 'Barcode definition added.');
+    }
+
+    public function generateBarcodes(Request $request): RedirectResponse
+    {
+        $d = $request->validate(['product_id' => 'required|integer|exists:products,id', 'barcode_definition_id' => 'required|integer|exists:barcode_definitions,id', 'quantity' => 'required|integer|min:1|max:1000']);
+        for ($i = 0; $i < $d['quantity']; $i++) {
+            $code = ($d['prefix'] ?? 'NG') . strtoupper(substr(bin2hex(random_bytes(6)), 0, 12));
+            DB::table('product_barcodes')->insert(['product_id' => $d['product_id'], 'barcode_definition_id' => $d['barcode_definition_id'], 'code' => $code, 'created_at' => now(), 'updated_at' => now()]);
+        }
+        return back()->with('status', "Generated {$d['quantity']} barcodes.");
+    }
+
+    public function toggleBarcodeDefinition(Request $request, int $def): RedirectResponse
+    {
+        $b = DB::table('barcode_definitions')->find($def);
+        DB::table('barcode_definitions')->where('id', $def)->update(['is_active' => !($b->is_active ?? true), 'updated_at' => now()]);
+        return back()->with('status', 'Barcode definition updated.');
+    }
+
+    // === Supplier catalog imports ===
+
+    public function runSupplierImport(Request $request, string $supplier): RedirectResponse
+    {
+        $commands = ['adafruit' => 'import:adafruit', 'dfrobot' => 'import:dfrobot', 'seeed' => 'import:seeed', 'sparkfun' => 'import:sparkfun', 'waveshare' => 'import:waveshare', 'okystar' => 'import:okystar'];
+        $cmd = $commands[$supplier] ?? null;
+        if (!$cmd) { return back()->with('error', 'Unknown supplier.'); }
+        \Illuminate\Support\Facades\Artisan::queue($cmd);
+        return back()->with('status', "Queued {$supplier} import. Check queue worker.");
+    }
+
+    // === POS Advanced: Rewards & Instalments ===
+
+    public function storeRewardSystem(Request $request): RedirectResponse
+    {
+        $d = $request->validate(['name' => 'required|string|max:100', 'type' => 'required|string|in:points,cashback,discount', 'target' => 'required|numeric|min:1', 'reward_value' => 'required|numeric|min:0.01', 'min_order' => 'nullable|numeric|min:0']);
+        DB::table('pos_reward_systems')->insert(['name' => $d['name'], 'type' => $d['type'], 'target' => $d['target'], 'reward_value' => $d['reward_value'], 'min_order' => $d['min_order'] ?? null, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        return back()->with('status', 'Reward system added.');
+    }
+
+    public function toggleRewardSystem(Request $request, int $id): RedirectResponse
+    {
+        $rs = DB::table('pos_reward_systems')->find($id);
+        DB::table('pos_reward_systems')->where('id', $id)->update(['is_active' => !($rs->is_active ?? true), 'updated_at' => now()]);
+        return back()->with('status', 'Reward system updated.');
+    }
+
+    public function markInstalmentPaid(Request $request, int $id): RedirectResponse
+    {
+        $d = $request->validate(['payment_method' => 'required|string|max:50', 'reference' => 'nullable|string|max:100']);
+        DB::table('pos_order_instalments')->where('id', $id)->update(['status' => 'paid', 'paid_at' => now(), 'payment_method' => $d['payment_method'], 'reference' => $d['reference'] ?? null, 'updated_at' => now()]);
+        return back()->with('status', 'Instalment marked as paid.');
+    }
 }

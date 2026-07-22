@@ -44,6 +44,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             ElecForest Imports
         </a>
+        <a href="/admin/imports/suppliers" class="{{ str_starts_with($r,'admin/imports/suppliers') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            Supplier Imports
+        </a>
         <a href="/admin/seo" class="{{ str_starts_with($r,'admin/seo') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg>
             SEO
@@ -84,9 +88,29 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7l2-7z"/></svg>
             Coupons &amp; Gift Cards
         </a>
-        <a href="/admin/pos" class="{{ str_starts_with($r,'admin/pos') ? 'active':'' }}">
+        <a href="/admin/pos" class="{{ $r==='admin/pos' ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8" stroke-linecap="round"/></svg>
-            POS
+            POS Dashboard
+        </a>
+        <a href="/admin/pos/manage" class="{{ str_starts_with($r,'admin/pos/manage') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/></svg>
+            Registers
+        </a>
+        <a href="/admin/pos/history" class="{{ str_starts_with($r,'admin/pos/history') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Register History
+        </a>
+        <a href="/admin/pos/z-reports" class="{{ str_starts_with($r,'admin/pos/z-reports') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 7h18M8 7v10M16 7v10" stroke-linecap="round"/></svg>
+            Z-Reports
+        </a>
+        <a href="/admin/pos/rewards" class="{{ str_starts_with($r,'admin/pos/rewards') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7l2-7z"/></svg>
+            Rewards
+        </a>
+        <a href="/admin/pos/instalments" class="{{ str_starts_with($r,'admin/pos/instalments') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18" stroke-linecap="round"/></svg>
+            Instalments
         </a>
         <a href="/admin/support" class="{{ str_starts_with($r,'admin/support') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 01-8 8H7l-4 3v-6.2A8 8 0 1113 20" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -102,6 +126,14 @@
         <a href="/admin/inventory" class="{{ str_starts_with($r,'admin/inventory') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7" stroke-linejoin="round"/></svg>
             Inventory
+        </a>
+        <a href="/admin/warehouse" class="{{ str_starts_with($r,'admin/warehouse') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Warehouse Map
+        </a>
+        <a href="/admin/barcode" class="{{ str_starts_with($r,'admin/barcode') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h2v14H3zm4 0h1v14H7zm3 0h2v14h-2zm4 0h1v14h-1zm3 0h3v14h-3zM3 5h2m-2 14h2"/></svg>
+            Barcode System
         </a>
         <a href="/admin/bom-imports" class="{{ str_starts_with($r,'admin/bom-imports') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h14v16H5z" stroke-linejoin="round"/><path d="M17 16l2 2 3-4" stroke-linecap="round" stroke-linejoin="round"/></svg>

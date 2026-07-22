@@ -16,6 +16,21 @@
     <meta name="description" content="@yield('description', 'Instant PCB and PCBA quote. Gerber upload, DFM analysis, SMT assembly, component sourcing, engineering review and production tracking from NeoGiga.')">
     <meta name="robots" content="@yield('robots', 'index,follow')">
     <link rel="canonical" href="{{ url()->current() }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="NeoGiga PCB">
+    <meta property="og:title" content="@yield('title', 'NeoGiga PCB — PCB Fabrication & PCBA Assembly Platform')">
+    <meta property="og:description" content="@yield('description', 'Instant PCB and PCBA quote. Gerber upload, DFM analysis, SMT assembly, component sourcing, engineering review and production tracking from NeoGiga.')">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="https://neogiga.com/images/og/neogiga-default-2026.png">
+    <meta property="og:image:secure_url" content="https://neogiga.com/images/og/neogiga-default-2026.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="NeoGiga PCB — PCB Fabrication & PCBA Assembly">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="@yield('title', 'NeoGiga PCB — PCB Fabrication & PCBA Assembly Platform')">
+    <meta name="twitter:description" content="@yield('description', 'Instant PCB and PCBA quote. Gerber upload, DFM analysis, SMT assembly, component sourcing, engineering review and production tracking from NeoGiga.')">
+    <meta name="twitter:image" content="https://neogiga.com/images/og/neogiga-default-2026.png">
     <link rel="icon" type="image/png" sizes="32x32" href="https://neogiga.com/images/brand/neogiga-favicon-32.png">
     <link rel="icon" type="image/png" sizes="192x192" href="https://neogiga.com/images/brand/neogiga-icon-192.png">
     <style nonce="{{ $csp_nonce ?? '' }}">
