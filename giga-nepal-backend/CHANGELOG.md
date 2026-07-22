@@ -2,6 +2,7 @@
 
 ## 2026-07-22 - Production Session and Commerce Stability
 
+- Corrected the production FastCGI cache boundary so login and other stateful responses retain Laravel's private-cache and `Set-Cookie` headers, responses that rotate sessions are never cached, and authentication redirects are no longer stored; added a configuration regression test and retained the pre-change server configuration backup.
 - Changed an expired customer logout submission from a raw 419 page into a safe login redirect with the stale session cookie removed; CSRF validation remains enabled for every state-changing request.
 - Removed the duplicate customer logout route and added regression coverage for the expired-session recovery path.
 - Corrected payment-provider inheritance so global providers apply to marketplaces without an explicit registry, while marketplace-specific disabled providers remain authoritative overrides.
