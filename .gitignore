@@ -1,49 +1,56 @@
-# Compiled and build artifacts
+```
+# Dependency directories
+vendor/
+node_modules/
+
+# Laravel/Lumen specific
+bootstrap/cache/
+storage/logs/
+storage/framework/
+public/storage/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# Compiled files
 *.pyc
 __pycache__/
+*.class
 *.o
 *.obj
-*.class
 *.exe
 *.dll
 *.so
 *.a
 *.out
 
-# Dependencies
-node_modules/
-venv/
-.venv/
-.env
-.env.local
-*.env.*
-
-# Logs and temp files
-*.log
-*.tmp
-*.swp
-
-# Editors
-.vscode/
-.idea/
-
-# Build directories
+# Build artifacts
 dist/
 build/
 target/
-.gradle/
-
-# Python specific
-*.pyc
-__pycache__/
-*.pyo
-*.pyd
-.Python
-*.so
-.coverage
-htmlcov/
 .mypy_cache/
 .pytest_cache/
+.gradle/
 
 # Compressed files
 *.zip
@@ -68,3 +75,4 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
+```

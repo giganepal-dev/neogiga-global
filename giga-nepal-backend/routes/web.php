@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
+use App\Http\Controllers\Admin\Chat\ChatController as AdminChat;
 use App\Http\Controllers\Admin\CommerceOpsController as AdminCommerce;
 use App\Http\Controllers\Admin\CustomerDataController as AdminCustomerData;
 use App\Http\Controllers\Admin\CustomerImportController as AdminCustomerImport;
@@ -501,6 +502,20 @@ Route::prefix('admin')->group(function () {
         Route::post('support/tickets/{ticket}', [AdminCommerce::class, 'updateSupportTicket'])->whereNumber('ticket')->middleware('throttle:20,1');
         Route::post('support/tickets/{ticket}/escalate', [AdminCommerce::class, 'escalateSupportTicket'])->whereNumber('ticket')->middleware('throttle:20,1');
         Route::post('support/tickets/{ticket}/messages', [AdminCommerce::class, 'storeSupportTicketMessage'])->whereNumber('ticket')->middleware('throttle:20,1');
+
+        // Chat System Routes
+        Route::prefix('chat')->group(function () {
+            Route::get('/', [AdminChat::class, 'index'])->name('admin.chat.index');
+            Route::get('/{conversation}', [AdminChat::class, 'show'])->name('admin.chat.show');
+            Route::post('/{conversation}/messages', [AdminChat::class, 'sendMessage'])->name('admin.chat.messages.store');
+            Route::post('/direct', [AdminChat::class, 'createDirect'])->name('admin.chat.direct.create');
+            Route::post('/support', [AdminChat::class, 'createSupport'])->name('admin.chat.support.create');
+            Route::post('/{conversation}/archive', [AdminChat::class, 'archive'])->name('admin.chat.archive');
+            Route::post('/{conversation}/assign', [AdminChat::class, 'assign'])->name('admin.chat.assign');
+            Route::get('/search', [AdminChat::class, 'search'])->name('admin.chat.search');
+            Route::get('/unread-count', [AdminChat::class, 'unreadCount'])->name('admin.chat.unread');
+            Route::post('/mark-all-read', [AdminChat::class, 'markAllAsRead'])->name('admin.chat.mark-all-read');
+        });
     });
 });
 
