@@ -17,6 +17,18 @@ use Illuminate\View\View;
 
 class CustomerDashboardController extends Controller
 {
+    private const SUPPORT_CATEGORIES = ['support', 'product_qa', 'seller', 'general'];
+
+    private const NOTIFICATION_TYPES = [
+        'order_updates' => 'Order and delivery updates',
+        'rfq_updates' => 'RFQ and quotation updates',
+        'support_updates' => 'Support ticket updates',
+        'price_alerts' => 'Price alerts',
+        'back_in_stock' => 'Back-in-stock alerts',
+        'promotions' => 'NeoGiga offers and product news',
+        'security' => 'Security and account alerts',
+    ];
+
     public function __construct(
         private readonly AccountHubService $hub,
         private readonly GlobalMarketplaceContextService $marketplaces,
@@ -48,7 +60,16 @@ class CustomerDashboardController extends Controller
             $this->hub->owned('orders', $request->user()->id), [
                 'order_number' => 'Order', 'status' => 'Status', 'payment_status' => 'Payment',
                 'grand_total' => 'Total', 'currency_code' => 'Currency', 'created_at' => 'Placed',
-            ], '/en/products', 'Start shopping');
+            ], '/en/products', 'Start shopping', '/account/orders');
+    }
+
+    public function showOrder(Request $request, int $order): View
+    {
+        return $this->recordPage($request, 'orders', $order, 'Order details', [
+            'order_items' => ['foreign' => 'order_id', 'title' => 'Items', 'columns' => ['product_name' => 'Product', 'product_sku' => 'SKU', 'quantity' => 'Quantity', 'unit_price' => 'Unit price', 'total_price' => 'Line total']],
+            'payments' => ['foreign' => 'order_id', 'title' => 'Payments', 'columns' => ['payment_number' => 'Payment', 'payment_method' => 'Method', 'amount' => 'Amount', 'currency_code' => 'Currency', 'status' => 'Status']],
+            'shipments' => ['foreign' => 'order_id', 'title' => 'Shipments', 'columns' => ['tracking_number' => 'Tracking', 'carrier' => 'Carrier', 'shipping_method' => 'Method', 'status' => 'Status', 'shipped_at' => 'Shipped']],
+        ], '/account/orders');
     }
 
     public function rfqs(Request $request): View
@@ -57,7 +78,15 @@ class CustomerDashboardController extends Controller
             $this->hub->owned('rfq_requests', $request->user()->id), [
                 'rfq_number' => 'RFQ', 'company_name' => 'Company', 'status' => 'Status',
                 'currency' => 'Currency', 'created_at' => 'Created',
-            ], '/en/rfq', 'Create RFQ');
+            ], '/en/rfq', 'Create RFQ', '/account/rfqs');
+    }
+
+    public function showRfq(Request $request, int $rfq): View
+    {
+        return $this->recordPage($request, 'rfq_requests', $rfq, 'RFQ details', [
+            'rfq_items' => ['foreign' => 'rfq_request_id', 'title' => 'Requested items', 'columns' => ['name' => 'Item', 'sku' => 'SKU', 'quantity' => 'Quantity', 'target_price' => 'Target price', 'notes' => 'Notes']],
+            'quotations' => ['foreign' => 'rfq_request_id', 'title' => 'Quotations', 'columns' => ['quote_number' => 'Quote', 'status' => 'Status', 'grand_total' => 'Total', 'currency' => 'Currency', 'valid_until' => 'Valid until']],
+        ], '/account/rfqs');
     }
 
     public function quotations(Request $request): View
@@ -66,7 +95,14 @@ class CustomerDashboardController extends Controller
             $this->hub->owned('quotations', $request->user()->id), [
                 'quote_number' => 'Quote', 'status' => 'Status', 'grand_total' => 'Total',
                 'currency' => 'Currency', 'valid_until' => 'Valid until', 'created_at' => 'Issued',
-            ], '/account/rfqs', 'View RFQs');
+            ], '/account/rfqs', 'View RFQs', '/account/quotations');
+    }
+
+    public function showQuotation(Request $request, int $quotation): View
+    {
+        return $this->recordPage($request, 'quotations', $quotation, 'Quotation details', [
+            'quotation_items' => ['foreign' => 'quotation_id', 'title' => 'Quoted items', 'columns' => ['name' => 'Item', 'sku' => 'SKU', 'quantity' => 'Quantity', 'unit_price' => 'Unit price', 'tax_amount' => 'Tax', 'line_total' => 'Line total']],
+        ], '/account/quotations');
     }
 
     public function bom(Request $request): View
@@ -107,20 +143,114 @@ class CustomerDashboardController extends Controller
 
     public function notifications(Request $request): View
     {
-        return $this->tablePage($request, 'Notifications', 'Transactional, account and sourcing updates.',
-            $this->hub->owned('notification_delivery_logs', $request->user()->id), [
-                'title' => 'Notification', 'body' => 'Details', 'channel' => 'Channel',
-                'status' => 'Status', 'created_at' => 'Received',
-            ], '/account/profile', 'Manage preferences');
+        $notifications = $this->hub->owned('notification_delivery_logs', $request->user()->id);
+        $stored = Schema::hasTable('notification_preferences')
+            ? DB::table('notification_preferences')->where('user_id', $request->user()->id)->get()->keyBy('notification_type')
+            : collect();
+        $preferences = collect(self::NOTIFICATION_TYPES)->map(function (string $label, string $type) use ($stored) {
+            $row = $stored->get($type);
+
+            return (object) [
+                'type' => $type, 'label' => $label,
+                'email_enabled' => $row ? (bool) $row->email_enabled : true,
+                'push_enabled' => $row ? (bool) $row->push_enabled : true,
+                'sms_enabled' => $row ? (bool) $row->sms_enabled : false,
+                'whatsapp_enabled' => $row ? (bool) $row->whatsapp_enabled : false,
+                'is_mandatory' => $type === 'security' || (bool) ($row->is_mandatory ?? false),
+            ];
+        });
+
+        return view('frontend.account.notifications', $this->shell($request) + compact('notifications', 'preferences'));
+    }
+
+    public function updateNotificationPreferences(Request $request): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('notification_preferences'), 503, 'Notification preferences are being upgraded.');
+        $data = $request->validate(['preferences' => ['nullable', 'array']]);
+        $submitted = $data['preferences'] ?? [];
+        $marketplace = $this->marketplaces->context($request)['current'] ?? null;
+
+        DB::transaction(function () use ($request, $submitted, $marketplace): void {
+            foreach (self::NOTIFICATION_TYPES as $type => $label) {
+                $values = is_array($submitted[$type] ?? null) ? $submitted[$type] : [];
+                $mandatory = $type === 'security';
+                DB::table('notification_preferences')->updateOrInsert([
+                    'user_id' => $request->user()->id,
+                    'marketplace_id' => $marketplace?->id,
+                    'notification_type' => $type,
+                ], [
+                    'email_enabled' => $mandatory || isset($values['email']),
+                    'push_enabled' => $mandatory || isset($values['push']),
+                    'sms_enabled' => isset($values['sms']),
+                    'whatsapp_enabled' => isset($values['whatsapp']),
+                    'is_mandatory' => $mandatory,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]);
+            }
+        });
+
+        $this->hub->audit($request->user()->id, 'notification_preferences_updated', [], $request);
+
+        return back()->with('success', 'Notification preferences updated.');
     }
 
     public function support(Request $request): View
     {
-        return $this->tablePage($request, 'Support tickets', 'Product, order, RFQ and account support in one place.',
-            $this->hub->owned('support_tickets', $request->user()->id), [
-                'ticket_number' => 'Ticket', 'subject' => 'Subject', 'category' => 'Category',
-                'priority' => 'Priority', 'status' => 'Status', 'updated_at' => 'Updated',
-            ], '/contact', 'Contact support');
+        return view('frontend.account.support', $this->shell($request) + [
+            'tickets' => $this->hub->owned('support_tickets', $request->user()->id),
+            'categories' => self::SUPPORT_CATEGORIES,
+        ]);
+    }
+
+    public function storeSupport(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'subject' => ['required', 'string', 'max:190'], 'message' => ['required', 'string', 'max:5000'],
+            'category' => ['required', 'in:'.implode(',', self::SUPPORT_CATEGORIES)], 'priority' => ['required', 'in:low,medium,high'],
+        ]);
+        $ticketId = DB::transaction(function () use ($request, $data): int {
+            $id = DB::table('support_tickets')->insertGetId([
+                'ticket_number' => 'CST-'.now()->format('YmdHis').'-'.random_int(100, 999),
+                'user_id' => $request->user()->id, 'subject' => $data['subject'], 'description' => $data['message'],
+                'priority' => $data['priority'], 'status' => 'open', 'category' => $data['category'],
+                'metadata' => json_encode(['channel' => 'customer_account']), 'created_at' => now(), 'updated_at' => now(),
+            ]);
+            DB::table('support_ticket_messages')->insert([
+                'support_ticket_id' => $id, 'user_id' => $request->user()->id, 'sender_type' => 'customer',
+                'message' => $data['message'], 'created_at' => now(), 'updated_at' => now(),
+            ]);
+
+            return $id;
+        });
+
+        return redirect('/account/support/'.$ticketId)->with('success', 'Support ticket created.');
+    }
+
+    public function showSupport(Request $request, int $ticket): View
+    {
+        $ticketRow = DB::table('support_tickets')->where('id', $ticket)->where('user_id', $request->user()->id)->first();
+        abort_unless($ticketRow, 404);
+        $messages = DB::table('support_ticket_messages')->where('support_ticket_id', $ticket)->orderBy('id')->get();
+
+        return view('frontend.account.support-show', $this->shell($request) + ['ticket' => $ticketRow, 'messages' => $messages]);
+    }
+
+    public function replySupport(Request $request, int $ticket): RedirectResponse
+    {
+        $ticketRow = DB::table('support_tickets')->where('id', $ticket)->where('user_id', $request->user()->id)->first();
+        abort_unless($ticketRow, 404);
+        $data = $request->validate(['message' => ['required', 'string', 'max:5000']]);
+        DB::transaction(function () use ($request, $ticketRow, $data): void {
+            DB::table('support_ticket_messages')->insert([
+                'support_ticket_id' => $ticketRow->id, 'user_id' => $request->user()->id, 'sender_type' => 'customer',
+                'message' => $data['message'], 'created_at' => now(), 'updated_at' => now(),
+            ]);
+            $status = match ($ticketRow->status) { 'resolved', 'closed' => 'open', 'waiting_customer' => 'in_progress', default => $ticketRow->status };
+            DB::table('support_tickets')->where('id', $ticketRow->id)->update(['status' => $status, 'updated_at' => now()]);
+        });
+
+        return back()->with('success', 'Reply sent.');
     }
 
     public function payments(Request $request): View
@@ -308,6 +438,50 @@ class CustomerDashboardController extends Controller
         return back()->with('success', 'Application submitted for compliance review.');
     }
 
+    public function resubmitApplication(Request $request, int $application): RedirectResponse
+    {
+        $data = $request->validate([
+            'applicant_notes' => ['required', 'string', 'max:5000'],
+            'business_description' => ['nullable', 'string', 'max:5000'],
+            'documents.*' => ['file', 'mimes:pdf,png,jpg,jpeg,webp', 'max:10240'],
+        ]);
+
+        DB::transaction(function () use ($request, $application, $data): void {
+            $row = DB::table('account_applications')->where('id', $application)
+                ->where('user_id', $request->user()->id)->lockForUpdate()->first();
+            abort_unless($row, 404);
+            abort_unless($row->status === 'needs_information', 409, 'Only applications awaiting information can be resubmitted.');
+
+            $updates = [
+                'status' => 'submitted', 'applicant_notes' => $data['applicant_notes'],
+                'submitted_at' => now(), 'reviewed_at' => null, 'reviewed_by' => null, 'updated_at' => now(),
+            ];
+            if (! empty($data['business_description'])) {
+                $updates['business_description'] = $data['business_description'];
+            }
+            DB::table('account_applications')->where('id', $row->id)->update($updates);
+
+            foreach ($request->file('documents', []) as $file) {
+                $path = $file->store('account-applications/'.$row->id, 'local');
+                DB::table('account_application_documents')->insert([
+                    'account_application_id' => $row->id, 'user_id' => $request->user()->id,
+                    'document_type' => 'supporting_document', 'original_name' => $file->getClientOriginalName(),
+                    'storage_disk' => 'local', 'storage_path' => $path, 'mime_type' => $file->getMimeType(),
+                    'size_bytes' => $file->getSize(), 'sha256' => hash_file('sha256', $file->getRealPath()),
+                    'status' => 'pending', 'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
+            DB::table('account_application_events')->insert([
+                'account_application_id' => $row->id, 'actor_user_id' => $request->user()->id,
+                'event_type' => 'resubmitted', 'from_status' => 'needs_information', 'to_status' => 'submitted',
+                'notes' => $data['applicant_notes'], 'ip_address' => $request->ip(),
+                'user_agent' => mb_substr((string) $request->userAgent(), 0, 500), 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'Application resubmitted for review.');
+    }
+
     public function switchRole(Request $request): RedirectResponse
     {
         $data = $request->validate(['role_key' => ['required', 'string', 'max:50']]);
@@ -315,9 +489,29 @@ class CustomerDashboardController extends Controller
         return redirect()->to($this->hub->switchRole($request->user(), $request, $data['role_key']));
     }
 
-    private function tablePage(Request $request, string $title, string $intro, $rows, array $columns, string $actionUrl, string $actionLabel): View
+    private function tablePage(Request $request, string $title, string $intro, $rows, array $columns, string $actionUrl, string $actionLabel, ?string $detailBase = null): View
     {
-        return view('frontend.account.table', $this->shell($request) + compact('title', 'intro', 'rows', 'columns', 'actionUrl', 'actionLabel'));
+        return view('frontend.account.table', $this->shell($request) + compact('title', 'intro', 'rows', 'columns', 'actionUrl', 'actionLabel', 'detailBase'));
+    }
+
+    private function recordPage(Request $request, string $table, int $id, string $title, array $relationDefinitions, string $backUrl): View
+    {
+        abort_unless(Schema::hasTable($table) && Schema::hasColumn($table, 'user_id'), 404);
+        $record = DB::table($table)->where('id', $id)->where('user_id', $request->user()->id)->first();
+        abort_unless($record, 404);
+
+        $relations = collect($relationDefinitions)->map(function (array $definition, string $relationTable) use ($id) {
+            if (! Schema::hasTable($relationTable) || ! Schema::hasColumn($relationTable, $definition['foreign'])) {
+                return ['title' => $definition['title'], 'columns' => $definition['columns'], 'rows' => collect()];
+            }
+
+            return [
+                'title' => $definition['title'], 'columns' => $definition['columns'],
+                'rows' => DB::table($relationTable)->where($definition['foreign'], $id)->orderBy('id')->get(),
+            ];
+        })->values();
+
+        return view('frontend.account.record', $this->shell($request) + compact('record', 'title', 'relations', 'backUrl'));
     }
 
     private function shell(Request $request): array

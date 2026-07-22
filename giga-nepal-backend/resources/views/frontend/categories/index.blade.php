@@ -87,11 +87,7 @@
                 <a class="category-directory-head" href="{{ $publicBase }}/categories/{{ $root->slug }}">
                     <span class="category-directory-title">
                         <span class="category-directory-icon" aria-hidden="true">
-                            @if ($root->image_path)
-                                <img src="{{ $root->image_path }}" alt="" width="42" height="42" loading="lazy">
-                            @else
-                                <x-icon name="categories" size="20"/>
-                            @endif
+                            <img src="{{ $root->image_path ?: url('/images/brand/neogiga-icon-512.png') }}" alt="" width="42" height="42" loading="lazy">
                         </span>
                         <span>{{ $root->name }}</span>
                     </span>

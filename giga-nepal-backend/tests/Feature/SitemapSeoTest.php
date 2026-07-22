@@ -106,9 +106,12 @@ class SitemapSeoTest extends TestCase
 
     public function test_categories_without_media_use_the_global_neogiga_fallback(): void
     {
+        $governedRoot = (string) collect(config('neogiga_categories.root_slugs', []))->first();
+        $this->assertNotSame('', $governedRoot);
+
         DB::table('product_categories')->insert([
             'name' => 'Fallback Category',
-            'slug' => 'fallback-category',
+            'slug' => $governedRoot,
             'is_active' => true,
             'image_path' => null,
             'sort_order' => 1, // directory index hides sort_order = 0 (uncategorized)
@@ -121,7 +124,7 @@ class SitemapSeoTest extends TestCase
             ->assertSee('/images/brand/neogiga-icon-512.png', false)
             ->assertSee('"@type":"ItemList"', false);
 
-        $this->get('/en/categories/fallback-category')
+        $this->get('/en/categories/'.$governedRoot)
             ->assertOk()
             ->assertSee('/images/brand/neogiga-icon-512.png', false)
             ->assertSee('Fallback Category category');

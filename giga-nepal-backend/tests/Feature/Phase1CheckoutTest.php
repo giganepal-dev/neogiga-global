@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Payments\PaymentProvider;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Payments\PaymentMethodPolicyService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -107,6 +108,27 @@ class Phase1CheckoutTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('payment_method');
+    }
+
+    public function test_marketplace_registry_overrides_the_global_payment_provider(): void
+    {
+        $marketplaceId = $this->marketplaceId();
+        $this->enablePaymentProvider('bank_transfer');
+
+        PaymentProvider::create([
+            'marketplace_id' => $marketplaceId,
+            'code' => 'bank_transfer',
+            'name' => 'Bank Transfer',
+            'is_enabled' => false,
+            'is_live' => false,
+            'supported_currencies' => null,
+            'config' => [],
+            'sort_order' => 20,
+        ]);
+
+        $methods = app(PaymentMethodPolicyService::class)->allowedMethods($marketplaceId, 'USD');
+
+        $this->assertFalse($methods->pluck('code')->contains('bank_transfer'));
     }
 
     private function customerUser(string $token): User

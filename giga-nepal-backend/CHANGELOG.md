@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-07-22 - Production Session and Commerce Stability
+
+- Changed an expired customer logout submission from a raw 419 page into a safe login redirect with the stale session cookie removed; CSRF validation remains enabled for every state-changing request.
+- Removed the duplicate customer logout route and added regression coverage for the expired-session recovery path.
+- Corrected payment-provider inheritance so global providers apply to marketplaces without an explicit registry, while marketplace-specific disabled providers remain authoritative overrides.
+- Restored the transparent NeoGiga fallback image for governed categories without media and aligned SEO coverage with the three-level public taxonomy rules.
+- Completed the account-hub follow-up with ownership-scoped order, RFQ and quotation detail pages, customer support ticket creation/replies, regional notification preferences with mandatory security alerts, and audited resubmission for applications awaiting information.
+- Upgraded Guzzle from 7.14.1 to 7.15.1 and PSR-7 from 2.12.5 to 2.13.0, clearing all Composer security advisories reported at release time.
+
 ## 2026-07-22 - Unified Multi-Role Account Hub
 
 - Replaced the minimal customer account screen with a responsive dark account workspace for owned orders, RFQs, quotations, BOM work, saved parts, notifications, support, payments, profile, security and addresses; every data query remains scoped to the authenticated user.

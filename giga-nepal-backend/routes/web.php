@@ -555,12 +555,19 @@ Route::post('/register', [CustomerAuthController::class, 'register'])->middlewar
 Route::prefix('account')->middleware('auth')->name('account.')->group(function () {
     Route::get('/', [CustomerDashboardController::class, 'index'])->name('dashboard');
     Route::get('orders', [CustomerDashboardController::class, 'orders'])->name('orders');
+    Route::get('orders/{order}', [CustomerDashboardController::class, 'showOrder'])->whereNumber('order')->name('orders.show');
     Route::get('rfqs', [CustomerDashboardController::class, 'rfqs'])->name('rfqs');
+    Route::get('rfqs/{rfq}', [CustomerDashboardController::class, 'showRfq'])->whereNumber('rfq')->name('rfqs.show');
     Route::get('quotations', [CustomerDashboardController::class, 'quotations'])->name('quotations');
+    Route::get('quotations/{quotation}', [CustomerDashboardController::class, 'showQuotation'])->whereNumber('quotation')->name('quotations.show');
     Route::get('bom', [CustomerDashboardController::class, 'bom'])->name('bom');
     Route::get('saved', [CustomerDashboardController::class, 'saved'])->name('saved');
     Route::get('notifications', [CustomerDashboardController::class, 'notifications'])->name('notifications');
+    Route::patch('notifications', [CustomerDashboardController::class, 'updateNotificationPreferences'])->middleware('throttle:10,1')->name('notifications.update');
     Route::get('support', [CustomerDashboardController::class, 'support'])->name('support');
+    Route::post('support', [CustomerDashboardController::class, 'storeSupport'])->middleware('throttle:10,1')->name('support.store');
+    Route::get('support/{ticket}', [CustomerDashboardController::class, 'showSupport'])->whereNumber('ticket')->name('support.show');
+    Route::post('support/{ticket}/reply', [CustomerDashboardController::class, 'replySupport'])->whereNumber('ticket')->middleware('throttle:20,1')->name('support.reply');
     Route::get('payments', [CustomerDashboardController::class, 'payments'])->name('payments');
     Route::get('profile', [CustomerDashboardController::class, 'profile'])->name('profile');
     Route::patch('profile', [CustomerDashboardController::class, 'updateProfile'])->middleware('throttle:10,1')->name('profile.update');
@@ -571,11 +578,11 @@ Route::prefix('account')->middleware('auth')->name('account.')->group(function (
     Route::delete('addresses/{address}', [CustomerDashboardController::class, 'deleteAddress'])->whereNumber('address')->name('addresses.delete');
     Route::get('applications', [CustomerDashboardController::class, 'applications'])->name('applications');
     Route::post('applications', [CustomerDashboardController::class, 'storeApplication'])->middleware('throttle:4,1')->name('applications.store');
+    Route::post('applications/{application}/resubmit', [CustomerDashboardController::class, 'resubmitApplication'])->whereNumber('application')->middleware('throttle:4,1')->name('applications.resubmit');
     Route::post('role', [CustomerDashboardController::class, 'switchRole'])->middleware('throttle:20,1')->name('role.switch');
 });
 Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 Route::get('/logout', fn () => redirect('/login'))->name('logout.get');
-Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 
 // Two-Factor Authentication (root level)
 Route::middleware('auth')->group(function () {

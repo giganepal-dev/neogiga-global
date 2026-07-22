@@ -5,7 +5,10 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Services\Account\PartnerApplicationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -19,6 +22,16 @@ class UnifiedAccountHubTest extends TestCase
         $this->get('/account')->assertRedirect('/login');
         $this->get('/account/orders')->assertRedirect('/login');
         $this->get('/account/applications')->assertRedirect('/login');
+    }
+
+    public function test_expired_logout_submission_recovers_at_login_instead_of_rendering_419(): void
+    {
+        $request = Request::create('/logout', 'POST');
+        $this->app->instance('request', $request);
+        $response = app(ExceptionHandler::class)->render($request, new TokenMismatchException('CSRF token mismatch.'));
+
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertSame(url('/login'), $response->headers->get('Location'));
     }
 
     public function test_dashboard_and_lists_only_show_records_owned_by_user(): void
@@ -67,6 +80,64 @@ class UnifiedAccountHubTest extends TestCase
         foreach (['orders', 'rfqs', 'quotations', 'bom', 'saved', 'notifications', 'support', 'payments', 'profile', 'security', 'addresses', 'applications'] as $section) {
             $this->actingAs($user)->get('/account/'.$section)->assertOk();
         }
+    }
+
+    public function test_owned_commerce_details_are_visible_and_other_accounts_are_hidden(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $ownedOrder = DB::table('orders')->insertGetId($this->order('NG-DETAIL-001', $owner->id));
+        $otherOrder = DB::table('orders')->insertGetId($this->order('NG-DETAIL-002', $other->id));
+
+        $this->actingAs($owner)->get('/account/orders/'.$ownedOrder)->assertOk()->assertSee('NG-DETAIL-001');
+        $this->actingAs($owner)->get('/account/orders/'.$otherOrder)->assertNotFound();
+    }
+
+    public function test_customer_can_create_and_reply_to_owned_support_ticket(): void
+    {
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->post('/account/support', [
+            'subject' => 'Order tracking question', 'message' => 'Please confirm the delivery checkpoint.',
+            'category' => 'support', 'priority' => 'medium',
+        ]);
+        $ticket = DB::table('support_tickets')->where('user_id', $user->id)->first();
+        $response->assertRedirect('/account/support/'.$ticket->id);
+
+        $this->actingAs($user)->post('/account/support/'.$ticket->id.'/reply', ['message' => 'Adding the order reference.'])
+            ->assertSessionHas('success');
+        $this->assertDatabaseHas('support_ticket_messages', ['support_ticket_id' => $ticket->id, 'message' => 'Adding the order reference.']);
+    }
+
+    public function test_customer_can_update_notification_preferences_with_security_alerts_preserved(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user)->patch('/account/notifications', [
+            'preferences' => ['order_updates' => ['email' => '1'], 'security' => []],
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('notification_preferences', [
+            'user_id' => $user->id, 'notification_type' => 'order_updates', 'email_enabled' => true, 'push_enabled' => false,
+        ]);
+        $this->assertDatabaseHas('notification_preferences', [
+            'user_id' => $user->id, 'notification_type' => 'security', 'email_enabled' => true, 'push_enabled' => true, 'is_mandatory' => true,
+        ]);
+    }
+
+    public function test_customer_can_resubmit_an_owned_application_needing_information(): void
+    {
+        $user = User::factory()->create();
+        $application = DB::table('account_applications')->insertGetId([
+            'application_number' => 'NG-RESUBMIT-001', 'user_id' => $user->id, 'role_key' => 'reseller',
+            'status' => 'needs_information', 'company_name' => 'Resubmit Company', 'review_notes' => 'Provide territory evidence.',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)->post('/account/applications/'.$application.'/resubmit', [
+            'applicant_notes' => 'The requested territory evidence is now attached to our company file.',
+        ])->assertSessionHas('success');
+
+        $this->assertDatabaseHas('account_applications', ['id' => $application, 'status' => 'submitted']);
+        $this->assertDatabaseHas('account_application_events', ['account_application_id' => $application, 'event_type' => 'resubmitted']);
     }
 
     public function test_approval_provisions_each_supported_partner_context_and_role_entitlement(): void

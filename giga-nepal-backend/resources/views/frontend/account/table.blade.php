@@ -9,7 +9,9 @@
     @foreach($rows as $row)<tr>@foreach($columns as $field => $label)
         @php $value = $row->{$field} ?? null; @endphp
         <td class="clip">
-            @if($field === 'status' || $field === 'payment_status' || $field === 'priority')
+            @if($detailBase && $loop->first)
+                <a href="{{ $detailBase }}/{{ $row->id }}">{{ $value !== null && $value !== '' ? $value : 'View' }}</a>
+            @elseif($field === 'status' || $field === 'payment_status' || $field === 'priority')
                 <span class="account-badge {{ $value }}">{{ str_replace('_',' ',(string)($value ?: '—')) }}</span>
             @elseif(str_ends_with($field, '_at') && $value)
                 {{ \Carbon\Carbon::parse($value)->format('d M Y, H:i') }}

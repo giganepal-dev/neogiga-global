@@ -31,25 +31,32 @@ class PaymentMethodPolicyService
             return $this->legacyCollection();
         }
 
-        $query = DB::table('payment_providers')
-            ->orderBy('sort_order')
-            ->orderBy('name');
+        $query = DB::table('payment_providers');
 
-        if ($marketplaceId !== null && Schema::hasColumn('payment_providers', 'marketplace_id')) {
-            $scoped = (clone $query)
-                ->where('marketplace_id', $marketplaceId)
-                ->exists();
-
-            if ($scoped) {
-                $query->where('marketplace_id', $marketplaceId);
-            } elseif ($this->isGlobalMarketplace($marketplaceId)) {
+        if (Schema::hasColumn('payment_providers', 'marketplace_id')) {
+            if ($marketplaceId === null) {
                 $query->whereNull('marketplace_id');
             } else {
-                return $this->configFallbackForMarketplace($marketplaceId, $currencyCode);
+                $scoped = (clone $query)->where('marketplace_id', $marketplaceId);
+                $global = (clone $query)->whereNull('marketplace_id');
+
+                if ($scoped->exists()) {
+                    // A marketplace-specific registry is an explicit override,
+                    // including when every provider in it is disabled.
+                    $query->where('marketplace_id', $marketplaceId);
+                } elseif ($global->exists()) {
+                    // Null marketplace_id means the provider is available to
+                    // marketplaces that do not define their own override.
+                    $query->whereNull('marketplace_id');
+                } else {
+                    $fallback = $this->configFallbackForMarketplace($marketplaceId, $currencyCode);
+
+                    return $fallback->isNotEmpty() ? $fallback : $this->legacyCollection();
+                }
             }
         }
 
-        $providers = $query->get();
+        $providers = $query->orderBy('sort_order')->orderBy('name')->get();
 
         if ($providers->isEmpty()) {
             if ($marketplaceId !== null) {
@@ -119,21 +126,6 @@ class PaymentMethodPolicyService
                 'code' => Str::slug(strtolower($name), '_'),
                 'name' => $name,
             ]);
-    }
-
-    private function isGlobalMarketplace(int $marketplaceId): bool
-    {
-        $marketplace = DB::table('marketplaces')->where('id', $marketplaceId)->first(['code', 'global_fallback', 'is_default']);
-
-        if (! $marketplace) {
-            return false;
-        }
-
-        $code = strtolower((string) $marketplace->code);
-
-        return (bool) ($marketplace->global_fallback ?? false)
-            || (bool) ($marketplace->is_default ?? false)
-            || in_array($code, ['global', 'en'], true);
     }
 
     private function supportsCurrency(mixed $supportedCurrencies, ?string $currencyCode): bool
