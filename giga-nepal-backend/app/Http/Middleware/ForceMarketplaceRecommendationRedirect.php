@@ -113,6 +113,7 @@ class ForceMarketplaceRecommendationRedirect
             '/checkout',
             '/health',
             '/marketplace/preference',
+            '/partner-country-options',
             '/storage',
             '/up',
         ];

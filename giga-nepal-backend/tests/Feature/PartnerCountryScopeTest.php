@@ -14,7 +14,7 @@ class PartnerCountryScopeTest extends TestCase
     {
         [$nepal, $india, $usa] = $this->countries();
 
-        $response = $this->withHeader('CF-IPCountry', 'NP')->getJson('/api/partner-country-options');
+        $response = $this->withHeader('CF-IPCountry', 'NP')->getJson('/partner-country-options');
 
         $response->assertOk()
             ->assertJsonPath('data.detected_country_id', $nepal)
