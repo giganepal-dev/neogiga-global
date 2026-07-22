@@ -37,6 +37,9 @@ class ProductPageController extends Controller
         $datasheet = (string) $request->query('datasheet', '');
         $package = trim((string) $request->query('package', ''));
         $quality = trim((string) $request->query('quality', ''));
+        $priceMin = max(0, (float) $request->query('price_min', 0));
+        $priceMax = max(0, (float) $request->query('price_max', 0));
+        $ratingMin = max(0, min(5, (float) $request->query('rating_min', 0)));
         $sort = (string) $request->query('sort', 'relevance');
         $catalogSearch = app(CatalogSearchService::class);
 
@@ -71,6 +74,9 @@ class ProductPageController extends Controller
             ->when($datasheet === '1' && Schema::hasTable('product_documents'), fn ($query) => $query->whereExists(function ($sub) {
                 $sub->selectRaw('1')->from('product_documents')->whereColumn('product_documents.product_id', 'products.id')->where('document_type', 'datasheet');
             }))
+            ->when($priceMin > 0, fn ($query) => $query->where('base_price', '>=', $priceMin))
+            ->when($priceMax > 0, fn ($query) => $query->where('base_price', '<=', $priceMax))
+            ->when($ratingMin > 0 && Schema::hasColumn('products', 'rating_avg'), fn ($query) => $query->where('rating_avg', '>=', $ratingMin))
             ->tap(fn ($query) => $catalogSearch->applyPublicFilters($query, [
                 'q' => $q,
                 'stock' => $stock,
@@ -82,7 +88,7 @@ class ProductPageController extends Controller
             ->when($sort === 'stock', fn ($query) => $query->orderByDesc('stock_quantity'))
             ->when($sort === 'manufacturer', fn ($query) => $query->orderBy('manufacturer_name')->orderBy('name'))
             ->when(! in_array($sort, ['newest', 'price', 'stock', 'manufacturer'], true), fn ($query) => $query->orderByDesc('is_featured')->orderBy('name'))
-            ->paginate(100)
+            ->paginate(48)
             ->withQueryString();
 
         // Search and faceted combinations are useful to people but create an
@@ -111,7 +117,7 @@ class ProductPageController extends Controller
             'q' => $q,
             'category' => $category,
             'catalogTotal' => $hasFilters ? null : ($catalogSearch->cachedPublicProductCount() ?? 0),
-            'filters' => compact('brandId', 'manufacturer', 'stock', 'countryId', 'datasheet', 'package', 'quality', 'sort'),
+            'filters' => compact('brandId', 'manufacturer', 'stock', 'countryId', 'datasheet', 'package', 'quality', 'priceMin', 'priceMax', 'ratingMin', 'sort'),
             'facetGroups' => $hasFilters ? $catalogSearch->publicFacetGroups(compact('q')) : collect(),
             'indexedSummary' => $hasFilters ? $catalogSearch->indexedSummary() : ['documents'=>0,'facets'=>0,'approved_documents'=>0],
             'rootCategories' => ProductCategory::whereNull('parent_id')

@@ -11,7 +11,10 @@ use Symfony\Component\HttpFoundation\Response;
  * Baseline security headers for every response (Blueprint §40, SEC-07).
  *
  * CSP uses per-request nonces (shared via View) so inline critical CSS and
- * GTM/GA bootstrap scripts function without 'unsafe-inline'.
+ * GTM/GA bootstrap scripts function without script 'unsafe-inline'. Blade
+ * views still contain legacy style attributes, which cannot carry a nonce;
+ * CSP Level 3 isolates that compatibility allowance to style attributes while
+ * keeping style elements nonce-protected.
  * 'strict-dynamic' lets GTM load further scripts without allow-listing each
  * origin; the GTM + GA origins remain as fallback for browsers that don't
  * support CSP Level 3.
@@ -41,6 +44,8 @@ class SecurityHeaders
                 "default-src 'self'; "
                 . "img-src 'self' data: https:; "
                 . "style-src 'self' 'nonce-{$nonce}'; "
+                . "style-src-elem 'self' 'nonce-{$nonce}'; "
+                . "style-src-attr 'unsafe-inline'; "
                 . "script-src 'self' 'nonce-{$nonce}' 'strict-dynamic' https://www.googletagmanager.com https://www.google-analytics.com; "
                 . "font-src 'self'; "
                 . "connect-src 'self' https://backend.neogiga.com https://pk.neogiga.com https://np.neogiga.com https://in.neogiga.com; "

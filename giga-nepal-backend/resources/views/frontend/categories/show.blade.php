@@ -72,6 +72,24 @@
 @endpush
 
 @section('content')
+<style nonce="{{ $csp_nonce ?? '' }}">
+    .category-show{padding-bottom:64px}
+    .category-hero{display:flex;align-items:center;gap:18px;margin:8px 0 22px;padding:22px;background:var(--s1);border:1px solid var(--line);border-radius:var(--r)}
+    .category-hero img{width:104px;height:104px;object-fit:contain;border:1px solid var(--line);border-radius:12px;background:transparent;flex:none}
+    .category-hero h1{margin:0 0 6px;font-size:clamp(1.8rem,4vw,2.7rem);letter-spacing:-.025em}.category-hero .lead{margin:0}
+    .category-section-title{display:flex;align-items:center;gap:8px;font-size:1.05rem;margin:20px 0 12px;color:var(--on)}
+    .subcategory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:30px}
+    .subcategory-card{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:14px 16px;transition:border-color .18s,transform .18s,box-shadow .18s}
+    .subcategory-card:hover{border-color:var(--cyan);transform:translateY(-1px);box-shadow:0 10px 24px rgba(23,43,77,.08)}.subcategory-card svg{color:var(--cyan)}
+    .category-search{display:flex;gap:8px;margin:0 0 12px}.category-search input{flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--s1);color:var(--on)}
+    .category-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:8px 0 14px}.category-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.stock-tabs{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--s1)}.stock-tabs a{padding:7px 12px;font-size:.78rem;color:var(--muted)}.stock-tabs a.active{background:var(--cyan);color:#fff;font-weight:700}
+    .category-sort{width:auto;min-height:36px;font-size:.78rem;padding:6px 10px}
+    .category-products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.category-product{background:var(--s1);border:1px solid var(--line);border-radius:var(--r);padding:14px;content-visibility:auto;contain-intrinsic-size:330px;transition:border-color .18s,transform .18s,box-shadow .18s}.category-product:hover{border-color:rgba(15,98,230,.42);transform:translateY(-2px);box-shadow:0 14px 34px rgba(23,43,77,.1)}
+    .category-product-media{position:relative;display:block;aspect-ratio:4/3;background:var(--s2);border:1px solid var(--line);border-radius:9px;margin-bottom:10px;overflow:hidden}.category-product-media img{width:100%;height:100%;object-fit:contain;background:transparent}.category-product strong{display:block;line-height:1.35}.category-product-meta{color:var(--muted);font-size:.78rem;margin-top:7px;overflow-wrap:anywhere}
+    @media(max-width:620px){.category-hero{align-items:flex-start;padding:16px}.category-hero img{width:76px;height:76px}.category-search{display:grid;grid-template-columns:1fr 1fr}.category-search input{grid-column:1/-1}.category-toolbar{align-items:flex-start}.stock-tabs{max-width:100%;overflow-x:auto}.category-products{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:430px){.category-hero{display:grid}.category-products,.subcategory-grid{grid-template-columns:1fr}}
+</style>
+<div class="wrap category-show">
 <nav class="crumbs" aria-label="Breadcrumb">
     @foreach ($breadcrumb as $i => $b)
         @if ($i === count($breadcrumb)-1)
@@ -82,47 +100,47 @@
     @endforeach
 </nav>
 
-<div class="category-hero" style="display:flex;align-items:center;gap:18px;margin-bottom:12px">
-    <img src="{{ $category->image_path ?: url('/images/brand/neogiga-icon-512.png') }}" alt="{{ $category->name }} category" width="112" height="112" loading="lazy" style="width:112px;height:112px;object-fit:contain;border:1px solid var(--line);border-radius:12px;background:#081527;flex:none">
-    <div><h1 style="margin:0 0 8px">{{ $category->name }}</h1><p class="lead" style="margin:0">{{ $metaDesc }}</p></div>
+<div class="category-hero">
+    <img src="{{ $category->image_path ?: url('/images/brand/neogiga-icon-512.png') }}" alt="{{ $category->name }} category" width="104" height="104" loading="eager" fetchpriority="high">
+    <div><h1>{{ $category->name }}</h1><p class="lead">{{ $metaDesc }}</p></div>
 </div>
 
 @if ($children->isNotEmpty())
-    <h2 style="font-size:1.05rem;margin:8px 0 12px;color:var(--soft)">Subcategories</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:34px">
+    <h2 class="category-section-title">Subcategories <span class="badge b-muted">{{ number_format($children->count()) }}</span></h2>
+    <div class="subcategory-grid">
         @foreach ($children as $child)
-            <a href="{{ $publicBase }}/categories/{{ $child->slug }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(13,34,64,.5);border:1px solid var(--line);border-radius:10px;padding:14px 16px">
+            <a class="subcategory-card" href="{{ $publicBase }}/categories/{{ $child->slug }}">
                 <span>{{ $child->name }}</span>
-                <span aria-hidden="true" style="color:var(--cyan)"><x-icon name="chevron-right" size="16"/></span>
+                <span aria-hidden="true"><x-icon name="chevron-right" size="16"/></span>
             </a>
         @endforeach
     </div>
 @endif
 
 {{-- Search within category --}}
-<form method="get" action="{{ request()->url() }}" style="display:flex;gap:8px;margin:0 0 12px">
-    <input type="search" name="q" value="{{ request('q') }}" placeholder="Search within {{ $category->name }}" aria-label="Search within {{ $category->name }}" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--s1);color:var(--on);font:inherit">
+<form class="category-search" method="get" action="{{ request()->url() }}">
+    <input type="search" name="q" value="{{ request('q') }}" placeholder="Search within {{ $category->name }}" aria-label="Search within {{ $category->name }}">
     <button type="submit" class="btn btn-ghost btn-sm">Search</button>
     @if(request('q'))<a href="{{ request()->url() }}" class="btn btn-ghost btn-sm">Clear</a>@endif
 </form>
 
 {{-- Filter bar: stock tabs + sort dropdown --}}
-<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:8px 0 12px">
+<div class="category-toolbar">
     <div style="display:flex;align-items:center;gap:8px">
-        <h2 style="font-size:1.05rem;margin:0;color:var(--soft)">Products</h2>
+        <h2 class="category-section-title" style="margin:0">Products</h2>
         <span class="badge b-info" style="font-size:.75rem">{{ number_format($inclusiveCount) }}</span>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <div class="category-toolbar-actions">
         {{-- Stock filter pills --}}
-        <div style="display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden">
+        <div class="stock-tabs">
             @foreach ($stockOptions as $val => $label)
                 <a href="{{ request()->fullUrlWithQuery(['stock' => $val ?: null, 'page' => null]) }}"
-                   style="padding:6px 12px;font-size:.78rem;{{ ($currentStock ?? '') === $val ? 'background:var(--cyan);color:#000;font-weight:600' : 'color:var(--soft)' }}"
+                   class="{{ ($currentStock ?? '') === $val ? 'active' : '' }}"
                 >{{ $label }}</a>
             @endforeach
         </div>
         {{-- Sort dropdown --}}
-        <select class="control" onchange="location=this.value" style="font-size:.78rem;padding:6px 10px;background:rgba(13,34,64,.5);color:var(--soft);border:1px solid var(--line);border-radius:8px">
+        <select class="control category-sort" onchange="location=this.value">
             @foreach ($sortOptions as $val => $label)
                 <option value="{{ request()->fullUrlWithQuery(['sort' => $val, 'page' => null]) }}" @selected(($currentSort ?? 'newest') === $val)>{{ $label }}</option>
             @endforeach
@@ -137,12 +155,13 @@
         <p style="margin:0 auto;max-width:44ch">No products found for the selected filters. Try adjusting stock or sort options.</p>
     </div>
 @else
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px">
+    <div class="category-products">
         @foreach ($products as $p)
             @php($cardImage = $p->images->first())
-            <article style="background:rgba(13,34,64,.55);border:1px solid var(--line);border-radius:var(--r);padding:16px">
-                <a href="{{ $publicBase }}/products/{{ $p->slug }}" style="position:relative;display:block"><x-product-image-badges :product="$p" /><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($cardImage?->srcset()) srcset="{{ $cardImage->srcset() }}" sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 25vw" @endif alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async" style="display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#081527;border-radius:9px;margin-bottom:12px"><strong>{{ $p->name }}</strong></a>
-                <div style="color:var(--muted);font-size:.82rem" class="mono">@if($p->sku)<a href="{{ $publicBase }}/products?q={{ urlencode($p->sku) }}">{{ $p->sku }}</a>@endif @if($p->mpn)· <a href="/mpn/{{ str_replace('/','--', urlencode($p->mpn)) }}">{{ $p->mpn }}</a>@endif</div>
+            <article class="category-product">
+                <a class="category-product-media" href="{{ $publicBase }}/products/{{ $p->slug }}"><x-product-image-badges :product="$p" /><img src="{{ $cardImage?->publicUrl() ?: url('/images/products/neogiga-product-placeholder-2026.png') }}" @if($cardImage?->srcset()) srcset="{{ $cardImage->srcset() }}" sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, 20vw" @endif alt="{{ $cardImage?->alt_text ?: $p->name.' product image' }}" width="480" height="360" loading="lazy" decoding="async"></a>
+                <a href="{{ $publicBase }}/products/{{ $p->slug }}"><strong>{{ $p->name }}</strong></a>
+                <div class="category-product-meta mono">@if($p->sku)<a href="{{ $publicBase }}/products?q={{ urlencode($p->sku) }}">{{ $p->sku }}</a>@endif @if($p->mpn)· <a href="/mpn/{{ str_replace('/','--', urlencode($p->mpn)) }}">{{ $p->mpn }}</a>@endif</div>
             </article>
         @endforeach
     </div>
@@ -154,4 +173,5 @@
         </div>
     @endif
 @endif
+</div>
 @endsection

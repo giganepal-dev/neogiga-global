@@ -47,7 +47,6 @@
 @endphp
 <script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode($productSchema, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
-document.querySelectorAll(".spec-group").forEach(function(g){g.addEventListener("click",function(){g.classList.toggle("collapsed")})});
 </script>
 <script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
@@ -60,7 +59,6 @@ document.querySelectorAll(".spec-group").forEach(function(g){g.addEventListener(
         'item' => $item['item'],
     ])->all(),
 ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) !!}
-document.querySelectorAll(".spec-group").forEach(function(g){g.addEventListener("click",function(){g.classList.toggle("collapsed")})});
 </script>
 @endpush
 
