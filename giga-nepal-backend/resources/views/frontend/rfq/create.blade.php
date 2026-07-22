@@ -83,15 +83,15 @@
 
             <div id="rfq-lines" class="rfq-lines">
                 <div class="rfq-line">
-                    <div class="rfq-field"><label>Part name / description *</label><input name="item_name" required maxlength="190" value="{{ old('item_name', $product->name ?? '') }}" placeholder="e.g. STM32F103C8T6 microcontroller"></div>
-                    <div class="rfq-field"><label>Qty *</label><input type="number" name="quantity" min="1" value="{{ old('quantity', 1) }}" required></div>
-                    <div class="rfq-field"><label>Target price</label><input type="number" name="target_price" min="0" step="0.01" value="{{ old('target_price') }}" placeholder="Opt"></div>
-<button type="button" class="btn-remove" title="Remove this part" aria-label="Remove this part" onclick="removeRfqLine(this)"><x-icon name="x-circle" size="18"/> Remove</button>
+                    <div class="rfq-field"><label>Part name / description *</label><input name="item_name[]" required maxlength="190" value="{{ old('item_name.0', $product->name ?? '') }}" placeholder="e.g. STM32F103C8T6 microcontroller"></div>
+                    <div class="rfq-field"><label>Qty *</label><input type="number" name="quantity[]" min="1" value="{{ old('quantity.0', 1) }}" required></div>
+                    <div class="rfq-field"><label>Target price</label><input type="number" name="target_price[]" min="0" step="0.01" value="{{ old('target_price.0') }}" placeholder="Opt"></div>
+<button type="button" class="btn-remove" title="Remove this part" aria-label="Remove this part"><x-icon name="x-circle" size="18"/> Remove</button>
                 </div>
             </div>
 
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-                <button type="button" class="btn btn-ghost btn-sm" onclick="addRfqLine()">+ Add another part</button>
+                <button type="button" id="rfq-add-line" class="btn btn-ghost btn-sm">+ Add another part</button>
                 <a href="/en/bom" class="btn btn-ghost btn-sm">Upload BOM instead</a>
             </div>
             <input type="hidden" name="mpn" value="{{ old('mpn', $product->mpn ?? '') }}">
@@ -126,23 +126,35 @@
 </div>
 
 <script nonce="{{ $csp_nonce ?? '' }}">
-function addRfqLine() {
+// Wired here (not inline onclick): the app's nonce + strict-dynamic CSP blocks
+// inline handlers, which is why "Add another part" did nothing before.
+(function () {
     var lines = document.getElementById('rfq-lines');
-    var first = lines.querySelector('.rfq-line');
-    var clone = first.cloneNode(true);
-    var inputs = clone.querySelectorAll('input');
-    for (var i = 0; i < inputs.length; i++) {
-        if (i === 1) inputs[i].value = '1';
-        else inputs[i].value = '';
-    }
-    lines.appendChild(clone);
-}
-function removeRfqLine(btn) {
-    var all = document.querySelectorAll('.rfq-line');
-    if (all.length <= 1) return;
-    var row = btn.closest('.rfq-line');
-    if (row) row.remove();
-}
+    var addBtn = document.getElementById('rfq-add-line');
+    if (!lines || !addBtn) return;
+
+    addBtn.addEventListener('click', function () {
+        var first = lines.querySelector('.rfq-line');
+        if (!first) return;
+        var clone = first.cloneNode(true);
+        var inputs = clone.querySelectorAll('input');
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].value = inputs[i].name === 'quantity[]' ? '1' : '';
+        }
+        lines.appendChild(clone);
+        var firstInput = clone.querySelector('input');
+        if (firstInput) firstInput.focus();
+    });
+
+    // Delegation so cloned rows' Remove buttons work without re-binding.
+    lines.addEventListener('click', function (e) {
+        var btn = e.target.closest('.btn-remove');
+        if (!btn) return;
+        if (lines.querySelectorAll('.rfq-line').length <= 1) return;
+        var row = btn.closest('.rfq-line');
+        if (row) row.remove();
+    });
+})();
 </script>
 @endif
 @endsection
