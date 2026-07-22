@@ -19,20 +19,39 @@
 @php($publicBase = '/'.($marketplaceContext['locale'] ?? 'en'))
 <div class="wrap section">
     <nav class="crumbs" aria-label="Breadcrumb"><a href="{{ $publicBase }}">Home</a><span>/</span><a href="{{ $publicBase }}/brands">Brands</a><span>/</span><strong>{{ $brand->name }}</strong></nav>
-    <section class="panel" style="padding:28px;margin:20px 0 28px">
-        @if($brand->banner_path)<img src="{{ $brand->banner_path }}" alt="{{ $brand->name }} engineering products" width="1200" height="320" style="width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin-bottom:20px">@endif
-        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
-            @if($brand->logo_path)<img src="{{ $brand->logo_path }}" alt="{{ $brand->name }} logo" width="180" height="90" style="max-width:180px;max-height:90px;object-fit:contain;background:#fff;border-radius:10px;padding:8px">@else<div class="cat-icon" style="width:72px;height:72px;font-size:1.5rem">{{ strtoupper(substr($brand->name, 0, 1)) }}</div>@endif
-            <div style="flex:1;min-width:240px"><p class="eyebrow">Brand catalog</p><h1 class="section-title">{{ $brand->name }}</h1><p class="sub">{{ $brand->description ?: $brand->short_description ?: $pageSeo['description'] }}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge b-info">{{ number_format($products->total()) }} public products</span>@if($brand->manufacturer)<a class="badge b-muted" href="{{ $publicBase }}/manufacturer/{{ $brand->manufacturer->slug }}">Manufacturer: {{ $brand->manufacturer->name }}</a>@endif</div></div>
+    <section class="panel" style="padding:18px 20px;margin:16px 0 20px">
+        @if($brand->banner_path)<img src="{{ $brand->banner_path }}" alt="{{ $brand->name }} engineering products" width="1200" height="200" style="width:100%;max-height:150px;object-fit:cover;border-radius:10px;margin-bottom:14px">@endif
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+            @if($brand->logo_path)<img src="{{ $brand->logo_path }}" alt="{{ $brand->name }} logo" width="120" height="56" style="max-width:120px;max-height:56px;object-fit:contain;background:#fff;border-radius:8px;padding:6px">@else<div class="cat-icon" style="width:52px;height:52px;font-size:1.15rem">{{ strtoupper(substr($brand->name, 0, 1)) }}</div>@endif
+            <div style="flex:1;min-width:240px">
+                <h1 class="section-title" style="font-size:clamp(1.25rem,2.6vw,1.6rem);margin:0 0 4px">{{ $brand->name }}</h1>
+                <p class="sub" style="margin:0 0 8px;font-size:.9rem">{{ \Illuminate\Support\Str::limit(strip_tags($brand->description ?: $brand->short_description ?: $pageSeo['description']), 160) }}</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                    <span class="badge b-info">{{ number_format($brandProductTotal) }} products</span>
+                    @if($brand->manufacturer)<a class="badge b-muted" href="{{ $publicBase }}/manufacturer/{{ $brand->manufacturer->slug }}">{{ $brand->manufacturer->name }}</a>@endif
+                    @if($brand->website_url)<a class="badge b-muted" href="{{ $brand->website_url }}" rel="nofollow noopener" target="_blank">Official website</a>@endif
+                </div>
+            </div>
         </div>
     </section>
 
     @if($categories->isNotEmpty())<div class="section-head"><div><p class="eyebrow">Categories</p><h2>Product categories</h2></div></div><div class="category-grid grid" style="margin-bottom:34px">@foreach($categories as $category)<a class="category-card" href="{{ $publicBase }}/categories/{{ $category->slug }}"><h3>{{ $category->name }}</h3><span class="badge b-muted">{{ number_format($category->products_count) }} products</span></a>@endforeach</div>@endif
 
-    <form method="get" action="{{ $publicBase }}/products" style="display:flex;gap:8px;margin:0 0 14px">
-        <input type="hidden" name="brand_id" value="{{ $brand->id }}">
-        <input type="search" name="q" value="{{ request('q') }}" placeholder="Search within {{ $brand->name }}" aria-label="Search within {{ $brand->name }}" style="flex:1;max-width:480px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--s1);color:var(--on);font:inherit">
-        <button type="submit" class="btn btn-ghost btn-sm">Search</button>
+    <form method="get" action="{{ $publicBase }}/brand/{{ $brand->slug }}" style="display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap;align-items:center">
+        <input type="search" name="q" value="{{ $productSearch }}" placeholder="Search within {{ $brand->name }}" aria-label="Search within {{ $brand->name }}" style="flex:1;min-width:200px;max-width:420px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--s1);color:var(--on);font:inherit">
+        @if($categories->isNotEmpty())
+        <select name="category" aria-label="Filter by category" style="padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--s1);color:var(--on);font:inherit">
+            <option value="">All categories</option>
+            @foreach($categories as $category)<option value="{{ $category->id }}" @selected($productCategory === $category->id)>{{ $category->name }} ({{ $category->products_count }})</option>@endforeach
+        </select>
+        @endif
+        <select name="sort" aria-label="Sort products" style="padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--s1);color:var(--on);font:inherit">
+            <option value="featured" @selected($productSort==='featured')>Featured</option>
+            <option value="name" @selected($productSort==='name')>Name A–Z</option>
+            <option value="newest" @selected($productSort==='newest')>Newest</option>
+        </select>
+        <button type="submit" class="btn btn-ghost btn-sm">Apply</button>
+        @if($productSearch !== '' || $productCategory > 0 || $productSort !== 'featured')<a class="btn btn-ghost btn-sm" href="{{ $publicBase }}/brand/{{ $brand->slug }}">Reset</a>@endif
     </form>
     <div class="section-head"><div><p class="eyebrow">Catalog</p><h2>{{ $brand->name }} products</h2></div><a class="btn btn-ghost" href="{{ $publicBase }}/products?brand_id={{ $brand->id }}">Open filtered catalog</a></div>
     @if($products->count())
@@ -44,7 +63,13 @@
         </div>
         @if($products->hasPages())<div style="margin-top:24px">{{ $products->links() }}</div>@endif
     @else
-        <div class="panel" style="padding:28px"><h3>Brand page available</h3><p class="sub">No public products are currently listed for this brand. Regional stock, price, or RFQ availability does not affect this brand identity page.</p><a class="btn btn-primary" href="{{ $publicBase }}/rfq">Request a {{ $brand->name }} part</a></div>
+        <div class="panel" style="padding:28px">
+            @if($productSearch !== '' || $productCategory > 0)
+                <h3>No products match these filters</h3><p class="sub">Try a different search term or category.</p><a class="btn btn-primary" href="{{ $publicBase }}/brand/{{ $brand->slug }}">Reset filters</a>
+            @else
+                <h3>Brand page available</h3><p class="sub">No public products are currently listed for this brand. Regional stock, price, or RFQ availability does not affect this brand identity page.</p><a class="btn btn-primary" href="{{ $publicBase }}/rfq">Request a {{ $brand->name }} part</a>
+            @endif
+        </div>
     @endif
 
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:34px">

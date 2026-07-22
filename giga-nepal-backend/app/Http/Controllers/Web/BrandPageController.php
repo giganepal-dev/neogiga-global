@@ -129,6 +129,11 @@ class BrandPageController extends Controller
         $brand = $this->brands->findVisible($slug, $context['current'] ?? null, $context['locale'] ?? 'en', $request->getHost());
         abort_unless($brand, 404);
 
+        $search = trim((string) $request->query('q', ''));
+        $categoryFilter = (int) $request->query('category', 0);
+        $productSort = (string) $request->query('sort', 'featured');
+        $productSort = in_array($productSort, ['featured', 'name', 'newest'], true) ? $productSort : 'featured';
+
         $products = Product::query()
             ->with([
                 'category',
@@ -136,8 +141,17 @@ class BrandPageController extends Controller
             ])
             ->published()
             ->where('brand_id', $brand->id)
-            ->orderByDesc('is_featured')
-            ->orderBy('name')
+            ->when($categoryFilter > 0, fn ($query) => $query->where('category_id', $categoryFilter))
+            ->when($search !== '', function ($query) use ($search) {
+                // LOWER(...) LIKE keeps this portable across Postgres and SQLite.
+                $like = '%'.mb_strtolower($search).'%';
+                $query->where(fn ($match) => $match->whereRaw('LOWER(name) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(mpn) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(sku) LIKE ?', [$like]));
+            })
+            ->when($productSort === 'name', fn ($query) => $query->orderBy('name'))
+            ->when($productSort === 'newest', fn ($query) => $query->orderByDesc('id'))
+            ->when($productSort === 'featured', fn ($query) => $query->orderByDesc('is_featured')->orderBy('name'))
             ->paginate(24)
             ->withQueryString();
         $categoryIds = Product::query()->published()->where('brand_id', $brand->id)->whereNotNull('category_id')->distinct()->pluck('category_id');
@@ -153,6 +167,10 @@ class BrandPageController extends Controller
         return view('frontend.brands.show', [
             'brand' => $brand,
             'products' => $products,
+            'brandProductTotal' => Product::query()->published()->where('brand_id', $brand->id)->count(),
+            'productSearch' => $search,
+            'productCategory' => $categoryFilter,
+            'productSort' => $productSort,
             'categories' => $categories,
             'regionalAvailability' => $this->regionalAvailability($brand->id),
             'technicalResources' => $this->technicalResources($brand->id),
