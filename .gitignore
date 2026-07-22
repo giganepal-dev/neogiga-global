@@ -1,2 +1,86 @@
-# Documentation
-EMAIL_CAMPAIGN_MANAGER_STATUS.md
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
+
+# Dependencies
+node_modules/
+vendor/
+composer.lock
+*.lock
+.env
+.env.local
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Build directories
+dist/
+build/
+target/
+*.jar
+*.war
+*.zip
+*.tar.gz
+
+# Python specific
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+
+# PHP specific
+*.phar
+vendor/
+
+# Laravel specific
+storage/
+bootstrap/cache/
+
+# Compressed files
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+```
