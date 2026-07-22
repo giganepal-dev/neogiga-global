@@ -153,15 +153,38 @@ class ProductPageController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
+        // Related: same-category first, then same-brand, limited to avoid query timeout
         $related = Product::with([
             'brand',
             'images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1),
         ])
             ->published()
             ->where('id', '!=', $product->id)
-            ->when($product->category_id, fn ($q) => $q->where('category_id', $product->category_id))
-            ->limit(6)
+            ->where(function ($q) use ($product) {
+                $q->where('category_id', $product->category_id)
+                  ->orWhere('brand_id', $product->brand_id);
+            })
+            ->orderByDesc('is_featured')
+            ->orderByDesc('id')
+            ->limit(8)
             ->get();
+
+        // Fallback: if not enough, pad with same-category only
+        if ($related->count() < 4 && $product->category_id) {
+            $existingIds = $related->pluck('id')->push($product->id)->all();
+            $more = Product::with([
+                'brand',
+                'images' => fn ($query) => $query->where('is_active', true)->orderByDesc('is_primary')->orderBy('sort_order')->limit(1),
+            ])
+                ->published()
+                ->whereNotIn('id', $existingIds)
+                ->where('category_id', $product->category_id)
+                ->orderByDesc('is_featured')
+                ->orderByDesc('id')
+                ->limit(8 - $related->count())
+                ->get();
+            $related = $related->concat($more);
+        }
 
         $pageSeo = app(CatalogSeoTemplateService::class)->activeProduct(
             $product,
