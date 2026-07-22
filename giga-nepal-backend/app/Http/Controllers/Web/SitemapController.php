@@ -29,7 +29,7 @@ class SitemapController extends Controller
 {
     private const CHUNK_SIZE = 10000;
 
-    private const CACHE_VERSION = 'v3';
+    private const CACHE_VERSION = 'v4';
 
     public function __invoke(): Response
     {
@@ -189,10 +189,20 @@ class SitemapController extends Controller
             if ($isGlobal) {
                 $paths[] = ['path' => '/en/lms', 'priority' => '0.7'];
                 $paths[] = ['path' => '/en/rfq', 'priority' => '0.6'];
+                $paths[] = ['path' => '/en/bom', 'priority' => '0.7'];
+                $paths[] = ['path' => '/en/compare', 'priority' => '0.5'];
                 $paths[] = ['path' => '/en/sell-on-neogiga', 'priority' => '0.6'];
                 $paths[] = ['path' => '/en/distributors', 'priority' => '0.6'];
                 $paths[] = ['path' => '/en/ai-commerce', 'priority' => '0.7'];
             }
+        }
+
+        // PCB subdomain — separate host, always crawlable
+        if (config('pcb.enabled', true)) {
+            $pcbHost = rtrim(config('pcb.domain', 'pcb.neogiga.com'), '/');
+            $paths[] = ['path' => "https://{$pcbHost}/en", 'priority' => '0.9'];
+            $paths[] = ['path' => "https://{$pcbHost}/en/capabilities", 'priority' => '0.7'];
+            $paths[] = ['path' => "https://{$pcbHost}/en/design-rules", 'priority' => '0.6'];
         }
 
         return $paths;
@@ -349,6 +359,11 @@ class SitemapController extends Controller
 
     private function canonicalUrl(?Marketplace $marketplace, string $path): string
     {
+        // Absolute URLs (e.g. PCB subdomain) pass through unchanged
+        if (str_starts_with($path, 'https://') || str_starts_with($path, 'http://')) {
+            return $path;
+        }
+
         return $marketplace
             ? app(MarketplaceUrlGenerator::class)->forMarketplace($marketplace, $path)
             : url($path);
