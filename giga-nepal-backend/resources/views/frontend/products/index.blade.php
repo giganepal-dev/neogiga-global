@@ -68,10 +68,11 @@
     .pcard-media{position:relative;display:block;aspect-ratio:4/3;margin:0 0 3px;border-radius:9px;overflow:hidden;background:var(--s2);border:1px solid var(--line)}
     .pcard-media img{display:block;width:100%;height:100%;object-fit:contain}
     .pcard h2{font-size:1rem;margin:0;line-height:1.35}
-    .pcard a{color:#0F172A;text-decoration:none}.pcard a:hover{color:#0369A1}
-    .pmeta{color:#64748B;font-size:.82rem}
-    .ptag{display:inline-block;background:#ECFEFF;color:#155E75;border-radius:999px;padding:2px 10px;font-size:.75rem;font-weight:600}
-    .pstock{font-size:.8rem;font-weight:600}.in{color:#065F46}.out{color:#991B1B}
+    .pcard a{color:var(--on);text-decoration:none}.pcard a:hover{color:var(--cyan)}
+    .pmeta{color:var(--muted);font-size:.82rem}.pcard .pmeta a{color:var(--muted)}.pcard .pmeta a:hover{color:var(--cyan)}
+    .ptag,.pcard .ptag{display:inline-block;background:#ECFEFF;color:#155E75;border-radius:999px;padding:2px 10px;font-size:.75rem;font-weight:700}
+    .pcard .btn-ghost{color:var(--on);border-color:var(--line);background:var(--s1)}.pcard .btn-ghost:hover{color:var(--cyan);border-color:var(--cyan)}
+    .pstock{font-size:.8rem;font-weight:700}.in{color:#10b981}.out{color:#f87171}
     .pempty{border:1px dashed rgba(15,23,42,.2);border-radius:12px;padding:48px;text-align:center;color:var(--muted);margin:24px 0}
     @media(max-width:1080px){.psearch{grid-template-columns:2fr 1fr 1fr}.psearch>.btn{width:auto}.pfilter-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
     @media(max-width:760px){.psearch{grid-template-columns:1fr 1fr}.psearch>input:first-child{grid-column:1/-1}.pfilter-grid{grid-template-columns:1fr 1fr}.psearch>.btn{width:100%}}
@@ -155,7 +156,7 @@
         </form>
     </div>
     <div class="pmeta">
-        {{ number_format($indexedSummary['documents'] ?? 0) }} products indexed and searchable across the NeoGiga catalog.
+        {{ number_format(($catalogTotal ?? 0) ?: ($indexedSummary['documents'] ?? 0)) }} products indexed and searchable across the NeoGiga catalog.
     </div>
     @if(($facetGroups['manufacturer'] ?? collect())->isNotEmpty() || ($facetGroups['stock'] ?? collect())->isNotEmpty())
         <div class="facetbar" aria-label="Indexed catalog facets">

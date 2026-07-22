@@ -34,4 +34,14 @@ class CatalogUiSecurityHeadersTest extends TestCase
             $this->assertStringNotContainsString('document.querySelectorAll', $structuredDataBlock);
         }
     }
+
+    public function test_catalog_cards_use_theme_aware_text_colours(): void
+    {
+        $blade = File::get(resource_path('views/frontend/products/index.blade.php'));
+
+        $this->assertStringContainsString('.pcard a{color:var(--on)', $blade);
+        $this->assertStringContainsString('.pcard .btn-ghost{color:var(--on)', $blade);
+        $this->assertStringContainsString('.pcard .ptag{display:inline-block', $blade);
+        $this->assertStringNotContainsString('.pcard a{color:#0F172A', $blade);
+    }
 }
