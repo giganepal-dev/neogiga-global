@@ -2191,4 +2191,36 @@ class DashboardController extends Controller
             return 0;
         }
     }
+
+    public function warehouse(): View
+    {
+        $warehouses = DB::table('warehouses')->orderBy('name')->get();
+        $zones = DB::table('warehouse_zones')->join('warehouses', 'warehouse_zones.warehouse_id', '=', 'warehouses.id')->select('warehouse_zones.*', 'warehouses.name as warehouse_name')->orderBy('warehouse_zones.name')->get();
+        $aisles = DB::table('warehouse_aisles')->join('warehouse_zones', 'warehouse_aisles.zone_id', '=', 'warehouse_zones.id')->select('warehouse_aisles.*', 'warehouse_zones.name as zone_name')->orderBy('warehouse_aisles.name')->get();
+        $racks = DB::table('warehouse_racks')->join('warehouse_aisles', 'warehouse_racks.aisle_id', '=', 'warehouse_aisles.id')->select('warehouse_racks.*', 'warehouse_aisles.name as aisle_name')->orderBy('warehouse_racks.name')->get();
+        $shelves = DB::table('warehouse_shelves')->join('warehouse_racks', 'warehouse_shelves.rack_id', '=', 'warehouse_racks.id')->select('warehouse_shelves.*', 'warehouse_racks.name as rack_name')->orderBy('warehouse_shelves.name')->get();
+        $bins = DB::table('warehouse_bins')->join('warehouse_shelves', 'warehouse_bins.shelf_id', '=', 'warehouse_shelves.id')->select('warehouse_bins.*', 'warehouse_shelves.name as shelf_name')->orderBy('warehouse_bins.name')->get();
+        return view('admin.warehouse', compact('warehouses', 'zones', 'aisles', 'racks', 'shelves', 'bins'));
+    }
+
+    public function barcode(): View
+    {
+        $definitions = DB::table('barcode_definitions')->orderBy('name')->get();
+        $recentBarcodes = DB::table('product_barcodes')->join('products', 'product_barcodes.product_id', '=', 'products.id')->select('product_barcodes.*', 'products.name as product_name')->orderByDesc('product_barcodes.created_at')->limit(50)->get();
+        $products = DB::table('products')->select('id', 'name', 'sku')->whereNotNull('sku')->orderBy('name')->limit(200)->get();
+        return view('admin.barcode', compact('definitions', 'recentBarcodes', 'products'));
+    }
+
+    public function supplierImports(): View
+    {
+        $suppliers = [
+            'adafruit' => 'Adafruit Industries',
+            'dfrobot' => 'DFRobot',
+            'seeed' => 'Seeed Studio',
+            'sparkfun' => 'SparkFun Electronics',
+            'waveshare' => 'Waveshare',
+            'okystar' => 'OKYSTAR',
+        ];
+        return view('admin.supplier-imports', compact('suppliers'));
+    }
 }

@@ -403,6 +403,25 @@ Route::prefix('admin')->group(function () {
         Route::post('pos/offline-sync-events', [AdminCommerce::class, 'storePosOfflineSyncEvent'])->middleware('throttle:20,1');
         Route::post('pos/offline-sync-events/{event}/status', [AdminCommerce::class, 'updatePosOfflineSyncEvent'])->whereNumber('event')->middleware('throttle:20,1');
 
+        // === Warehouse sub-location management ===
+        Route::get('warehouse', [AdminDash::class, 'warehouse']);
+        Route::post('warehouse/zones', [AdminCommerce::class, 'storeWarehouseZone'])->middleware('throttle:20,1');
+        Route::post('warehouse/zones/{zone}/toggle', [AdminCommerce::class, 'toggleWarehouseZone'])->whereNumber('zone')->middleware('throttle:20,1');
+        Route::post('warehouse/aisles', [AdminCommerce::class, 'storeWarehouseAisle'])->middleware('throttle:20,1');
+        Route::post('warehouse/racks', [AdminCommerce::class, 'storeWarehouseRack'])->middleware('throttle:20,1');
+        Route::post('warehouse/shelves', [AdminCommerce::class, 'storeWarehouseShelf'])->middleware('throttle:20,1');
+        Route::post('warehouse/bins', [AdminCommerce::class, 'storeWarehouseBin'])->middleware('throttle:20,1');
+
+        // === Barcode system ===
+        Route::get('barcode', [AdminDash::class, 'barcode']);
+        Route::post('barcode/definitions', [AdminCommerce::class, 'storeBarcodeDefinition'])->middleware('throttle:20,1');
+        Route::post('barcode/generate', [AdminCommerce::class, 'generateBarcodes'])->middleware('throttle:10,1');
+        Route::post('barcode/definitions/{def}/toggle', [AdminCommerce::class, 'toggleBarcodeDefinition'])->whereNumber('def')->middleware('throttle:20,1');
+
+        // === Supplier catalog importers ===
+        Route::get('imports/suppliers', [AdminDash::class, 'supplierImports']);
+        Route::post('imports/suppliers/{supplier}/run', [AdminCommerce::class, 'runSupplierImport'])->whereIn('supplier', ['adafruit','dfrobot','seeed','sparkfun','waveshare','okystar'])->middleware('throttle:4,1');
+
         Route::get('marketing', [AdminDash::class, 'marketing'])->middleware('admin.web.permission:campaigns.view');
         Route::get('marketing/crm', [AdminDash::class, 'crm'])->middleware('admin.web.permission:customers.view');
         Route::get('marketing/customer-imports', [AdminCustomerImport::class, 'index'])->middleware('admin.web.permission:customers.import');

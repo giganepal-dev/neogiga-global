@@ -44,6 +44,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M8 11l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             ElecForest Imports
         </a>
+        <a href="/admin/imports/suppliers" class="{{ str_starts_with($r,'admin/imports/suppliers') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            Supplier Imports
+        </a>
         <a href="/admin/seo" class="{{ str_starts_with($r,'admin/seo') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg>
             SEO
@@ -102,6 +106,14 @@
         <a href="/admin/inventory" class="{{ str_starts_with($r,'admin/inventory') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7" stroke-linejoin="round"/></svg>
             Inventory
+        </a>
+        <a href="/admin/warehouse" class="{{ str_starts_with($r,'admin/warehouse') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Warehouse Map
+        </a>
+        <a href="/admin/barcode" class="{{ str_starts_with($r,'admin/barcode') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h2v14H3zm4 0h1v14H7zm3 0h2v14h-2zm4 0h1v14h-1zm3 0h3v14h-3zM3 5h2m-2 14h2"/></svg>
+            Barcode System
         </a>
         <a href="/admin/bom-imports" class="{{ str_starts_with($r,'admin/bom-imports') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h14v16H5z" stroke-linejoin="round"/><path d="M17 16l2 2 3-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
