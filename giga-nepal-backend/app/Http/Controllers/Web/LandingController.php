@@ -13,6 +13,7 @@ use App\Services\Marketplace\MarketplaceSeoRenderer;
 use App\Services\Marketplace\MarketplaceUrlGenerator;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
 class LandingController extends Controller
@@ -60,15 +61,17 @@ class LandingController extends Controller
         $canonicalUrl = $marketplaceSeo['canonical'];
         $locale = $marketplaceContext['locale'] ?? 'en';
 
-        $categories = $this->categories();
-        $products = $this->products((int) ($current?->id ?? 0));
-        $brands = $this->brands();
-        $stats = [
+        $cacheKey = 'landing:'.($current?->id ?? 'global');
+
+        $categories = Cache::remember($cacheKey.':categories', now()->addHour(), fn () => $this->categories());
+        $products = Cache::remember($cacheKey.':products', now()->addMinutes(10), fn () => $this->products((int) ($current?->id ?? 0)));
+        $brands = Cache::remember($cacheKey.':brands', now()->addHour(), fn () => $this->brands());
+        $stats = Cache::remember($cacheKey.':stats', now()->addMinutes(30), fn () => [
             'marketplaces' => $this->safeCount(Marketplace::class),
             'products' => $this->safePublishedProductCount(),
             'categories' => $this->safeCount(ProductCategory::class),
             'brands' => $this->safeCount(ProductBrand::class),
-        ];
+        ]);
 
         $homeSchema = [
             '@context' => 'https://schema.org',

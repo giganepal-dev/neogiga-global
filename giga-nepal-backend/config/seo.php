@@ -16,9 +16,7 @@ return [
 
     'default_title' => 'NeoGiga — Engineering the Future | Semiconductors, Electronics, IoT, Robotics',
     'title_template' => '%s | NeoGiga',
-    'default_description' => 'NeoGiga is the global engineering ecosystem: semiconductors, electronic components, '
-        . 'IoT, robotics, industrial automation, battery technology, power storage, AI hardware and engineering '
-        . 'tools — with learning resources and AI-assisted commerce.',
+    'default_description' => 'Discover electronics, semiconductors, IoT, robotics and industrial components on NeoGiga. Browse verified products or request bulk quotes.',
 
     'social' => [
         'handle' => '@NeoGigaGlobal',

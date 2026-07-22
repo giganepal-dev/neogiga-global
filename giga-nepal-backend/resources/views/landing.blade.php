@@ -1,7 +1,7 @@
 @extends('frontend.layout')
 
 @section('title', $marketplaceSeo['title'] ?? 'NeoGiga — Global Engineering Marketplace')
-@section('description', $marketplaceSeo['description'] ?? 'Source semiconductors, electronic components, robotics, IoT, automation and engineering tools through NeoGiga.')
+@section('description', $marketplaceSeo['description'] ?? 'Discover electronics, semiconductors, IoT, robotics and industrial components on NeoGiga. Browse verified products or request bulk quotes.')
 
 @php
     $activePrefix = strtolower((string) request()->segment(1));
@@ -18,7 +18,7 @@
 
 @push('head')
     <script type="application/ld+json">@json($homeSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)</script>
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         .home-status{display:grid;gap:12px;padding:24px}.home-status-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--line)}.home-status-row:last-child{border:0}.home-status-row span{color:var(--muted)}.home-status-row strong{color:#fff;text-align:right}.home-stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--glass)}.home-stat{padding:24px;border-right:1px solid var(--line)}.home-stat:last-child{border:0}.home-stat strong{display:block;color:#fff;font-size:clamp(1.7rem,3vw,2.35rem);line-height:1}.home-stat span{display:block;color:var(--muted);font-size:.82rem;margin-top:7px}.home-product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.home-product-card{padding:0;overflow:hidden}.home-product-card .product-copy{display:grid;gap:9px;padding:18px}.home-product-card h3{margin:0;font-size:1rem}.home-product-card .product-img img{width:100%;height:100%;object-fit:contain;background:#081527}.home-price{color:var(--cyan);font-size:1.1rem;font-weight:700}.home-brand-row{display:flex;gap:10px;flex-wrap:wrap}.home-brand-row a{border:1px solid var(--line);border-radius:999px;padding:9px 14px;color:var(--muted);font-size:.84rem;transition:.15s}.home-brand-row a:hover{border-color:var(--cyan);color:var(--cyan)}.home-capabilities{grid-template-columns:repeat(4,minmax(0,1fr))}.home-editions{grid-template-columns:repeat(3,minmax(0,1fr))}.home-edition{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px}.home-edition:hover{border-color:var(--cyan)}.home-edition strong{display:block}.home-edition small{color:var(--muted)}.home-cta{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:32px}.home-cta h2{margin:0 0 8px}.home-cta p{margin:0;color:var(--muted)}
         @media(max-width:980px){.home-product-grid,.home-capabilities{grid-template-columns:repeat(2,minmax(0,1fr))}.home-editions{grid-template-columns:1fr 1fr}.home-stats{grid-template-columns:1fr 1fr}.home-stat:nth-child(2){border-right:0}.home-stat:nth-child(-n+2){border-bottom:1px solid var(--line)}}
         @media(max-width:620px){.home-product-grid,.home-capabilities,.home-editions{grid-template-columns:1fr}.home-stats{grid-template-columns:1fr}.home-stat,.home-stat:nth-child(2){border-right:0;border-bottom:1px solid var(--line)}.home-stat:last-child{border-bottom:0}.home-cta{display:grid}.home-cta .btn{width:100%}}

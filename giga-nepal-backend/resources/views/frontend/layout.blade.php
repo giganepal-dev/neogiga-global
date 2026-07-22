@@ -14,7 +14,7 @@
 @endphp
 <head>
 	    <!-- Google Tag Manager -->
-	    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	    <script nonce="{{ $csp_nonce ?? '' }}">(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 	    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 	    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 	    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
@@ -25,8 +25,8 @@
     <meta name="yandex-verification" content="208c27f08c871e90" />
     @if($gaId = config('marketing.analytics.ga_measurement_id'))
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $gaId }}"></script>
-    <script>
+    <script nonce="{{ $csp_nonce ?? '' }}" async src="https://www.googletagmanager.com/gtag/js?id={{ $gaId }}"></script>
+    <script nonce="{{ $csp_nonce ?? '' }}">
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
@@ -57,7 +57,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url('/images/brand/neogiga-apple-touch-icon-180.png') }}">
     <x-icon-styles/>
     @stack('head')
-    <style>
+    <style nonce="{{ $csp_nonce ?? '' }}">
         /* NeoGiga "Precision Engineering" design system — light professional edition */
         :root{--bg:#f5f7fa;--bg2:#eef1f6;--s1:#ffffff;--s2:#f8fafc;--s3:#eef1f6;--blue:#0f5bd7;--cyan:#0f62e6;--gold:#f59e0b;--white:#fff;--soft:#33445c;--on:#1e2a36;--muted:#54657a;--faint:#8a97a8;--ink:#1e2a36;--line:#dfe6ef;--glass:#ffffff;--success:#0e9f6e;--max:1280px;--r:14px}
         *{box-sizing:border-box}html{scroll-behavior:smooth}
@@ -231,7 +231,7 @@
     <div class="wrap">
         <div class="foot-grid">
             <div><a class="brand" href="{{ $publicBase }}"><span class="mark"><img src="{{ url('/images/brand/neogiga-icon-192.png') }}" alt="" width="30" height="30" aria-hidden="true"></span><span>NeoGiga<small>Engineering the Future</small></span></a><p>Global marketplace for semiconductors, IoT, robotics, automation, battery technology, power storage and industrial engineering tools.</p><form class="newsletter" method="post" action="/api/v1/newsletter/subscribe"><input type="email" name="email" placeholder="Engineering newsletter" aria-label="Email"><button class="btn btn-gold" type="submit"><x-icon name="email" size="16"/> Subscribe</button></form></div>
-            <div><h3>Information</h3><a href="/about">About NeoGiga</a><a href="/contact">Contact Us</a><a href="/quality-assurance">Quality Assurance</a><a href="/terms">Terms and Conditions</a><a href="/privacy">Privacy Policy</a><a href="/cookie-notice">Cookie Notice</a></div>
+            <div><h3>Information</h3><a href="/about">About NeoGiga</a><a href="/contact">Contact Us</a><a href="/quality-assurance">Quality Assurance</a><a href="/terms">Terms and Conditions</a><a href="/privacy">Privacy Policy</a><a href="/cookie-notice">Cookie Notice</a><a href="https://www.ipc.org" target="_blank" rel="noopener noreferrer">IPC Standards</a><a href="https://www.ieee.org" target="_blank" rel="noopener noreferrer">IEEE</a></div>
             <div><h3>Tools</h3><a href="{{ $publicBase }}/bom">BOM Tool / RFQ</a><a href="/tools/smd-marking-code-identifier">SMD Code Identifier</a><a href="https://pcb.neogiga.com/en">PCB Fabrication</a><a href="{{ $publicBase }}/ai-commerce">AI Project Builder</a><a href="{{ $publicBase }}/lms">Learning Hub</a><a href="{{ $publicBase }}/distributors">Warehouse Network</a></div>
             <div><h3>Customer Service</h3><a href="/how-to-order">How to Order</a><a href="/shipping">International Shipping</a><a href="/returns">Return Policy</a><a href="/payment-terms">Orders &amp; Payment Terms</a><a href="/faq">FAQ</a></div>
             <div><h3>Sell &amp; Partner</h3><a href="{{ $publicBase }}/sell-on-neogiga">Become a Seller</a><a href="{{ $publicBase }}/seller-early-access">Seller Early Access</a><a href="/seller/login">Seller Portal</a><a href="/distributor/login">Distributor Portal</a><a href="{{ $publicBase }}#regional-editions">Regional Editions</a></div>

@@ -105,6 +105,9 @@ Route::get('/health', HealthController::class)->withoutMiddleware([
     ValidateCsrfToken::class,
 ]);
 
+// Security vulnerability disclosure (RFC 9116)
+Route::redirect('/security.txt', '/.well-known/security.txt', 301);
+
 // Email preference management
 Route::get('/email/unsubscribe/{token}', [EmailPreferenceController::class, 'unsubscribe'])
     ->middleware('throttle:60,1')->name('email.unsubscribe');

@@ -1,0 +1,7 @@
+Contact: mailto:security@neogiga.com
+Expires: 2027-07-22T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://neogiga.com/.well-known/security.txt
+Policy: https://neogiga.com/security-policy
+Encryption: https://neogiga.com/pgp-key.txt
+Acknowledgments: https://neogiga.com/hall-of-fame

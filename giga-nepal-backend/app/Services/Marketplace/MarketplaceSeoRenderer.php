@@ -20,7 +20,7 @@ class MarketplaceSeoRenderer
 {
     private const DEFAULT_TITLE = 'NeoGiga — Global Engineering Marketplace';
 
-    private const DEFAULT_DESCRIPTION = 'Semiconductors, electronics, IoT, robotics, batteries and engineering tools — sourced globally, delivered regionally.';
+    private const DEFAULT_DESCRIPTION = 'Discover electronics, semiconductors, IoT, robotics and industrial components on NeoGiga. Browse verified products or request bulk quotes.';
 
     public function __construct(
         private readonly MarketplaceSeoService $seo,
