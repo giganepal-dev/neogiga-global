@@ -88,9 +88,29 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7l2-7z"/></svg>
             Coupons &amp; Gift Cards
         </a>
-        <a href="/admin/pos" class="{{ str_starts_with($r,'admin/pos') ? 'active':'' }}">
+        <a href="/admin/pos" class="{{ $r==='admin/pos' ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8" stroke-linecap="round"/></svg>
-            POS
+            POS Dashboard
+        </a>
+        <a href="/admin/pos/manage" class="{{ str_starts_with($r,'admin/pos/manage') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/></svg>
+            Registers
+        </a>
+        <a href="/admin/pos/history" class="{{ str_starts_with($r,'admin/pos/history') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Register History
+        </a>
+        <a href="/admin/pos/z-reports" class="{{ str_starts_with($r,'admin/pos/z-reports') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 7h18M8 7v10M16 7v10" stroke-linecap="round"/></svg>
+            Z-Reports
+        </a>
+        <a href="/admin/pos/rewards" class="{{ str_starts_with($r,'admin/pos/rewards') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7l2-7z"/></svg>
+            Rewards
+        </a>
+        <a href="/admin/pos/instalments" class="{{ str_starts_with($r,'admin/pos/instalments') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18" stroke-linecap="round"/></svg>
+            Instalments
         </a>
         <a href="/admin/support" class="{{ str_starts_with($r,'admin/support') ? 'active':'' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 01-8 8H7l-4 3v-6.2A8 8 0 1113 20" stroke-linecap="round" stroke-linejoin="round"/></svg>

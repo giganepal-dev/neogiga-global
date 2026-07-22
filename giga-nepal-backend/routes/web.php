@@ -343,6 +343,15 @@ Route::prefix('admin')->group(function () {
         Route::post('pos/shifts/open', [PosAdminController::class, 'openShift'])->name('admin.pos.open-shift');
         Route::post('pos/shifts/close', [PosAdminController::class, 'closeShift'])->name('admin.pos.close-shift');
 
+        // POS advanced: register history, Z-reports, rewards, instalments
+        Route::get('pos/history', [PosAdminController::class, 'registerHistory'])->name('admin.pos.history');
+        Route::get('pos/z-reports', [PosAdminController::class, 'zReports'])->name('admin.pos.zreports');
+        Route::get('pos/rewards', [PosAdminController::class, 'rewards'])->name('admin.pos.rewards');
+        Route::post('pos/rewards/systems', [AdminCommerce::class, 'storeRewardSystem'])->middleware('throttle:20,1');
+        Route::post('pos/rewards/systems/{id}/toggle', [AdminCommerce::class, 'toggleRewardSystem'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::get('pos/instalments', [PosAdminController::class, 'instalments'])->name('admin.pos.instalments');
+        Route::post('pos/instalments/{id}/mark-paid', [AdminCommerce::class, 'markInstalmentPaid'])->whereNumber('id')->middleware('throttle:20,1');
+
         Route::post('products/{product}/toggle', [AdminCommerce::class, 'deactivateProduct'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/stock', [AdminCommerce::class, 'adjustProductStock'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/regional-stock', [AdminCommerce::class, 'storeProductRegionalStock'])->whereNumber('product')->middleware('throttle:20,1');

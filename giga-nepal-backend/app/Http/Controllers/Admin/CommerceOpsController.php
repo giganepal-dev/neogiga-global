@@ -3782,4 +3782,27 @@ class CommerceOpsController extends Controller
         \Illuminate\Support\Facades\Artisan::queue($cmd);
         return back()->with('status', "Queued {$supplier} import. Check queue worker.");
     }
+
+    // === POS Advanced: Rewards & Instalments ===
+
+    public function storeRewardSystem(Request $request): RedirectResponse
+    {
+        $d = $request->validate(['name' => 'required|string|max:100', 'type' => 'required|string|in:points,cashback,discount', 'target' => 'required|numeric|min:1', 'reward_value' => 'required|numeric|min:0.01', 'min_order' => 'nullable|numeric|min:0']);
+        DB::table('pos_reward_systems')->insert(['name' => $d['name'], 'type' => $d['type'], 'target' => $d['target'], 'reward_value' => $d['reward_value'], 'min_order' => $d['min_order'] ?? null, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        return back()->with('status', 'Reward system added.');
+    }
+
+    public function toggleRewardSystem(Request $request, int $id): RedirectResponse
+    {
+        $rs = DB::table('pos_reward_systems')->find($id);
+        DB::table('pos_reward_systems')->where('id', $id)->update(['is_active' => !($rs->is_active ?? true), 'updated_at' => now()]);
+        return back()->with('status', 'Reward system updated.');
+    }
+
+    public function markInstalmentPaid(Request $request, int $id): RedirectResponse
+    {
+        $d = $request->validate(['payment_method' => 'required|string|max:50', 'reference' => 'nullable|string|max:100']);
+        DB::table('pos_order_instalments')->where('id', $id)->update(['status' => 'paid', 'paid_at' => now(), 'payment_method' => $d['payment_method'], 'reference' => $d['reference'] ?? null, 'updated_at' => now()]);
+        return back()->with('status', 'Instalment marked as paid.');
+    }
 }

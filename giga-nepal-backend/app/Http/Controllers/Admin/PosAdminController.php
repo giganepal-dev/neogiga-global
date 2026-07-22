@@ -146,4 +146,59 @@ class PosAdminController extends Controller
 
         return view('admin.pos.report', compact('sales', 'refunds', 'shifts', 'today'));
     }
+
+    public function registerHistory(): View
+    {
+        $history = DB::table('pos_register_history')
+            ->join('pos_registers', 'pos_register_history.register_id', '=', 'pos_registers.id')
+            ->leftJoin('users', 'pos_register_history.user_id', '=', 'users.id')
+            ->select('pos_register_history.*', 'pos_registers.name as register_name', 'users.name as user_name')
+            ->orderByDesc('pos_register_history.created_at')
+            ->limit(200)
+            ->get();
+
+        $registers = DB::table('pos_registers')->orderBy('name')->get();
+
+        return view('admin.pos.history', compact('history', 'registers'));
+    }
+
+    public function zReports(): View
+    {
+        $reports = DB::table('pos_z_reports')
+            ->join('pos_registers', 'pos_z_reports.register_id', '=', 'pos_registers.id')
+            ->leftJoin('users', 'pos_z_reports.closed_by', '=', 'users.id')
+            ->select('pos_z_reports.*', 'pos_registers.name as register_name', 'users.name as closed_by_name')
+            ->orderByDesc('pos_z_reports.report_date')
+            ->limit(100)
+            ->get();
+
+        return view('admin.pos.zreports', compact('reports'));
+    }
+
+    public function rewards(): View
+    {
+        $systems = DB::table('pos_reward_systems')->orderBy('name')->get();
+        $customerRewards = DB::table('pos_customer_rewards')
+            ->join('pos_reward_systems', 'pos_customer_rewards.reward_system_id', '=', 'pos_reward_systems.id')
+            ->join('users', 'pos_customer_rewards.customer_id', '=', 'users.id')
+            ->select('pos_customer_rewards.*', 'pos_reward_systems.name as system_name', 'users.name as customer_name', 'users.email')
+            ->orderByDesc('pos_customer_rewards.current_balance')
+            ->limit(100)
+            ->get();
+
+        return view('admin.pos.rewards', compact('systems', 'customerRewards'));
+    }
+
+    public function instalments(): View
+    {
+        $instalments = DB::table('pos_order_instalments')
+            ->join('orders', 'pos_order_instalments.order_id', '=', 'orders.id')
+            ->leftJoin('users', 'orders.user_id', '=', 'users.id')
+            ->select('pos_order_instalments.*', 'orders.order_number', 'users.name as customer_name')
+            ->orderByDesc('pos_order_instalments.created_at')
+            ->limit(100)
+            ->get();
+
+        return view('admin.pos.instalments', compact('instalments'));
+    }
 }
