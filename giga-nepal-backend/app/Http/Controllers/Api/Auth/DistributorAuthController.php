@@ -14,14 +14,18 @@ use App\Services\Distributor\DistributorRegistrationService;
 use App\Services\Marketing\AccountCommunicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Services\Partner\PartnerCountryService;
 
 class DistributorAuthController extends Controller
 {
     use ApiResponses;
 
-    public function register(DistributorRegisterRequest $request, DistributorRegistrationService $registration, AuthService $auth, AccountCommunicationService $communications): JsonResponse
+    public function register(DistributorRegisterRequest $request, DistributorRegistrationService $registration, AuthService $auth, AccountCommunicationService $communications, PartnerCountryService $countries): JsonResponse
     {
-        [$user, $distributor] = $registration->register($request->validated());
+        $data = $request->validated();
+        $data['country_id'] = $countries->resolveSignupCountry($request, $data['country_id'] ?? null);
+        $data['operating_scope'] = $countries->normalizeScope($data['operating_scope'] ?? null);
+        [$user, $distributor] = $registration->register($data);
         $communications->application($user, 'distributor', (int) $distributor->id);
 
         return $this->success([

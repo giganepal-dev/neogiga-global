@@ -1,7 +1,7 @@
 @extends('distributor.layout')
 @section('title','Dashboard')
 @section('content')
-<div class="page-intro"><h1>{{ $distributor->name }}</h1><p>{{ ucfirst($distributor->type ?? 'distributor') }} · {{ ucfirst($distributor->status ?? 'pending') }}</p></div>
+<div class="page-intro"><h1>{{ $distributor->name }}</h1><p>{{ ($distributor->operating_scope ?? 'country') === 'global' ? 'Global distributor' : 'Single-country distributor' }} · {{ ucfirst($distributor->status ?? 'pending') }}</p></div>
 <div class="kpi-grid">
     <div class="kpi"><div class="t">Territories</div><div class="v">{{ number_format($overview['territories'] ?? 0) }}</div></div>
     <div class="kpi"><div class="t">Orders</div><div class="v">{{ number_format($overview['orders'] ?? 0) }}</div><div class="s">Territory orders</div></div>

@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\Marketplace\MarketplaceController;
 use App\Http\Controllers\Api\Messaging\MessagingController;
 use App\Http\Controllers\Api\Onboarding\DistributorApplicationController as PublicDistributorApplicationController;
 use App\Http\Controllers\Api\Onboarding\SellerApplicationController;
+use App\Http\Controllers\Api\Onboarding\PartnerCountryController;
 use App\Http\Controllers\Api\Order\OrderController;
 use App\Http\Controllers\Api\POS\PosController;
 use App\Http\Controllers\Api\Product\BrandController;
@@ -69,6 +70,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('v1')->group(function () {
+    Route::get('/partner-country-options', [PartnerCountryController::class, 'index'])->middleware('throttle:60,1');
     // Public, read-only catalog contract for AI agents and MCP integrations.
     // Product access remains constrained by ProductPublicationGate.
     Route::prefix('ai-catalog')->middleware('throttle:30,1')->group(function () {
@@ -836,6 +838,7 @@ Route::middleware('admin.token')->prefix('v1/admin')->group($productMediaAdmin);
 */
 Route::post('/seller-applications', [SellerApplicationController::class, 'store'])->middleware('throttle:writes');
 Route::post('/distributor-applications', [PublicDistributorApplicationController::class, 'store'])->middleware('throttle:writes');
+Route::get('/partner-country-options', [PartnerCountryController::class, 'index'])->middleware('throttle:60,1');
 
 Route::prefix('commerce-ai')->group(function () {
     Route::get('/examples', [CommerceAiDemoController::class, 'examples']);

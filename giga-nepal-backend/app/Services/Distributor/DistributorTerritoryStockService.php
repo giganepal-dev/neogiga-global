@@ -126,12 +126,24 @@ class DistributorTerritoryStockService
                 $inner->whereNull('inventory_stocks.is_active')->orWhere('inventory_stocks.is_active', true);
             });
 
+        if (($distributor->operating_scope ?? 'country') === 'global') {
+            return $query;
+        }
+
         $territories = array_values(array_filter(
             $this->territories($distributor),
             fn (array $territory) => ! empty($territory['country_id'])
                 || ! empty($territory['region_id'])
                 || ! empty($territory['city_id']),
         ));
+
+        if ($territories === [] && $distributor->country_id) {
+            $territories[] = [
+                'country_id' => $distributor->country_id,
+                'region_id' => null,
+                'city_id' => null,
+            ];
+        }
 
         if ($territories === []) {
             $query->whereRaw('1 = 0');
@@ -162,6 +174,8 @@ class DistributorTerritoryStockService
 
         return DB::table('distributor_territories')
             ->where('distributor_id', $distributor->id)
+            ->when(($distributor->operating_scope ?? 'country') === 'country' && $distributor->country_id,
+                fn ($query) => $query->where('country_id', $distributor->country_id))
             ->get(['country_id', 'region_id', 'city_id', 'territory_name', 'exclusive'])
             ->map(fn ($row) => (array) $row)
             ->all();

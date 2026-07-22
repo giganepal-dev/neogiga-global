@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Distributor extends Model
 {
-    protected $fillable = ['user_id', 'parent_id', 'name', 'slug', 'email', 'phone', 'type', 'status', 'country_id', 'approved_by', 'approved_at', 'rejection_reason', 'metadata'];
+    protected $fillable = ['user_id', 'parent_id', 'name', 'slug', 'email', 'phone', 'type', 'status', 'country_id', 'operating_scope', 'approved_by', 'approved_at', 'rejection_reason', 'metadata'];
 
     protected $casts = ['approved_at' => 'datetime', 'metadata' => 'array'];
 

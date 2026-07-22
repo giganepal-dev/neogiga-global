@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Models\Marketplace\Marketplace;
 
 class SellerRegistrationService
 {
@@ -44,6 +45,7 @@ class SellerRegistrationService
                 'website' => $data['website'] ?? null,
                 'description' => $data['description'] ?? null,
                 'country_id' => $data['country_id'] ?? null,
+                'operating_scope' => $data['operating_scope'] ?? 'country',
                 'tax_number' => $data['tax_number'] ?? null,
                 'registration_number' => $data['registration_number'] ?? null,
                 'status' => 'pending',
@@ -67,6 +69,20 @@ class SellerRegistrationService
                     'registration_source' => 'seller_register_api',
                 ],
             ]);
+
+            $marketplaces = Marketplace::query()->where('is_active', true)
+                ->when(($data['operating_scope'] ?? 'country') !== 'global', fn ($query) => $query->where('country_id', $data['country_id']))
+                ->pluck('id');
+            foreach ($marketplaces as $marketplaceId) {
+                $vendor->marketplaceApprovals()->create([
+                    'marketplace_id' => $marketplaceId,
+                    'status' => 'pending',
+                    'application_notes' => ($data['operating_scope'] ?? 'country') === 'global'
+                        ? 'Global seller access requested during registration.'
+                        : 'Single-country seller access requested during registration.',
+                    'metadata' => ['operating_scope' => $data['operating_scope'] ?? 'country'],
+                ]);
+            }
 
             return [$user, $vendor];
         });

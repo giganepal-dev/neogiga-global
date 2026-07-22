@@ -18,6 +18,8 @@ class SellerDashboardService
                 'status' => $vendor->status,
                 'commerce_status' => Schema::hasColumn('vendors', 'commerce_status') ? $vendor->commerce_status : $vendor->status,
                 'is_verified' => (bool) $vendor->is_verified,
+                'operating_scope' => $vendor->operating_scope ?? 'country',
+                'country_id' => $vendor->country_id,
             ],
             'onboarding' => $this->onboarding($vendor),
             'products' => $this->productSummary($vendor),

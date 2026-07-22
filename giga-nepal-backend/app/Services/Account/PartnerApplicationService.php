@@ -110,6 +110,7 @@ class PartnerApplicationService
             'user_id' => $a->user_id, 'name' => $a->company_name, 'slug' => $slug, 'email' => $user->email,
             'phone' => $a->contact_phone, 'website' => $a->website, 'description' => $a->business_description,
             'tax_number' => $a->tax_number, 'registration_number' => $a->registration_number,
+            'country_id' => $a->country_id ?? null, 'operating_scope' => $a->operating_scope ?? 'country',
             'status' => 'active', 'type' => 'company', 'is_verified' => true,
             'metadata' => json_encode(['account_application_id' => $a->id]), 'verified_at' => now(), 'created_at' => now(), 'updated_at' => now(),
         ]);
@@ -122,6 +123,7 @@ class PartnerApplicationService
         return DB::table('distributors')->insertGetId([
             'user_id' => $a->user_id, 'name' => $a->company_name, 'slug' => $slug, 'email' => $user->email,
             'phone' => $a->contact_phone, 'type' => $a->role_key === 'global_distributor' ? 'global' : 'regional',
+            'country_id' => $a->country_id ?? null, 'operating_scope' => $a->operating_scope ?? ($a->role_key === 'global_distributor' ? 'global' : 'country'),
             'status' => 'active', 'approved_by' => $reviewerId, 'approved_at' => now(),
             'metadata' => json_encode(['account_application_id' => $a->id, 'territory' => $a->territory]),
             'created_at' => now(), 'updated_at' => now(),

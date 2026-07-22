@@ -2,6 +2,10 @@
 
 ## 2026-07-22 - Production Session and Commerce Stability
 
+- Added one active-marketplace country policy across seller and distributor public applications, direct API registration, unified account applications, admin conversion and partner profile updates; active Cloudflare/locale geolocation is authoritative at signup and otherwise only active countries are selectable.
+- Added additive single-country/global operating scope fields for seller and distributor applications/accounts, carried scope through approval and API resources, surfaced it in both dashboards and profiles, and retained a home country for global-partner compliance.
+- Made regional distributor stock fail closed to the selected country while global distributors can use global stock visibility; new regional registrations receive a primary-country territory and global seller registrations create pending access requests for every active marketplace.
+- Added compatibility-only columns for the two pre-existing application table variants without replacing either module or deleting history, plus focused regression coverage for active-country filtering, geolocation override, fallback validation and both public application forms.
 - Upgraded the existing seller portal dashboard to use the established seller analytics service, added ownership-scoped inventory, payout, support, recent-order and recent-product views, and completed its navigation/profile identity treatment without replacing vendor data or APIs.
 - Expanded the existing distributor dashboard with owned order, lead, customer, support and recent-activity summaries, and made territory-stock aggregation database-portable while failing closed for territories without a country, region or city scope.
 - Corrected both application and production FastCGI cache boundaries so login and other stateful responses retain Laravel's private-cache and `Set-Cookie` headers, CSRF-backed pages are rejected from stale application cache entries, responses that rotate sessions are never cached, and authentication redirects are no longer stored; added regression coverage and retained the pre-change server configuration backup.

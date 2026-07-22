@@ -22,6 +22,7 @@ class DistributorRegisterRequest extends FormRequest
             'whatsapp' => ['nullable', 'string', 'max:40'],
             'password' => ['required', 'string', 'min:8', 'max:120'],
             'country_id' => ['nullable', 'integer', 'min:1'],
+            'operating_scope' => ['sometimes', Rule::in(['country', 'global'])],
             'distributor_type' => ['required', Rule::in(['country_distributor', 'regional_distributor', 'city_distributor', 'institutional_distributor', 'reseller', 'service_partner', 'affiliate_distributor'])],
             'registration_number' => ['nullable', 'string', 'max:120'],
             'tax_number' => ['nullable', 'string', 'max:120'],

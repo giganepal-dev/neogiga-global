@@ -11,7 +11,7 @@ class DistributorDashboardService
     public function overview(Distributor $distributor): array
     {
         return [
-            'distributor' => $distributor->only(['id', 'name', 'slug', 'type', 'status']),
+            'distributor' => $distributor->only(['id', 'name', 'slug', 'type', 'status', 'country_id', 'operating_scope']),
             'territories' => Schema::hasTable('distributor_territories') ? DB::table('distributor_territories')->where('distributor_id', $distributor->id)->count() : 0,
             'leads' => Schema::hasTable('distributor_leads') ? DB::table('distributor_leads')->where('distributor_id', $distributor->id)->count() : 0,
             'customers' => Schema::hasTable('distributor_customers') ? DB::table('distributor_customers')->where('distributor_id', $distributor->id)->count() : 0,

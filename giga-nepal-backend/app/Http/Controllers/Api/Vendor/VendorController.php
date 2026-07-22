@@ -9,6 +9,7 @@ use App\Models\Marketplace\VendorMarketplaceApproval;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Services\Partner\PartnerCountryService;
 
 class VendorController extends Controller
 {
@@ -49,7 +50,7 @@ class VendorController extends Controller
      * Creates a vendor in `pending` status; activation requires
      * marketplace-ops approval (never automatic).
      */
-    public function register(Request $request): JsonResponse
+    public function register(Request $request, PartnerCountryService $countries): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:2', 'max:150'],
@@ -61,7 +62,10 @@ class VendorController extends Controller
             'type' => ['required', 'in:individual,company,manufacturer,distributor'],
             'tax_number' => ['sometimes', 'nullable', 'string', 'max:60'],
             'registration_number' => ['sometimes', 'nullable', 'string', 'max:60'],
+            'operating_scope' => ['sometimes', 'in:country,global'],
         ]);
+        $validated['country_id'] = $countries->resolveSignupCountry($request, $validated['country_id'] ?? null);
+        $validated['operating_scope'] = $countries->normalizeScope($validated['operating_scope'] ?? null);
 
         $slug = Str::slug($validated['name']);
         $suffix = 1;
@@ -75,6 +79,16 @@ class VendorController extends Controller
             'status' => 'pending',
             'is_verified' => false,
         ]);
+
+        foreach ($countries->marketplaceIdsForScope($validated['operating_scope'], $validated['country_id']) as $marketplaceId) {
+            VendorMarketplaceApproval::create([
+                'vendor_id' => $vendor->id,
+                'marketplace_id' => $marketplaceId,
+                'status' => 'pending',
+                'application_notes' => 'Marketplace access requested during vendor application.',
+                'metadata' => ['operating_scope' => $validated['operating_scope']],
+            ]);
+        }
 
         return $this->success([
             'vendor' => $vendor->only(['id', 'name', 'slug', 'status']),

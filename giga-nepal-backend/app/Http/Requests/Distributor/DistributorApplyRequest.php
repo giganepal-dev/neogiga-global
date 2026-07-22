@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Distributor;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class DistributorApplyRequest extends FormRequest
 {
@@ -16,6 +17,7 @@ class DistributorApplyRequest extends FormRequest
             'phone' => ['sometimes', 'nullable', 'string', 'max:40'],
             'type' => ['required', 'in:country_distributor,regional_distributor,city_distributor,institutional_distributor,reseller,affiliate_distributor,service_partner'],
             'country_id' => ['sometimes', 'nullable', 'integer', 'exists:countries,id'],
+            'operating_scope' => ['sometimes', Rule::in(['country', 'global'])],
             'business_name' => ['sometimes', 'nullable', 'string', 'max:190'],
             'notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
         ];

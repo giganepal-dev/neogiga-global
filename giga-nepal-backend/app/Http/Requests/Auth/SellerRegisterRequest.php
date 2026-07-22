@@ -22,6 +22,7 @@ class SellerRegisterRequest extends FormRequest
             'whatsapp' => ['nullable', 'string', 'max:40'],
             'password' => ['required', 'string', 'min:8', 'max:120'],
             'country_id' => ['nullable', 'integer', 'min:1'],
+            'operating_scope' => ['sometimes', Rule::in(['country', 'global'])],
             'website' => ['nullable', 'url', 'max:255'],
             'business_type' => ['nullable', 'string', 'max:80'],
             'vendor_type' => ['nullable', Rule::in(['manufacturer', 'distributor', 'reseller', 'retailer', 'service_provider', 'importer', 'exporter'])],

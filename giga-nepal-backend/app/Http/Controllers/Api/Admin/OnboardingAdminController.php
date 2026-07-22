@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use App\Services\Partner\PartnerCountryService;
 
 class OnboardingAdminController extends Controller
 {
@@ -47,7 +48,7 @@ class OnboardingAdminController extends Controller
         return $this->success($record->fresh());
     }
 
-    public function convertSellerToVendor(Request $request, int $application, TransactionalCommunicationService $communications): JsonResponse
+    public function convertSellerToVendor(Request $request, int $application, TransactionalCommunicationService $communications, PartnerCountryService $countries): JsonResponse
     {
         if (! Schema::hasTable('vendors')) {
             return $this->error('Vendor table is not available.', 503);
@@ -63,8 +64,19 @@ class OnboardingAdminController extends Controller
             'slug' => $slug,
             'email' => $record->email,
             'phone' => $record->phone,
+            'country_id' => $record->country_id,
+            'operating_scope' => $record->operating_scope ?? 'country',
             'status' => 'pending',
+            'metadata' => ['source_application_id' => $record->id],
         ]);
+        foreach ($countries->marketplaceIdsForScope($record->operating_scope ?? 'country', (int) $record->country_id) as $marketplaceId) {
+            $vendor->marketplaceApprovals()->create([
+                'marketplace_id' => $marketplaceId,
+                'status' => 'pending',
+                'application_notes' => 'Access copied from approved seller application.',
+                'metadata' => ['source_application_id' => $record->id, 'operating_scope' => $record->operating_scope ?? 'country'],
+            ]);
+        }
         $record->forceFill([
             'status' => 'approved_for_onboarding',
             'reviewed_by' => $request->user()?->id,
@@ -123,9 +135,18 @@ class OnboardingAdminController extends Controller
             'phone' => $record->phone,
             'type' => $record->distributor_type,
             'country_id' => $record->country_id,
+            'operating_scope' => $record->operating_scope ?? 'country',
             'status' => 'pending',
-            'metadata' => ['source_application_id' => $record->id],
+            'metadata' => ['source_application_id' => $record->id, 'operating_scope' => $record->operating_scope ?? 'country'],
         ]);
+        if (($record->operating_scope ?? 'country') === 'country' && $record->country_id) {
+            $distributor->territories()->create([
+                'country_id' => $record->country_id,
+                'territory_name' => 'Primary country',
+                'exclusive' => false,
+                'can_manage_downlines' => false,
+            ]);
+        }
         $record->forceFill([
             'status' => 'approved_for_onboarding',
             'reviewed_by' => $request->user()?->id,

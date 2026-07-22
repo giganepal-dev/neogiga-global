@@ -10,7 +10,7 @@
     $onboardingDone = collect($onboarding)->filter()->count();
 @endphp
 <div class="page-intro page-intro--row">
-    <div><h1>{{ $v->name }}</h1><p>{{ $v->email ?? 'Seller account' }} · {{ ucfirst($overview['vendor']['commerce_status'] ?? $v->status ?? 'pending') }}</p></div>
+    <div><h1>{{ $v->name }}</h1><p>{{ ($v->operating_scope ?? 'country') === 'global' ? 'Global seller' : 'Single-country seller' }} · {{ $v->email ?? 'Seller account' }} · {{ ucfirst($overview['vendor']['commerce_status'] ?? $v->status ?? 'pending') }}</p></div>
     <span class="badge {{ ($overview['vendor']['is_verified'] ?? false) ? 'b-ok' : 'b-warn' }}">{{ ($overview['vendor']['is_verified'] ?? false) ? 'Verified seller' : 'Verification pending' }}</span>
 </div>
 

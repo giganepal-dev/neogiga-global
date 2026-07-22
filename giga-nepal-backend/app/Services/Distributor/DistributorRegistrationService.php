@@ -39,6 +39,7 @@ class DistributorRegistrationService
                 'type' => $data['distributor_type'],
                 'status' => 'pending',
                 'country_id' => $data['country_id'] ?? null,
+                'operating_scope' => $data['operating_scope'] ?? 'country',
                 'metadata' => [
                     'contact_person' => $data['contact_person'],
                     'whatsapp' => $data['whatsapp'] ?? null,
@@ -52,8 +53,17 @@ class DistributorRegistrationService
                 'tax_number' => $data['tax_number'] ?? null,
                 'registration_number' => $data['registration_number'] ?? null,
                 'address' => $data['address'] ?? null,
-                'capabilities' => ['type' => $data['distributor_type']],
+                'capabilities' => ['type' => $data['distributor_type'], 'operating_scope' => $data['operating_scope'] ?? 'country'],
             ]);
+
+            if (($data['operating_scope'] ?? 'country') === 'country') {
+                $distributor->territories()->create([
+                    'country_id' => $data['country_id'],
+                    'territory_name' => 'Primary country',
+                    'exclusive' => false,
+                    'can_manage_downlines' => false,
+                ]);
+            }
 
             return [$user, $distributor];
         });

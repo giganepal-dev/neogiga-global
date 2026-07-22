@@ -12,18 +12,19 @@
         <div class="account-empty">No partner applications submitted.</div>
     @else
         <div class="account-table-wrap"><table class="account-table">
-            <thead><tr><th>Application</th><th>Role</th><th>Company</th><th>Status</th><th>Submitted</th></tr></thead>
+            <thead><tr><th>Application</th><th>Role</th><th>Scope</th><th>Company</th><th>Status</th><th>Submitted</th></tr></thead>
             <tbody>
             @foreach($applications as $application)
                 <tr>
                     <td class="mono">{{ $application->application_number }}</td>
                     <td>{{ ucwords(str_replace('_',' ',$application->role_key)) }}</td>
+                    <td>{{ ($application->operating_scope ?? 'country') === 'global' ? 'Global' : 'Single country' }}</td>
                     <td>{{ $application->company_name }}</td>
                     <td><span class="account-badge {{ $application->status }}">{{ str_replace('_',' ',$application->status) }}</span></td>
                     <td>{{ $application->submitted_at ? \Carbon\Carbon::parse($application->submitted_at)->format('d M Y') : 'Draft' }}</td>
                 </tr>
                 @if($application->status === 'needs_information')
-                    <tr><td colspan="5">
+                    <tr><td colspan="6">
                         <form class="account-form" method="post" action="/account/applications/{{ $application->id }}/resubmit" enctype="multipart/form-data">
                             @csrf
                             <div class="account-form-grid">
@@ -47,6 +48,8 @@
         <div class="account-field"><label for="company_name">Company / institution</label><input id="company_name" name="company_name" value="{{ old('company_name') }}" required></div>
         <div class="account-field"><label for="legal_name">Legal name</label><input id="legal_name" name="legal_name" value="{{ old('legal_name') }}"></div>
         <div class="account-field"><label for="contact_phone">Contact phone</label><input id="contact_phone" name="contact_phone" value="{{ old('contact_phone') }}" required></div>
+        <div class="account-field"><label for="operating_scope">Operating scope</label><select id="operating_scope" name="operating_scope" required><option value="country" @selected(old('operating_scope','country')==='country')>Single country / regional</option><option value="global" @selected(old('operating_scope')==='global')>Global</option></select></div>
+        <div class="account-field"><label for="country_id">Registration country</label><select id="country_id" name="country_id">@if($detectedPartnerCountry)<option value="{{ $detectedPartnerCountry['id'] }}">{{ $detectedPartnerCountry['name'] }} (detected)</option>@else<option value="">Choose active country</option>@foreach($partnerCountries as $country)<option value="{{ $country->id }}" @selected((string)old('country_id')===(string)$country->id)>{{ $country->name }} ({{ $country->iso_code_2 }})</option>@endforeach @endif</select><span>Required for seller and distributor applications. {{ $detectedPartnerCountry ? 'Your active country was detected automatically.' : 'Choose a country where NeoGiga is active.' }}</span></div>
         <div class="account-field"><label for="registration_number">Registration number</label><input id="registration_number" name="registration_number" value="{{ old('registration_number') }}"></div>
         <div class="account-field"><label for="tax_number">Tax / VAT number</label><input id="tax_number" name="tax_number" value="{{ old('tax_number') }}"></div>
         <div class="account-field"><label for="website">Website</label><input id="website" type="url" name="website" value="{{ old('website') }}"></div>

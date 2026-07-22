@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Onboarding;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SellerApplicationRequest extends FormRequest
 {
@@ -20,6 +21,7 @@ class SellerApplicationRequest extends FormRequest
             'phone' => ['required', 'string', 'max:40'],
             'whatsapp' => ['nullable', 'string', 'max:40'],
             'country_id' => ['nullable', 'integer', 'min:1'],
+            'operating_scope' => ['sometimes', Rule::in(['country', 'global'])],
             'region_id' => ['nullable', 'integer', 'min:1'],
             'city_id' => ['nullable', 'integer', 'min:1'],
             'business_type' => ['required', 'string', 'max:80'],

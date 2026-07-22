@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
+use App\Services\Partner\PartnerCountryService;
 
 class DistributorPortalController extends Controller
 {
@@ -90,26 +91,46 @@ class DistributorPortalController extends Controller
         ));
     }
 
-    public function profile(Request $r): View
+    public function profile(Request $r, PartnerCountryService $countries): View
     {
-        return view('distributor.profile', ['distributor' => $r->attributes->get('distributor')]);
+        return view('distributor.profile', ['distributor' => $r->attributes->get('distributor'), 'countries' => $countries->activeCountries()]);
     }
 
-    public function updateProfile(Request $r): RedirectResponse
+    public function updateProfile(Request $r, PartnerCountryService $countries): RedirectResponse
     {
         $distributor = $r->attributes->get('distributor');
-        $meta = json_decode($distributor->metadata ?? '{}', true) ?: [];
-        $meta['website'] = $r->input('website', $meta['website'] ?? '');
-        $meta['description'] = $r->input('description', $meta['description'] ?? '');
+        $data = $r->validate([
+            'name' => ['required', 'string', 'max:190'], 'phone' => ['nullable', 'string', 'max:40'],
+            'country_id' => ['nullable', 'integer'], 'operating_scope' => ['required', 'in:country,global'],
+            'website' => ['nullable', 'url', 'max:255'], 'description' => ['nullable', 'string', 'max:3000'],
+        ]);
+        $data['country_id'] = ! empty($data['country_id'])
+            ? $countries->assertActiveCountryId($data['country_id'])
+            : ($distributor->status === 'pending' ? $countries->assertActiveCountryId(null) : null);
+        $data['operating_scope'] = $countries->normalizeScope($data['operating_scope']);
+        $scopeChangeRestricted = ! in_array($distributor->status, ['pending'], true)
+            && ($data['operating_scope'] !== ($distributor->operating_scope ?? 'country') || $data['country_id'] !== (int) $distributor->country_id);
+        if ($scopeChangeRestricted) {
+            $data['operating_scope'] = $distributor->operating_scope ?? 'country';
+            $data['country_id'] = (int) $distributor->country_id;
+        }
+        $meta = is_array($distributor->metadata)
+            ? $distributor->metadata
+            : (json_decode($distributor->metadata ?? '{}', true) ?: []);
+        $meta['website'] = $data['website'] ?? '';
+        $meta['description'] = $data['description'] ?? '';
         DB::table('distributors')->where('id', $distributor->id)->update([
-            'name' => $r->input('name'),
-            'phone' => $r->input('phone'),
-            'country_id' => $r->input('country_id') ?: null,
+            'name' => $data['name'],
+            'phone' => $data['phone'] ?? null,
+            'country_id' => $data['country_id'],
+            'operating_scope' => $data['operating_scope'],
             'metadata' => json_encode($meta),
             'updated_at' => now(),
         ]);
 
-        return back()->with('status', 'Profile updated.');
+        return back()->with('status', $scopeChangeRestricted
+            ? 'Profile updated. Open a support ticket to request a country or global-scope change.'
+            : 'Profile and operating scope updated. Territory changes remain subject to NeoGiga approval.');
     }
 
     public function products(Request $r): View

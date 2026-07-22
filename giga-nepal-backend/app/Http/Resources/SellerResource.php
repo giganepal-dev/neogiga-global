@@ -18,6 +18,7 @@ class SellerResource extends JsonResource
             'phone' => $this->phone,
             'website' => $this->website,
             'country_id' => $this->country_id,
+            'operating_scope' => $this->operating_scope ?? 'country',
             'status' => $this->status,
             'type' => $this->type,
             'commerce_status' => $this->commerce_status ?? null,

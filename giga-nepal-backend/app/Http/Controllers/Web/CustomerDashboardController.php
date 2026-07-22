@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Services\Account\AccountHubService;
 use App\Services\Marketplace\GlobalMarketplaceContextService;
+use App\Services\Partner\PartnerCountryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -383,15 +384,18 @@ class CustomerDashboardController extends Controller
         return back()->with('success', 'Address removed.');
     }
 
-    public function applications(Request $request): View
+    public function applications(Request $request, PartnerCountryService $partnerCountries): View
     {
+        $countryOptions = $partnerCountries->options($request);
         return view('frontend.account.applications', $this->shell($request) + [
             'catalog' => $this->hub->roleCatalog(),
             'applications' => $this->hub->owned('account_applications', $request->user()->id),
+            'partnerCountries' => $countryOptions['countries'],
+            'detectedPartnerCountry' => $countryOptions['detected_country'],
         ]);
     }
 
-    public function storeApplication(Request $request): RedirectResponse
+    public function storeApplication(Request $request, PartnerCountryService $partnerCountries): RedirectResponse
     {
         abort_unless(Schema::hasTable('account_applications'), 503, 'Account applications are being upgraded.');
         $data = $request->validate([
@@ -400,8 +404,22 @@ class CustomerDashboardController extends Controller
             'registration_number' => ['nullable', 'string', 'max:100'], 'tax_number' => ['nullable', 'string', 'max:100'],
             'contact_phone' => ['required', 'string', 'max:40'], 'website' => ['nullable', 'url', 'max:255'],
             'territory' => ['nullable', 'string', 'max:190'], 'business_description' => ['required', 'string', 'max:5000'],
+            'country_id' => ['nullable', 'integer', 'min:1'], 'operating_scope' => ['nullable', 'in:country,global'],
             'documents.*' => ['file', 'mimes:pdf,png,jpg,jpeg,webp', 'max:10240'],
         ]);
+        if (in_array($data['role_key'], ['seller', 'regional_distributor', 'global_distributor'], true)) {
+            $data['country_id'] = $partnerCountries->resolveSignupCountry($request, $data['country_id'] ?? null);
+            $data['operating_scope'] = match ($data['role_key']) {
+                'global_distributor' => 'global',
+                'regional_distributor' => 'country',
+                default => $partnerCountries->normalizeScope($data['operating_scope'] ?? null),
+            };
+            $data['marketplace_id'] = $partnerCountries->marketplaceIdForCountry($data['country_id']);
+        } else {
+            $data['country_id'] = ! empty($data['country_id']) ? $partnerCountries->assertActiveCountryId($data['country_id']) : null;
+            $data['operating_scope'] = 'country';
+            $data['marketplace_id'] = $request->user()->home_marketplace_id;
+        }
         $duplicate = DB::table('account_applications')->where('user_id', $request->user()->id)
             ->where('role_key', $data['role_key'])->whereIn('status', ['draft', 'submitted', 'under_review', 'needs_information', 'approved'])->exists();
         if ($duplicate) {
@@ -416,7 +434,8 @@ class CustomerDashboardController extends Controller
                 'registration_number' => $data['registration_number'] ?? null, 'tax_number' => $data['tax_number'] ?? null,
                 'contact_phone' => $data['contact_phone'], 'website' => $data['website'] ?? null,
                 'territory' => $data['territory'] ?? null, 'business_description' => $data['business_description'],
-                'marketplace_id' => $request->user()->home_marketplace_id, 'submitted_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+                'marketplace_id' => $data['marketplace_id'], 'country_id' => $data['country_id'],
+                'operating_scope' => $data['operating_scope'], 'submitted_at' => now(), 'created_at' => now(), 'updated_at' => now(),
             ]);
             foreach ($request->file('documents', []) as $file) {
                 $path = $file->store('account-applications/'.$id, 'local');

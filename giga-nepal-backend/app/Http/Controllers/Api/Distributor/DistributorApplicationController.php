@@ -9,18 +9,21 @@ use App\Models\Distributor\Distributor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use App\Services\Partner\PartnerCountryService;
 
 class DistributorApplicationController extends Controller
 {
     use ApiResponses;
 
-    public function apply(DistributorApplyRequest $request): JsonResponse
+    public function apply(DistributorApplyRequest $request, PartnerCountryService $countries): JsonResponse
     {
         if (! Schema::hasTable('distributors')) {
             return $this->error('Distributor foundation migration is pending.', 503);
         }
 
         $data = $request->validated();
+        $data['country_id'] = $countries->resolveSignupCountry($request, $data['country_id'] ?? null);
+        $data['operating_scope'] = $countries->normalizeScope($data['operating_scope'] ?? null);
         if (Distributor::where('email', $data['email'])->exists()) {
             return $this->error('A distributor application already exists for this email.', 422);
         }
@@ -39,6 +42,7 @@ class DistributorApplicationController extends Controller
             'phone' => $data['phone'] ?? null,
             'type' => $data['type'],
             'country_id' => $data['country_id'] ?? null,
+            'operating_scope' => $data['operating_scope'],
             'status' => 'pending',
             'metadata' => ['notes' => $data['notes'] ?? null],
         ]);

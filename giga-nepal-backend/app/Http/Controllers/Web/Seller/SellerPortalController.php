@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
+use App\Services\Partner\PartnerCountryService;
 
 class SellerPortalController extends Controller
 {
@@ -69,17 +70,44 @@ class SellerPortalController extends Controller
         return view('seller.dashboard', compact('v', 'overview', 'stats', 'recentProducts', 'recentOrders'));
     }
 
-    public function profile(Request $r): View
+    public function profile(Request $r, PartnerCountryService $countries): View
     {
-        return view('seller.profile', ['v' => $r->attributes->get('vendor')]);
+        return view('seller.profile', ['v' => $r->attributes->get('vendor'), 'countries' => $countries->activeCountries()]);
     }
 
-    public function updateProfile(Request $r): RedirectResponse
+    public function updateProfile(Request $r, PartnerCountryService $countries): RedirectResponse
     {
         $v = $r->attributes->get('vendor');
-        DB::table('vendors')->where('id', $v->id)->update(['name' => $r->input('name'), 'email' => $r->input('email'), 'phone' => $r->input('phone'), 'website' => $r->input('website'), 'description' => $r->input('description'), 'updated_at' => now()]);
+        $data = $r->validate([
+            'name' => ['required', 'string', 'max:190'], 'email' => ['nullable', 'email:rfc', 'max:190'],
+            'phone' => ['nullable', 'string', 'max:40'], 'website' => ['nullable', 'url', 'max:255'],
+            'description' => ['nullable', 'string', 'max:3000'], 'country_id' => ['nullable', 'integer'],
+            'operating_scope' => ['required', 'in:country,global'],
+        ]);
+        $data['country_id'] = ! empty($data['country_id'])
+            ? $countries->assertActiveCountryId($data['country_id'])
+            : ($v->status === 'pending' ? $countries->assertActiveCountryId(null) : null);
+        $data['operating_scope'] = $countries->normalizeScope($data['operating_scope']);
+        $scopeChangeRestricted = $v->status !== 'pending'
+            && ($data['operating_scope'] !== ($v->operating_scope ?? 'country') || $data['country_id'] !== (int) $v->country_id);
+        if ($scopeChangeRestricted) {
+            $data['operating_scope'] = $v->operating_scope ?? 'country';
+            $data['country_id'] = (int) $v->country_id;
+        }
+        DB::transaction(function () use ($v, $data, $countries): void {
+            DB::table('vendors')->where('id', $v->id)->update($data + ['updated_at' => now()]);
+            foreach ($data['country_id'] ? $countries->marketplaceIdsForScope($data['operating_scope'], $data['country_id']) : [] as $marketplaceId) {
+                DB::table('vendor_marketplace_approvals')->insertOrIgnore([
+                    'vendor_id' => $v->id, 'marketplace_id' => $marketplaceId, 'status' => 'pending',
+                    'application_notes' => 'Operating scope requested from seller profile.',
+                    'created_at' => now(), 'updated_at' => now(),
+                ]);
+            }
+        });
 
-        return back()->with('status', 'Profile updated.');
+        return back()->with('status', $scopeChangeRestricted
+            ? 'Profile updated. Open a support ticket to request a country or global-scope change.'
+            : 'Profile and operating scope updated. New marketplace access remains subject to approval.');
     }
 
     public function products(Request $r): View

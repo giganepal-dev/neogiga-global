@@ -20,6 +20,7 @@ class DistributorResource extends JsonResource
             'type' => $this->type,
             'status' => $this->status,
             'country_id' => $this->country_id,
+            'operating_scope' => $this->operating_scope ?? 'country',
             'approved_at' => $this->approved_at,
         ];
     }

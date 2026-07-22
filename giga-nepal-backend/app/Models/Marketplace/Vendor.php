@@ -23,6 +23,7 @@ class Vendor extends Model
         'logo_path',
         'banner_path',
         'country_id',
+        'operating_scope',
         'tax_number',
         'registration_number',
         'status',
