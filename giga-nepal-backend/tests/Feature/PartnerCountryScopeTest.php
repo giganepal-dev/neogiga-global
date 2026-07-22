@@ -20,6 +20,7 @@ class PartnerCountryScopeTest extends TestCase
             ->assertJsonPath('data.detected_country_id', $nepal)
             ->assertJsonPath('data.country_locked', true)
             ->assertJsonCount(2, 'data.countries')
+            ->assertJsonCount(2, 'data.marketplaces')
             ->assertJsonMissing(['id' => $usa]);
 
         $fallback = $this->withHeader('CF-IPCountry', 'US')->getJson('/api/partner-country-options');
@@ -31,7 +32,6 @@ class PartnerCountryScopeTest extends TestCase
     public function test_geolocated_active_country_overrides_submitted_country_for_global_seller_application(): void
     {
         [$nepal, $india] = $this->countries();
-
         $response = $this->withHeader('CF-IPCountry', 'NP')->postJson('/api/v1/vendors/register', [
             'name' => 'Global Components',
             'email' => 'neogiga.partner.test@gmail.com',
@@ -66,25 +66,31 @@ class PartnerCountryScopeTest extends TestCase
     public function test_public_seller_and_distributor_forms_persist_scope_and_active_country(): void
     {
         [$nepal, $india] = $this->countries();
+        $nepalMarketplace = (int) DB::table('marketplaces')->where('country_id', $nepal)->value('id');
+        $indiaMarketplace = (int) DB::table('marketplaces')->where('country_id', $india)->value('id');
 
         $this->withHeader('CF-IPCountry', 'NP')->postJson('/partner-applications/seller', [
             'business_name' => 'Public Seller', 'contact_person' => 'Seller Owner',
             'email' => 'neogiga.public.seller@gmail.com', 'phone' => '+9779800000001',
             'country_id' => $india, 'operating_scope' => 'global',
+            'target_marketplace_ids' => [$nepalMarketplace, $indiaMarketplace],
             'business_type' => 'Company', 'seller_type' => 'manufacturer',
         ])->assertCreated();
         $this->assertDatabaseHas('seller_applications', [
             'email' => 'neogiga.public.seller@gmail.com', 'country_id' => $nepal, 'operating_scope' => 'global',
+            'target_marketplace_ids' => json_encode([$nepalMarketplace, $indiaMarketplace]),
         ]);
 
         $this->withHeader('CF-IPCountry', 'US')->postJson('/partner-applications/distributor', [
             'business_name' => 'Public Distributor', 'contact_person' => 'Distributor Owner',
             'email' => 'neogiga.public.distributor@gmail.com', 'phone' => '+919800000001',
             'country_id' => $india, 'operating_scope' => 'country',
+            'target_marketplace_ids' => [$indiaMarketplace],
             'distributor_type' => 'regional_distributor',
         ])->assertCreated();
         $this->assertDatabaseHas('distributor_applications', [
             'email' => 'neogiga.public.distributor@gmail.com', 'country_id' => $india, 'operating_scope' => 'country',
+            'target_marketplace_ids' => json_encode([$indiaMarketplace]),
         ]);
     }
 
@@ -93,12 +99,30 @@ class PartnerCountryScopeTest extends TestCase
         $this->get('/en/sell-on-neogiga')->assertOk()
             ->assertSee('data-endpoint="/partner-applications/seller"', false)
             ->assertSee('name="_token"', false)
+            ->assertSee('Seller base country')
+            ->assertSee('name="target_marketplace_ids[]"', false)
             ->assertDontSee('data-endpoint="/api/seller-applications"', false);
 
         $this->get('/en/distributors')->assertOk()
             ->assertSee('data-endpoint="/partner-applications/distributor"', false)
             ->assertSee('name="_token"', false)
+            ->assertSee('Distributor base country')
+            ->assertSee('name="target_marketplace_ids[]"', false)
             ->assertDontSee('data-endpoint="/api/distributor-applications"', false);
+    }
+
+    public function test_single_country_application_rejects_multiple_target_marketplaces(): void
+    {
+        [$nepal, $india] = $this->countries();
+        $marketplaces = DB::table('marketplaces')->whereIn('country_id', [$nepal, $india])->pluck('id')->all();
+
+        $this->withHeader('CF-IPCountry', 'NP')->postJson('/partner-applications/seller', [
+            'business_name' => 'Invalid Targets', 'contact_person' => 'Seller Owner',
+            'email' => 'neogiga.invalid.targets@gmail.com', 'phone' => '+9779800000002',
+            'country_id' => $nepal, 'operating_scope' => 'country',
+            'target_marketplace_ids' => $marketplaces,
+            'business_type' => 'Company', 'seller_type' => 'manufacturer',
+        ])->assertUnprocessable()->assertJsonValidationErrors('target_marketplace_ids');
     }
 
     private function countries(): array

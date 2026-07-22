@@ -69,7 +69,7 @@ class OnboardingAdminController extends Controller
             'status' => 'pending',
             'metadata' => ['source_application_id' => $record->id],
         ]);
-        foreach ($countries->marketplaceIdsForScope($record->operating_scope ?? 'country', (int) $record->country_id) as $marketplaceId) {
+        foreach ($countries->marketplaceIdsForApplication($record->target_marketplace_ids, $record->operating_scope ?? 'country', (int) $record->country_id) as $marketplaceId) {
             $vendor->marketplaceApprovals()->create([
                 'marketplace_id' => $marketplaceId,
                 'status' => 'pending',
@@ -117,7 +117,7 @@ class OnboardingAdminController extends Controller
         return $this->success($record->fresh());
     }
 
-    public function convertDistributor(Request $request, int $application, TransactionalCommunicationService $communications): JsonResponse
+    public function convertDistributor(Request $request, int $application, TransactionalCommunicationService $communications, PartnerCountryService $countries): JsonResponse
     {
         if (! Schema::hasTable('distributors')) {
             return $this->error('Distributor table is not available.', 503);
@@ -139,10 +139,15 @@ class OnboardingAdminController extends Controller
             'status' => 'pending',
             'metadata' => ['source_application_id' => $record->id, 'operating_scope' => $record->operating_scope ?? 'country'],
         ]);
-        if (($record->operating_scope ?? 'country') === 'country' && $record->country_id) {
+        $targetCountryIds = DB::table('marketplaces')
+            ->whereIn('id', $countries->marketplaceIdsForApplication($record->target_marketplace_ids, $record->operating_scope ?? 'country', (int) $record->country_id))
+            ->whereNotNull('country_id')
+            ->distinct()
+            ->pluck('country_id');
+        foreach ($targetCountryIds as $targetCountryId) {
             $distributor->territories()->create([
-                'country_id' => $record->country_id,
-                'territory_name' => 'Primary country',
+                'country_id' => $targetCountryId,
+                'territory_name' => 'Approved marketplace country',
                 'exclusive' => false,
                 'can_manage_downlines' => false,
             ]);

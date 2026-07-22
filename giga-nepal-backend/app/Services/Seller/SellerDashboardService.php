@@ -20,6 +20,7 @@ class SellerDashboardService
                 'is_verified' => (bool) $vendor->is_verified,
                 'operating_scope' => $vendor->operating_scope ?? 'country',
                 'country_id' => $vendor->country_id,
+                'base_country_name' => $vendor->country_id ? DB::table('countries')->where('id', $vendor->country_id)->value('name') : null,
             ],
             'onboarding' => $this->onboarding($vendor),
             'products' => $this->productSummary($vendor),
@@ -110,8 +111,9 @@ class SellerDashboardService
     {
         return DB::table('vendor_marketplace_approvals')
             ->leftJoin('marketplaces', 'marketplaces.id', '=', 'vendor_marketplace_approvals.marketplace_id')
+            ->leftJoin('countries', 'countries.id', '=', 'marketplaces.country_id')
             ->where('vendor_marketplace_approvals.vendor_id', $vendor->id)
-            ->select('vendor_marketplace_approvals.id', 'vendor_marketplace_approvals.status', 'marketplaces.name as marketplace_name', 'marketplaces.code as marketplace_code')
+            ->select('vendor_marketplace_approvals.id', 'vendor_marketplace_approvals.status', 'marketplaces.name as marketplace_name', 'marketplaces.code as marketplace_code', 'countries.name as country_name', 'countries.iso_code_2 as country_iso_code_2')
             ->get();
     }
 

@@ -51,12 +51,67 @@ class PartnerCountryService
 
         return [
             'countries' => $this->activeCountries(),
+            'marketplaces' => $this->activeMarketplaces(),
             'detected_country_id' => $detected?->id,
             'detected_country' => $detected?->only(['id', 'name', 'iso_code_2']),
             'country_locked' => $detected !== null,
             'detection_source' => $detected ? 'geolocation' : null,
             'scopes' => [self::SCOPE_COUNTRY, self::SCOPE_GLOBAL],
         ];
+    }
+
+    public function activeMarketplaces(): Collection
+    {
+        return Marketplace::query()
+            ->join('countries', 'countries.id', '=', 'marketplaces.country_id')
+            ->where('marketplaces.is_active', true)
+            ->where('countries.is_active', true)
+            ->whereRaw('UPPER(marketplaces.code) <> ?', ['GLOBAL'])
+            ->orderBy('countries.name')
+            ->orderByDesc('marketplaces.is_default')
+            ->orderBy('marketplaces.name')
+            ->get([
+                'marketplaces.id', 'marketplaces.name', 'marketplaces.code', 'marketplaces.country_id',
+                'countries.name as country_name', 'countries.iso_code_2 as country_iso_code_2',
+            ]);
+    }
+
+    public function resolveTargetMarketplaceIds(mixed $submittedIds, string $scope): array
+    {
+        $ids = collect(is_array($submittedIds) ? $submittedIds : [])
+            ->map(fn ($id) => filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            throw ValidationException::withMessages([
+                'target_marketplace_ids' => 'Select at least one active target marketplace.',
+            ]);
+        }
+        if ($scope === self::SCOPE_COUNTRY && $ids->count() !== 1) {
+            throw ValidationException::withMessages([
+                'target_marketplace_ids' => 'Single-country operation requires exactly one target marketplace.',
+            ]);
+        }
+
+        $activeIds = $this->activeMarketplaces()->pluck('id');
+        if ($ids->diff($activeIds)->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'target_marketplace_ids' => 'Every target must be an active NeoGiga marketplace.',
+            ]);
+        }
+
+        return $ids->map(fn ($id) => (int) $id)->all();
+    }
+
+    public function marketplaceIdsForApplication(mixed $targetIds, string $scope, int $countryId): Collection
+    {
+        if (is_array($targetIds) && $targetIds !== []) {
+            return collect($this->resolveTargetMarketplaceIds($targetIds, $scope));
+        }
+
+        return $this->marketplaceIdsForScope($scope, $countryId);
     }
 
     public function resolveSignupCountry(Request $request, mixed $submittedCountryId): int

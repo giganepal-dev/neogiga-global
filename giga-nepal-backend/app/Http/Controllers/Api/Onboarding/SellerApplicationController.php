@@ -23,6 +23,7 @@ class SellerApplicationController extends Controller
         $data = $request->validated();
         $data['country_id'] = $countries->resolveSignupCountry($request, $data['country_id'] ?? null);
         $data['operating_scope'] = $countries->normalizeScope($data['operating_scope'] ?? null);
+        $data['target_marketplace_ids'] = $countries->resolveTargetMarketplaceIds($data['target_marketplace_ids'] ?? [], $data['operating_scope']);
         if (Schema::hasColumn('seller_applications', 'country')) {
             $data['country'] = $countries->countryName($data['country_id']);
         }

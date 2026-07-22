@@ -10,7 +10,7 @@
     $onboardingDone = collect($onboarding)->filter()->count();
 @endphp
 <div class="page-intro page-intro--row">
-    <div><h1>{{ $v->name }}</h1><p>{{ ($v->operating_scope ?? 'country') === 'global' ? 'Global seller' : 'Single-country seller' }} · {{ $v->email ?? 'Seller account' }} · {{ ucfirst($overview['vendor']['commerce_status'] ?? $v->status ?? 'pending') }}</p></div>
+    <div><h1>{{ $v->name }}</h1><p>{{ ($v->operating_scope ?? 'country') === 'global' ? 'Global seller' : 'Single-country seller' }} · Base: {{ $overview['vendor']['base_country_name'] ?? 'Not assigned' }} · {{ $v->email ?? 'Seller account' }} · {{ ucfirst($overview['vendor']['commerce_status'] ?? $v->status ?? 'pending') }}</p></div>
     <span class="badge {{ ($overview['vendor']['is_verified'] ?? false) ? 'b-ok' : 'b-warn' }}">{{ ($overview['vendor']['is_verified'] ?? false) ? 'Verified seller' : 'Verification pending' }}</span>
 </div>
 
@@ -45,7 +45,7 @@
             @endforeach
         </div></div>
         <div class="card"><div class="card-h"><h2>Marketplace access</h2></div><div class="card-body">
-            @forelse($overview['marketplace_approvals'] as $approval)<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0"><span>{{ $approval->marketplace_name ?? $approval->marketplace_code ?? 'Marketplace' }}</span><span class="badge {{ $approval->status === 'approved' ? 'b-ok' : 'b-warn' }}">{{ ucfirst($approval->status) }}</span></div>@empty<p class="sub">No marketplace applications yet.</p>@endforelse
+            @forelse($overview['marketplace_approvals'] as $approval)<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0"><span>{{ $approval->country_name ?? 'Global' }} @if($approval->country_iso_code_2)({{ $approval->country_iso_code_2 }})@endif · {{ $approval->marketplace_name ?? $approval->marketplace_code ?? 'Marketplace' }}</span><span class="badge {{ $approval->status === 'approved' ? 'b-ok' : 'b-warn' }}">{{ ucfirst($approval->status) }}</span></div>@empty<p class="sub">No marketplace applications yet.</p>@endforelse
         </div></div>
         <div class="card"><div class="card-h"><h2>Quick actions</h2></div><div class="card-body actions-row"><a href="/seller/products" class="btn btn-primary">Manage products</a><a href="/seller/inventory" class="btn btn-ghost">Check inventory</a><a href="/seller/support" class="btn btn-ghost">Get support</a></div></div>
     </div>

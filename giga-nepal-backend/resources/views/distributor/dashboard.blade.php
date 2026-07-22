@@ -1,7 +1,7 @@
 @extends('distributor.layout')
 @section('title','Dashboard')
 @section('content')
-<div class="page-intro"><h1>{{ $distributor->name }}</h1><p>{{ ($distributor->operating_scope ?? 'country') === 'global' ? 'Global distributor' : 'Single-country distributor' }} · {{ ucfirst($distributor->status ?? 'pending') }}</p></div>
+<div class="page-intro"><h1>{{ $distributor->name }}</h1><p>{{ ($distributor->operating_scope ?? 'country') === 'global' ? 'Global distributor' : 'Single-country distributor' }} · Base: {{ $overview['base_country_name'] ?? 'Not assigned' }} · {{ ucfirst($distributor->status ?? 'pending') }}</p></div>
 <div class="kpi-grid">
     <div class="kpi"><div class="t">Territories</div><div class="v">{{ number_format($overview['territories'] ?? 0) }}</div></div>
     <div class="kpi"><div class="t">Orders</div><div class="v">{{ number_format($overview['orders'] ?? 0) }}</div><div class="s">Territory orders</div></div>
@@ -16,6 +16,13 @@
     <div class="kpi"><div class="t">Downlines</div><div class="v">{{ number_format($downlineStats['total'] ?? 0) }}</div></div>
     <div class="kpi"><div class="t">Open Support</div><div class="v">{{ number_format($openTickets) }}</div><div class="s">Tickets requiring follow-up</div></div>
 </div>
+<div class="card"><div class="card-h"><h2>Approved sales regions and territories</h2><a href="/distributor/territories" class="sub">Manage territories</a></div><div class="card-body">
+    @forelse($overview['territory_details'] ?? [] as $territory)
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)"><span>{{ $territory->country_name ?? 'Unassigned country' }} @if($territory->country_iso_code_2)({{ $territory->country_iso_code_2 }})@endif @if($territory->region_name) · {{ $territory->region_name }}@endif @if($territory->city_name) · {{ $territory->city_name }}@endif</span><span class="badge b-ok">{{ $territory->territory_name }}</span></div>
+    @empty
+        <p class="sub">No approved sales territory yet. Submitted targets remain subject to NeoGiga review.</p>
+    @endforelse
+</div></div>
 <div class="card"><div class="card-h"><h2>Quick Actions</h2></div><div class="card-body actions-row">
     <a href="/distributor/territory-stock" class="btn btn-primary">Territory stock</a>
     <a href="/distributor/territories" class="btn btn-ghost">Expand territory</a>

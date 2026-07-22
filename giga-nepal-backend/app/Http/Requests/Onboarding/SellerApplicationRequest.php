@@ -22,6 +22,8 @@ class SellerApplicationRequest extends FormRequest
             'whatsapp' => ['nullable', 'string', 'max:40'],
             'country_id' => ['nullable', 'integer', 'min:1'],
             'operating_scope' => ['sometimes', Rule::in(['country', 'global'])],
+            'target_marketplace_ids' => ['required', 'array', 'min:1'],
+            'target_marketplace_ids.*' => ['required', 'integer', 'distinct', 'min:1'],
             'region_id' => ['nullable', 'integer', 'min:1'],
             'city_id' => ['nullable', 'integer', 'min:1'],
             'business_type' => ['required', 'string', 'max:80'],
