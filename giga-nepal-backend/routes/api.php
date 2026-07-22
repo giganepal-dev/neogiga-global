@@ -569,6 +569,8 @@ use App\Http\Controllers\RegionStockVisibilityController;
 use App\Http\Controllers\StockReservationController;
 use App\Http\Controllers\TerritoryStockAllocationController;
 use App\Http\Controllers\Api\BarcodeController;
+use App\Http\Controllers\Api\Freight\FreightController;
+use App\Http\Controllers\Api\Dispatch\DispatchController;
 
 $marketingPublic = function () {
     Route::post('/email/webhooks/{provider}', EmailWebhookController::class)
@@ -1087,4 +1089,32 @@ Route::prefix('v1/barcode')->middleware(['api.token'])->group(function () {
     
     // Scan logs and analytics
     Route::get('/scan-logs', [BarcodeController::class, 'scanLogs']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Freight & Dispatch API Routes (Phase 3)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('v1/freight')->middleware(['api.token'])->group(function () {
+    Route::get('/', [FreightController::class, 'index']);
+    Route::post('/', [FreightController::class, 'store']);
+    Route::get('/{shipment}', [FreightController::class, 'show']);
+    Route::put('/{shipment}', [FreightController::class, 'update']);
+    Route::post('/{shipment}/allocate-landed-cost', [FreightController::class, 'allocateLandedCost']);
+    Route::post('/{shipment}/post-landed-cost', [FreightController::class, 'postLandedCost']);
+    Route::get('/carriers', [FreightController::class, 'carriers']);
+});
+
+Route::prefix('v1/dispatch')->middleware(['api.token'])->group(function () {
+    Route::get('/', [DispatchController::class, 'index']);
+    Route::post('/', [DispatchController::class, 'store']);
+    Route::get('/{batch}', [DispatchController::class, 'show']);
+    Route::post('/{batch}/pick', [DispatchController::class, 'pickItems']);
+    Route::post('/{batch}/pack', [DispatchController::class, 'packItems']);
+    Route::post('/{batch}/dispatch', [DispatchController::class, 'dispatch']);
+    Route::post('/complete-delivery', [DispatchController::class, 'completeDelivery']);
+    Route::get('/drivers', [DispatchController::class, 'drivers']);
+    Route::get('/drivers/{driver}/deliveries', [DispatchController::class, 'driverDeliveries']);
 });
