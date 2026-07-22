@@ -48,6 +48,7 @@ use App\Http\Controllers\Web\RfqPageController;
 use App\Http\Controllers\Web\Seller\SellerPortalController;
 use App\Http\Controllers\Web\SellOnNeoGigaController;
 use App\Http\Controllers\Web\SeoLandingController;
+use App\Http\Controllers\Web\GoogleMerchantFeedController;
 use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\SsoController;
 use App\Http\Controllers\Web\TwoFactorController;
@@ -561,6 +562,7 @@ Route::post('/checkout', [CartPageController::class, 'placeOrder'])->middleware(
 Route::get('/checkout/thank-you/{orderNumber}', [CartPageController::class, 'thankYou'])->where('orderNumber', '[A-Z0-9\\-]+')->name('checkout.thank-you');
 Route::get('/rfq', fn (Request $request) => redirect()->to('/en/rfq'.($request->getQueryString() ? '?'.$request->getQueryString() : ''), 301))->name('rfq.create');
 Route::post('/rfq', [RfqPageController::class, 'store'])->middleware('throttle:6,1')->name('rfq.store');
+Route::get('/feeds/google-merchant.xml', GoogleMerchantFeedController::class)->name('feeds.google-merchant');
 Route::get('/sitemap.xml', SitemapController::class);
 Route::get('/sitemaps/{section}-{page}.xml', [SitemapController::class, 'section'])
     ->whereIn('section', ['pages', 'categories', 'brands', 'manufacturers', 'products'])
