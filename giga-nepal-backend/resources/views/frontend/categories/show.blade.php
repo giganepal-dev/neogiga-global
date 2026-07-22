@@ -33,7 +33,7 @@
 @push('head')
 <script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
-    '@context' => 'https://schema.org',
+    '@'.'context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
     'itemListElement' => collect($breadcrumb)->values()->map(fn($b,$i)=>[
         '@type'=>'ListItem','position'=>$i+1,'name'=>$b['name'],'item'=>$canonicalOrigin.$b['url'],
@@ -42,7 +42,7 @@
 </script>
 <script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
-    '@context' => 'https://schema.org',
+    '@'.'context' => 'https://schema.org',
     '@type' => 'ItemList',
     'name' => $category->name.' products',
     'url' => $categoryCanonical,
@@ -58,7 +58,7 @@
 @if ($children->isNotEmpty())
 <script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
-    '@context' => 'https://schema.org',
+    '@'.'context' => 'https://schema.org',
     '@type' => 'ItemList',
     'name' => $category->name.' subcategories',
     'numberOfItems' => $children->count(),

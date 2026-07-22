@@ -43,7 +43,7 @@
 </script>
 <script nonce="{{ $csp_nonce ?? '' }}" type="application/ld+json">
 {!! json_encode([
-    '@context' => 'https://schema.org', '@type' => 'BreadcrumbList',
+    '@'.'context' => 'https://schema.org', '@type' => 'BreadcrumbList',
     'itemListElement' => collect($schemaBreadcrumb)->values()->map(fn ($item, $index) => [
         '@type' => 'ListItem', 'position' => $index + 1, 'name' => $item['name'], 'item' => $item['item'],
     ])->all(),
