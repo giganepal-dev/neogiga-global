@@ -8,6 +8,43 @@ return [
         'localized_pricing' => env('NEOGIGA_LOCALIZED_PRICING', false),
     ],
 
+    // Client-side geo suggestion (the "Marketplace → Geo Routing" settings).
+    // This is the SEO-safe path: a JS modal, never an unconditional server-side
+    // IP redirect (features.geo_recommendation_redirect stays OFF so search
+    // engines index every edition). Per-region overrides live in
+    // marketplaces.settings['geo'] (auto_redirect / countdown / title / message
+    // / flag) so an admin can tune a single country without touching config.
+    'geo_routing' => [
+        'modal_enabled' => env('NEOGIGA_GEO_MODAL', true),
+        // Auto-redirect after the countdown when NO choice is made. Kill switch:
+        // NEOGIGA_GEO_MODAL_AUTOREDIRECT=false turns the modal into suggest-only.
+        'auto_redirect' => env('NEOGIGA_GEO_MODAL_AUTOREDIRECT', true),
+        'countdown_seconds' => (int) env('NEOGIGA_GEO_COUNTDOWN', 5),
+        'cookie_days' => (int) env('NEOGIGA_GEO_COOKIE_DAYS', 180), // spec: >= 30
+        // Small optional notice (no countdown) when the visitor is already on a
+        // DIFFERENT regional edition than the one detected for their country.
+        'soft_notice' => env('NEOGIGA_GEO_SOFT_NOTICE', true),
+        // Never suggest/redirect on these paths (checkout, payment, orders, API,
+        // webhooks, auth callbacks, health/status). Matched raw AND with a known
+        // marketplace prefix stripped, so /np/checkout and /en/rfq are covered.
+        'excluded_paths' => [
+            '/admin', '/api', '/backend', '/health', '/status', '/up',
+            '/cart', '/checkout', '/payment', '/order', '/orders',
+            '/quotation', '/quotations', '/rfq', '/bom', '/webhook', '/webhooks',
+            '/login', '/logout', '/register', '/password', '/auth',
+            '/marketplace/preference', '/partner-country-options', '/storage',
+        ],
+        // {country} = detected country, {region} = recommended edition name,
+        // {current} = current edition name. Overridable per region in settings.
+        'copy' => [
+            'title' => env('NEOGIGA_GEO_TITLE', 'Choose your NeoGiga marketplace'),
+            'body' => 'You appear to be visiting from {country}. For local pricing, stock, taxes, payment methods, delivery options and customer support, you can visit {region}.',
+            'stay' => 'Stay on {current}',
+            'go' => 'Go to {region}',
+            'notice' => 'It looks like you are visiting from {country}. Switch to {region}?',
+        ],
+    ],
+
     'default_prefix' => 'en',
     'x_default' => 'https://neogiga.com/en',
 

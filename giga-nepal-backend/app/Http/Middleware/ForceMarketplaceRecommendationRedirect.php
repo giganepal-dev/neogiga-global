@@ -13,8 +13,7 @@ class ForceMarketplaceRecommendationRedirect
     public function __construct(
         private readonly MarketplaceContextResolver $resolver,
         private readonly GlobalMarketplaceContextService $context,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -57,13 +56,13 @@ class ForceMarketplaceRecommendationRedirect
             return false;
         }
 
-        $path = '/' . ltrim($request->path(), '/');
+        $path = '/'.ltrim($request->path(), '/');
         $path = $path === '/.' ? '/' : $path;
 
-        foreach ($this->excludedPrefixes() as $prefix) {
-            if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
-                return false;
-            }
+        // Single source of truth (config: geo_routing.excluded_paths) shared
+        // with the client modal, so both honor the same do-not-redirect list.
+        if ($this->context->isExcludedPath($path)) {
+            return false;
         }
 
         return ! preg_match('/(^|\/)(sitemap|robots\.txt|llms\.txt|favicon\.ico)/i', $path);
@@ -71,24 +70,24 @@ class ForceMarketplaceRecommendationRedirect
 
     private function targetUrl(Request $request, array $edition): ?string
     {
-        $path = $this->pathWithoutMarketplacePrefix('/' . ltrim($request->path(), '/'));
+        $path = $this->pathWithoutMarketplacePrefix('/'.ltrim($request->path(), '/'));
         $query = $request->getQueryString();
-        $pathWithQuery = $path . ($query ? '?' . $query : '');
+        $pathWithQuery = $path.($query ? '?'.$query : '');
 
         if (! empty($edition['domain'])) {
             // Dedicated regional domains currently run independent storefronts;
             // do not force users into path-for-path URLs that may not exist there.
-            $liveRoot = rtrim((string) ($edition['url'] ?? ('https://' . $edition['domain'])), '/');
+            $liveRoot = rtrim((string) ($edition['url'] ?? ('https://'.$edition['domain'])), '/');
 
-            return $liveRoot . '/' . ($query ? '?' . $query : '');
+            return $liveRoot.'/'.($query ? '?'.$query : '');
         }
 
         $prefix = trim((string) ($edition['url_prefix'] ?: config('neogiga_global.default_prefix', 'en')), '/');
         if ($prefix === '') {
-            return $request->getSchemeAndHttpHost() . $pathWithQuery;
+            return $request->getSchemeAndHttpHost().$pathWithQuery;
         }
 
-        return $request->getSchemeAndHttpHost() . '/' . $prefix . ($path === '/' ? '' : $path) . ($query ? '?' . $query : '');
+        return $request->getSchemeAndHttpHost().'/'.$prefix.($path === '/' ? '' : $path).($query ? '?'.$query : '');
     }
 
     private function pathWithoutMarketplacePrefix(string $path): string
@@ -100,22 +99,6 @@ class ForceMarketplaceRecommendationRedirect
             array_shift($segments);
         }
 
-        return $segments ? '/' . implode('/', $segments) : '/';
-    }
-
-    private function excludedPrefixes(): array
-    {
-        return [
-            '/admin',
-            '/api',
-            '/backend',
-            '/cart',
-            '/checkout',
-            '/health',
-            '/marketplace/preference',
-            '/partner-country-options',
-            '/storage',
-            '/up',
-        ];
+        return $segments ? '/'.implode('/', $segments) : '/';
     }
 }

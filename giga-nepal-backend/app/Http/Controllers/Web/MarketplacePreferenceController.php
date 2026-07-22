@@ -38,10 +38,10 @@ class MarketplacePreferenceController extends Controller
         $returnPath = $this->localizedReturnPath($returnPath, $edition, hasDedicatedDomain: ! empty($edition['domain']));
 
         if (! empty($edition['domain'])) {
-            return 'https://' . $edition['domain'] . $returnPath;
+            return 'https://'.$edition['domain'].$returnPath;
         }
 
-        return $request->getSchemeAndHttpHost() . $returnPath;
+        return $request->getSchemeAndHttpHost().$returnPath;
     }
 
     private function safeReturnPath(string $path): string
@@ -56,8 +56,8 @@ class MarketplacePreferenceController extends Controller
     private function localizedReturnPath(string $path, array $edition, bool $hasDedicatedDomain): string
     {
         $parts = parse_url($path);
-        $rawPath = '/' . ltrim((string) ($parts['path'] ?? '/'), '/');
-        $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
+        $rawPath = '/'.ltrim((string) ($parts['path'] ?? '/'), '/');
+        $query = isset($parts['query']) && $parts['query'] !== '' ? '?'.$parts['query'] : '';
 
         $segments = array_values(array_filter(explode('/', trim($rawPath, '/')), fn ($segment) => $segment !== ''));
         $knownPrefixes = array_keys(config('neogiga_global.prefixes', []));
@@ -66,19 +66,21 @@ class MarketplacePreferenceController extends Controller
         }
 
         if ($hasDedicatedDomain) {
-            $localizedPath = $segments ? '/' . implode('/', $segments) : '/';
+            $localizedPath = $segments ? '/'.implode('/', $segments) : '/';
 
-            return $localizedPath . $query;
+            return $localizedPath.$query;
         }
 
         $prefix = trim((string) ($edition['url_prefix'] ?: config('neogiga_global.default_prefix', 'en')), '/');
-        $localizedPath = '/' . $prefix . ($segments ? '/' . implode('/', $segments) : '');
+        $localizedPath = '/'.$prefix.($segments ? '/'.implode('/', $segments) : '');
 
-        return $localizedPath . $query;
+        return $localizedPath.$query;
     }
 
     private function cookie(string $name, string $value): Cookie
     {
-        return cookie($name, $value, 60 * 24 * 180, '/', null, true, true, false, 'Lax');
+        $days = max(30, (int) config('neogiga_global.geo_routing.cookie_days', 180));
+
+        return cookie($name, $value, 60 * 24 * $days, '/', null, true, true, false, 'Lax');
     }
 }

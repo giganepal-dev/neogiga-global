@@ -67,14 +67,13 @@
         .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;letter-spacing:.02em}
         .wrap{width:min(var(--max),calc(100% - 40px));margin-inline:auto}.skip{position:absolute;left:-999px;top:8px;background:#fff;color:#000;padding:8px 10px;border-radius:6px;z-index:100}.skip:focus{left:8px}
         .top-strip{background:#1e293b;color:#e2e8f0;font-size:.78rem;border-bottom:1px solid #334155}.top-strip .wrap{min-height:32px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.edition-links{display:flex;gap:10px;flex-wrap:wrap}.edition-links a,.edition-links button{color:#cbd5e1;background:none;border:0;padding:2px 6px;font:inherit;cursor:pointer;border-radius:4px;transition:all .18s}.edition-links a:hover,.edition-links button:hover{color:#fff;background:rgba(255,255,255,.1)}
+        .region-picker{position:relative}.region-picker>summary{list-style:none;display:inline-flex;align-items:center;gap:5px;cursor:pointer;color:#cbd5e1;padding:2px 8px;border-radius:5px;font-weight:600}.region-picker>summary::-webkit-details-marker{display:none}.region-picker>summary:hover,.region-picker[open]>summary{color:#fff;background:rgba(255,255,255,.1)}.region-panel{position:absolute;right:0;top:26px;z-index:120;background:var(--s1);border:1px solid var(--line);border-radius:10px;box-shadow:0 20px 60px rgba(9,17,30,.28);padding:6px;min-width:230px;max-height:340px;overflow-y:auto;display:grid;gap:2px}.region-panel form{margin:0}.region-panel button{width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;border:0;border-radius:7px;background:transparent;color:var(--on);font-size:.82rem;text-align:left;cursor:pointer}.region-panel button:hover,.region-panel button:focus-visible{background:#e8f0fe;color:var(--cyan);outline:0}.region-panel button[aria-current=true]{font-weight:800;color:var(--cyan)}.region-panel button small{margin-left:auto;color:var(--faint);font-family:ui-monospace,monospace}
         .site-head{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}.head-main{min-height:76px;display:grid;grid-template-columns:auto minmax(280px,1fr) auto;gap:18px;align-items:center}.brand{display:flex;align-items:center;gap:11px;color:var(--ink);font-weight:800;letter-spacing:-.01em}.mark{width:40px;height:40px;border:1px solid rgba(15,98,230,.3);border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(15,98,230,.1),rgba(245,158,11,.06))}.brand small{display:block;color:#b45309;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;margin-top:-2px}
         .search-wrap{position:relative}.search{display:grid;grid-template-columns:150px 1fr auto auto;border:1px solid #c7d4e6;border-radius:10px;overflow:hidden;background:var(--s1)}.search select,.search input{border:0;min-height:46px;padding:0 14px;color:var(--on);background:transparent}.search input::placeholder{color:#9aa8ba}.search select{background:#f4f6f9;border-right:1px solid var(--line);color:var(--muted)}.search button{border:0;background:var(--cyan);color:#fff;font-weight:700;padding:0 20px;transition:filter .15s}.search button:hover{filter:brightness(1.08)}.search-bom{display:inline-flex;align-items:center;gap:6px;padding:0 14px;border-left:1px dashed #c7d4e6;color:var(--muted);font-weight:600;font-size:.85rem;white-space:nowrap;transition:color .15s}.search-bom:hover{color:var(--cyan)}.search-panel{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 60px rgba(23,43,77,.16);z-index:100;max-height:420px;overflow-y:auto;padding:6px}.search-panel:empty,.search-panel[hidden]{display:none}.search-item{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .12s}.search-item:hover,.search-item.active{background:#e8f0fe}.search-item img{width:44px;height:33px;object-fit:contain;border-radius:4px;background:#f4f6f9}.search-item .si-name{color:var(--on);font-weight:600;font-size:.88rem;line-height:1.2}.search-item .si-meta{color:var(--faint);font-size:.74rem;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}.search-item .si-badge{font-size:.68rem;padding:2px 8px;border-radius:999px;background:#e8f0fe;color:var(--cyan);white-space:nowrap}.search-panel .sp-empty{padding:20px;text-align:center;color:var(--faint);font-size:.84rem}.head-actions{display:flex;align-items:center;gap:8px}.switcher-form{display:flex;gap:6px;align-items:center}.select-lite,.icon-btn,.switch-btn{min-height:40px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--on);padding:0 12px;transition:.15s}.select-lite:hover,.icon-btn:hover,.switch-btn:hover{border-color:var(--cyan)}.switch-btn{font-weight:700;background:var(--cyan);color:#fff;border-color:transparent}.icon-btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.86rem}.icon-btn.gold{background:var(--gold);color:#3b2300;border-color:var(--gold);font-weight:700}.icon-btn.gold:hover{background:#e08f00}
         .nav-row{border-top:1px solid var(--line);background:#fff}.nav-row .wrap{display:flex;align-items:center;gap:18px;min-height:46px}.mega{position:relative}.mega summary{list-style:none;display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:700;font-size:.9rem;cursor:pointer}.mega summary::-webkit-details-marker{display:none}.mega-panel{position:absolute;top:40px;left:0;width:min(920px,calc(100vw - 32px));background:#fff;color:var(--on);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 80px rgba(23,43,77,.18);padding:20px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:18px}.mega-col{display:grid;gap:6px}.mega-col h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:0 0 4px}.mega-col a{padding:8px 10px;border-radius:8px;color:var(--muted);transition:.15s}.mega-col a:hover{background:#e8f0fe;color:var(--cyan)}.primary-nav{display:flex;gap:18px;color:var(--muted);font-size:.9rem;font-weight:600;flex-wrap:wrap}.primary-nav a{transition:color .15s}.primary-nav a:hover{color:var(--cyan)}
         main{min-height:60vh}.hero{background:linear-gradient(135deg,#e9f1fd,#f8fafd 55%,#fff);color:var(--ink);border-bottom:1px solid var(--line)}.hero-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:34px;align-items:center;padding:64px 0 52px}.eyebrow{color:var(--cyan);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem}.hero h1,.page-title{font-size:clamp(2.35rem,6vw,4.2rem);font-weight:800;line-height:1.02;letter-spacing:-.02em;margin:12px 0 18px}.hero p,.lead{color:var(--muted);font-size:1.08rem;max-width:72ch}.hero-search{margin:26px 0 12px;max-width:760px}.ai-bar{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 10px 30px rgba(23,43,77,.06)}.ai-bar input{flex:1;border:0;background:transparent;color:var(--on);border-radius:6px;min-height:44px;padding:0 12px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
         .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:10px;padding:0 18px;font-weight:600;font-size:.9rem;border:1px solid transparent;transition:.15s}.btn:hover{transform:translateY(-1px)}.btn-primary{background:var(--cyan);color:#fff}.btn-primary:hover{filter:brightness(1.08)}.btn-gold{background:var(--gold);color:#3b2300}.btn-ghost{border-color:#c7d4e6;background:#fff;color:var(--on)}.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}.btn-dark{border-color:var(--line);color:var(--ink);background:#f4f6f9}
-        .panel{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 24px rgba(23,43,77,.05)}.panel.dark{background:#fff;border-color:var(--line);box-shadow:0 8px 24px rgba(23,43,77,.05)}
-        .marketplace-recommend{background:#fff8e6;border-bottom:1px solid #f4d998;color:#8a5a00}.marketplace-recommend .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;flex-wrap:wrap}.marketplace-recommend strong{color:#5c3c00}.recommend-actions{display:flex;gap:8px;flex-wrap:wrap}.recommend-actions form{margin:0}.recommend-actions button{border:1px solid #e3bd62;border-radius:8px;min-height:36px;padding:0 12px;font-weight:700;background:transparent;color:#8a5a00}.recommend-actions .primary{background:var(--gold);color:#3b2300;border-color:transparent}
-        .section{padding:64px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:24px}.section h2,.section-title{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:700;letter-spacing:-.015em;line-height:1.1;margin:0;color:var(--on)}.sub{color:var(--muted)}
+        .panel{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 24px rgba(23,43,77,.05)}.panel.dark{background:#fff;border-color:var(--line);box-shadow:0 8px 24px rgba(23,43,77,.05)}        .section{padding:64px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:24px}.section h2,.section-title{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:700;letter-spacing:-.015em;line-height:1.1;margin:0;color:var(--on)}.sub{color:var(--muted)}
         .grid{display:grid;gap:20px}.category-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
         .category-card,.product-card,.info-card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:20px;transition:transform .2s,border-color .2s,box-shadow .2s}.category-card:hover,.product-card:hover{border-color:rgba(15,98,230,.45);box-shadow:0 20px 50px rgba(23,43,77,.12);transform:translateY(-3px)}.product-card{content-visibility:auto;contain-intrinsic-size:390px}
         .cat-icon{width:44px;height:44px;border-radius:12px;background:#e8f0fe;color:var(--cyan);display:grid;place-items:center;font-weight:700;margin-bottom:12px}.product-card{display:flex;flex-direction:column;gap:10px}.product-img{aspect-ratio:4/3;border-radius:10px;background-color:#fff;border:1px solid var(--line);background-position:center;background-repeat:no-repeat;background-size:cover;display:grid;place-items:center;color:var(--muted);font-weight:700;overflow:hidden}
@@ -144,44 +143,29 @@
 	    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 	    <!-- End Google Tag Manager (noscript) -->
 <a class="skip" href="#main">Skip to content</a>
-@if($marketplaceContext['show_recommendation'] ?? false)
-    <aside class="marketplace-recommend" aria-label="Marketplace recommendation">
-        <div class="wrap">
-            <span>We detected a closer NeoGiga edition: <strong>{{ $marketplaceContext['recommended']['name'] }}</strong> with {{ $marketplaceContext['recommended']['currency_code'] }} pricing and regional stock. Your choice is remembered.</span>
-            <div class="recommend-actions">
-                <form method="post" action="{{ route('marketplace.preference') }}">
-                    @csrf
-                    <input type="hidden" name="marketplace" value="{{ $marketplaceContext['recommended']['code'] }}">
-                    <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
-                    <input type="hidden" name="action" value="switch">
-                    <button class="primary" type="submit">Switch to {{ $marketplaceContext['recommended']['name'] }}</button>
-                </form>
-                <form method="post" action="{{ route('marketplace.preference') }}">
-                    @csrf
-                    <input type="hidden" name="marketplace" value="{{ strtolower($marketplaceContext['current']->code ?? 'global') }}">
-                    <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
-                    <input type="hidden" name="action" value="stay">
-                    <button type="submit">Stay on {{ $marketplaceContext['current']->name ?? 'NeoGiga Global' }}</button>
-                </form>
-            </div>
-        </div>
-    </aside>
-@endif
+@include('frontend.partials.marketplace-modal')
 <div class="top-strip">
     <div class="wrap">
         <span>
             @if($marketplaceContext['country_code']){{ $flag($marketplaceContext['country_code']) }} @endif{{ $marketplaceContext['current']->name ?? 'NeoGiga Global' }} · {{ $marketplaceContext['currency_code'] ?? 'USD' }}
         </span>
-        <div class="edition-links" aria-label="Regional editions">
-            @foreach(($marketplaceContext['editions'] ?? []) as $edition)
-                <form method="post" action="{{ route('marketplace.preference') }}" title="{{ $edition['name'] }}">
-                    @csrf
-                    <input type="hidden" name="marketplace" value="{{ $edition['code'] }}">
-                    <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
-                    <button type="submit" title="{{ $edition['name'] }}">{{ $flag($edition['country_code']) }}</button>
-                </form>
-            @endforeach
-        </div>
+        <details class="region-picker">
+            <summary aria-label="Choose your NeoGiga marketplace region">🌐 <span>Region</span> <span aria-hidden="true">▾</span></summary>
+            <div class="region-panel" role="menu" aria-label="Regional editions">
+                @php $activeCode = strtolower((string) ($marketplaceContext['current']->code ?? 'global')); @endphp
+                @foreach(($marketplaceContext['editions'] ?? []) as $edition)
+                    <form method="post" action="{{ route('marketplace.preference') }}">
+                        @csrf
+                        <input type="hidden" name="marketplace" value="{{ $edition['code'] }}">
+                        <input type="hidden" name="return_path" value="{{ request()->getRequestUri() }}">
+                        <button type="submit" role="menuitem" aria-label="Switch to {{ $edition['name'] }}"@if($edition['code'] === $activeCode) aria-current="true"@endif>
+                            <span aria-hidden="true">{{ $edition['country_code'] ? $flag($edition['country_code']) : '🌐' }}</span> {{ $edition['name'] }}
+                            <small>{{ $edition['currency_code'] }}</small>
+                        </button>
+                    </form>
+                @endforeach
+            </div>
+        </details>
     </div>
 </div>
 <header class="site-head">

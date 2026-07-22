@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Cookie;
 class MarketplacePreferenceService
 {
     public const COOKIE = GlobalMarketplaceContextService::PREFERENCE_COOKIE;
+
     public const SEEN_COOKIE = GlobalMarketplaceContextService::SEEN_COOKIE;
 
     public function preferredCode(Request $request): ?string
@@ -34,11 +35,19 @@ class MarketplacePreferenceService
 
     public function cookie(string $code): Cookie
     {
-        return cookie(self::COOKIE, strtolower($code), 60 * 24 * 180, '/', null, true, true, false, 'Lax');
+        return cookie(self::COOKIE, strtolower($code), $this->cookieMinutes(), '/', null, true, true, false, 'Lax');
     }
 
     public function seenCookie(): Cookie
     {
-        return cookie(self::SEEN_COOKIE, '1', 60 * 24 * 180, '/', null, true, true, false, 'Lax');
+        return cookie(self::SEEN_COOKIE, '1', $this->cookieMinutes(), '/', null, true, true, false, 'Lax');
+    }
+
+    /** Admin-configurable persistence; spec requires at least 30 days. */
+    private function cookieMinutes(): int
+    {
+        $days = max(30, (int) config('neogiga_global.geo_routing.cookie_days', 180));
+
+        return 60 * 24 * $days;
     }
 }
