@@ -47,6 +47,12 @@
     .ng-navitem:hover{background:rgba(127,127,127,.12);opacity:1}
     .ng-navitem:focus-visible{outline:2px solid var(--ng-focus,#28d8fb);outline-offset:2px}
     .ng-navitem.is-active{background:var(--ng-accent-soft,rgba(40,216,251,.14));color:var(--ng-accent,#28d8fb);opacity:1}
+    
+    /* Navigation groups */
+    .nav-group{margin-bottom:16px}
+    .nav-group-header{padding:8px 12px 6px;margin:0 -12px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .nav-group-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:#64748B;font-weight:700}
+    .nav-group-items{display:grid;gap:4px;padding-top:6px}
 
     /* Table row action */
     .ng-tact{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;

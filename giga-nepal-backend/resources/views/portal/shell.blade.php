@@ -90,8 +90,16 @@
             <span>NeoGiga<small>{{ $portal['name'] }}</small></span>
         </div>
         <nav aria-label="{{ $portal['name'] }} navigation">
+            @php $seenGroups = []; @endphp
             @foreach($portal['nav'] as $item)
-                <x-sidebar-nav-item :icon="$item['icon']" :label="$item['label']" :href="$item['href']" :active="request()->is($item['pattern'])" />
+                <x-sidebar-nav-item 
+                    :icon="$item['icon']" 
+                    :label="$item['label']" 
+                    :href="$item['href']" 
+                    :active="request()->is($item['pattern'])"
+                    :group="$item['group'] ?? null"
+                    :method="$item['method'] ?? 'GET'"
+                />
             @endforeach
             <form method="post" action="/{{ $portal['slug'] }}/logout" style="margin-top:14px">@csrf
                 <button class="ng-navitem" type="submit" style="width:100%;background:none;border:0;cursor:pointer;font:inherit;color:inherit">
