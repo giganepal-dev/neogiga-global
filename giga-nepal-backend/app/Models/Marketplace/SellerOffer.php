@@ -21,12 +21,15 @@ class SellerOffer extends Model
         'variation_id',
         'seller_id',
         'warehouse_id',
+        'marketplace_id',
         'base_price',
         'sale_price',
         'cost_price',
         'currency_code',
         'price_valid_from',
         'price_valid_until',
+        'offer_start_date',
+        'offer_end_date',
         'quantity_breaks',
         'moq',
         'order_multiple',
@@ -42,11 +45,28 @@ class SellerOffer extends Model
         'fulfillment_type',
         'shipping_restrictions',
         'status',
+        'approval_status',
+        'approved_by',
+        'approved_at',
+        'approval_notes',
+        'rejection_reason',
+        'is_published',
+        'published_at',
+        'paused_at',
+        'pause_reason',
         'is_featured',
         'is_buybox_winner',
         'seller_sku',
         'seller_notes',
         'conditions',
+        'date_code',
+        'condition_grade',
+        'packaging_type',
+        'lot_number',
+        'country_of_origin',
+        'warranty_type',
+        'warranty_period',
+        'warranty_terms',
         'sales_count',
         'rating_average',
         'rating_count',
@@ -74,12 +94,15 @@ class SellerOffer extends Model
         'is_featured' => 'boolean',
         'is_buybox_winner' => 'boolean',
         'conditions' => 'array',
-        'sales_count' => 'integer',
-        'rating_average' => 'decimal:2',
-        'rating_count' => 'integer',
-        'last_synced_at' => 'datetime',
+        'is_published' => 'boolean',
+        'published_at' => 'datetime',
+        'paused_at' => 'datetime',
+        'approved_at' => 'datetime',
         'price_valid_from' => 'date',
         'price_valid_until' => 'date',
+        'offer_start_date' => 'date',
+        'offer_end_date' => 'date',
+        'last_synced_at' => 'datetime',
     ];
 
     public function canonicalProduct(): BelongsTo
@@ -102,14 +125,54 @@ class SellerOffer extends Model
         return $this->belongsTo(Warehouse::class, 'warehouse_id');
     }
 
+    public function marketplace(): BelongsTo
+    {
+        return $this->belongsTo(Marketplace::class, 'marketplace_id');
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'approved_by');
+    }
+
+    public function movements(): HasMany
+    {
+        return $this->hasMany(SellerInventoryMovement::class, 'seller_offer_id');
+    }
+
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(SellerShipment::class, 'seller_offer_id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
     }
 
+    public function scopeApproved($query)
+    {
+        return $query->where('approval_status', 'approved');
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('is_published', true);
+    }
+
+    public function scopePendingApproval($query)
+    {
+        return $query->where('approval_status', 'pending');
+    }
+
     public function scopeWithStock($query)
     {
         return $query->where('stock_quantity', '>', 0);
+    }
+
+    public function scopeForMarketplace($query, int $marketplaceId)
+    {
+        return $query->where('marketplace_id', $marketplaceId);
     }
 
     public function getAvailableQuantityAttribute(): int
@@ -125,5 +188,83 @@ class SellerOffer extends Model
     public function isBuyBoxWinner(): bool
     {
         return $this->is_buybox_winner && $this->status === 'active';
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->approval_status === 'approved';
+    }
+
+    public function isPending(): bool
+    {
+        return $this->approval_status === 'pending';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->approval_status === 'rejected';
+    }
+
+    public function canBeSold(): bool
+    {
+        return $this->is_approved 
+            && $this->is_published 
+            && $this->status === 'active'
+            && ($this->stock_quantity > 0 || $this->allow_backorder);
+    }
+
+    public function approve(int $approverId, ?string $notes = null): void
+    {
+        $this->update([
+            'approval_status' => 'approved',
+            'approved_by' => $approverId,
+            'approved_at' => now(),
+            'approval_notes' => $notes,
+            'rejection_reason' => null,
+        ]);
+    }
+
+    public function reject(string $reason): void
+    {
+        $this->update([
+            'approval_status' => 'rejected',
+            'rejection_reason' => $reason,
+        ]);
+    }
+
+    public function publish(): void
+    {
+        if (!$this->is_approved()) {
+            throw new \RuntimeException('Cannot publish unapproved offer');
+        }
+
+        $this->update([
+            'is_published' => true,
+            'published_at' => now(),
+            'paused_at' => null,
+            'pause_reason' => null,
+        ]);
+    }
+
+    public function pause(string $reason): void
+    {
+        $this->update([
+            'is_published' => false,
+            'paused_at' => now(),
+            'pause_reason' => $reason,
+        ]);
+    }
+
+    public function resume(): void
+    {
+        if (!$this->is_approved()) {
+            throw new \RuntimeException('Cannot resume unapproved offer');
+        }
+
+        $this->update([
+            'is_published' => true,
+            'paused_at' => null,
+            'pause_reason' => null,
+        ]);
     }
 }
