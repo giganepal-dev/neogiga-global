@@ -92,13 +92,15 @@
         <nav aria-label="{{ $portal['name'] }} navigation">
             @php $seenGroups = []; @endphp
             @foreach($portal['nav'] as $item)
-                <x-sidebar-nav-item 
-                    :icon="$item['icon']" 
-                    :label="$item['label']" 
-                    :href="$item['href']" 
+                <x-sidebar-nav-item
+                    :icon="$item['icon']"
+                    :label="$item['label']"
+                    :href="$item['href']"
                     :active="request()->is($item['pattern'])"
                     :group="$item['group'] ?? null"
                     :method="$item['method'] ?? 'GET'"
+                    :loop="$loop"
+                    :portal="$portal"
                 />
             @endforeach
             <form method="post" action="/{{ $portal['slug'] }}/logout" style="margin-top:14px">@csrf

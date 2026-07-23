@@ -197,7 +197,7 @@
 </div>
 
 @push('scripts')
-<script>
+<script nonce="{{ $csp_nonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Search functionality
     const searchInput = document.getElementById('chat-search');
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
 @endpush
 
 @push('styles')
-<style>
+<style nonce="{{ $csp_nonce ?? '' }}">
     .conversation-item:hover {
         background-color: #f8f9fa;
     }

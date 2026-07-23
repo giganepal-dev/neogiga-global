@@ -55,8 +55,8 @@ class SellerPortalTest extends TestCase
         $res = $this->get('/seller');
         $res->assertOk();
         $res->assertSee('Acme Components');
-        $res->assertSee('Gross sales');
-        $res->assertSee('Seller readiness');
+        $res->assertSee('Gross Sales');
+        $res->assertSee('Seller Readiness');
         $res->assertViewHas('overview', fn ($overview) => $overview['products']['total_products'] === 1);
         $res->assertViewHas('stats', fn ($s) => $s['product_count'] === 1);
     }

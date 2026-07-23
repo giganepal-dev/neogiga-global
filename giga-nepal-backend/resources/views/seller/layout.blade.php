@@ -1,6 +1,7 @@
 @extends('portal.shell')
-@php($vendor = $vendor ?? $v ?? null)
-@php($portal = [
+@php
+$vendor = $vendor ?? $v ?? null;
+$portal = [
     'slug' => 'seller',
     'name' => 'Seller Portal',
     'nav' => [
@@ -63,7 +64,8 @@
         ['group' => 'ACCOUNT', 'icon' => 'settings', 'label' => 'Settings', 'href' => '/seller/settings', 'pattern' => 'seller/settings*'],
         ['group' => 'ACCOUNT', 'icon' => 'logout', 'label' => 'Log Out', 'href' => '/seller/logout', 'pattern' => 'seller/logout*', 'method' => 'POST'],
     ],
-])
+];
+@endphp
 
 @php
 // Group nav items for proper rendering
@@ -87,6 +89,5 @@ foreach ($portal['nav'] as $idx => $item) {
         }
     }
 }
+$portal = $portal + ['nav_groups' => $navGroups];
 @endphp
-
-@php($portal = $portal + ['nav_groups' => $navGroups])

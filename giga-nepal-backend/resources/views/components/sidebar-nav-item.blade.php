@@ -5,6 +5,8 @@
     'active' => false,
     'group' => null,
     'method' => 'GET',
+    'loop' => null,
+    'portal' => [],
 ])
 
 @if($group && !isset($seenGroups[$group]))

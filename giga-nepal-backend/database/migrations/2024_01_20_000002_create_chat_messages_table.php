@@ -22,7 +22,6 @@ return new class extends Migration
             $table->boolean('is_edited')->default(false);
             $table->timestamp('edited_at')->nullable();
             $table->boolean('is_deleted')->default(false);
-            $table->timestamp('deleted_at')->nullable();
             $table->foreignId('deleted_by')->nullable()->constrained('users')->onDelete('set null');
             $table->boolean('is_read')->default(false);
             $table->timestamp('read_at')->nullable();
