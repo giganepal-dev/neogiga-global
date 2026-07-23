@@ -359,6 +359,21 @@ Route::prefix('admin')->group(function () {
         Route::get('education/courses', [\App\Http\Controllers\Admin\EducationAdminController::class, 'courses']);
         Route::get('education/analytics', [\App\Http\Controllers\Admin\EducationAdminController::class, 'analytics']);
 
+        // News & Blog Admin
+        Route::get('news', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'index']);
+        Route::get('news/categories', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'categories']);
+        Route::post('news/categories', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'categoryStore'])->middleware('throttle:20,1');
+        Route::get('news/{id}', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'show'])->whereNumber('id');
+        Route::post('news', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'store'])->middleware('throttle:20,1');
+        Route::post('news/{id}/update', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'update'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('news/{id}/publish', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'publish'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('news/{id}/unpublish', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'unpublish'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('news/{id}/schedule', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'schedule'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('news/{id}/archive', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'archive'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::get('news/modal', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'modal']);
+        Route::post('news/modal', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'modalStore'])->middleware('throttle:20,1');
+        Route::post('news/modal/{id}/toggle', [\App\Http\Controllers\Admin\NewsBlogAdminController::class, 'modalToggle'])->whereNumber('id')->middleware('throttle:20,1');
+
         // Seller Intelligence Admin
         Route::get('seller-intelligence', [\App\Http\Controllers\Admin\SellerIntelligenceAdminController::class, 'dashboard']);
         Route::get('seller-intelligence/trending', [\App\Http\Controllers\Admin\SellerIntelligenceAdminController::class, 'trendingMpns']);
