@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('admin.layout')
 
 @section('title', __('Subscribers'))
 @section('page-title', __('Email Subscribers'))
