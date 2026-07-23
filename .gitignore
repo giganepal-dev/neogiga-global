@@ -1,4 +1,4 @@
-```
+```gitignore
 # Compiled and build artifacts
 *.pyc
 __pycache__/
@@ -12,11 +12,21 @@ __pycache__/
 *.out
 
 # Dependencies
-vendor/
 node_modules/
+venv/
+.venv/
 .env
 .env.local
-*.env.*
+.env.*
+
+# Build directories
+dist/
+build/
+target/
+coverage/
+htmlcov/
+.mypy_cache/
+.pytest_cache/
 
 # Logs and temp files
 *.log
@@ -28,27 +38,7 @@ node_modules/
 .vscode/
 .idea/
 
-# OS generated files
+# System files
 .DS_Store
 Thumbs.db
-
-# Coverage reports
-coverage/
-htmlcov/
-.coverage
-
-# Build directories (common in PHP projects)
-build/
-dist/
-target/
-
-# PHP specific
-*.phar
-composer.lock
-
-# Cache directories
-.cache/
-.mypy_cache/
-.pytest_cache/
-.gradle/
 ```
