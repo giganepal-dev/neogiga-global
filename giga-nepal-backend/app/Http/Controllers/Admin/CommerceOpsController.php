@@ -3720,29 +3720,29 @@ class CommerceOpsController extends Controller
 
     public function storeWarehouseAisle(Request $request): RedirectResponse
     {
-        $d = $request->validate(['zone_id' => 'required|integer|exists:warehouse_zones,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20']);
-        DB::table('warehouse_aisles')->insert(['zone_id' => $d['zone_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        $d = $request->validate(['warehouse_zone_id' => 'required|integer|exists:warehouse_zones,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20']);
+        DB::table('warehouse_aisles')->insert(['warehouse_zone_id' => $d['warehouse_zone_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
         return back()->with('status', 'Aisle added.');
     }
 
     public function storeWarehouseRack(Request $request): RedirectResponse
     {
-        $d = $request->validate(['aisle_id' => 'required|integer|exists:warehouse_aisles,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20']);
-        DB::table('warehouse_racks')->insert(['aisle_id' => $d['aisle_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        $d = $request->validate(['warehouse_aisle_id' => 'required|integer|exists:warehouse_aisles,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20']);
+        DB::table('warehouse_racks')->insert(['warehouse_aisle_id' => $d['warehouse_aisle_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
         return back()->with('status', 'Rack added.');
     }
 
     public function storeWarehouseShelf(Request $request): RedirectResponse
     {
-        $d = $request->validate(['rack_id' => 'required|integer|exists:warehouse_racks,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20']);
-        DB::table('warehouse_shelves')->insert(['rack_id' => $d['rack_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        $d = $request->validate(['warehouse_rack_id' => 'required|integer|exists:warehouse_racks,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20']);
+        DB::table('warehouse_shelves')->insert(['warehouse_rack_id' => $d['warehouse_rack_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
         return back()->with('status', 'Shelf added.');
     }
 
     public function storeWarehouseBin(Request $request): RedirectResponse
     {
-        $d = $request->validate(['shelf_id' => 'required|integer|exists:warehouse_shelves,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20', 'capacity' => 'nullable|numeric']);
-        DB::table('warehouse_bins')->insert(['shelf_id' => $d['shelf_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'capacity' => $d['capacity'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
+        $d = $request->validate(['warehouse_shelf_id' => 'required|integer|exists:warehouse_shelves,id', 'name' => 'required|string|max:100', 'code' => 'nullable|string|max:20', 'capacity' => 'nullable|numeric']);
+        DB::table('warehouse_bins')->insert(['warehouse_shelf_id' => $d['warehouse_shelf_id'], 'name' => $d['name'], 'code' => $d['code'] ?? null, 'capacity' => $d['capacity'] ?? null, 'created_at' => now(), 'updated_at' => now()]);
         return back()->with('status', 'Bin added.');
     }
 

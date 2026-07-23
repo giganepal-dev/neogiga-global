@@ -14,7 +14,7 @@
 <details class="modal"><summary class="btn btn-ghost">Add Aisle</summary>
 <div class="modal-panel"><div class="modal-h"><h3>Add Aisle</h3></div>
 <form class="modal-b form-stack" method="post" action="/admin/warehouse/aisles">@csrf
-<div class="field"><label>Zone</label><select class="control" name="zone_id" required>@foreach($zones as $z)<option value="{{$z->id}}">{{$z->warehouse_name}} → {{$z->name}}</option>@endforeach</select></div>
+<div class="field"><label>Zone</label><select class="control" name="warehouse_zone_id" required>@foreach($zones as $z)<option value="{{$z->id}}">{{$z->warehouse_name}} → {{$z->name}}</option>@endforeach</select></div>
 <div class="field"><label>Aisle Name</label><input class="control" name="name" required></div>
 <div class="field"><label>Code</label><input class="control" name="code"></div>
 <button class="btn btn-primary" type="submit">Save Aisle</button></form></div></details>
@@ -22,7 +22,7 @@
 <details class="modal"><summary class="btn btn-ghost">Add Rack</summary>
 <div class="modal-panel"><div class="modal-h"><h3>Add Rack</h3></div>
 <form class="modal-b form-stack" method="post" action="/admin/warehouse/racks">@csrf
-<div class="field"><label>Aisle</label><select class="control" name="aisle_id" required>@foreach($aisles as $a)<option value="{{$a->id}}">{{$a->zone_name}} → {{$a->name}}</option>@endforeach</select></div>
+<div class="field"><label>Aisle</label><select class="control" name="warehouse_aisle_id" required>@foreach($aisles as $a)<option value="{{$a->id}}">{{$a->zone_name}} → {{$a->name}}</option>@endforeach</select></div>
 <div class="field"><label>Rack Name</label><input class="control" name="name" required></div>
 <div class="field"><label>Code</label><input class="control" name="code"></div>
 <button class="btn btn-primary" type="submit">Save Rack</button></form></div></details>
@@ -48,7 +48,7 @@
 <details class="modal"><summary class="btn btn-ghost" style="font-size:.78rem">Add Shelf</summary>
 <div class="modal-panel"><div class="modal-h"><h3>Add Shelf</h3></div>
 <form class="modal-b form-stack" method="post" action="/admin/warehouse/shelves">@csrf
-<div class="field"><label>Rack</label><select class="control" name="rack_id" required>@foreach($racks as $r)<option value="{{$r->id}}">{{$r->aisle_name}} → {{$r->name}}</option>@endforeach</select></div>
+<div class="field"><label>Rack</label><select class="control" name="warehouse_rack_id" required>@foreach($racks as $r)<option value="{{$r->id}}">{{$r->aisle_name}} → {{$r->name}}</option>@endforeach</select></div>
 <div class="field"><label>Shelf Name</label><input class="control" name="name" required></div>
 <div class="field"><label>Code</label><input class="control" name="code"></div>
 <button class="btn btn-primary" type="submit">Save Shelf</button></form></div></details>
@@ -61,7 +61,7 @@
 <details class="modal"><summary class="btn btn-ghost" style="font-size:.78rem">Add Bin</summary>
 <div class="modal-panel"><div class="modal-h"><h3>Add Bin</h3></div>
 <form class="modal-b form-stack" method="post" action="/admin/warehouse/bins">@csrf
-<div class="field"><label>Shelf</label><select class="control" name="shelf_id" required>@foreach($shelves as $s)<option value="{{$s->id}}">{{$s->rack_name}} → {{$s->name}}</option>@endforeach</select></div>
+<div class="field"><label>Shelf</label><select class="control" name="warehouse_shelf_id" required>@foreach($shelves as $s)<option value="{{$s->id}}">{{$s->rack_name}} → {{$s->name}}</option>@endforeach</select></div>
 <div class="field"><label>Bin Name</label><input class="control" name="name" required></div>
 <div class="field"><label>Code</label><input class="control" name="code"></div>
 <div class="field"><label>Capacity</label><input class="control" name="capacity" type="number" step="any"></div>

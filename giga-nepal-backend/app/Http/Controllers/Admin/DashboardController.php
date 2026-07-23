@@ -2196,10 +2196,10 @@ class DashboardController extends Controller
     {
         $warehouses = DB::table('warehouses')->orderBy('name')->get();
         $zones = DB::table('warehouse_zones')->join('warehouses', 'warehouse_zones.warehouse_id', '=', 'warehouses.id')->select('warehouse_zones.*', 'warehouses.name as warehouse_name')->orderBy('warehouse_zones.name')->get();
-        $aisles = DB::table('warehouse_aisles')->join('warehouse_zones', 'warehouse_aisles.zone_id', '=', 'warehouse_zones.id')->select('warehouse_aisles.*', 'warehouse_zones.name as zone_name')->orderBy('warehouse_aisles.name')->get();
-        $racks = DB::table('warehouse_racks')->join('warehouse_aisles', 'warehouse_racks.aisle_id', '=', 'warehouse_aisles.id')->select('warehouse_racks.*', 'warehouse_aisles.name as aisle_name')->orderBy('warehouse_racks.name')->get();
-        $shelves = DB::table('warehouse_shelves')->join('warehouse_racks', 'warehouse_shelves.rack_id', '=', 'warehouse_racks.id')->select('warehouse_shelves.*', 'warehouse_racks.name as rack_name')->orderBy('warehouse_shelves.name')->get();
-        $bins = DB::table('warehouse_bins')->join('warehouse_shelves', 'warehouse_bins.shelf_id', '=', 'warehouse_shelves.id')->select('warehouse_bins.*', 'warehouse_shelves.name as shelf_name')->orderBy('warehouse_bins.name')->get();
+        $aisles = DB::table('warehouse_aisles')->join('warehouse_zones', 'warehouse_aisles.warehouse_zone_id', '=', 'warehouse_zones.id')->select('warehouse_aisles.*', 'warehouse_zones.name as zone_name')->orderBy('warehouse_aisles.name')->get();
+        $racks = DB::table('warehouse_racks')->join('warehouse_aisles', 'warehouse_racks.warehouse_aisle_id', '=', 'warehouse_aisles.id')->select('warehouse_racks.*', 'warehouse_aisles.name as aisle_name')->orderBy('warehouse_racks.name')->get();
+        $shelves = DB::table('warehouse_shelves')->join('warehouse_racks', 'warehouse_shelves.warehouse_rack_id', '=', 'warehouse_racks.id')->select('warehouse_shelves.*', 'warehouse_racks.name as rack_name')->orderBy('warehouse_shelves.name')->get();
+        $bins = DB::table('warehouse_bins')->join('warehouse_shelves', 'warehouse_bins.warehouse_shelf_id', '=', 'warehouse_shelves.id')->select('warehouse_bins.*', 'warehouse_shelves.name as shelf_name')->orderBy('warehouse_bins.name')->get();
         return view('admin.warehouse', compact('warehouses', 'zones', 'aisles', 'racks', 'shelves', 'bins'));
     }
 
