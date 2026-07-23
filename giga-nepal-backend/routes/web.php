@@ -142,6 +142,20 @@ Route::prefix('seller')->group(function () {
     Route::get('payouts', [SellerPortalController::class, 'payouts'])->middleware(EnsureSellerWeb::class);
     Route::get('support', [SellerPortalController::class, 'support'])->middleware(EnsureSellerWeb::class);
     Route::post('support', [SellerPortalController::class, 'storeSupport'])->middleware([EnsureSellerWeb::class, 'throttle:10,1']);
+
+    // Placeholder routes for in-development pages — nav items that link to real URLs
+    foreach ([
+        'readiness', 'notifications',
+        'products/add', 'products/match', 'products/import', 'products/drafts', 'products/rejected',
+        'inventory/warehouse', 'inventory/movements', 'inventory/reservations', 'inventory/alerts', 'inventory/import',
+        'rfqs', 'quotations', 'returns', 'cancellations', 'messages',
+        'warehouses', 'dispatch', 'shipments', 'pickups', 'freight', 'tracking',
+        'earnings', 'statements', 'commissions', 'taxes',
+        'marketplace', 'pricing', 'offers', 'performance', 'compliance',
+        'documents', 'team', 'settings',
+    ] as $path) {
+        Route::get($path, [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
+    }
 });
 
 // Reseller web portal

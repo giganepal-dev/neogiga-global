@@ -196,4 +196,54 @@ class SellerPortalController extends Controller
 
         return back()->with('status', 'Support ticket opened.');
     }
+
+    /**
+     * Generic handler for seller portal pages under development.
+     */
+    public function page(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $path = $r->path();
+        $section = str_replace(['seller/', '/'], ['', ' '], $path);
+        $titleMap = [
+            'readiness' => 'Readiness & Onboarding',
+            'notifications' => 'Notifications',
+            'products add' => 'Add Product',
+            'products match' => 'Match Existing MPN',
+            'products import' => 'Bulk Import',
+            'products drafts' => 'Drafts',
+            'products rejected' => 'Rejected Products',
+            'inventory warehouse' => 'Warehouse Stock',
+            'inventory movements' => 'Stock Movements',
+            'inventory reservations' => 'Reservations',
+            'inventory alerts' => 'Low Stock Alerts',
+            'inventory import' => 'Inventory Import',
+            'rfqs' => 'RFQs',
+            'quotations' => 'Quotations',
+            'returns' => 'Returns',
+            'cancellations' => 'Cancellations',
+            'messages' => 'Customer Messages',
+            'warehouses' => 'Warehouses',
+            'dispatch' => 'Dispatch',
+            'shipments' => 'Shipments',
+            'pickups' => 'Pickup Requests',
+            'freight' => 'Freight',
+            'tracking' => 'Tracking',
+            'earnings' => 'Earnings',
+            'statements' => 'Statements',
+            'commissions' => 'Commissions',
+            'taxes' => 'Taxes & Invoices',
+            'marketplace-approval' => 'Marketplace Access',
+            'pricing' => 'Regional Pricing',
+            'offers' => 'Seller Offers',
+            'performance' => 'Performance',
+            'compliance' => 'Compliance',
+            'documents' => 'Documents',
+            'team' => 'Team Members',
+            'settings' => 'Settings',
+        ];
+        $pageTitle = $titleMap[trim($section)] ?? ucwords(str_replace('-', ' ', trim($section)));
+
+        return view('seller.placeholder', compact('v', 'pageTitle'));
+    }
 }
