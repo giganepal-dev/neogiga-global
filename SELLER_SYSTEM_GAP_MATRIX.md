@@ -1,347 +1,402 @@
 # NeoGiga Seller System - Complete Gap Matrix
 
 ## Executive Summary
+The seller system has foundational infrastructure but requires completion of critical end-to-end workflows for production readiness.
 
-The seller system has foundational infrastructure but is missing critical end-to-end workflows required for production operation.
+---
 
-## 1. SELLER ONBOARDING GAPS
+## 1. DATABASE GAPS
 
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Business Profile | Partial | Document upload, verification workflow | No document model linkage | Add vendor_documents relations, upload endpoints | P0 |
-| Legal Registration | Missing | PAN/VAT/Registration doc handling | Schema exists but no UI/API | Implement document management | P0 |
-| Tax Registration | Missing | Tax certificate upload/verification | Same as above | Implement tax document flow | P0 |
-| Bank Account | Missing | Payout method setup | vendor_payout_methods exists but no CRUD | Build payout method management | P0 |
-| Warehouse | Partial | Approval workflow incomplete | warehouse model exists, approval flow partial | Complete warehouse approval | P0 |
-| Marketplace Application | Partial | Regional marketplace selection | VendorMarketplaceApproval exists, no seller-facing UI | Build marketplace application UI | P0 |
-| Compliance Declaration | Missing | No compliance model | Schema gap | Create compliance declarations table | P1 |
-| Admin Verification | Partial | Correction request workflow | Status transitions incomplete | Add correction_required status | P0 |
-| Readiness Calculation | Missing | Hardcoded or absent | No readiness service | Build readiness percentage calculator | P0 |
+### Missing Tables (Priority: P0)
+| Table | Purpose | Status | Required By |
+|-------|---------|--------|-------------|
+| seller_notifications | In-app notifications for sellers | MISSING | Notifications |
+| seller_notification_templates | Email/notification templates | MISSING | Notifications |
+| seller_inventory_movements | Stock movement ledger | MISSING | Inventory |
+| seller_compliance_declarations | Compliance tracking | MISSING | Compliance |
+| seller_onboarding_steps | Onboarding step tracking | MISSING | Onboarding |
+| seller_readiness_scores | Readiness calculation cache | MISSING | Dashboard |
+| vendor_team_members | Team member management | MISSING | Team Management |
+| vendor_member_invitations | Invitation tracking | MISSING | Team Management |
+| seller_marketplace_applications | Marketplace application workflow | EXISTING (partial) | Marketplace |
+| seller_bulk_import_jobs | Bulk import job tracking | MISSING | Bulk Imports |
+| seller_quotations | RFQ quotation submissions | MISSING | RFQ/Quotations |
+| seller_shipments | Shipment tracking | MISSING | Logistics |
+| seller_payout_statements | Payout statement generation | MISSING | Payouts |
 
-## 2. PRODUCT MANAGEMENT GAPS
+### Existing Tables Needing Enhancement
+| Table | Current Status | Required Enhancement |
+|-------|---------------|---------------------|
+| seller_offers | Basic fields exist | Add: marketplace_id, approval_status, date_code, condition, packaging, lot_number, warranty, country_of_origin, offer_dates |
+| vendor_warehouses | Basic structure | Add: verification status, document links, operating hours, dispatch cutoff |
+| vendor_products | Draft/approved status | Add: MPN matching reference, category suggestion flag |
+| vendor_inventory | Basic stock | Add: movements ledger integration, reservations, quarantined, damaged |
 
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| MPN Search | Missing | Central catalog matching | No search API for sellers | Implement MPN search endpoint | P0 |
-| Match Existing MPN | Missing | Duplicate prevention | No matching service | Build product matching service | P0 |
-| New Product Request | Partial | Admin review workflow | vendor_products exists, no review queue | Build admin product review | P0 |
-| Category Selection | Missing | Category tree selector | No category picker component | Build category selector UI | P0 |
-| Bulk Import | Missing | CSV/XLSX import pipeline | No import controller | Build bulk import with chunking | P0 |
-| Draft Products | Partial | Status filtering exists | Incomplete draft management | Complete draft workflow | P1 |
-| Rejected Products | Partial | Rejection reason display | Exists but no resubmission flow | Add resubmission workflow | P1 |
+---
 
-## 3. SELLER OFFERS GAPS
+## 2. ROUTE GAPS
 
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Offer Creation | Partial | seller_offers table exists | Missing complete CRUD + approval | Build offer management system | P0 |
-| Marketplace Pricing | Missing | Regional price management | No marketplace-specific pricing | Add marketplace pricing layer | P0 |
-| Tier Pricing | Missing | quantity_breaks not utilized | Schema exists, logic absent | Implement tier pricing calculation | P1 |
-| Stock Sync | Missing | Real-time stock updates | No sync mechanism | Build stock synchronization | P0 |
-| Offer Approval | Missing | Admin approval workflow | No approval state machine | Build offer approval flow | P0 |
-| Duplicate Prevention | Missing | No unique constraints | Database gap | Add unique indexes | P0 |
-
-## 4. INVENTORY GAPS
-
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Warehouse Stock | Partial | Multi-warehouse support | vendor_inventory exists, incomplete | Complete multi-warehouse inventory | P0 |
-| Stock Movements | Missing | Movement ledger | No inventory_movements for sellers | Build movement tracking | P0 |
-| Reservations | Partial | Exists for territories | Not linked to seller orders | Connect reservations to seller flow | P0 |
-| Low Stock Alerts | Partial | Table exists | No alert generation logic | Implement alert triggers | P1 |
-| Stock Import | Missing | Bulk stock upload | No import handler | Build stock import CSV | P1 |
-| Negative Stock Prevention | Missing | No database constraint | Missing check constraint | Add DB-level prevention | P0 |
-
-## 5. ORDER MANAGEMENT GAPS
-
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Order Notification | Missing | Email/in-app triggers | No notification wiring | Connect to notification system | P0 |
-| Order Confirmation | Partial | Status update exists | No email confirmation | Add confirmation emails | P0 |
-| Stock Reservation | Missing | Auto-reservation on order | No reservation trigger | Build auto-reservation | P0 |
-| Packing Slip | Missing | PDF generation | No packing slip generator | Build PDF generator | P1 |
-| Shipment Creation | Partial | freight table exists | Not connected to seller UI | Link freight to seller portal | P0 |
-| Tracking Update | Missing | Tracking number entry | No tracking input UI | Build tracking management | P0 |
-| Delivery Confirmation | Partial | Dispatch exists | No delivery webhook | Add delivery confirmation | P1 |
-
-## 6. RFQ & QUOTATIONS GAPS
-
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| RFQ Matching | Missing | Qualified RFQ feed | No RFQ matching service | Build RFQ matching engine | P0 |
-| Quotation Submit | Missing | Bid submission flow | reseller RFQ exists, seller missing | Clone for seller RFQs | P0 |
-| Quotation Revision | Missing | Revise submitted quote | No revision workflow | Add quotation revisions | P1 |
-| Award Notification | Missing | Winner notification | No award triggers | Build award notifications | P1 |
-| Convert to Order | Missing | Quote-to-order conversion | No conversion logic | Implement conversion | P0 |
-
-## 7. WAREHOUSE MANAGEMENT GAPS
-
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Create Warehouse | Missing | Warehouse creation form | No seller warehouse CRUD | Build warehouse management | P0 |
-| Document Upload | Missing | Warehouse docs | No document attachment | Add warehouse documents | P0 |
-| Admin Approval | Missing | Verification workflow | No approval queue | Build warehouse approval | P0 |
-| Marketplace Coverage | Missing | Region coverage setting | No coverage mapping | Add coverage configuration | P1 |
-| Operating Hours | Missing | Hours configuration | No hours schema | Add operating hours | P2 |
-| Dispatch Cutoff | Missing | Cutoff time setting | No cutoff configuration | Add cutoff times | P2 |
-
-## 8. LOGISTICS GAPS
-
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Create Shipment | Partial | Freight exists | No seller shipment creation UI | Build shipment creator | P0 |
-| Carrier Selection | Missing | Carrier options | No carrier integration | Add carrier selection | P1 |
-| Tracking Number | Missing | Tracking entry | No tracking field in UI | Add tracking input | P0 |
-| Package Details | Missing | Dimensions/weight | No package schema | Add package details | P1 |
-| Commercial Invoice | Missing | Invoice generation | No invoice generator | Build invoice PDF | P1 |
-| Pickup Request | Partial | Dispatch exists | No pickup request UI | Build pickup requests | P1 |
-| Partial Shipment | Missing | Split shipment logic | No partial fulfillment | Implement split shipments | P2 |
-
-## 9. FINANCE & PAYOUTS GAPS
-
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Commission Calc | Missing | Per-order commission | commission_rules exists, not applied | Implement commission calculation | P0 |
-| Earnings View | Missing | Earnings dashboard | No earnings aggregation | Build earnings summary | P0 |
-| Payout Statement | Partial | vendor_payouts exists | No downloadable statements | Generate payout statements | P0 |
-| Tax Deduction | Missing | Tax calculation | No tax engine integration | Add tax deductions | P1 |
-| Refund Deduction | Missing | Refund handling | No refund deduction logic | Implement refund deductions | P1 |
-| Payout Export | Missing | CSV/XLSX export | No export function | Build payout exports | P1 |
-
-## 10. TEAM MANAGEMENT GAPS
-
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Invite Member | Missing | Team invitation system | No vendor_team table | Create team member tables | P0 |
-| Role Assignment | Missing | RBAC for team | No vendor_roles assignment | Implement role assignment | P0 |
-| Permission Enforcement | Missing | Backend permission checks | No policy enforcement | Build team policies | P0 |
-| Deactivate Member | Missing | Member deactivation | No soft delete | Add member deactivation | P1 |
-| Activity Audit | Missing | Member activity log | No audit trail | Build activity logging | P1 |
-
-## 11. SUPPORT SYSTEM GAPS
-
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Ticket Creation | Exists | Basic CRUD works | vendor_support_tickets exists | Verify completeness | P2 |
-| Threaded Replies | Missing | Message threading | No ticket_messages table | Add threaded messages | P0 |
-| Admin Notes | Missing | Internal notes | No internal notes field | Add admin notes | P1 |
-| SLA Tracking | Missing | SLA timers | No SLA configuration | Implement SLA tracking | P2 |
-| Satisfaction Rating | Missing | CSAT collection | No rating mechanism | Add satisfaction survey | P2 |
-
-## 12. NOTIFICATIONS GAPS
-
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Email Templates | Missing | Seller-specific templates | No seller email templates | Create email templates | P0 |
-| In-App Notifications | Missing | Notification center | No seller_notifications table | Build notification system | P0 |
-| Event Triggers | Missing | Event-to-notification mapping | No notification jobs | Create notification jobs | P0 |
-| Delivery Tracking | Missing | Email delivery status | No delivery tracking | Add delivery tracking | P1 |
-| Duplicate Prevention | Missing | Deduplication logic | No dedup mechanism | Implement deduplication | P1 |
-
-## 13. ADMIN INTEGRATION GAPS
-
-| Module | Status | Missing | Root Cause | Fix Required | Priority |
-|--------|--------|---------|------------|--------------|----------|
-| Seller Review Queue | Missing | Admin review dashboard | No admin seller review UI | Build admin review interface | P0 |
-| Document Verification | Missing | Document approval UI | No document review screen | Build document reviewer | P0 |
-| Correction Requests | Missing | Send back for correction | No correction workflow | Implement correction flow | P0 |
-| Suspension Management | Missing | Seller suspension | No suspension mechanism | Add suspension controls | P0 |
-| Audit History | Missing | Complete audit trail | No comprehensive audit log | Build audit logging | P0 |
-
-## 14. ROUTE GAPS (Web)
-
-Missing routes identified from layout.blade.php navigation:
-
+### Web Routes Missing (26 routes)
 ```
-/seller/readiness - NOT IMPLEMENTED
-/seller/notifications - NOT IMPLEMENTED
-/seller/products/add - NOT IMPLEMENTED
-/seller/products/match - NOT IMPLEMENTED
-/seller/products/import - NOT IMPLEMENTED
-/seller/products/drafts - PARTIAL
-/seller/products/rejected - PARTIAL
-/seller/inventory/warehouse - NOT IMPLEMENTED
-/seller/inventory/movements - NOT IMPLEMENTED
-/seller/inventory/reservations - NOT IMPLEMENTED
-/seller/inventory/alerts - NOT IMPLEMENTED
-/seller/inventory/import - NOT IMPLEMENTED
-/seller/rfqs - NOT IMPLEMENTED
-/seller/quotations - NOT IMPLEMENTED
-/seller/returns - NOT IMPLEMENTED
-/seller/cancellations - NOT IMPLEMENTED
-/seller/messages - NOT IMPLEMENTED
-/seller/warehouses - NOT IMPLEMENTED
-/seller/dispatch - NOT IMPLEMENTED
-/seller/shipments - NOT IMPLEMENTED
-/seller/pickups - NOT IMPLEMENTED
-/seller/freight - PARTIAL
-/seller/tracking - NOT IMPLEMENTED
-/seller/earnings - NOT IMPLEMENTED
-/seller/statements - NOT IMPLEMENTED
-/seller/commissions - NOT IMPLEMENTED
-/seller/taxes - NOT IMPLEMENTED
-/seller/marketplace - NOT IMPLEMENTED
-/seller/pricing - NOT IMPLEMENTED
-/seller/offers - NOT IMPLEMENTED
-/seller/performance - NOT IMPLEMENTED
-/seller/compliance - NOT IMPLEMENTED
-/seller/documents - NOT IMPLEMENTED
-/seller/team - NOT IMPLEMENTED
-/seller/settings - NOT IMPLEMENTED
+/seller/readiness                    - Onboarding readiness
+/seller/notifications                - Notification center
+/seller/products/add                 - Add new product
+/seller/products/match               - MPN matching UI
+/seller/products/import              - Bulk import UI
+/seller/products/drafts              - Draft products
+/seller/products/rejected            - Rejected products
+/seller/inventory/warehouse          - Warehouse stock view
+/seller/inventory/movements          - Stock movement ledger
+/seller/inventory/reservations       - Reserved stock
+/seller/inventory/alerts             - Low stock alerts
+/seller/rfqs                         - RFQ listings
+/seller/quotations                   - Submitted quotations
+/seller/returns                      - Return requests
+/seller/cancellations                - Order cancellations
+/seller/messages                     - Customer messages
+/seller/warehouses                   - Warehouse management
+/seller/dispatch                     - Dispatch management
+/seller/shipments                    - Shipment tracking
+/seller/pickups                      - Pickup requests
+/seller/tracking                     - Tracking numbers
+/seller/earnings                     - Earnings breakdown
+/seller/statements                   - Payout statements
+/seller/commissions                  - Commission details
+/seller/taxes                        - Tax documents
+/seller/marketplace                  - Marketplace applications
+/seller/pricing                      - Regional pricing
+/seller/offers                       - Offer management
+/seller/performance                  - Performance metrics
+/seller/compliance                   - Compliance declarations
+/seller/documents                    - Document management
+/seller/team                         - Team members
+/seller/settings                     - Account settings
 ```
 
-## 15. API GAPS
+### API Endpoints Missing (45+ endpoints)
+- POST /api/v1/seller/products/search-mpn
+- POST /api/v1/seller/products/match
+- POST /api/v1/seller/products/bulk-import
+- GET/POST /api/v1/seller/offers
+- PATCH/DELETE /api/v1/seller/offers/{id}
+- GET/POST /api/v1/seller/warehouses
+- PATCH/DELETE /api/v1/seller/warehouses/{id}
+- GET /api/v1/seller/inventory/movements
+- GET /api/v1/seller/inventory/reservations
+- POST /api/v1/seller/inventory/reserve
+- POST /api/v1/seller/inventory/release
+- GET/POST /api/v1/seller/rfqs
+- GET/POST /api/v1/seller/quotations
+- PATCH /api/v1/seller/quotations/{id}
+- GET/POST /api/v1/seller/shipments
+- PATCH /api/v1/seller/shipments/{id}
+- GET /api/v1/seller/notifications
+- PATCH /api/v1/seller/notifications/{id}/read
+- GET/POST /api/v1/seller/team
+- PATCH/DELETE /api/v1/seller/team/{id}
+- POST /api/v1/seller/team/invite
+- GET /api/v1/seller/payouts/statements
+- GET /api/v1/seller/payouts/statement/{id}
+- GET /api/v1/seller/marketplace/applications
+- POST /api/v1/seller/marketplace/applications
+- GET /api/v1/seller/compliance
+- POST /api/v1/seller/compliance/declare
 
-Missing API endpoints:
+---
 
-```
-GET/POST /api/v1/seller/offers
-GET/PATCH/DELETE /api/v1/seller/offers/{id}
-POST /api/v1/seller/products/match-mpn
-POST /api/v1/seller/products/bulk-import
-GET /api/v1/seller/warehouses
-POST /api/v1/seller/warehouses
-GET/PATCH /api/v1/seller/warehouses/{id}
-GET /api/v1/seller/inventory/movements
-GET /api/v1/seller/inventory/reservations
-POST /api/v1/seller/rfqs/{id}/quote
-GET /api/v1/seller/quotations
-POST /api/v1/seller/shipments
-GET /api/v1/seller/team
-POST /api/v1/seller/team/invite
-GET /api/v1/seller/notifications
-POST /api/v1/seller/marketplace/apply
-```
+## 3. BUSINESS LOGIC GAPS
 
-## 16. DATABASE SCHEMA GAPS
+### Onboarding Flow (P0)
+- [ ] Readiness percentage calculation (real data, not hardcoded)
+- [ ] Step-by-step progress tracking
+- [ ] Document upload with validation
+- [ ] Admin review workflow
+- [ ] Correction request mechanism
+- [ ] Status transitions with notifications
 
-Missing tables:
+### MPN Matching (P0)
+- [ ] MPN normalization service
+- [ ] Search by exact MPN
+- [ ] Search by normalized MPN
+- [ ] Search by manufacturer + MPN
+- [ ] Alias matching
+- [ ] Duplicate prevention
+- [ ] Match results display
+- [ ] Offer creation from match
 
-```sql
--- Seller team management
-vendor_team_members
-vendor_member_invitations
-vendor_activity_logs
+### Offer Management (P0)
+- [ ] Create offer with all required fields
+- [ ] Edit offer
+- [ ] Submit for approval
+- [ ] Approval workflow
+- [ ] Rejection with reason
+- [ ] Pause/resume
+- [ ] Expiration handling
+- [ ] Duplicate offer prevention
+- [ ] Marketplace-specific offers
 
--- Seller notifications
-seller_notifications
-notification_templates
+### Inventory Management (P0)
+- [ ] Stock movement ledger
+- [ ] Reservation system
+- [ ] Reservation expiry
+- [ ] Low stock alerts
+- [ ] Stock reconciliation
+- [ ] No negative stock enforcement
+- [ ] Idempotent transactions
 
--- Seller offers (enhanced)
-seller_offer_approvals
-seller_offer_marketplace_prices
+### Order Processing (P0)
+- [ ] New order notification
+- [ ] Order confirmation
+- [ ] Stock reservation on order
+- [ ] Packing slip generation
+- [ ] Dispatch deadline tracking
+- [ ] Shipment creation
+- [ ] Delivery confirmation
+- [ ] Cancellation handling
+- [ ] Return processing
 
--- Inventory movements
-seller_inventory_movements
+### Payout Calculation (P0)
+- [ ] Commission calculation engine
+- [ ] Tax deduction
+- [ ] Refund deduction
+- [ ] Shipping deduction
+- [ ] Net earnings calculation
+- [ ] Statement generation
+- [ ] Payout eligibility check
 
--- Warehouse management
-seller_warehouses (or extend vendor_warehouses)
+---
 
--- Compliance
-seller_compliance_declarations
+## 4. CONTROLLER GAPS
 
--- Readiness tracking
-seller_onboarding_steps
-seller_readiness_scores
-```
+### Missing Controllers
+- SellerOfferController
+- SellerWarehouseController
+- SellerRfqController
+- SellerQuotationController
+- SellerShipmentController
+- SellerNotificationController
+- SellerTeamController
+- SellerBulkImportController
+- SellerComplianceController
+- SellerReadinessController
 
-## 17. QUEUE JOB GAPS
+### Incomplete Controllers
+- SellerProductController: Missing MPN search, bulk import
+- SellerInventoryController: Missing movements, reservations, alerts
+- SellerOrderController: Missing shipment, returns, cancellations
+- SellerPayoutController: Missing statements, commission breakdown
 
-Missing queue jobs:
+---
 
-```php
-ProcessSellerApplication
-ReviewVendorDocuments
-ApproveSellerOffer
-SyncSellerInventory
-SendOrderNotification
-GeneratePayoutStatement
-ProcessBulkProductImport
-ProcessStockImport
-SendReadinessReminder
-NotifyCorrectionRequired
-```
+## 5. SERVICE LAYER GAPS
 
-## 18. EMAIL TEMPLATE GAPS
+### Missing Services
+- SellerOnboardingService
+- MpnMatchingService
+- SellerOfferService
+- InventoryMovementService
+- StockReservationService
+- CommissionCalculationService
+- PayoutStatementService
+- SellerNotificationService
+- BulkImportService
+- SellerQuotationService
+- ShipmentTrackingService
 
-Missing templates:
+---
 
-```
-seller.registration_confirmation
-seller.email_verification
-seller.application_submitted
-seller.correction_requested
-seller.application_approved
-seller.application_rejected
-seller.warehouse_approved
-seller.offer_approved
-seller.order_received
-seller.payout_processed
-seller.low_stock_alert
-seller.readiness_reminder
-```
+## 6. NOTIFICATION GAPS
 
-## 19. POLICY/PERMISSION GAPS
+### Email Templates Missing
+- seller.registration
+- seller.email_verification
+- seller.onboarding_reminder
+- seller.verification_submitted
+- seller.correction_requested
+- seller.verification_approved
+- seller.verification_rejected
+- seller.marketplace_application_update
+- seller.warehouse_update
+- seller.product_update
+- seller.offer_update
+- seller.low_stock_alert
+- seller.new_order
+- seller.order_cancelled
+- seller.dispatch_deadline
+- seller.rfq_invitation
+- seller.quotation_accepted
+- seller.return_request
+- seller.support_response
+- seller.payout_processed
+- seller.document_expiry
+- seller.suspension_notice
 
-Missing policies:
+### In-App Notification Triggers
+- All above events need in-app notifications
+- Notification preferences
+- Mark as read/unread
+- Batch operations
 
-```php
-SellerOfferPolicy
-SellerWarehousePolicy
-SellerInventoryPolicy
-SellerTeamPolicy
-SellerDocumentPolicy
-```
+---
 
-## 20. UI COMPONENT GAPS
+## 7. ADMIN INTEGRATION GAPS
 
-Missing Blade components:
+### Admin Routes Missing
+- /admin/sellers/review-queue
+- /admin/sellers/{id}/verify
+- /admin/sellers/{id}/documents
+- /admin/sellers/{id}/correction-request
+- /admin/sellers/{id}/suspend
+- /admin/marketplace/applications/review
+- /admin/warehouses/{id}/verify
+- /admin/products/submitted/review
+- /admin/offers/pending/approval
+- /admin/payouts/reconcile
 
-```blade
-- seller-readiness-progress
-- mpn-search-input
-- category-tree-selector
-- bulk-upload-widget
-- team-member-manager
-- notification-center
-- document-uploader
-- warehouse-selector
-- offer-creator
-- shipment-tracker
-```
+### Admin Controllers Missing
+- AdminSellerReviewController
+- AdminSellerDocumentController
+- AdminMarketplaceApplicationController
+- AdminSellerOfferController
+- AdminSellerPayoutReconciliationController
+
+---
+
+## 8. UI/UX GAPS
+
+### Frontend Components Missing
+- MPN search component with results
+- Category tree selector
+- Bulk import wizard
+- Stock movement table
+- Notification center
+- Team member management
+- Shipment creation form
+- Quotation builder
+- Readiness progress indicator
+- Commission breakdown chart
+
+### Blade Views Missing
+- seller.readiness
+- seller.notifications
+- seller.products.add
+- seller.products.match
+- seller.products.import
+- seller.inventory.movements
+- seller.inventory.reservations
+- seller.rfqs.index
+- seller.quotations.index
+- seller.shipments.index
+- seller.team.index
+- seller.marketplace.applications
+- seller.compliance.index
+- seller.statements.index
+
+---
+
+## 9. PERMISSION GAPS
+
+### Missing Permissions
+- seller.products.match
+- seller.products.import
+- seller.offers.manage
+- seller.warehouses.manage
+- seller.inventory.movements.view
+- seller.inventory.reservations.manage
+- seller.rfqs.view
+- seller.rfqs.respond
+- seller.quotations.manage
+- seller.shipments.manage
+- seller.notifications.view
+- seller.team.manage
+- seller.marketplace.apply
+- seller.compliance.declare
+- seller.statements.view
+
+---
+
+## 10. QUEUE JOB GAPS
+
+### Missing Jobs
+- ProcessSellerBulkImport
+- SendSellerNotification
+- CalculateSellerPayout
+- GeneratePayoutStatement
+- ProcessMpnMatchRequest
+- SendOnboardingReminder
+- CheckReservationExpiry
+- SendLowStockAlert
+- ProcessSellerVerification
+
+---
+
+## 11. TEST GAPS
+
+### Feature Tests Missing
+- Seller registration flow
+- Onboarding completion
+- MPN matching
+- Offer creation and approval
+- Inventory movements
+- Stock reservation
+- Order processing
+- RFQ response
+- Quotation submission
+- Shipment creation
+- Payout calculation
+- Team management
+- Notification delivery
+- Permission enforcement
+- Seller isolation
+
+---
+
+## 12. SECURITY GAPS
+
+### Audit Requirements
+- All seller actions must be logged
+- Cross-seller access prevention
+- Financial manipulation prevention
+- Approval bypass prevention
+- Document access control
+- Upload security validation
+
+---
 
 ## PRIORITY CLASSIFICATION
 
-**P0 (Critical Blockers):**
-- Seller onboarding completion
-- MPN matching and duplicate prevention
-- Offer creation and approval
-- Inventory management
-- Order processing
-- Warehouse management
-- Payout calculation
+### P0 - Critical Blockers (Must Complete First)
+1. Onboarding with document uploads
+2. MPN matching and duplicate prevention
+3. Offer creation and approval
+4. Inventory with movement tracking
+5. Order processing with notifications
+6. Warehouse management with approval
+7. Payout calculation
 
-**P1 (High Priority):**
-- Bulk imports
-- RFQ/Quotations
-- Team management
-- Notifications
-- Admin review workflows
+### P1 - High Priority
+1. Bulk imports
+2. RFQ/Quotations
+3. Team management
+4. Notification system
+5. Admin review workflows
 
-**P2 (Medium Priority):**
-- Advanced logistics features
-- SLA tracking
-- Performance analytics
+### P2 - Medium Priority
+1. Advanced logistics
+2. SLA tracking
+3. Performance analytics
+4. Compliance declarations
 
-## NEXT STEPS
+---
 
-1. Create missing database migrations
-2. Build Eloquent models
-3. Implement API controllers
-4. Create web routes and controllers
-5. Build Blade views
-6. Wire notifications
-7. Create queue jobs
-8. Write tests
-9. Security audit
-10. Performance testing
+## IMPLEMENTATION PLAN
+
+Phase 1: Database Foundation (migrations for all missing tables)
+Phase 2: Models and Relationships
+Phase 3: Service Layer Implementation
+Phase 4: API Controllers and Routes
+Phase 5: Web Controllers and Views
+Phase 6: Notification System
+Phase 7: Admin Integration
+Phase 8: Testing and Security Audit
+
