@@ -25,7 +25,7 @@ use App\Http\Controllers\Admin\Email\EmailAnalyticsController;
 Route::prefix('email')->name('email.')->group(function () {
     Route::get('/preference/{token}', [EmailPreferenceController::class, 'show'])->name('preference.show');
     Route::post('/preference/{token}', [EmailPreferenceController::class, 'update'])->name('preference.update');
-    Route::get('/unsubscribe/{token}', [EmailPreferenceController::class, 'unsubscribe'])->name('unsubscribe');
+    Route::get('/unsubscribe/{token}', [EmailPreferenceController::class, 'unsubscribe'])->name('unsubscribe.manage');
 });
 
 // Admin email management routes

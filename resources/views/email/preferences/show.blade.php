@@ -102,7 +102,7 @@
 
             <div class="actions">
                 <button type="submit" class="btn">Save Preferences</button>
-                <a href="{{ route('email.unsubscribe', $token) }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to unsubscribe from all marketing emails?')">Unsubscribe All</a>
+                <a href="{{ route('email.unsubscribe.manage', $token) }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to unsubscribe from all marketing emails?')">Unsubscribe All</a>
             </div>
         </form>
     </div>
