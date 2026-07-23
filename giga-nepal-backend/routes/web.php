@@ -179,6 +179,14 @@ Route::prefix('seller')->group(function () {
     Route::get('documents', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('team', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('settings', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
+
+    // Market Intelligence
+    Route::get('intelligence', [\App\Http\Controllers\Web\SellerIntelligenceController::class, 'index'])->middleware(EnsureSellerWeb::class);
+    Route::get('intelligence/trending', [\App\Http\Controllers\Web\SellerIntelligenceController::class, 'trending'])->middleware(EnsureSellerWeb::class);
+    Route::get('intelligence/categories', [\App\Http\Controllers\Web\SellerIntelligenceController::class, 'categories'])->middleware(EnsureSellerWeb::class);
+    Route::get('intelligence/unmet', [\App\Http\Controllers\Web\SellerIntelligenceController::class, 'unmet'])->middleware(EnsureSellerWeb::class);
+    Route::get('intelligence/my-products', [\App\Http\Controllers\Web\SellerIntelligenceController::class, 'myProducts'])->middleware(EnsureSellerWeb::class);
+    Route::get('intelligence/opportunity/{mpn}', [\App\Http\Controllers\Web\SellerIntelligenceController::class, 'opportunityDetail'])->where('mpn', '.*')->middleware(EnsureSellerWeb::class);
 });
 
 // Reseller web portal
@@ -333,6 +341,33 @@ Route::prefix('admin')->group(function () {
         Route::get('users', [AdminDash::class, 'users']);
         Route::get('lms', [AdminDash::class, 'lms']);
         Route::get('lms/courses/{course}', [AdminDash::class, 'lmsCourse'])->whereNumber('course');
+
+        // Education & STEM Admin
+        Route::get('education', [\App\Http\Controllers\Admin\EducationAdminController::class, 'dashboard']);
+        Route::get('education/projects', [\App\Http\Controllers\Admin\EducationAdminController::class, 'projects']);
+        Route::get('education/projects/{id}', [\App\Http\Controllers\Admin\EducationAdminController::class, 'projectShow'])->whereNumber('id');
+        Route::post('education/projects/{id}/update', [\App\Http\Controllers\Admin\EducationAdminController::class, 'projectUpdate'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('education/projects/{id}/approve', [\App\Http\Controllers\Admin\EducationAdminController::class, 'projectApprove'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('education/projects/{id}/reject', [\App\Http\Controllers\Admin\EducationAdminController::class, 'projectReject'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('education/projects/{id}/archive', [\App\Http\Controllers\Admin\EducationAdminController::class, 'projectArchive'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('education/projects/{id}/bom/add', [\App\Http\Controllers\Admin\EducationAdminController::class, 'projectAddBomLine'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::post('education/projects/{id}/bom/{line}/delete', [\App\Http\Controllers\Admin\EducationAdminController::class, 'projectDeleteBomLine'])->whereNumber(['id', 'line'])->middleware('throttle:20,1');
+        Route::post('education/projects/{id}/code/add', [\App\Http\Controllers\Admin\EducationAdminController::class, 'projectAddCode'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::get('education/sensors', [\App\Http\Controllers\Admin\EducationAdminController::class, 'sensors']);
+        Route::post('education/sensors', [\App\Http\Controllers\Admin\EducationAdminController::class, 'sensorStore'])->middleware('throttle:20,1');
+        Route::post('education/sensors/{id}/update', [\App\Http\Controllers\Admin\EducationAdminController::class, 'sensorUpdate'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::get('education/courses', [\App\Http\Controllers\Admin\EducationAdminController::class, 'courses']);
+        Route::get('education/analytics', [\App\Http\Controllers\Admin\EducationAdminController::class, 'analytics']);
+
+        // Seller Intelligence Admin
+        Route::get('seller-intelligence', [\App\Http\Controllers\Admin\SellerIntelligenceAdminController::class, 'dashboard']);
+        Route::get('seller-intelligence/trending', [\App\Http\Controllers\Admin\SellerIntelligenceAdminController::class, 'trendingMpns']);
+        Route::get('seller-intelligence/unfulfilled', [\App\Http\Controllers\Admin\SellerIntelligenceAdminController::class, 'unfulfilled']);
+        Route::get('seller-intelligence/supply-gaps', [\App\Http\Controllers\Admin\SellerIntelligenceAdminController::class, 'supplyGaps']);
+        Route::get('seller-intelligence/opportunity/{mpn}', [\App\Http\Controllers\Admin\SellerIntelligenceAdminController::class, 'opportunityDetail'])->where('mpn', '.*');
+        Route::post('seller-intelligence/opportunity/{mpn}/create', [\App\Http\Controllers\Admin\SellerIntelligenceAdminController::class, 'createOpportunity'])->where('mpn', '.*')->middleware('throttle:20,1');
+        Route::post('seller-intelligence/opportunity/{mpn}/deactivate', [\App\Http\Controllers\Admin\SellerIntelligenceAdminController::class, 'deactivateOpportunity'])->where('mpn', '.*')->middleware('throttle:20,1');
+        Route::post('seller-intelligence/opportunity/{mpn}/activate', [\App\Http\Controllers\Admin\SellerIntelligenceAdminController::class, 'activateOpportunity'])->where('mpn', '.*')->middleware('throttle:20,1');
         Route::get('bom-imports', [AdminDash::class, 'bomImports']);
         Route::get('inventory', [AdminDash::class, 'inventory']);
         Route::get('pos', [AdminDash::class, 'pos']);
@@ -617,6 +652,13 @@ Route::middleware('admin.web')->prefix('pos/cashier')->group(function () {
 Route::redirect('/learn', '/en/lms', 301);
 Route::redirect('/learning', '/en/lms', 301);
 Route::get('/learn/projects/{slug}', [LmsPageController::class, 'project']);
+
+// Education & STEM Projects
+Route::get('/education', [\App\Http\Controllers\Web\EducationProjectController::class, 'index'])->name('education.index');
+Route::get('/education/projects', [\App\Http\Controllers\Web\EducationProjectController::class, 'index'])->name('education.projects.index');
+Route::get('/education/projects/{slug}', [\App\Http\Controllers\Web\EducationProjectController::class, 'show'])->name('education.show');
+Route::get('/education/ai-builder', [\App\Http\Controllers\Web\EducationProjectController::class, 'aiBuilder'])->name('education.ai-builder');
+Route::get('/education/sensors', [\App\Http\Controllers\Web\EducationProjectController::class, 'sensors'])->name('education.sensors');
 Route::redirect('/', '/en', 301);
 // Stitch "Precision Engineering" redesign preview (noindex; does not touch the
 // live homepage/layout). Promote to the live home only after review.

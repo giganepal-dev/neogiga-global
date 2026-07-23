@@ -131,7 +131,7 @@ class Phase1CheckoutTest extends TestCase
         $this->assertFalse($methods->pluck('code')->contains('bank_transfer'));
     }
 
-    private function customerUser(string $token): User
+    private function customerUser(string &$token): User
     {
         $role = Role::updateOrCreate(
             ['name' => 'customer'],
@@ -149,9 +149,7 @@ class Phase1CheckoutTest extends TestCase
             'role_id' => $role->id,
         ]);
 
-        $user->forceFill([
-            'api_token_hash' => hash('sha256', $token),
-        ])->save();
+        $token = $user->createToken('test-token')->plainTextToken;
 
         return $user;
     }

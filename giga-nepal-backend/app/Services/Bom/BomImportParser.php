@@ -19,14 +19,42 @@ class BomImportParser
         'mpn' => [
             'mpn', 'manufacturerpartnumber', 'mfrpartnumber', 'mfrpart', 'mfgpart',
             'partnumber', 'part', 'partno', 'partno.', 'mfrpart#', 'manufacturerpart#',
-            'supplierpartnumber',
+            'supplierpartnumber', 'pn', 'part_num', 'partnum', 'mfg_part_no',
+            'componentpartnumber', 'componentpart', 'device', 'devicetype',
         ],
-        'manufacturer' => ['manufacturer', 'mfr', 'mfg', 'brand', 'make', 'vendor'],
-        'description' => ['description', 'comment', 'value', 'desc', 'name', 'component'],
-        'quantity' => ['quantity', 'qty', 'qnty', 'count', 'amount', 'quantityperboard'],
+        'manufacturer' => [
+            'manufacturer', 'mfr', 'mfg', 'brand', 'make', 'vendor',
+            'manufacturername', 'mfrname', 'mfgname', 'brandname', 'vender',
+            'supplier', 'suppliername',
+        ],
+        'description' => [
+            'description', 'comment', 'value', 'desc', 'name', 'component',
+            'componentdescription', 'compdesc', 'notes', 'partdescription',
+            'deviceDescription', 'item',
+        ],
+        'quantity' => [
+            'quantity', 'qty', 'qnty', 'count', 'amount', 'quantityperboard',
+            'quantityrequired', 'qtyrequired', 'qtyreq', 'num', 'number',
+            'quantityneeded', 'qtyneeded',
+        ],
         'raw_reference' => [
             'designator', 'designators', 'reference', 'references', 'refdes',
-            'ref', 'refs', 'location', 'locations',
+            'ref', 'refs', 'location', 'locations', 'referenceDesignator',
+            'refdesignator', 'refdesignators', 'refdes',
+        ],
+        'package' => [
+            'package', 'footprint', 'pkg', 'case', 'packagesize',
+            'footprintreference', 'pattern',
+        ],
+        'value' => [
+            'value', 'val', 'parametervalue', 'param', 'setting',
+        ],
+        'tolerance' => [
+            'tolerance', 'tol', 'tolerancevalue',
+        ],
+        'voltage' => [
+            'voltagerating', 'voltagerated', 'voltage', 'vmax', 'vrated',
+            'ratedvoltage', 'workingvoltage',
         ],
     ];
 
@@ -211,5 +239,166 @@ class BomImportParser
         }
 
         return mb_substr($value, 0, $max);
+    }
+
+    /**
+     * Parse a pasted table (tab-separated or multi-space separated).
+     */
+    public function parsePastedTable(string $content): array
+    {
+        return $this->parse($content);
+    }
+
+    /**
+     * Parse from an array of rows (already split).
+     *
+     * @param  array<int, array<int, string>>  $rows
+     * @return array{lines: array<int, array<string, mixed>>, mapped: array<string,int>, has_header: bool}
+     */
+    public function parseRows(array $rows): array
+    {
+        $rows = array_values(array_filter($rows, fn ($r) => $this->rowHasContent($r)));
+
+        if ($rows === []) {
+            return ['lines' => [], 'mapped' => [], 'has_header' => false];
+        }
+
+        $mapped = $this->mapHeader($rows[0]);
+        $hasHeader = $mapped !== [];
+        $dataRows = $hasHeader ? array_slice($rows, 1) : $rows;
+
+        if (! $hasHeader) {
+            $mapped = $this->guessPositional($dataRows);
+        }
+
+        $lines = [];
+        $lineNo = 0;
+        foreach ($dataRows as $row) {
+            $mpn = $this->cell($row, $mapped, 'mpn');
+            $description = $this->cell($row, $mapped, 'description');
+
+            if (($mpn === null || $mpn === '') && ($description === null || $description === '')) {
+                continue;
+            }
+
+            $lineNo++;
+            $lines[] = [
+                'line_no' => $lineNo,
+                'mpn' => $this->clip($mpn, 190),
+                'manufacturer' => $this->clip($this->cell($row, $mapped, 'manufacturer'), 190),
+                'description' => $this->clip($description, 190),
+                'raw_reference' => $this->clip($this->cell($row, $mapped, 'raw_reference'), 190),
+                'quantity' => $this->quantity($this->cell($row, $mapped, 'quantity')),
+                'package' => $this->clip($this->cell($row, $mapped, 'package'), 50),
+                'value' => $this->clip($this->cell($row, $mapped, 'value'), 100),
+                'tolerance' => $this->clip($this->cell($row, $mapped, 'tolerance'), 20),
+                'voltage' => $this->clip($this->cell($row, $mapped, 'voltage'), 20),
+            ];
+        }
+
+        return ['lines' => $lines, 'mapped' => $mapped, 'has_header' => $hasHeader];
+    }
+
+    /**
+     * Detect the format of the input content.
+     */
+    public function detectFormat(string $content): string
+    {
+        $trimmed = trim($content);
+
+        // Check for JSON
+        if (str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[')) {
+            $decoded = json_decode($trimmed, true);
+            if (is_array($decoded)) {
+                return 'json';
+            }
+        }
+
+        // Check for XML
+        if (str_starts_with($trimmed, '<?xml') || str_starts_with($trimmed, '<')) {
+            return 'xml';
+        }
+
+        // Check for CSV/TSV
+        $firstLine = strtok($content, "\n") ?: '';
+        if (substr_count($firstLine, "\t") > 2) {
+            return 'tsv';
+        }
+        if (substr_count($firstLine, ',') > 2) {
+            return 'csv';
+        }
+        if (substr_count($firstLine, ';') > 2) {
+            return 'csv_semicolon';
+        }
+
+        // Check for markdown table
+        if (preg_match('/^\|.*\|$/m', $trimmed)) {
+            return 'markdown_table';
+        }
+
+        return 'text';
+    }
+
+    /**
+     * Get parsing statistics.
+     */
+    public function getStats(array $parsed): array
+    {
+        $lines = $parsed['lines'] ?? [];
+        $withMpn = 0;
+        $withManufacturer = 0;
+        $withQuantity = 0;
+
+        foreach ($lines as $line) {
+            if (! empty($line['mpn'])) {
+                $withMpn++;
+            }
+            if (! empty($line['manufacturer'])) {
+                $withManufacturer++;
+            }
+            if (($line['quantity'] ?? 1) > 1) {
+                $withQuantity++;
+            }
+        }
+
+        return [
+            'total_lines' => count($lines),
+            'with_mpn' => $withMpn,
+            'with_manufacturer' => $withManufacturer,
+            'with_quantity' => $withQuantity,
+            'has_header' => $parsed['has_header'] ?? false,
+            'mapped_fields' => array_keys($parsed['mapped'] ?? []),
+        ];
+    }
+
+    /**
+     * Merge duplicate lines (same MPN).
+     */
+    public function mergeDuplicates(array $lines): array
+    {
+        $merged = [];
+        $seen = [];
+
+        foreach ($lines as $line) {
+            $key = strtoupper(trim($line['mpn'] ?? ''));
+
+            if ($key === '') {
+                $merged[] = $line;
+                continue;
+            }
+
+            if (isset($seen[$key])) {
+                // Add quantity to existing line
+                $idx = $seen[$key];
+                $merged[$idx]['quantity'] = ($merged[$idx]['quantity'] ?? 1) + ($line['quantity'] ?? 1);
+                $merged[$idx]['duplicate_count'] = ($merged[$idx]['duplicate_count'] ?? 1) + 1;
+            } else {
+                $seen[$key] = count($merged);
+                $line['duplicate_count'] = 1;
+                $merged[] = $line;
+            }
+        }
+
+        return $merged;
     }
 }

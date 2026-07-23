@@ -31,7 +31,7 @@ class DistributorAuthController extends Controller
         return $this->success([
             'user' => new UserResource($user),
             'distributor' => new DistributorResource($distributor),
-            'token' => $auth->issueToken($user),
+            'token' => $user->createToken('auth-token')->plainTextToken,
             'onboarding_status' => 'submitted',
             'message' => 'Distributor account created with pending onboarding status.',
         ], 201);
@@ -52,10 +52,12 @@ class DistributorAuthController extends Controller
             return $this->error('Distributor account is not active for login.', 403);
         }
 
+        $user->update(['last_login_at' => now()]);
+
         return $this->success([
             'user' => new UserResource($user),
             'distributor' => new DistributorResource($distributor),
-            'token' => $auth->issueToken($user),
+            'token' => $user->createToken('auth-token')->plainTextToken,
             'portal_status' => $distributor->status === 'approved' ? 'active' : 'early_access_pending',
         ]);
     }

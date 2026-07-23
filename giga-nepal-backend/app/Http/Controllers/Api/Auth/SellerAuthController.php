@@ -31,7 +31,7 @@ class SellerAuthController extends Controller
         return $this->success([
             'user' => new UserResource($user),
             'seller' => new SellerResource($vendor),
-            'token' => $auth->issueToken($user),
+            'token' => $user->createToken('auth-token')->plainTextToken,
             'onboarding_status' => 'submitted',
             'message' => 'Seller account created with pending onboarding status.',
         ], 201);
@@ -52,10 +52,12 @@ class SellerAuthController extends Controller
             return $this->error('Seller account is not active for login.', 403);
         }
 
+        $user->update(['last_login_at' => now()]);
+
         return $this->success([
             'user' => new UserResource($user),
             'seller' => new SellerResource($vendor),
-            'token' => $auth->issueToken($user),
+            'token' => $user->createToken('auth-token')->plainTextToken,
             'portal_status' => $vendor->status === 'active' ? 'active' : 'early_access_pending',
         ]);
     }

@@ -148,6 +148,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/search', [ProductController::class, 'search']);
         Route::get('/category/{slug}', [ProductController::class, 'byCategory']);
         Route::get('/brand/{slug}', [ProductController::class, 'byBrand']);
+
+        // MPN Autocomplete (must be before {slug} catch-all)
+        Route::get('/autocomplete', [\App\Http\Controllers\Api\Product\MpnAutocompleteController::class, 'search'])
+            ->middleware('throttle:120,1');
         Route::get('/{product}/attributes', [ProductCommerceController::class, 'attributes']);
         Route::get('/{product}/specs', [ProductCommerceController::class, 'specs']);
         Route::get('/{product}/variants', [ProductCommerceController::class, 'variants']);
@@ -1139,4 +1143,234 @@ Route::prefix('v1/dispatch')->middleware(['api.token'])->group(function () {
     Route::post('/complete-delivery', [DispatchController::class, 'completeDelivery']);
     Route::get('/drivers', [DispatchController::class, 'drivers']);
     Route::get('/drivers/{driver}/deliveries', [DispatchController::class, 'driverDeliveries']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| AI Commerce & MPN Autocomplete API Routes
+|--------------------------------------------------------------------------
+|
+| Fast MPN autocomplete, normalization, alternatives, BOM processing,
+| RFQ automation, and AI Commerce chat.
+|
+*/
+
+// =====================================================
+// MPN NORMALIZATION & DETECTION (Public, rate-limited)
+// =====================================================
+
+// MPN normalization & detection tools
+Route::prefix('v1/products/mpn')->group(function () {
+    // Normalize a single MPN
+    Route::post('/normalize', [\App\Http\Controllers\Api\Product\MpnAutocompleteController::class, 'normalize'])
+        ->middleware('throttle:60,1');
+
+    // Batch normalize MPNs (up to 100)
+    Route::post('/normalize-batch', [\App\Http\Controllers\Api\Product\MpnAutocompleteController::class, 'normalizeBatch'])
+        ->middleware('throttle:30,1');
+
+    // Match a single MPN against catalog
+    Route::post('/match', [\App\Http\Controllers\Api\Product\MpnAutocompleteController::class, 'matchMpn'])
+        ->middleware('throttle:60,1');
+
+    // Detect manufacturer from MPN prefix
+    Route::post('/detect-manufacturer', [\App\Http\Controllers\Api\Product\MpnAutocompleteController::class, 'detectManufacturer'])
+        ->middleware('throttle:60,1');
+
+    // Resolve manufacturer alias
+    Route::post('/resolve-manufacturer', [\App\Http\Controllers\Api\Product\MpnAutocompleteController::class, 'resolveManufacturer'])
+        ->middleware('throttle:60,1');
+
+    // Parse passive component description
+    Route::post('/parse-passive', [\App\Http\Controllers\Api\Product\MpnAutocompleteController::class, 'parsePassive'])
+        ->middleware('throttle:60,1');
+});
+
+// Product alternatives & aliases
+Route::prefix('v1/products')->group(function () {
+    // Find alternatives for a product
+    Route::get('/{product}/alternatives', [\App\Http\Controllers\Api\Product\MpnAutocompleteController::class, 'alternatives'])
+        ->whereNumber('product')
+        ->middleware('throttle:60,1');
+
+    // Get MPN aliases for a product
+    Route::get('/{product}/aliases', [\App\Http\Controllers\Api\Product\MpnAutocompleteController::class, 'getAliases'])
+        ->whereNumber('product')
+        ->middleware('throttle:60,1');
+
+    // Store MPN alias (authenticated)
+    Route::post('/mpn/alias', [\App\Http\Controllers\Api\Product\MpnAutocompleteController::class, 'storeAlias'])
+        ->middleware(['api.token', 'throttle:writes']);
+});
+
+// =====================================================
+// BOM PROCESSING (Authenticated)
+// =====================================================
+
+Route::prefix('v1/bom')->middleware(['api.token'])->group(function () {
+
+    // --- Upload & Create ---
+
+    // Upload BOM file
+    Route::post('/upload', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'upload'])
+        ->middleware(['permission:bom.create', 'throttle:writes']);
+
+    // Process BOM from pasted text
+    Route::post('/process-text', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'processText'])
+        ->middleware(['permission:bom.create', 'throttle:writes']);
+
+    // Process existing BOM import via queue (for large files)
+    Route::post('/process', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'process'])
+        ->middleware(['permission:bom.create', 'throttle:writes']);
+
+    // --- List & Status ---
+
+    // List user's BOM imports
+    Route::get('/imports', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'listImports'])
+        ->middleware('permission:bom.view_own');
+
+    // Get BOM processing status
+    Route::get('/{import}/status', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'status'])
+        ->whereNumber('import')
+        ->middleware('permission:bom.view_own');
+
+    // Get detailed BOM results
+    Route::get('/{import}/results', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'results'])
+        ->whereNumber('import')
+        ->middleware('permission:bom.view_own');
+
+    // --- Line Actions ---
+
+    // Approve or change a match
+    Route::post('/{import}/lines/{line}/approve', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'approveMatch'])
+        ->whereNumber(['import', 'line'])
+        ->middleware(['permission:bom.edit_own', 'throttle:writes']);
+
+    // Get RFQ-ready lines (unmatched/multiple)
+    Route::get('/{import}/rfq-ready', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'rfqReady'])
+        ->whereNumber('import')
+        ->middleware('permission:bom.view_own');
+
+    // Get cart-ready lines (exact matches)
+    Route::get('/{import}/cart-ready', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'cartReady'])
+        ->whereNumber('import')
+        ->middleware('permission:bom.view_own');
+
+    // --- RFQ Creation ---
+
+    // Create RFQ from BOM lines
+    Route::post('/{import}/create-rfq', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'createRfq'])
+        ->whereNumber('import')
+        ->middleware(['permission:rfq.create', 'throttle:writes']);
+
+    // --- Collaboration ---
+
+    // Add comment
+    Route::post('/{import}/comments', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'addComment'])
+        ->whereNumber('import')
+        ->middleware(['permission:bom.edit_own', 'throttle:writes']);
+
+    // Get comments
+    Route::get('/{import}/comments', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'getComments'])
+        ->whereNumber('import')
+        ->middleware('permission:bom.view_own');
+
+    // Add collaborator
+    Route::post('/{import}/collaborators', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'addCollaborator'])
+        ->whereNumber('import')
+        ->middleware(['permission:bom.share', 'throttle:writes']);
+
+    // Get collaborators
+    Route::get('/{import}/collaborators', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'getCollaborators'])
+        ->whereNumber('import')
+        ->middleware('permission:bom.view_own');
+
+    // --- Delete ---
+
+    // Delete BOM import
+    Route::delete('/{import}', [\App\Http\Controllers\Api\Bom\BomProcessController::class, 'destroy'])
+        ->whereNumber('import')
+        ->middleware(['permission:bom.edit_own', 'throttle:writes']);
+});
+
+// =====================================================
+// AI COMMERCE CHAT (Authenticated)
+// =====================================================
+
+Route::prefix('v1/ai-commerce')->middleware(['api.token'])->group(function () {
+    // Chat with AI Commerce assistant
+    Route::post('/chat', [\App\Http\Controllers\Api\AI\AiCommerceChatController::class, 'chat'])
+        ->middleware(['permission:ai.chat', 'throttle:writes']);
+
+    // Create a new chat session
+    Route::post('/session', [\App\Http\Controllers\Api\AI\AiCommerceChatController::class, 'createSession'])
+        ->middleware(['permission:ai.chat', 'throttle:writes']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Education & STEM Projects API Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('v1/education')->group(function () {
+    // Projects (public, rate-limited)
+    Route::get('/projects', [\App\Http\Controllers\Api\Education\EducationProjectController::class, 'index'])
+        ->middleware('throttle:60,1');
+    Route::get('/projects/featured', [\App\Http\Controllers\Api\Education\EducationProjectController::class, 'featured'])
+        ->middleware('throttle:60,1');
+    Route::get('/projects/categories', [\App\Http\Controllers\Api\Education\EducationProjectController::class, 'categories'])
+        ->middleware('throttle:60,1');
+    Route::get('/projects/{slug}', [\App\Http\Controllers\Api\Education\EducationProjectController::class, 'show'])
+        ->middleware('throttle:60,1');
+    Route::get('/projects/{id}/bom', [\App\Http\Controllers\Api\Education\EducationProjectController::class, 'bom'])
+        ->whereNumber('id')->middleware('throttle:60,1');
+    Route::get('/projects/{id}/code', [\App\Http\Controllers\Api\Education\EducationProjectController::class, 'code'])
+        ->whereNumber('id')->middleware('throttle:60,1');
+
+    // AI Project Builder (authenticated)
+    Route::post('/ai-build', [\App\Http\Controllers\Api\Education\EducationProjectController::class, 'aiBuild'])
+        ->middleware(['api.token', 'throttle:30,1']);
+    Route::post('/ai-intent', [\App\Http\Controllers\Api\Education\EducationProjectController::class, 'aiIntent'])
+        ->middleware(['api.token', 'throttle:30,1']);
+
+    // Sensor Knowledge (public)
+    Route::get('/sensors', [\App\Http\Controllers\Api\Education\EducationProjectController::class, 'sensors'])
+        ->middleware('throttle:60,1');
+    Route::get('/sensors/{type}', [\App\Http\Controllers\Api\Education\EducationProjectController::class, 'sensor'])
+        ->middleware('throttle:60,1');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Recommendations & Seller Intelligence API Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('v1/products')->group(function () {
+    // Product recommendations (public)
+    Route::get('/{id}/recommendations', [\App\Http\Controllers\Api\Product\RecommendationController::class, 'recommendations'])
+        ->whereNumber('id')->middleware('throttle:60,1');
+    Route::get('/{id}/frequently-bought-together', [\App\Http\Controllers\Api\Product\RecommendationController::class, 'frequentlyBoughtTogether'])
+        ->whereNumber('id')->middleware('throttle:60,1');
+    Route::get('/{id}/similar', [\App\Http\Controllers\Api\Product\RecommendationController::class, 'similar'])
+        ->whereNumber('id')->middleware('throttle:60,1');
+
+    // Track product view
+    Route::post('/track-view', [\App\Http\Controllers\Api\Product\RecommendationController::class, 'trackView'])
+        ->middleware('throttle:120,1');
+});
+
+// Search tracking
+Route::post('/v1/search/track', [\App\Http\Controllers\Api\Product\RecommendationController::class, 'trackSearch'])
+    ->middleware('throttle:120,1');
+
+// Seller Intelligence (authenticated)
+Route::prefix('v1/seller/intelligence')->middleware(['api.token'])->group(function () {
+    Route::get('/trending-mpns', [\App\Http\Controllers\Api\Product\RecommendationController::class, 'trendingMpns'])
+        ->middleware('throttle:60,1');
+    Route::get('/fast-selling', [\App\Http\Controllers\Api\Product\RecommendationController::class, 'fastSelling'])
+        ->middleware('throttle:60,1');
+    Route::get('/unfulfilled', [\App\Http\Controllers\Api\Product\RecommendationController::class, 'unfulfilled'])
+        ->middleware('throttle:60,1');
+    Route::get('/opportunity/{mpn}', [\App\Http\Controllers\Api\Product\RecommendationController::class, 'opportunity'])
+        ->middleware('throttle:60,1');
 });

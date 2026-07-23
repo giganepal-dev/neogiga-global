@@ -55,6 +55,13 @@ $portal = [
         ['group' => 'MARKETPLACE', 'icon' => 'offer', 'label' => 'Seller Offers', 'href' => '/seller/offers', 'pattern' => 'seller/offers*'],
         ['group' => 'MARKETPLACE', 'icon' => 'performance', 'label' => 'Performance', 'href' => '/seller/performance', 'pattern' => 'seller/performance*'],
         ['group' => 'MARKETPLACE', 'icon' => 'compliance', 'label' => 'Compliance', 'href' => '/seller/compliance', 'pattern' => 'seller/compliance*'],
+
+        // MARKET INTELLIGENCE
+        ['group' => 'INTELLIGENCE', 'icon' => 'trending', 'label' => 'Market Intelligence', 'href' => '/seller/intelligence', 'pattern' => 'seller/intelligence'],
+        ['group' => 'INTELLIGENCE', 'icon' => 'trending', 'label' => 'Trending MPNs', 'href' => '/seller/intelligence/trending', 'pattern' => 'seller/intelligence/trending*'],
+        ['group' => 'INTELLIGENCE', 'icon' => 'demand', 'label' => 'Fast-Selling Categories', 'href' => '/seller/intelligence/categories', 'pattern' => 'seller/intelligence/categories*'],
+        ['group' => 'INTELLIGENCE', 'icon' => 'search', 'label' => 'Unmet Demand', 'href' => '/seller/intelligence/unmet', 'pattern' => 'seller/intelligence/unmet*'],
+        ['group' => 'INTELLIGENCE', 'icon' => 'stock', 'label' => 'My Product Performance', 'href' => '/seller/intelligence/my-products', 'pattern' => 'seller/intelligence/my-products*'],
         
         // ACCOUNT
         ['group' => 'ACCOUNT', 'icon' => 'profile', 'label' => 'Business Profile', 'href' => '/seller/profile', 'pattern' => 'seller/profile*'],

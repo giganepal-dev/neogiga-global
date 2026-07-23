@@ -9,38 +9,80 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('vendor_warehouses', function (Blueprint $table) {
-            // Add verification workflow
-            $table->string('verification_status')->default('pending')->after('is_active'); // pending, verified, rejected, suspended
-            $table->foreignId('verified_by')->nullable()->after('verification_status')->constrained('users')->nullOnDelete();
-            $table->timestamp('verified_at')->nullable()->after('verified_by');
-            $table->text('verification_notes')->nullable()->after('verified_at');
-            $table->text('rejection_reason')->nullable()->after('verification_notes');
-            
+            // Add verification workflow (only if not exists)
+            if (! Schema::hasColumn('vendor_warehouses', 'verification_status')) {
+                $table->string('verification_status')->default('pending')->after('is_active');
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'verified_by')) {
+                $table->foreignId('verified_by')->nullable()->after('verification_status')->constrained('users')->nullOnDelete();
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'verified_at')) {
+                $table->timestamp('verified_at')->nullable()->after('verified_by');
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'verification_notes')) {
+                $table->text('verification_notes')->nullable()->after('verified_at');
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'rejection_reason')) {
+                $table->text('rejection_reason')->nullable()->after('verification_notes');
+            }
+
             // Add operating details
-            $table->json('operating_hours')->nullable()->after('address_line2'); // {"monday": "9:00-18:00", ...}
-            $table->time('dispatch_cutoff_time')->nullable()->after('operating_hours');
-            $table->integer('dispatch_cutoff_timezone_offset')->default(0)->after('dispatch_cutoff_time'); // hours from UTC
-            
+            if (! Schema::hasColumn('vendor_warehouses', 'operating_hours')) {
+                $table->json('operating_hours')->nullable()->after('address_line2');
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'dispatch_cutoff_time')) {
+                $table->time('dispatch_cutoff_time')->nullable()->after('operating_hours');
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'dispatch_cutoff_timezone_offset')) {
+                $table->integer('dispatch_cutoff_timezone_offset')->default(0)->after('dispatch_cutoff_time');
+            }
+
             // Add return address details
-            $table->string('return_contact_name')->nullable()->after('phone');
-            $table->string('return_email')->nullable()->after('return_contact_name');
-            $table->string('return_phone')->nullable()->after('return_email');
-            $table->text('return_address_line1')->nullable()->after('return_phone');
-            $table->text('return_address_line2')->nullable()->after('return_address_line1');
-            $table->foreignId('return_city_id')->nullable()->after('return_address_line2')->constrained('cities')->nullOnDelete();
-            $table->foreignId('return_region_id')->nullable()->after('return_city_id')->constrained('regions')->nullOnDelete();
-            $table->foreignId('return_country_id')->nullable()->after('return_region_id')->constrained('countries')->nullOnDelete();
-            $table->string('return_postal_code')->nullable()->after('return_country_id');
-            
+            if (! Schema::hasColumn('vendor_warehouses', 'return_contact_name')) {
+                $table->string('return_contact_name')->nullable()->after('phone');
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'return_email')) {
+                $table->string('return_email')->nullable()->after('return_contact_name');
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'return_phone')) {
+                $table->string('return_phone')->nullable()->after('return_email');
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'return_address_line1')) {
+                $table->text('return_address_line1')->nullable()->after('return_phone');
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'return_address_line2')) {
+                $table->text('return_address_line2')->nullable()->after('return_address_line1');
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'return_city_id')) {
+                $table->foreignId('return_city_id')->nullable()->after('return_address_line2')->constrained('cities')->nullOnDelete();
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'return_region_id')) {
+                $table->foreignId('return_region_id')->nullable()->after('return_city_id')->constrained('regions')->nullOnDelete();
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'return_country_id')) {
+                $table->foreignId('return_country_id')->nullable()->after('return_region_id')->constrained('countries')->nullOnDelete();
+            }
+            if (! Schema::hasColumn('vendor_warehouses', 'return_postal_code')) {
+                $table->string('return_postal_code')->nullable()->after('return_country_id');
+            }
+
             // Add marketplace coverage
-            $table->json('marketplace_coverage')->nullable()->after('warehouse_type'); // ["global", "nepal", "india"]
-            
+            if (! Schema::hasColumn('vendor_warehouses', 'marketplace_coverage')) {
+                $table->json('marketplace_coverage')->nullable()->after('warehouse_type');
+            }
+
             // Add document references
-            $table->json('document_paths')->nullable()->after('metadata'); // paths to warehouse documents
-            
-            // Add indexes
-            $table->index(['vendor_id', 'verification_status']);
-            $table->index('verification_status');
+            if (! Schema::hasColumn('vendor_warehouses', 'document_paths')) {
+                $table->json('document_paths')->nullable()->after('metadata');
+            }
+
+            // Add indexes (only if not exists)
+            if (! Schema::hasIndex('vendor_warehouses', 'vendor_warehouses_vendor_id_verification_status_index')) {
+                $table->index(['vendor_id', 'verification_status']);
+            }
+            if (! Schema::hasIndex('vendor_warehouses', 'vendor_warehouses_verification_status_index')) {
+                $table->index('verification_status');
+            }
         });
     }
 

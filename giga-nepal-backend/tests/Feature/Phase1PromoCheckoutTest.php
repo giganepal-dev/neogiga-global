@@ -58,7 +58,7 @@ class Phase1PromoCheckoutTest extends TestCase
         $this->assertEquals(1, (int) Coupon::find($coupon->id)->used_count);
     }
 
-    private function customerUser(string $token): User
+    private function customerUser(string &$token): User
     {
         $role = Role::updateOrCreate(['name' => 'customer'], [
             'display_name' => 'Customer',
@@ -72,7 +72,8 @@ class Phase1PromoCheckoutTest extends TestCase
             'password' => Hash::make('password123'),
             'role_id' => $role->id,
         ]);
-        $user->forceFill(['api_token_hash' => hash('sha256', $token)])->save();
+
+        $token = $user->createToken('test-token')->plainTextToken;
 
         return $user;
     }

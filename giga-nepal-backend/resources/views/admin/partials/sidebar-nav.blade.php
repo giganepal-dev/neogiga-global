@@ -221,6 +221,56 @@
     </div>
 </div>
 
+{{-- ===== EDUCATION & STEM ===== --}}
+<div class="nav-section">
+    <div class="nav-section-header" data-nav-toggle>Education &amp; STEM</div>
+    <div class="nav-section-body">
+        <a href="/admin/education" class="{{ $r==='admin/education' ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 8v8l9 5 9-5V8" stroke-linejoin="round"/></svg>
+            Dashboard
+        </a>
+        <a href="/admin/education/projects" class="{{ str_starts_with($r,'admin/education/projects') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 9h18M8 21h8M12 17v4" stroke-linejoin="round"/></svg>
+            Projects
+        </a>
+        <a href="/admin/education/sensors" class="{{ str_starts_with($r,'admin/education/sensors') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/></svg>
+            Sensors
+        </a>
+        <a href="/admin/education/courses" class="{{ str_starts_with($r,'admin/education/courses') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5z"/></svg>
+            Courses
+        </a>
+        <a href="/admin/education/analytics" class="{{ str_starts_with($r,'admin/education/analytics') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h16M8 15l3-3 3 2 5-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Analytics
+        </a>
+    </div>
+</div>
+
+{{-- ===== SELLER INTELLIGENCE ===== --}}
+<div class="nav-section">
+    <div class="nav-section-header" data-nav-toggle>Seller Intelligence</div>
+    <div class="nav-section-body">
+        <a href="/admin/seller-intelligence" class="{{ $r==='admin/seller-intelligence' ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h16M8 15l3-3 3 2 5-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Dashboard
+        </a>
+        <a href="/admin/seller-intelligence/trending" class="{{ str_starts_with($r,'admin/seller-intelligence/trending') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 6l-9.5 9.5-5-5L1 18" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Trending MPNs
+        </a>
+        <a href="/admin/seller-intelligence/unfulfilled" class="{{ str_starts_with($r,'admin/seller-intelligence/unfulfilled') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Unfulfilled Demand
+        </a>
+        <a href="/admin/seller-intelligence/supply-gaps" class="{{ str_starts_with($r,'admin/seller-intelligence/supply-gaps') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Supply Gaps
+        </a>
+    </div>
+</div>
+
 {{-- ===== SYSTEM ===== --}}
 <div class="nav-section">
     <div class="nav-section-header" data-nav-toggle>System</div>

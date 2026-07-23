@@ -47,7 +47,7 @@ class AuthController extends Controller
 
         return $this->success([
             'user' => $this->userPayload($user),
-            'token' => $this->issueToken($user),
+            'token' => $user->createToken('auth-token')->plainTextToken,
         ], 201);
     }
 
@@ -66,9 +66,11 @@ class AuthController extends Controller
 
         $this->bindReferral($user, $request);
 
+        $user->update(['last_login_at' => now()]);
+
         return $this->success([
             'user' => $this->userPayload($user),
-            'token' => $this->issueToken($user),
+            'token' => $user->createToken('auth-token')->plainTextToken,
         ]);
     }
 
@@ -79,7 +81,7 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->forceFill(['api_token_hash' => null])->save();
+        $request->user()->tokens()->delete();
 
         return $this->success(['message' => 'Logged out.']);
     }
@@ -99,18 +101,6 @@ class AuthController extends Controller
                 // referral binding is non-critical to authentication
             }
         }
-    }
-
-    private function issueToken(User $user): string
-    {
-        $token = Str::random(64);
-
-        $user->forceFill([
-            'api_token_hash' => hash('sha256', $token),
-            'last_login_at' => now(),
-        ])->save();
-
-        return $token;
     }
 
     private function userPayload(User $user): array

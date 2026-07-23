@@ -5,7 +5,6 @@ namespace App\Services\Auth;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class AuthService
 {
@@ -14,14 +13,11 @@ class AuthService
         return Role::firstOrCreate(['name' => $name], $defaults);
     }
 
-    public function issueToken(User $user): string
+    public function issueToken(User $user, array $abilities = ['*']): string
     {
-        $token = Str::random(64);
+        $token = $user->createToken('auth-token', $abilities)->plainTextToken;
 
-        $user->forceFill([
-            'api_token_hash' => hash('sha256', $token),
-            'last_login_at' => now(),
-        ])->save();
+        $user->update(['last_login_at' => now()]);
 
         return $token;
     }
@@ -35,6 +31,6 @@ class AuthService
 
     public function logout(User $user): void
     {
-        $user->forceFill(['api_token_hash' => null])->save();
+        $user->tokens()->delete();
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\PersonalAccessToken;
 use Tests\TestCase;
 
 class Phase1AuthTest extends TestCase
@@ -37,7 +38,10 @@ class Phase1AuthTest extends TestCase
             ->assertJsonPath('data.user.email', $email)
             ->assertJsonStructure(['data' => ['token']]);
 
-        $this->assertNotEmpty(User::where('email', $email)->value('api_token_hash'));
+        // Verify Sanctum token was created
+        $user = User::where('email', $email)->first();
+        $this->assertNotNull($user);
+        $this->assertGreaterThan(0, $user->tokens()->count());
 
         $this->withToken($registerResponse->json('data.token'))
             ->getJson('/api/v1/auth/me')
@@ -73,10 +77,15 @@ class Phase1AuthTest extends TestCase
             ->assertOk()
             ->assertJsonStructure(['data' => ['token']]);
 
+        // Verify Sanctum token was created
+        $user = User::where('email', $email)->first();
+        $this->assertGreaterThan(0, $user->tokens()->count());
+
         $this->withToken($loginResponse->json('data.token'))
             ->postJson('/api/v1/auth/logout')
             ->assertOk();
 
-        $this->assertNull(User::where('email', $email)->value('api_token_hash'));
+        // Verify all tokens were deleted
+        $this->assertEquals(0, $user->fresh()->tokens()->count());
     }
 }

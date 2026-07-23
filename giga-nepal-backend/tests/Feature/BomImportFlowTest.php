@@ -205,13 +205,13 @@ class BomImportFlowTest extends TestCase
     /** @return array{0:User,1:string} */
     private function apiUser(string $email): array
     {
-        $token = bin2hex(random_bytes(32));
         $user = User::forceCreate([
             'name' => 'QA '.strtok($email, '@'),
             'email' => $email,
             'password' => bcrypt('secret-password'),
-            'api_token_hash' => hash('sha256', $token),
         ]);
+
+        $token = $user->createToken('test-token')->plainTextToken;
 
         return [$user, $token];
     }
