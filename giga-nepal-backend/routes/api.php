@@ -51,6 +51,7 @@ use App\Http\Controllers\Api\Reseller\ResellerSupportTicketController;
 use App\Http\Controllers\Api\Reseller\ResellerTerritoryController;
 use App\Http\Controllers\Api\Seller\SellerDashboardController;
 use App\Http\Controllers\Api\Seller\SellerInventoryController;
+use App\Http\Controllers\Api\Seller\SellerOfferController;
 use App\Http\Controllers\Api\Seller\SellerOrderController;
 use App\Http\Controllers\Api\Seller\SellerPayoutController;
 use App\Http\Controllers\Api\Seller\SellerPerformanceController;
@@ -213,6 +214,27 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders', [SellerOrderController::class, 'index'])->middleware('permission:seller.orders.view');
         Route::get('/orders/{order}', [SellerOrderController::class, 'show'])->whereNumber('order')->middleware('permission:seller.orders.view');
         Route::patch('/orders/{order}/status', [SellerOrderController::class, 'updateStatus'])->whereNumber('order')->middleware(['permission:seller.orders.manage', 'throttle:writes']);
+
+        // Offers - MPN matching and offer management
+        Route::prefix('offers')->middleware('permission:seller.products.manage')->group(function () {
+            Route::get('/', [SellerOfferController::class, 'index']);
+            Route::get('/statistics', [SellerOfferController::class, 'statistics']);
+            Route::post('/search-mpn', [SellerOfferController::class, 'searchMpn']);
+            Route::post('/', [SellerOfferController::class, 'store']);
+            Route::get('/{offer}', [SellerOfferController::class, 'show'])->whereNumber('offer');
+            Route::patch('/{offer}', [SellerOfferController::class, 'update'])->whereNumber('offer');
+            Route::post('/{offer}/add-stock', [SellerOfferController::class, 'addStock'])->whereNumber('offer');
+            Route::post('/{offer}/toggle-pause', [SellerOfferController::class, 'togglePause'])->whereNumber('offer');
+            Route::post('/{offer}/duplicate', [SellerOfferController::class, 'duplicate'])->whereNumber('offer');
+            Route::delete('/{offer}', [SellerOfferController::class, 'destroy'])->whereNumber('offer');
+        });
+
+        // Notifications
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [SellerDashboardController::class, 'notifications']);
+            Route::post('/{notification}/read', [SellerDashboardController::class, 'markNotificationRead'])->whereUuid('notification');
+            Route::post('/read-all', [SellerDashboardController::class, 'markAllNotificationsRead']);
+        });
 
         Route::get('/payouts', [SellerPayoutController::class, 'index'])->middleware('permission:seller.payouts.view');
         Route::get('/performance', [SellerPerformanceController::class, 'show']);
