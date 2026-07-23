@@ -361,9 +361,8 @@ class DashboardController extends Controller
                 'product_brands.name',
                 'product_brands.slug',
                 'product_brands.logo_path',
+                DB::raw('product_brands.logo_path as logo_url'),
                 'product_brands.website_url',
-                'product_brands.logo_source',
-                'product_brands.logo_verified_at',
                 'product_brands.updated_at',
                 DB::raw('COUNT(DISTINCT products.id) as product_count')
             )

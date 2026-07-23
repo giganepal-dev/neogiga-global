@@ -45,7 +45,7 @@
 <div class="card stack-gap"><div class="card-h"><h2>Recent Barcodes</h2></div>
 <div class="scroll-x"><table class="tbl"><thead><tr><th>Code</th><th>Product</th><th>Barcode Def</th><th>Created</th></tr></thead>
 <tbody>@foreach($recentBarcodes as $b)<tr>
-<td class="mono">{{$b->code}}</td><td>{{$b->product_name}}</td><td>{{$b->barcode_definition_id}}</td><td>{{$b->created_at}}</td>
+<td class="mono">{{$b->barcode_value}}</td><td>{{$b->product_name}}</td><td>{{$b->barcode_definition_id}}</td><td>{{$b->created_at}}</td>
 </tr>@endforeach</tbody></table></div>
 @if($recentBarcodes->isEmpty())<div class="empty"><h3>No barcodes yet</h3><p>Add a barcode definition and generate barcodes for products.</p></div>@endif
 </div>

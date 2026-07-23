@@ -3758,9 +3758,11 @@ class CommerceOpsController extends Controller
     public function generateBarcodes(Request $request): RedirectResponse
     {
         $d = $request->validate(['product_id' => 'required|integer|exists:products,id', 'barcode_definition_id' => 'required|integer|exists:barcode_definitions,id', 'quantity' => 'required|integer|min:1|max:1000']);
+        $def = DB::table('barcode_definitions')->find($d['barcode_definition_id']);
+        $prefix = $def->prefix ?? 'NG';
         for ($i = 0; $i < $d['quantity']; $i++) {
-            $code = ($d['prefix'] ?? 'NG') . strtoupper(substr(bin2hex(random_bytes(6)), 0, 12));
-            DB::table('product_barcodes')->insert(['product_id' => $d['product_id'], 'barcode_definition_id' => $d['barcode_definition_id'], 'code' => $code, 'created_at' => now(), 'updated_at' => now()]);
+            $barcodeValue = $prefix . strtoupper(substr(bin2hex(random_bytes(6)), 0, 12));
+            DB::table('product_barcodes')->insert(['product_id' => $d['product_id'], 'barcode_definition_id' => $d['barcode_definition_id'], 'barcode_type' => $def->type ?? 'code128', 'barcode_value' => $barcodeValue, 'created_at' => now(), 'updated_at' => now()]);
         }
         return back()->with('status', "Generated {$d['quantity']} barcodes.");
     }

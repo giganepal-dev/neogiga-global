@@ -5,8 +5,8 @@
 
 <div class="grid kpis">
     <div class="kpi"><div class="t">Total brands</div><div class="v tnum">{{ number_format($brands->total()) }}</div><div class="s">with logo tracking</div></div>
-    <div class="kpi"><div class="t">Logos verified</div><div class="v tnum">{{ number_format($brands->filter(fn($b) => $b->logo_verified_at)->count()) }}</div><div class="s">verified brands</div></div>
-    <div class="kpi"><div class="t">Missing logos</div><div class="v tnum">{{ number_format($brands->filter(fn($b) => !$b->logo_url)->count()) }}</div><div class="s">need attention</div></div>
+    <div class="kpi"><div class="t">With logos</div><div class="v tnum">{{ number_format($brands->filter(fn($b) => !empty($b->logo_url))->count()) }}</div><div class="s">have logo file</div></div>
+    <div class="kpi"><div class="t">Missing logos</div><div class="v tnum">{{ number_format($brands->filter(fn($b) => empty($b->logo_url))->count()) }}</div><div class="s">need attention</div></div>
     <div class="kpi"><div class="t">Page</div><div class="v">{{ $brands->currentPage() }} / {{ $brands->lastPage() }}</div><div class="s">50 per page</div></div>
 </div>
 
@@ -48,16 +48,10 @@
                                     <span style="color:var(--muted)">—</span>
                                 @endif
                             </td>
-                            <td><span class="badge {{ $brand->logo_source ? 'b-info' : 'b-muted' }}">{{ $brand->logo_source ?? 'manual' }}</span></td>
-                            <td>
-                                @if ($brand->logo_verified_at)
-                                    <span class="badge b-ok" title="{{ $brand->logo_verified_at }}">✓ {{ \Carbon\Carbon::parse($brand->logo_verified_at)->diffForHumans() }}</span>
-                                @else
-                                    <span class="badge b-muted">unverified</span>
-                                @endif
-                            </td>
+                            <td><span class="badge b-muted">manual</span></td>
+                            <td><span class="badge b-muted">unverified</span></td>
                             <td class="tnum">{{ number_format($brand->product_count) }}</td>
-                            <td class="mono" style="font-size:.72rem;color:var(--muted)">{{ $brand->updated_at ? $brand->updated_at->diffForHumans() : '—' }}</td>
+                            <td class="mono" style="font-size:.72rem;color:var(--muted)">{{ $brand->updated_at ? \Carbon\Carbon::parse($brand->updated_at)->diffForHumans() : '—' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
