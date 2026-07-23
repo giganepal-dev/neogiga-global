@@ -43,7 +43,7 @@ class BomComponentMatcherTest extends TestCase
     public function test_match_single_exact(): void
     {
         // Create a product
-        $brand = ProductProductBrand::create(['name' => 'STMicroelectronics', 'slug' => 'stmicro']);
+        $brand = ProductBrand::create(['name' => 'STMicroelectronics', 'slug' => 'stmicro']);
         $product = Product::create([
             'name' => 'STM32F103C8T6',
             'slug' => 'stm32f103c8t6',
@@ -72,7 +72,7 @@ class BomComponentMatcherTest extends TestCase
     public function test_match_batch(): void
     {
         // Create products
-        $brand = ProductProductBrand::create(['name' => 'STMicroelectronics', 'slug' => 'stmicro']);
+        $brand = ProductBrand::create(['name' => 'STMicroelectronics', 'slug' => 'stmicro']);
         Product::create([
             'name' => 'STM32F103',
             'slug' => 'stm32f103',

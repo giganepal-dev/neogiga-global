@@ -321,13 +321,13 @@ class BomImportParser
 
         // Check for CSV/TSV
         $firstLine = strtok($content, "\n") ?: '';
-        if (substr_count($firstLine, "\t") > 2) {
+        if (substr_count($firstLine, "\t") >= 2) {
             return 'tsv';
         }
-        if (substr_count($firstLine, ',') > 2) {
+        if (substr_count($firstLine, ',') >= 2) {
             return 'csv';
         }
-        if (substr_count($firstLine, ';') > 2) {
+        if (substr_count($firstLine, ';') >= 2) {
             return 'csv_semicolon';
         }
 
