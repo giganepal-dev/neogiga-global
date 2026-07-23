@@ -18,7 +18,7 @@ class ChatController extends Controller
     public function __construct(ChatService $chatService)
     {
         $this->chatService = $chatService;
-        $this->middleware('auth');
+        // $this->middleware('auth'); // handled by route middleware
     }
 
     /**

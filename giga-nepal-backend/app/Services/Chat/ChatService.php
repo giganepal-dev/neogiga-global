@@ -182,7 +182,7 @@ class ChatService
      */
     public function getUserConversations(
         User $user,
-        string $type = null,
+        ?string $type = null,
         string $status = 'active',
         int $perPage = 20
     ) {
