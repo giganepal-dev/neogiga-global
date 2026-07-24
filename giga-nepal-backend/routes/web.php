@@ -670,6 +670,73 @@ Route::prefix('admin')->group(function () {
         Route::get('ai-commerce/bom-builds', [\App\Http\Controllers\Admin\AiCommerce\AiCommerceAdminController::class, 'bomBuilds'])->middleware('admin.web.permission:campaigns.view');
         Route::get('ai-commerce/settings', [\App\Http\Controllers\Admin\AiCommerce\AiCommerceAdminController::class, 'settings'])->middleware('admin.web.permission:campaigns.view');
 
+        // AI & Robotics Admin
+        $aiRoboticsAdmin = \App\Http\Controllers\Admin\AiRobotics\AiRoboticsAdminController::class;
+        Route::get('ai-robotics', [$aiRoboticsAdmin, 'dashboard'])->middleware('admin.web.permission:campaigns.view');
+        // Robot Models
+        Route::get('ai-robotics/robot-models', [$aiRoboticsAdmin, 'robotModels'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-robotics/robot-models/create', [$aiRoboticsAdmin, 'robotModelCreate'])->middleware('admin.web.permission:campaigns.create');
+        Route::post('ai-robotics/robot-models', [$aiRoboticsAdmin, 'robotModelStore'])->middleware(['admin.web.permission:campaigns.create', 'throttle:20,1']);
+        Route::get('ai-robotics/robot-models/{id}/edit', [$aiRoboticsAdmin, 'robotModelEdit'])->whereNumber('id')->middleware('admin.web.permission:campaigns.edit');
+        Route::put('ai-robotics/robot-models/{id}', [$aiRoboticsAdmin, 'robotModelUpdate'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.edit', 'throttle:20,1']);
+        Route::delete('ai-robotics/robot-models/{id}', [$aiRoboticsAdmin, 'robotModelDestroy'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.delete', 'throttle:20,1']);
+        // Robot Types
+        Route::get('ai-robotics/robot-types', [$aiRoboticsAdmin, 'robotTypes'])->middleware('admin.web.permission:campaigns.view');
+        Route::post('ai-robotics/robot-types', [$aiRoboticsAdmin, 'robotTypeStore'])->middleware(['admin.web.permission:campaigns.create', 'throttle:20,1']);
+        // Robot Applications
+        Route::get('ai-robotics/robot-applications', [$aiRoboticsAdmin, 'robotApplications'])->middleware('admin.web.permission:campaigns.view');
+        Route::post('ai-robotics/robot-applications', [$aiRoboticsAdmin, 'robotApplicationStore'])->middleware(['admin.web.permission:campaigns.create', 'throttle:20,1']);
+        // AI Models
+        Route::get('ai-robotics/ai-models', [$aiRoboticsAdmin, 'aiModels'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-robotics/ai-models/create', [$aiRoboticsAdmin, 'aiModelCreate'])->middleware('admin.web.permission:campaigns.create');
+        Route::post('ai-robotics/ai-models', [$aiRoboticsAdmin, 'aiModelStore'])->middleware(['admin.web.permission:campaigns.create', 'throttle:20,1']);
+        Route::get('ai-robotics/ai-models/{id}/edit', [$aiRoboticsAdmin, 'aiModelEdit'])->whereNumber('id')->middleware('admin.web.permission:campaigns.edit');
+        Route::put('ai-robotics/ai-models/{id}', [$aiRoboticsAdmin, 'aiModelUpdate'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.edit', 'throttle:20,1']);
+        // Manufacturers
+        Route::get('ai-robotics/manufacturers', [$aiRoboticsAdmin, 'manufacturers'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-robotics/manufacturers/create', [$aiRoboticsAdmin, 'manufacturerCreate'])->middleware('admin.web.permission:campaigns.create');
+        Route::post('ai-robotics/manufacturers', [$aiRoboticsAdmin, 'manufacturerStore'])->middleware(['admin.web.permission:campaigns.create', 'throttle:20,1']);
+        Route::get('ai-robotics/manufacturers/{id}/edit', [$aiRoboticsAdmin, 'manufacturerEdit'])->whereNumber('id')->middleware('admin.web.permission:campaigns.edit');
+        Route::put('ai-robotics/manufacturers/{id}', [$aiRoboticsAdmin, 'manufacturerUpdate'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.edit', 'throttle:20,1']);
+        // Learning Paths
+        Route::get('ai-robotics/learning-paths', [$aiRoboticsAdmin, 'learningPaths'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-robotics/learning-paths/create', [$aiRoboticsAdmin, 'learningPathCreate'])->middleware('admin.web.permission:campaigns.create');
+        Route::post('ai-robotics/learning-paths', [$aiRoboticsAdmin, 'learningPathStore'])->middleware(['admin.web.permission:campaigns.create', 'throttle:20,1']);
+        Route::get('ai-robotics/learning-paths/{id}/edit', [$aiRoboticsAdmin, 'learningPathEdit'])->whereNumber('id')->middleware('admin.web.permission:campaigns.edit');
+        Route::put('ai-robotics/learning-paths/{id}', [$aiRoboticsAdmin, 'learningPathUpdate'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.edit', 'throttle:20,1']);
+        // Events
+        Route::get('ai-robotics/events', [$aiRoboticsAdmin, 'events'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-robotics/events/create', [$aiRoboticsAdmin, 'eventCreate'])->middleware('admin.web.permission:campaigns.create');
+        Route::post('ai-robotics/events', [$aiRoboticsAdmin, 'eventStore'])->middleware(['admin.web.permission:campaigns.create', 'throttle:20,1']);
+        Route::get('ai-robotics/events/{id}/edit', [$aiRoboticsAdmin, 'eventEdit'])->whereNumber('id')->middleware('admin.web.permission:campaigns.edit');
+        Route::put('ai-robotics/events/{id}', [$aiRoboticsAdmin, 'eventUpdate'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.edit', 'throttle:20,1']);
+        // Articles
+        Route::get('ai-robotics/articles', [$aiRoboticsAdmin, 'articles'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-robotics/articles/create', [$aiRoboticsAdmin, 'articleCreate'])->middleware('admin.web.permission:campaigns.create');
+        Route::post('ai-robotics/articles', [$aiRoboticsAdmin, 'articleStore'])->middleware(['admin.web.permission:campaigns.create', 'throttle:20,1']);
+        Route::get('ai-robotics/articles/{id}/edit', [$aiRoboticsAdmin, 'articleEdit'])->whereNumber('id')->middleware('admin.web.permission:campaigns.edit');
+        Route::put('ai-robotics/articles/{id}', [$aiRoboticsAdmin, 'articleUpdate'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.edit', 'throttle:20,1']);
+        // Demo Requests
+        Route::get('ai-robotics/demo-requests', [$aiRoboticsAdmin, 'demoRequests'])->middleware('admin.web.permission:campaigns.view');
+        Route::post('ai-robotics/demo-requests/{id}/status', [$aiRoboticsAdmin, 'demoRequestUpdateStatus'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.edit', 'throttle:20,1']);
+        // Lab Bookings
+        Route::get('ai-robotics/lab-bookings', [$aiRoboticsAdmin, 'labBookings'])->middleware('admin.web.permission:campaigns.view');
+        Route::post('ai-robotics/lab-bookings/{id}/status', [$aiRoboticsAdmin, 'labBookingUpdateStatus'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.edit', 'throttle:20,1']);
+        // Institutional Packages
+        Route::get('ai-robotics/packages', [$aiRoboticsAdmin, 'packages'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-robotics/packages/create', [$aiRoboticsAdmin, 'packageCreate'])->middleware('admin.web.permission:campaigns.create');
+        Route::post('ai-robotics/packages', [$aiRoboticsAdmin, 'packageStore'])->middleware(['admin.web.permission:campaigns.create', 'throttle:20,1']);
+        Route::get('ai-robotics/packages/{id}/edit', [$aiRoboticsAdmin, 'packageEdit'])->whereNumber('id')->middleware('admin.web.permission:campaigns.edit');
+        Route::put('ai-robotics/packages/{id}', [$aiRoboticsAdmin, 'packageUpdate'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.edit', 'throttle:20,1']);
+        // Integrators
+        Route::get('ai-robotics/integrators', [$aiRoboticsAdmin, 'integrators'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-robotics/integrators/create', [$aiRoboticsAdmin, 'integratorCreate'])->middleware('admin.web.permission:campaigns.create');
+        Route::post('ai-robotics/integrators', [$aiRoboticsAdmin, 'integratorStore'])->middleware(['admin.web.permission:campaigns.create', 'throttle:20,1']);
+        Route::get('ai-robotics/integrators/{id}/edit', [$aiRoboticsAdmin, 'integratorEdit'])->whereNumber('id')->middleware('admin.web.permission:campaigns.edit');
+        Route::put('ai-robotics/integrators/{id}', [$aiRoboticsAdmin, 'integratorUpdate'])->whereNumber('id')->middleware(['admin.web.permission:campaigns.edit', 'throttle:20,1']);
+        // Projects
+        Route::get('ai-robotics/projects', [$aiRoboticsAdmin, 'projects'])->middleware('admin.web.permission:campaigns.view');
+
         // Email Campaign Manager
         require __DIR__.'/../routes/email.php';
 
@@ -858,7 +925,28 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
             Route::get('/sell-on-neogiga', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->sell())->name('localized.seller');
             Route::get('/seller-early-access', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->earlyAccess())->name('localized.seller.early-access');
             Route::get('/distributors', fn (string $localePrefix) => app(SellOnNeoGigaController::class)->distributors())->name('localized.distributors');
-            Route::get('/ai-commerce', fn (string $localePrefix, Request $request) => app(AiCommercePageController::class)->index($request, app(CommerceAiService::class)))->name('localized.ai');
+            Route::get('/ai-commerce', fn (string $localePrefix, Request $request) => app(AiCommercePageController::class)->index($request, app(CommerceAiService::class)))->name('localized.ai-commerce');
+
+            // AI & Robotics Portal
+            $aiRobotics = \App\Http\Controllers\Web\AiRoboticsPageController::class;
+            Route::get('/ai', fn () => app($aiRobotics)->index())->name('localized.ai-robotics');
+            Route::get('/ai/robots', fn () => app($aiRobotics)->robots(app(Request::class)))->name('localized.ai-robotics.robots');
+            Route::get('/ai/robots/{slug}', fn (string $slug) => app($aiRobotics)->robotDetail($slug))->where('slug', '[a-z0-9\-]+')->name('localized.ai-robotics.robot');
+            Route::get('/ai/ai-models', fn () => app($aiRobotics)->aiModels(app(Request::class)))->name('localized.ai-robotics.ai-models');
+            Route::get('/ai/ai-models/{slug}', fn (string $slug) => app($aiRobotics)->aiModelDetail($slug))->where('slug', '[a-z0-9\-]+')->name('localized.ai-robotics.ai-model');
+            Route::get('/ai/store', fn () => app($aiRobotics)->store(app(Request::class)))->name('localized.ai-robotics.store');
+            Route::get('/ai/learning', fn () => app($aiRobotics)->learning())->name('localized.ai-robotics.learning');
+            Route::get('/ai/learning/{slug}', fn (string $slug) => app($aiRobotics)->learningPathDetail($slug))->where('slug', '[a-z0-9\-]+')->name('localized.ai-robotics.learning-path');
+            Route::get('/ai/lab', fn () => app($aiRobotics)->lab())->name('localized.ai-robotics.lab');
+            Route::get('/ai/institutional', fn () => app($aiRobotics)->institutional())->name('localized.ai-robotics.institutional');
+            Route::get('/ai/manufacturers', fn () => app($aiRobotics)->manufacturers())->name('localized.ai-robotics.manufacturers');
+            Route::get('/ai/manufacturers/{slug}', fn (string $slug) => app($aiRobotics)->manufacturerDetail($slug))->where('slug', '[a-z0-9\-]+')->name('localized.ai-robotics.manufacturer');
+            Route::get('/ai/events', fn () => app($aiRobotics)->events())->name('localized.ai-robotics.events');
+            Route::get('/ai/news', fn () => app($aiRobotics)->news(app(Request::class)))->name('localized.ai-robotics.news');
+            Route::get('/ai/news/{slug}', fn (string $slug) => app($aiRobotics)->articleDetail($slug))->where('slug', '[a-z0-9\-]+')->name('localized.ai-robotics.article');
+            Route::get('/ai/integrators', fn () => app($aiRobotics)->integrators())->name('localized.ai-robotics.integrators');
+            Route::get('/ai/compare', fn () => app($aiRobotics)->compare(app(Request::class)))->name('localized.ai-robotics.compare');
+
             Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->middleware('auth')->name('localized.dashboard');
             Route::get('/account', [CustomerDashboardController::class, 'index'])->middleware('auth')->name('localized.account');
         });
