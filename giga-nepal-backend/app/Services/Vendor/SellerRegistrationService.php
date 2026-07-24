@@ -56,7 +56,7 @@ class SellerRegistrationService
                     'whatsapp' => $data['whatsapp'] ?? null,
                     'requested_vendor_type' => $requestedVendorType,
                     'seller_onboarding_status' => 'submitted',
-                    'email_verification_status' => 'placeholder_pending',
+                    'email_verification_status' => 'pending',
                 ],
             ]);
 
