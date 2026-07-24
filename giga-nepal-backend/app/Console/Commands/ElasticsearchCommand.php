@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 
 class ElasticsearchCommand extends Command
 {
-    protected $signature = 'elastic {command : index|delete|sync|stats|search}
+    protected $signature = 'es {action : index|delete|sync|stats|search}
                             {--q= : Search query}
                             {--limit=20 : Search result limit}
                             {--chunk=500 : Sync chunk size}';
@@ -16,7 +16,7 @@ class ElasticsearchCommand extends Command
 
     public function handle(ElasticsearchService $elastic): int
     {
-        $command = $this->argument('command');
+        $command = $this->argument('action');
 
         return match ($command) {
             'index' => $this->createIndex($elastic),
