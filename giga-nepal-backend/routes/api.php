@@ -542,6 +542,16 @@ Route::prefix('v1')->group(function () {
             Route::post('/bom/projects/{project}/items', [BomAdminController::class, 'storeItem'])->whereNumber('project')->middleware('throttle:writes');
             Route::patch('/bom/projects/{project}/items/{item}', [BomAdminController::class, 'updateItem'])->whereNumber('project')->whereNumber('item')->middleware('throttle:writes');
             Route::delete('/bom/projects/{project}/items/{item}', [BomAdminController::class, 'deleteItem'])->whereNumber('project')->whereNumber('item')->middleware('throttle:writes');
+
+            // Pricing Rules API
+            Route::get('/pricing/rules', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'index']);
+            Route::post('/pricing/rules', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'store'])->middleware('throttle:writes');
+            Route::get('/pricing/rules/{rule}', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'show'])->whereNumber('rule');
+            Route::put('/pricing/rules/{rule}', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'update'])->whereNumber('rule')->middleware('throttle:writes');
+            Route::delete('/pricing/rules/{rule}', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'destroy'])->whereNumber('rule')->middleware('throttle:writes');
+            Route::post('/pricing/simulate', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'simulate'])->middleware('throttle:writes');
+            Route::get('/pricing/floors', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'floors']);
+            Route::get('/pricing/stats', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'stats']);
         });
     });
 });
