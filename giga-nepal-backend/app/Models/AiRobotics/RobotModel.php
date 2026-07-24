@@ -43,7 +43,7 @@ class RobotModel extends Model
     public function manufacturer(): BelongsTo { return $this->belongsTo(RobotManufacturer::class, 'manufacturer_id'); }
     public function type(): BelongsTo { return $this->belongsTo(RobotType::class, 'robot_type_id'); }
     public function applications(): BelongsToMany { return $this->belongsToMany(RobotApplication::class, 'robot_model_application'); }
-    public function categories(): BelongsToMany { return $this->belongsToMany(\App\Models\Marketplace\ProductCategory::class, 'robot_model_category'); }
+    public function categories(): BelongsToMany { return $this->belongsToMany(\App\Models\Marketplace\ProductCategory::class, 'robot_model_category', 'robot_model_id', 'category_id'); }
     public function compatibleProducts(): BelongsToMany { return $this->belongsToMany(\App\Models\Marketplace\Product::class, 'robot_compatible_products'); }
 
     public function scopeActive($q) { return $q->where('is_active', true); }
