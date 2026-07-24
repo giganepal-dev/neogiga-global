@@ -256,12 +256,9 @@ class AiRoboticsPageController extends Controller
      */
     public function compare(?Request $request = null): View
     {
-        $ids = $request->input('robots');
-        if (is_string($ids)) {
-            $ids = explode(',', $ids);
-        }
+        $ids = $request->input('robots', []);
         if (!is_array($ids)) {
-            $ids = [];
+            $ids = $ids !== null ? [$ids] : [];
         }
         $ids = array_filter(array_map('intval', $ids), fn($id) => $id > 0);
         $robots = RobotModel::active()->whereIn('id', $ids)->with(['manufacturer', 'type'])->get();
