@@ -83,9 +83,71 @@ class CartController extends Controller
         });
     }
 
-    public function addBom(): JsonResponse
+    public function addBom(Request $request): JsonResponse
     {
-        return $this->notImplemented('AI BOM to cart', 'Phase 2');
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:500'],
+        ]);
+
+        $marketplaceId = $request->input('marketplace_id') ?? $this->defaultMarketplaceId();
+        $cart = $this->activeCart($request, $marketplaceId);
+
+        $added = 0;
+        $errors = [];
+
+        foreach ($validated['items'] as $bomItem) {
+            $product = Product::query()->published()->find($bomItem['product_id']);
+            if (! $product) {
+                $errors[] = ['product_id' => $bomItem['product_id'], 'error' => 'Product not available'];
+                continue;
+            }
+
+            $price = $this->currentPrice($product, $marketplaceId);
+            if ($price['amount'] === null || $price['amount'] <= 0) {
+                $errors[] = ['product_id' => $bomItem['product_id'], 'error' => 'No active price'];
+                continue;
+            }
+
+            $existing = $cart->items()
+                ->where('product_id', $bomItem['product_id'])
+                ->first();
+
+            $newQuantity = ($existing?->quantity ?? 0) + $bomItem['quantity'];
+            if (! $this->hasStock($bomItem['product_id'], $marketplaceId, $newQuantity)) {
+                $errors[] = ['product_id' => $bomItem['product_id'], 'error' => 'Insufficient stock'];
+                continue;
+            }
+
+            if ($existing) {
+                $existing->forceFill([
+                    'quantity' => $newQuantity,
+                    'unit_price' => $price['amount'],
+                ])->save();
+            } else {
+                $cart->items()->create([
+                    'product_id' => $bomItem['product_id'],
+                    'quantity' => $bomItem['quantity'],
+                    'unit_price' => $price['amount'],
+                    'tax_rate' => 0,
+                    'tax_amount' => 0,
+                    'discount_amount' => 0,
+                    'metadata' => ['price_source' => $price['source'], 'source' => 'bom'],
+                ]);
+            }
+
+            $added++;
+        }
+
+        $cart->calculateTotal();
+
+        return $this->success([
+            'cart_id' => $cart->id,
+            'items_added' => $added,
+            'errors' => $errors,
+            'cart' => $this->publicCart($cart->fresh()),
+        ]);
     }
 
     public function updateItem(Request $request, int $item): JsonResponse

@@ -143,9 +143,20 @@ Route::prefix('seller')->group(function () {
     Route::get('support', [SellerPortalController::class, 'support'])->middleware(EnsureSellerWeb::class);
     Route::post('support', [SellerPortalController::class, 'storeSupport'])->middleware([EnsureSellerWeb::class, 'throttle:10,1']);
 
-    // Placeholder routes for in-development pages — nav items that link to real URLs
-    Route::get('readiness', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
-    Route::get('notifications', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
+    // Real implementations — dedicated controller methods
+    Route::get('readiness', [SellerPortalController::class, 'readiness'])->middleware(EnsureSellerWeb::class);
+    Route::get('notifications', [SellerPortalController::class, 'notifications'])->middleware(EnsureSellerWeb::class);
+    Route::post('notifications/{id}/read', [SellerPortalController::class, 'markNotificationRead'])->whereNumber('id')->middleware([EnsureSellerWeb::class, 'throttle:30,1']);
+    Route::post('notifications/mark-all-read', [SellerPortalController::class, 'markAllNotificationsRead'])->middleware([EnsureSellerWeb::class, 'throttle:30,1']);
+    Route::get('warehouses', [SellerPortalController::class, 'warehouses'])->middleware(EnsureSellerWeb::class);
+    Route::get('offers', [SellerPortalController::class, 'offers'])->middleware(EnsureSellerWeb::class);
+    Route::get('rfqs', [SellerPortalController::class, 'rfqs'])->middleware(EnsureSellerWeb::class);
+    Route::get('quotations', [SellerPortalController::class, 'quotations'])->middleware(EnsureSellerWeb::class);
+    Route::get('earnings', [SellerPortalController::class, 'earnings'])->middleware(EnsureSellerWeb::class);
+    Route::get('statements', [SellerPortalController::class, 'statements'])->middleware(EnsureSellerWeb::class);
+    Route::get('settings', [SellerPortalController::class, 'settings'])->middleware(EnsureSellerWeb::class);
+
+    // Placeholder routes for remaining in-development pages
     Route::get('products/add', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('products/match', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('products/import', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
@@ -156,29 +167,22 @@ Route::prefix('seller')->group(function () {
     Route::get('inventory/reservations', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('inventory/alerts', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('inventory/import', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
-    Route::get('rfqs', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
-    Route::get('quotations', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('returns', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('cancellations', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('messages', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
-    Route::get('warehouses', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('dispatch', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('shipments', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('pickups', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('freight', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('tracking', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
-    Route::get('earnings', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
-    Route::get('statements', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('commissions', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('taxes', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('marketplace', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('pricing', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
-    Route::get('offers', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('performance', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('compliance', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('documents', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
     Route::get('team', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
-    Route::get('settings', [SellerPortalController::class, 'page'])->middleware(EnsureSellerWeb::class);
 
     // Market Intelligence
     Route::get('intelligence', [\App\Http\Controllers\Web\SellerIntelligenceController::class, 'index'])->middleware(EnsureSellerWeb::class);

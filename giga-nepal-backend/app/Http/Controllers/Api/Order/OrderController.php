@@ -214,7 +214,55 @@ class OrderController extends Controller
 
     public function invoice(int $order): JsonResponse
     {
-        return $this->notImplemented('Invoice generation', 'Phase 2');
+        $orderModel = Order::query()
+            ->where('id', $order)
+            ->with(['items', 'payments'])
+            ->first();
+
+        if (! $orderModel) {
+            return $this->error('Order not found.', 404);
+        }
+
+        $invoice = $orderModel->invoice;
+
+        if (! $invoice) {
+            $invoice = \App\Models\Invoice::create([
+                'invoice_number' => 'INV-'.now()->format('YmdHis').'-'.strtoupper(Str::random(6)),
+                'order_id' => $orderModel->id,
+                'marketplace_id' => $orderModel->marketplace_id,
+                'user_id' => $orderModel->user_id,
+                'status' => 'issued',
+                'subtotal' => $orderModel->subtotal,
+                'tax_amount' => $orderModel->tax_total,
+                'shipping_amount' => $orderModel->shipping_total,
+                'discount_amount' => $orderModel->discount_total,
+                'total_amount' => $orderModel->grand_total,
+                'currency_code' => $orderModel->currency_code,
+                'issued_at' => now(),
+                'due_at' => now()->addDays(30),
+                'billing_name' => $orderModel->billing_address['name'] ?? null,
+                'billing_email' => $orderModel->billing_address['email'] ?? null,
+                'billing_address' => $orderModel->billing_address,
+                'shipping_name' => $orderModel->shipping_address['name'] ?? null,
+                'shipping_address' => $orderModel->shipping_address,
+                'notes' => $orderModel->customer_notes,
+            ]);
+
+            foreach ($orderModel->items as $item) {
+                $invoice->items()->create([
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product_name,
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'tax_amount' => $item->tax_amount,
+                    'total_price' => $item->total_price,
+                ]);
+            }
+        }
+
+        $invoice->load('items');
+
+        return $this->success($invoice);
     }
 
     /**
