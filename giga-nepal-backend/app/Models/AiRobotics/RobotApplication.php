@@ -8,5 +8,5 @@ class RobotApplication extends Model
 {
     protected $fillable = ['name', 'slug', 'description', 'sort_order', 'is_active'];
     protected $casts = ['is_active' => 'boolean'];
-    public function robotModels() { return $this->belongsToMany(RobotModel::class); }
+    public function robotModels() { return $this->belongsToMany(RobotModel::class, 'robot_model_application'); }
 }
