@@ -133,9 +133,8 @@ class PricingRuleSeeder extends Seeder
 
         // B2B minimum margin floor: 5%
         MarginFloorRule::updateOrCreate(
-            ['code' => 'b2b-min-margin'],
+            ['scope_type' => 'b2b_account'],
             [
-                'name' => 'B2B Minimum Margin (5%)',
                 'min_gross_margin_percent' => 5.0,
                 'is_active' => true,
             ]
@@ -206,9 +205,8 @@ class PricingRuleSeeder extends Seeder
     {
         // Global price floor: $0.01 minimum
         PriceFloorRule::updateOrCreate(
-            ['code' => 'global-min-price'],
+            ['scope_type' => 'global', 'scope_id' => null],
             [
-                'name' => 'Global Minimum Price ($0.01)',
                 'min_absolute_price' => 0.01,
                 'currency_code' => 'USD',
                 'is_active' => true,
@@ -217,9 +215,8 @@ class PricingRuleSeeder extends Seeder
 
         // Price rounding: nearest $0.01
         PriceRoundingRule::updateOrCreate(
-            ['code' => 'global-rounding'],
+            ['marketplace_id' => null, 'currency_code' => null],
             [
-                'name' => 'Global Price Rounding (nearest cent)',
                 'increment' => 0.01,
                 'strategy' => 'nearest',
                 'is_active' => true,
