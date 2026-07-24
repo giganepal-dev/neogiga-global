@@ -21,7 +21,7 @@ class AiRoboticsPageController extends Controller
     /**
      * AI & Robotics Homepage
      */
-    public function index(Request $request): View
+    public function index(Request $request = null): View
     {
         $featuredRobots = RobotModel::active()->featured()->with('manufacturer', 'type')->limit(6)->get();
         $featuredAiModels = AiModel::active()->featured()->limit(6)->get();
@@ -43,7 +43,7 @@ class AiRoboticsPageController extends Controller
     /**
      * Robot Explorer
      */
-    public function robots(Request $request): View
+    public function robots(Request $request = null): View
     {
         $query = RobotModel::active()->with(['manufacturer', 'type', 'applications']);
 
@@ -104,7 +104,7 @@ class AiRoboticsPageController extends Controller
     /**
      * AI Models Directory
      */
-    public function aiModels(Request $request): View
+    public function aiModels(Request $request = null): View
     {
         $query = AiModel::active();
 
@@ -132,7 +132,7 @@ class AiRoboticsPageController extends Controller
     /**
      * AI & Robotics Store (products filtered by AI/robotics categories)
      */
-    public function store(Request $request): View
+    public function store(Request $request = null): View
     {
         $query = \App\Models\Marketplace\Product::query()
             ->where('status', 'approved')
@@ -154,7 +154,7 @@ class AiRoboticsPageController extends Controller
     /**
      * Learning Paths
      */
-    public function learning(Request $request): View
+    public function learning(): View
     {
         $paths = LearningPath::active()->withCount('courses')->get();
         $courses = Course::where('is_published', true)->limit(12)->get();
@@ -221,7 +221,7 @@ class AiRoboticsPageController extends Controller
     /**
      * News & Releases
      */
-    public function news(Request $request): View
+    public function news(Request $request = null): View
     {
         $query = Article::published();
         if ($type = $request->input('type')) {
@@ -254,7 +254,7 @@ class AiRoboticsPageController extends Controller
     /**
      * Robot Comparison
      */
-    public function compare(Request $request): View
+    public function compare(Request $request = null): View
     {
         $ids = $request->input('robots', []);
         $robots = RobotModel::active()->whereIn('id', $ids)->with(['manufacturer', 'type'])->get();
