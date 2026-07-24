@@ -25,7 +25,7 @@ class AiRoboticsPageController extends Controller
     {
         $featuredRobots = RobotModel::active()->featured()->with('manufacturer', 'type')->limit(6)->get();
         $featuredAiModels = AiModel::active()->featured()->limit(6)->get();
-        $featuredCourses = Course::where('is_published', true)->limit(4)->get();
+        $featuredCourses = Course::where('status', 'published')->limit(4)->get();
         $featuredLearningPaths = LearningPath::active()->featured()->withCount('courses')->limit(3)->get();
         $featuredPackages = InstitutionalPackage::active()->featured()->limit(3)->get();
         $featuredManufacturers = RobotManufacturer::active()->limit(8)->get();
@@ -157,7 +157,7 @@ class AiRoboticsPageController extends Controller
     public function learning(): View
     {
         $paths = LearningPath::active()->withCount('courses')->get();
-        $courses = Course::where('is_published', true)->limit(12)->get();
+        $courses = Course::where('status', 'published')->limit(12)->get();
 
         return view('frontend.ai-robotics.learning', compact('paths', 'courses'));
     }
