@@ -28,4 +28,5 @@ class InstitutionalPackage extends Model
     }
 
     public function scopeActive($q) { return $q->where('is_active', true); }
+    public function scopeFeatured($q) { return $q->where('is_featured', true); }
 }
