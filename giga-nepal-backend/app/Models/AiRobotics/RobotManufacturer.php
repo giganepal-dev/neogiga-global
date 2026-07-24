@@ -9,6 +9,8 @@ class RobotManufacturer extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'ai_robotics_manufacturers';
+
     protected $fillable = [
         'name', 'slug', 'logo', 'description', 'country', 'regions_served',
         'certifications', 'website_url', 'contact_email', 'contact_phone',
