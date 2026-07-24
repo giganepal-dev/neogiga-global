@@ -277,7 +277,7 @@ class AiRoboticsSampleDataSeeder extends Seeder
             }
             DB::table('robot_models')->updateOrInsert(
                 ['slug' => $robot['slug']],
-                $robot + ['barcode_format' => 'svg', 'source' => 'internal', 'created_at' => now(), 'updated_at' => now()]
+                $robot + ['created_at' => now(), 'updated_at' => now()]
             );
         }
     }
