@@ -278,7 +278,7 @@ class ElasticsearchService
                     'products.short_description',
                     'products.base_price',
                     'products.sale_price',
-                    'products.stock_quantity',
+                    DB::raw('0 as stock_quantity'),
                     'products.status',
                     'products.created_at',
                     'products.updated_at'
