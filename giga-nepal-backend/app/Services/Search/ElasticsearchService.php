@@ -197,7 +197,7 @@ class ElasticsearchService
         }
 
         // Status filter
-        $filter[] = ['term' => ['status' => 'active']];
+        $filter[] = ['terms' => ['status' => ['active', 'approved']]];
 
         if ($must !== []) {
             $body['query']['bool']['must'] = $must;
@@ -283,7 +283,7 @@ class ElasticsearchService
                     'products.created_at',
                     'products.updated_at'
                 )
-                ->where('products.status', 'active')
+                ->whereIn('products.status', ['active', 'approved'])
                 ->orderBy('products.id')
                 ->offset($offset)
                 ->limit($chunkSize)
