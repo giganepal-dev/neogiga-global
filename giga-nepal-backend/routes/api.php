@@ -536,6 +536,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/reseller/territory-requests/{request}/approve', [ResellerAdminController::class, 'approveTerritoryRequest'])->whereNumber('request')->middleware('throttle:writes');
             Route::post('/reseller/rfq/{rfq}/assign', [ResellerAdminController::class, 'assignRfq'])->whereNumber('rfq')->middleware('throttle:writes');
 
+            // RFQ Bidding Admin API
+            Route::get('/rfq', [\App\Http\Controllers\Api\Admin\RfqAdminController::class, 'index']);
+            Route::get('/rfq/{rfq}', [\App\Http\Controllers\Api\Admin\RfqAdminController::class, 'show'])->whereNumber('rfq');
+            Route::post('/rfq/{rfq}/assign', [\App\Http\Controllers\Api\Admin\RfqAdminController::class, 'assign'])->whereNumber('rfq')->middleware('throttle:writes');
+            Route::get('/rfq/{rfq}/comparison', [\App\Http\Controllers\Api\Admin\RfqAdminController::class, 'comparison'])->whereNumber('rfq');
+            Route::post('/rfq/{rfq}/award', [\App\Http\Controllers\Api\Admin\RfqAdminController::class, 'award'])->whereNumber('rfq')->middleware('throttle:writes');
+            Route::post('/rfq/{rfq}/convert-to-quotation', [\App\Http\Controllers\Api\Admin\RfqAdminController::class, 'convertToQuotation'])->whereNumber('rfq')->middleware('throttle:writes');
+
             Route::get('/bom/projects', [BomAdminController::class, 'projects']);
             Route::post('/bom/projects', [BomAdminController::class, 'storeProject'])->middleware('throttle:writes');
             Route::patch('/bom/projects/{project}', [BomAdminController::class, 'updateProject'])->whereNumber('project')->middleware('throttle:writes');

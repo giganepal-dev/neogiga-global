@@ -104,6 +104,35 @@ class QuotationService
         return $quote->fresh('items');
     }
 
+    /**
+     * Create a quotation from an awarded RFQ bid.
+     */
+    public function createFromRfq(RfqRequest $rfq, $bid): Quotation
+    {
+        $items = [];
+        foreach ($bid->items as $bidItem) {
+            $rfqItem = $bidItem->rfqItem;
+            $items[] = [
+                'product_id' => $rfqItem?->product_id,
+                'sku' => $rfqItem?->sku,
+                'name' => $rfqItem?->name ?? 'RFQ Item',
+                'quantity' => (float) $bidItem->quantity,
+                'unit_price' => (float) $bidItem->unit_price,
+                'tax_amount' => 0,
+            ];
+        }
+
+        return $this->create([
+            'rfq_request_id' => $rfq->id,
+            'user_id' => $rfq->user_id,
+            'currency' => $bid->currency ?? 'USD',
+            'valid_until' => $bid->valid_until,
+            'notes' => $bid->cover_note,
+            'created_by' => $bid->vendor_id,
+            'items' => $items,
+        ]);
+    }
+
     private function recomputeTotals(Quotation $quote): Quotation
     {
         $quote->load('items');
