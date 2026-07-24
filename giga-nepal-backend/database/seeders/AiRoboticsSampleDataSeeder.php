@@ -269,6 +269,12 @@ class AiRoboticsSampleDataSeeder extends Seeder
         ];
 
         foreach ($robots as $robot) {
+            // JSON-encode array fields for PostgreSQL
+            foreach (['sensors', 'programming_languages', 'certifications', 'safety_features', 'images', 'videos', 'seo_meta'] as $field) {
+                if (isset($robot[$field]) && is_array($robot[$field])) {
+                    $robot[$field] = json_encode($robot[$field]);
+                }
+            }
             DB::table('robot_models')->updateOrInsert(
                 ['slug' => $robot['slug']],
                 $robot + ['barcode_format' => 'svg', 'source' => 'internal', 'created_at' => now(), 'updated_at' => now()]
@@ -413,6 +419,12 @@ class AiRoboticsSampleDataSeeder extends Seeder
         ];
 
         foreach ($models as $model) {
+            // JSON-encode array fields for PostgreSQL
+            foreach (['supported_tasks', 'input_types', 'output_types', 'hardware_requirements', 'supported_accelerators', 'robotics_use_cases', 'cv_use_cases', 'nlp_use_cases', 'seo_meta'] as $field) {
+                if (isset($model[$field]) && is_array($model[$field])) {
+                    $model[$field] = json_encode($model[$field]);
+                }
+            }
             DB::table('ai_models')->updateOrInsert(
                 ['slug' => $model['slug']],
                 $model + ['created_at' => now(), 'updated_at' => now()]
@@ -478,6 +490,12 @@ class AiRoboticsSampleDataSeeder extends Seeder
         ];
 
         foreach ($integrators as $intg) {
+            // JSON-encode array fields for PostgreSQL
+            foreach (['services', 'regions_served', 'certifications', 'seo_meta'] as $field) {
+                if (isset($intg[$field]) && is_array($intg[$field])) {
+                    $intg[$field] = json_encode($intg[$field]);
+                }
+            }
             DB::table('ai_robotics_integrators')->updateOrInsert(
                 ['slug' => $intg['slug']],
                 $intg + ['created_at' => now(), 'updated_at' => now()]
@@ -494,6 +512,12 @@ class AiRoboticsSampleDataSeeder extends Seeder
         ];
 
         foreach ($packages as $pkg) {
+            // JSON-encode array fields for PostgreSQL
+            foreach (['equipment_list', 'includes', 'seo_meta'] as $field) {
+                if (isset($pkg[$field]) && is_array($pkg[$field])) {
+                    $pkg[$field] = json_encode($pkg[$field]);
+                }
+            }
             DB::table('institutional_packages')->updateOrInsert(
                 ['slug' => $pkg['slug']],
                 $pkg + ['created_at' => now(), 'updated_at' => now()]
