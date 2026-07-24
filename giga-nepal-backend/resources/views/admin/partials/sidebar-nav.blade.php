@@ -271,6 +271,57 @@
     </div>
 </div>
 
+{{-- ===== AI & ROBOTICS ===== --}}
+<div class="nav-section">
+    <div class="nav-section-header" data-nav-toggle>AI &amp; Robotics</div>
+    <div class="nav-section-body">
+        <a href="/admin/ai-robotics" class="{{ $r==='admin/ai-robotics' ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 8v8l9 5 9-5V8" stroke-linejoin="round"/></svg>
+            Dashboard
+        </a>
+        <a href="/admin/ai-robotics/robot-models" class="{{ str_starts_with($r,'admin/ai-robotics/robot-models') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 9h18M8 21h8M12 17v4" stroke-linejoin="round"/></svg>
+            Robot Models
+        </a>
+        <a href="/admin/ai-robotics/ai-models" class="{{ str_starts_with($r,'admin/ai-robotics/ai-models') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a10 10 0 110 20 10 10 0 010-20z"/><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            AI Models
+        </a>
+        <a href="/admin/ai-robotics/manufacturers" class="{{ str_starts_with($r,'admin/ai-robotics/manufacturers') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Manufacturers
+        </a>
+        <a href="/admin/ai-robotics/learning-paths" class="{{ str_starts_with($r,'admin/ai-robotics/learning-paths') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5z"/></svg>
+            Learning Paths
+        </a>
+        <a href="/admin/ai-robotics/events" class="{{ str_starts_with($r,'admin/ai-robotics/events') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Events
+        </a>
+        <a href="/admin/ai-robotics/articles" class="{{ str_starts_with($r,'admin/ai-robotics/articles') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Articles &amp; News
+        </a>
+        <a href="/admin/ai-robotics/demo-requests" class="{{ str_starts_with($r,'admin/ai-robotics/demo-requests') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Demo Requests
+        </a>
+        <a href="/admin/ai-robotics/lab-bookings" class="{{ str_starts_with($r,'admin/ai-robotics/lab-bookings') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6v11l-3 3-3-3V3z"/><path d="M6 3h12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Lab Bookings
+        </a>
+        <a href="/admin/ai-robotics/packages" class="{{ str_starts_with($r,'admin/ai-robotics/packages') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Institutional Packages
+        </a>
+        <a href="/admin/ai-robotics/integrators" class="{{ str_starts_with($r,'admin/ai-robotics/integrators') ? 'active':'' }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Integrators
+        </a>
+    </div>
+</div>
+
 {{-- ===== SYSTEM ===== --}}
 <div class="nav-section">
     <div class="nav-section-header" data-nav-toggle>System</div>

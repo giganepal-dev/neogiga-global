@@ -260,4 +260,110 @@ class AiRoboticsPageController extends Controller
         $robots = RobotModel::active()->whereIn('id', $ids)->with(['manufacturer', 'type'])->get();
         return view('frontend.ai-robotics.compare', compact('robots'));
     }
+
+    /**
+     * Integrator Detail
+     */
+    public function integratorDetail(string $slug): View
+    {
+        $integrator = \App\Models\AiRobotics\Integrator::active()->where('slug', $slug)->firstOrFail();
+        return view('frontend.ai-robotics.integrator-detail', compact('integrator'));
+    }
+
+    /**
+     * Institutional Package Detail
+     */
+    public function institutionalDetail(string $slug): View
+    {
+        $package = InstitutionalPackage::active()->with('products')->where('slug', $slug)->firstOrFail();
+        return view('frontend.ai-robotics.institutional-detail', compact('package'));
+    }
+
+    /**
+     * Demo Request Form
+     */
+    public function demoRequestForm(?Request $request = null): View
+    {
+        $robots = RobotModel::active()->orderBy('name')->get();
+        $manufacturers = RobotManufacturer::active()->orderBy('name')->get();
+        return view('frontend.ai-robotics.demo-request', compact('robots', 'manufacturers'));
+    }
+
+    /**
+     * Store Demo Request
+     */
+    public function storeDemoRequest(Request $request)
+    {
+        $data = $request->validate([
+            'contact_name' => 'required|string|max:255',
+            'contact_email' => 'required|email|max:255',
+            'contact_phone' => 'nullable|string|max:50',
+            'institution_name' => 'nullable|string|max:255',
+            'robot_model_id' => 'nullable|exists:robot_models,id',
+            'manufacturer_id' => 'nullable|exists:ai_robotics_manufacturers,id',
+            'requirements' => 'nullable|string|max:2000',
+        ]);
+
+        \App\Models\AiRobotics\DemoRequest::create($data);
+
+        return redirect('/ai')->with('status', 'Demo request submitted. We will contact you shortly.');
+    }
+
+    /**
+     * Lab Booking Form
+     */
+    public function labBookingForm(?Request $request = null): View
+    {
+        return view('frontend.ai-robotics.lab-booking');
+    }
+
+    /**
+     * Store Lab Booking
+     */
+    public function storeLabBooking(Request $request)
+    {
+        $data = $request->validate([
+            'contact_name' => 'required|string|max:255',
+            'contact_email' => 'required|email|max:255',
+            'contact_phone' => 'nullable|string|max:50',
+            'institution_name' => 'nullable|string|max:255',
+            'booking_type' => 'required|string|in:demonstration,workshop,training,testing,prototyping',
+            'preferred_date' => 'required|date|after:today',
+            'preferred_time' => 'nullable|string|max:20',
+            'requirements' => 'nullable|string|max:2000',
+        ]);
+
+        \App\Models\AiRobotics\LabBooking::create($data);
+
+        return redirect('/ai/lab')->with('status', 'Lab booking submitted. We will confirm your session shortly.');
+    }
+
+    /**
+     * Event Detail
+     */
+    public function eventDetail(string $slug): View
+    {
+        $event = Event::active()->where('slug', $slug)->firstOrFail();
+        return view('frontend.ai-robotics.event-detail', compact('event'));
+    }
+
+    /**
+     * Store Event Registration
+     */
+    public function storeEventRegistration(Request $request, string $slug)
+    {
+        $event = Event::active()->where('slug', $slug)->firstOrFail();
+
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'institution' => 'nullable|string|max:255',
+        ]);
+
+        $event->registrations()->create($data);
+        $event->increment('current_attendees');
+
+        return redirect('/ai/events')->with('status', 'Registration confirmed for ' . $event->name . '.');
+    }
 }

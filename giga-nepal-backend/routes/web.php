@@ -945,7 +945,15 @@ if (config('neogiga_global.features.locale_prefix_routes', true)) {
             Route::get('/ai/news', fn () => app($aiRobotics)->news(app(Request::class)))->name('localized.ai-robotics.news');
             Route::get('/ai/news/{slug}', fn (string $slug) => app($aiRobotics)->articleDetail($slug))->where('slug', '[a-z0-9\-]+')->name('localized.ai-robotics.article');
             Route::get('/ai/integrators', fn () => app($aiRobotics)->integrators())->name('localized.ai-robotics.integrators');
+            Route::get('/ai/integrators/{slug}', fn (string $slug) => app($aiRobotics)->integratorDetail($slug))->where('slug', '[a-z0-9\-]+')->name('localized.ai-robotics.integrator');
             Route::get('/ai/compare', fn () => app($aiRobotics)->compare(app(Request::class)))->name('localized.ai-robotics.compare');
+            Route::get('/ai/institutional/{slug}', fn (string $slug) => app($aiRobotics)->institutionalDetail($slug))->where('slug', '[a-z0-9\-]+')->name('localized.ai-robotics.institutional-detail');
+            Route::get('/ai/demo-request', fn () => app($aiRobotics)->demoRequestForm())->name('localized.ai-robotics.demo-request');
+            Route::post('/ai/demo-request', fn (Request $request) => app($aiRobotics)->storeDemoRequest($request))->name('localized.ai-robotics.demo-request.store');
+            Route::get('/ai/lab/book', fn () => app($aiRobotics)->labBookingForm())->name('localized.ai-robotics.lab-booking');
+            Route::post('/ai/lab/book', fn (Request $request) => app($aiRobotics)->storeLabBooking($request))->name('localized.ai-robotics.lab-booking.store');
+            Route::get('/ai/events/{slug}', fn (string $slug) => app($aiRobotics)->eventDetail($slug))->where('slug', '[a-z0-9\-]+')->name('localized.ai-robotics.event');
+            Route::post('/ai/events/{slug}/register', fn (Request $request, string $slug) => app($aiRobotics)->storeEventRegistration($request, $slug))->name('localized.ai-robotics.event.register');
 
             Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->middleware('auth')->name('localized.dashboard');
             Route::get('/account', [CustomerDashboardController::class, 'index'])->middleware('auth')->name('localized.account');
