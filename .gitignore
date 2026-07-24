@@ -1,20 +1,35 @@
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-
-# Dependencies
-vendor/
-composer.lock
-
-# Logs and temp files
-*.log
-*.tmp
+```gitignore
+# Laravel-specific ignores
+/vendor/
+/storage/logs/*
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/bootstrap/cache/*
+/public/storage
 
 # Environment
 .env
 .env.local
-*.env.*
+.env.*
 
-# Editors
+# Dependencies
+/node_modules/
+/composer.lock
+
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+```

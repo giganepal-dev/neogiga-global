@@ -196,4 +196,286 @@ class SellerPortalController extends Controller
 
         return back()->with('status', 'Support ticket opened.');
     }
+
+    // Readiness & Onboarding
+    public function readiness(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $profile = DB::table('vendor_profiles')->where('vendor_id', $v->id)->first();
+        $marketplaces = DB::table('vendor_marketplace_approvals')->where('vendor_id', $v->id)->get();
+        $warehouses = DB::table('vendor_warehouses')->where('vendor_id', $v->id)->get();
+        
+        $steps = [
+            'business_profile' => (bool) $profile,
+            'documents' => DB::table('vendor_documents')->where('vendor_id', $v->id)->count() > 0,
+            'tax_registration' => $profile && !empty($profile->tax_id),
+            'bank_details' => $profile && !empty($profile->bank_account),
+            'warehouse' => $warehouses->where('status', 'approved')->count() > 0,
+            'marketplace' => $marketplaces->where('status', 'approved')->count() > 0,
+        ];
+        
+        $readinessPercentage = round((collect($steps)->filter()->count() / count($steps)) * 100);
+        
+        return view('seller.readiness', compact('v', 'steps', 'readinessPercentage', 'marketplaces', 'warehouses'));
+    }
+
+    // Notifications
+    public function notifications(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $notifications = Schema::hasTable('seller_notifications')
+            ? DB::table('seller_notifications')
+                ->where('seller_id', $v->id)
+                ->orderByDesc('created_at')
+                ->paginate(50)
+            : new LengthAwarePaginator([], 0, 50);
+        
+        return view('seller.notifications.index', compact('v', 'notifications'));
+    }
+
+    public function markNotificationsRead(Request $r)
+    {
+        $v = $r->attributes->get('vendor');
+        if (Schema::hasTable('seller_notifications')) {
+            DB::table('seller_notifications')
+                ->where('seller_id', $v->id)
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+        }
+        return back()->with('status', 'Notifications marked as read.');
+    }
+
+    // Products - additional routes
+    public function addProduct(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.products.add', compact('v'));
+    }
+
+    public function matchMpn(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.products.match', compact('v'));
+    }
+
+    public function importProducts(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.products.import', compact('v'));
+    }
+
+    public function draftProducts(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $products = DB::table('products')->where('vendor_id', $v->id)->where('status', 'draft')
+            ->orderByDesc('updated_at')->paginate(20);
+        return view('seller.products.drafts', compact('v', 'products'));
+    }
+
+    public function rejectedProducts(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $products = DB::table('products')->where('vendor_id', $v->id)->where('status', 'rejected')
+            ->orderByDesc('updated_at')->paginate(20);
+        return view('seller.products.rejected', compact('v', 'products'));
+    }
+
+    // Inventory - additional routes
+    public function warehouseStock(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $warehouses = DB::table('vendor_warehouses')->where('vendor_id', $v->id)->get();
+        return view('seller.inventory.warehouse', compact('v', 'warehouses'));
+    }
+
+    public function stockMovements(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $movements = Schema::hasTable('seller_inventory_movements')
+            ? DB::table('seller_inventory_movements')
+                ->where('seller_id', $v->id)
+                ->orderByDesc('created_at')
+                ->paginate(50)
+            : new LengthAwarePaginator([], 0, 50);
+        return view('seller.inventory.movements', compact('v', 'movements'));
+    }
+
+    public function reservations(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $reservations = collect([]); // Placeholder for future implementation
+        return view('seller.inventory.reservations', compact('v', 'reservations'));
+    }
+
+    public function lowStockAlerts(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $alerts = collect([]); // Placeholder for future implementation
+        return view('seller.inventory.alerts', compact('v', 'alerts'));
+    }
+
+    public function inventoryImport(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.inventory.import', compact('v'));
+    }
+
+    // Sales - RFQs, Quotations, Returns, Cancellations, Messages
+    public function rfqs(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $rfqs = collect([]); // Placeholder for future implementation
+        return view('seller.rfqs', compact('v', 'rfqs'));
+    }
+
+    public function quotations(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $quotations = collect([]); // Placeholder for future implementation
+        return view('seller.quotations', compact('v', 'quotations'));
+    }
+
+    public function returns(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $returns = collect([]); // Placeholder for future implementation
+        return view('seller.returns', compact('v', 'returns'));
+    }
+
+    public function cancellations(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $cancellations = collect([]); // Placeholder for future implementation
+        return view('seller.cancellations', compact('v', 'cancellations'));
+    }
+
+    public function messages(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $messages = collect([]); // Placeholder for future implementation
+        return view('seller.messages', compact('v', 'messages'));
+    }
+
+    // Logistics - Warehouses, Dispatch, Shipments, Pickups, Freight, Tracking
+    public function warehouses(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $warehouses = DB::table('vendor_warehouses')->where('vendor_id', $v->id)->get();
+        return view('seller.warehouses.index', compact('v', 'warehouses'));
+    }
+
+    public function dispatch(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.dispatch', compact('v'));
+    }
+
+    public function shipments(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $shipments = Schema::hasTable('seller_shipments')
+            ? DB::table('seller_shipments')->where('seller_id', $v->id)->orderByDesc('created_at')->paginate(20)
+            : new LengthAwarePaginator([], 0, 20);
+        return view('seller.shipments', compact('v', 'shipments'));
+    }
+
+    public function pickups(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.pickups', compact('v'));
+    }
+
+    public function freight(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.freight', compact('v'));
+    }
+
+    public function tracking(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.tracking', compact('v'));
+    }
+
+    // Finance - Earnings, Statements, Commissions, Taxes
+    public function earnings(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.earnings', compact('v'));
+    }
+
+    public function statements(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.statements', compact('v'));
+    }
+
+    public function commissions(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.commissions', compact('v'));
+    }
+
+    public function taxes(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.taxes', compact('v'));
+    }
+
+    // Marketplace - Access, Pricing, Offers, Performance, Compliance
+    public function marketplaceAccess(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $applications = DB::table('vendor_marketplace_approvals')->where('vendor_id', $v->id)->get();
+        return view('seller.marketplace', compact('v', 'applications'));
+    }
+
+    public function regionalPricing(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.pricing', compact('v'));
+    }
+
+    public function sellerOffers(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $offers = DB::table('seller_offers')->where('seller_id', $v->id)->orderByDesc('created_at')->paginate(20);
+        return view('seller.offers', compact('v', 'offers'));
+    }
+
+    public function performance(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.performance', compact('v'));
+    }
+
+    public function compliance(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $complianceItems = collect([]); // Placeholder for future implementation
+        return view('seller.compliance', compact('v', 'complianceItems'));
+    }
+
+    // Account - Documents, Team, Settings
+    public function documents(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $documents = DB::table('vendor_documents')->where('vendor_id', $v->id)->get();
+        return view('seller.documents', compact('v', 'documents'));
+    }
+
+    public function teamMembers(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        $members = Schema::hasTable('vendor_team_members')
+            ? DB::table('vendor_team_members')->where('vendor_id', $v->id)->get()
+            : collect([]);
+        return view('seller.team', compact('v', 'members'));
+    }
+
+    public function settings(Request $r): View
+    {
+        $v = $r->attributes->get('vendor');
+        return view('seller.settings', compact('v'));
+    }
 }

@@ -68,26 +68,27 @@ $portal = [
 @endphp
 
 @php
-// Group nav items for proper rendering
+// Group nav items for proper rendering with isFirstInGroup and isLastInGroup flags
 $navGroups = [];
 $currentGroup = null;
+$groupStartIdx = null;
+
 foreach ($portal['nav'] as $idx => $item) {
     $group = $item['group'] ?? null;
+    
     if ($group !== $currentGroup) {
-        if ($group) {
-            $navGroups[$group] = ['items' => [], 'start_idx' => $idx];
-        } else {
-            $navGroups['_ungrouped_' . $idx] = ['items' => [$item], 'start_idx' => $idx, 'is_ungrouped' => true];
+        // Close previous group if exists
+        if ($currentGroup !== null && $groupStartIdx !== null) {
+            $portal['nav'][$groupStartIdx]['isFirstInGroup'] = true;
+            $portal['nav'][$idx - 1]['isLastInGroup'] = true;
         }
         $currentGroup = $group;
-    } else {
-        if (isset($navGroups[$group])) {
-            $navGroups[$group]['items'][] = $item;
-        } else {
-            $lastKey = array_key_last($navGroups);
-            $navGroups[$lastKey]['items'][] = $item;
-        }
+        $groupStartIdx = $idx;
     }
 }
-$portal = $portal + ['nav_groups' => $navGroups];
+// Close last group
+if ($currentGroup !== null && $groupStartIdx !== null) {
+    $portal['nav'][$groupStartIdx]['isFirstInGroup'] = true;
+    $portal['nav'][count($portal['nav']) - 1]['isLastInGroup'] = true;
+}
 @endphp

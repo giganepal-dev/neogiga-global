@@ -127,12 +127,13 @@ Route::patch('/email/preferences/{token}', [EmailPreferenceController::class, 'u
     ->middleware('throttle:10,1')->name('email.preferences.update');
 
 // Seller web portal (session guard mirrors the admin console; vendor scope
-// enforced by seller.web / SellerContextService — sellers see only their data).
+// Seller web portal routes (session-based, CSRF-protected, enforced by seller.web / SellerContextService — sellers see only their data).
 Route::prefix('seller')->group(function () {
     Route::get('login', [SellerPortalController::class, 'showLogin'])->name('seller.login');
     Route::post('login', [SellerPortalController::class, 'login'])->middleware('throttle:6,1');
     Route::post('logout', [SellerPortalController::class, 'logout']);
 
+    // Core pages
     Route::get('/', [SellerPortalController::class, 'dashboard'])->middleware(EnsureSellerWeb::class);
     Route::get('profile', [SellerPortalController::class, 'profile'])->middleware(EnsureSellerWeb::class);
     Route::post('profile', [SellerPortalController::class, 'updateProfile'])->middleware(EnsureSellerWeb::class);
@@ -142,6 +143,60 @@ Route::prefix('seller')->group(function () {
     Route::get('payouts', [SellerPortalController::class, 'payouts'])->middleware(EnsureSellerWeb::class);
     Route::get('support', [SellerPortalController::class, 'support'])->middleware(EnsureSellerWeb::class);
     Route::post('support', [SellerPortalController::class, 'storeSupport'])->middleware([EnsureSellerWeb::class, 'throttle:10,1']);
+    
+    // Readiness & Onboarding
+    Route::get('readiness', [SellerPortalController::class, 'readiness'])->middleware(EnsureSellerWeb::class);
+    
+    // Notifications
+    Route::get('notifications', [SellerPortalController::class, 'notifications'])->middleware(EnsureSellerWeb::class);
+    Route::post('notifications/mark-read', [SellerPortalController::class, 'markNotificationsRead'])->middleware([EnsureSellerWeb::class, 'throttle:20,1']);
+    
+    // Products - additional routes
+    Route::get('products/add', [SellerPortalController::class, 'addProduct'])->middleware(EnsureSellerWeb::class);
+    Route::get('products/match', [SellerPortalController::class, 'matchMpn'])->middleware(EnsureSellerWeb::class);
+    Route::get('products/import', [SellerPortalController::class, 'importProducts'])->middleware(EnsureSellerWeb::class);
+    Route::get('products/drafts', [SellerPortalController::class, 'draftProducts'])->middleware(EnsureSellerWeb::class);
+    Route::get('products/rejected', [SellerPortalController::class, 'rejectedProducts'])->middleware(EnsureSellerWeb::class);
+    
+    // Inventory - additional routes
+    Route::get('inventory/warehouse', [SellerPortalController::class, 'warehouseStock'])->middleware(EnsureSellerWeb::class);
+    Route::get('inventory/movements', [SellerPortalController::class, 'stockMovements'])->middleware(EnsureSellerWeb::class);
+    Route::get('inventory/reservations', [SellerPortalController::class, 'reservations'])->middleware(EnsureSellerWeb::class);
+    Route::get('inventory/alerts', [SellerPortalController::class, 'lowStockAlerts'])->middleware(EnsureSellerWeb::class);
+    Route::get('inventory/import', [SellerPortalController::class, 'inventoryImport'])->middleware(EnsureSellerWeb::class);
+    
+    // Sales - RFQs, Quotations, Returns, Cancellations, Messages
+    Route::get('rfqs', [SellerPortalController::class, 'rfqs'])->middleware(EnsureSellerWeb::class);
+    Route::get('quotations', [SellerPortalController::class, 'quotations'])->middleware(EnsureSellerWeb::class);
+    Route::get('returns', [SellerPortalController::class, 'returns'])->middleware(EnsureSellerWeb::class);
+    Route::get('cancellations', [SellerPortalController::class, 'cancellations'])->middleware(EnsureSellerWeb::class);
+    Route::get('messages', [SellerPortalController::class, 'messages'])->middleware(EnsureSellerWeb::class);
+    
+    // Logistics - Warehouses, Dispatch, Shipments, Pickups, Freight, Tracking
+    Route::get('warehouses', [SellerPortalController::class, 'warehouses'])->middleware(EnsureSellerWeb::class);
+    Route::get('dispatch', [SellerPortalController::class, 'dispatch'])->middleware(EnsureSellerWeb::class);
+    Route::get('shipments', [SellerPortalController::class, 'shipments'])->middleware(EnsureSellerWeb::class);
+    Route::get('pickups', [SellerPortalController::class, 'pickups'])->middleware(EnsureSellerWeb::class);
+    Route::get('freight', [SellerPortalController::class, 'freight'])->middleware(EnsureSellerWeb::class);
+    Route::get('tracking', [SellerPortalController::class, 'tracking'])->middleware(EnsureSellerWeb::class);
+    
+    // Finance - Earnings, Statements, Commissions, Taxes
+    Route::get('earnings', [SellerPortalController::class, 'earnings'])->middleware(EnsureSellerWeb::class);
+    Route::get('statements', [SellerPortalController::class, 'statements'])->middleware(EnsureSellerWeb::class);
+    Route::get('commissions', [SellerPortalController::class, 'commissions'])->middleware(EnsureSellerWeb::class);
+    Route::get('taxes', [SellerPortalController::class, 'taxes'])->middleware(EnsureSellerWeb::class);
+    
+    // Marketplace - Access, Pricing, Offers, Performance, Compliance
+    Route::get('marketplace', [SellerPortalController::class, 'marketplaceAccess'])->middleware(EnsureSellerWeb::class);
+    Route::get('pricing', [SellerPortalController::class, 'regionalPricing'])->middleware(EnsureSellerWeb::class);
+    Route::get('offers', [SellerPortalController::class, 'sellerOffers'])->middleware(EnsureSellerWeb::class);
+    Route::get('performance', [SellerPortalController::class, 'performance'])->middleware(EnsureSellerWeb::class);
+    Route::get('compliance', [SellerPortalController::class, 'compliance'])->middleware(EnsureSellerWeb::class);
+    
+    // Account - Documents, Team, Settings
+    Route::get('documents', [SellerPortalController::class, 'documents'])->middleware(EnsureSellerWeb::class);
+    Route::get('team', [SellerPortalController::class, 'teamMembers'])->middleware(EnsureSellerWeb::class);
+    Route::get('settings', [SellerPortalController::class, 'settings'])->middleware(EnsureSellerWeb::class);
 });
 
 // Reseller web portal

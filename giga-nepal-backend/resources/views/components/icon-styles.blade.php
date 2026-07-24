@@ -50,8 +50,12 @@
     
     /* Navigation groups */
     .nav-group{margin-bottom:16px}
-    .nav-group-header{padding:8px 12px 6px;margin:0 -12px;border-bottom:1px solid rgba(255,255,255,.06)}
-    .nav-group-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:#64748B;font-weight:700}
+    .nav-group-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px 6px;margin:0 -12px;border-bottom:1px solid rgba(255,255,255,.06);background:transparent;border:0;width:100%;cursor:pointer;color:#94A3B8;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;transition:opacity .15s}
+    .nav-group-header:hover{opacity:.8}
+    .nav-group-label{flex:1;text-align:left}
+    .nav-group-toggle{transition:transform .2s ease;opacity:.7}
+    .nav-group.is-collapsed .nav-group-toggle{transform:rotate(-90deg)}
+    .nav-group.is-collapsed .nav-group-items{display:none}
     .nav-group-items{display:grid;gap:4px;padding-top:6px}
 
     /* Table row action */

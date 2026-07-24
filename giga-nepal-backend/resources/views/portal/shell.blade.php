@@ -13,17 +13,24 @@
             --accent:#f9bd2c;--accent-soft:rgba(249,189,44,.14);--ok:#16a34a;--warn:#d97706;
             --bad:#e5484d;--info:#0f62e6;--ng-accent:#f9bd2c;--ng-focus:#f9bd2c;
             --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.06);
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 72px;
         }
         *{box-sizing:border-box}
         body{margin:0;font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:#0f172a;background:linear-gradient(180deg,#eef2f7 0%,#f8fafc 220px)}
         a{color:inherit;text-decoration:none}
-        .shell{display:grid;grid-template-columns:240px 1fr;min-height:100dvh}
-        .side{background:linear-gradient(180deg,var(--navy) 0%,#111827 100%);color:#CBD5E1;padding:16px 14px;position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;gap:12px;border-right:1px solid rgba(255,255,255,.06)}
-        .side .brand{display:flex;gap:10px;align-items:center;color:#fff;font-weight:800;padding:8px 10px 12px}
+        .shell{display:grid;grid-template-columns:var(--sidebar-width) 1fr;min-height:100dvh}
+        .side{background:linear-gradient(180deg,var(--navy) 0%,#111827 100%);color:#CBD5E1;padding:16px 14px;position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;gap:12px;border-right:1px solid rgba(255,255,255,.06);width:var(--sidebar-width);overflow-y:auto;overflow-x:hidden;transition:width .2s ease}
+        .side.is-collapsed{width:var(--sidebar-collapsed-width)}
+        .side.is-collapsed .brand span,.side.is-collapsed .ng-navitem__lbl,.side.is-collapsed .nav-group-label,.side.is-collapsed .side-foot{display:none}
+        .side.is-collapsed .ng-navitem{justify-content:center;padding:9px}
+        .side.is-collapsed .nav-group-header{justify-content:center;padding:8px}
+        .side.is-collapsed .nav-group-toggle{display:none}
+        .side .brand{display:flex;gap:10px;align-items:center;color:#fff;font-weight:800;padding:8px 10px 12px;white-space:nowrap;overflow:hidden}
         .side .brand small{display:block;font-weight:500;color:#94A3B8;font-size:.72rem;margin-top:2px}
         .side nav{display:grid;gap:4px;flex:1}
-        .side-foot{margin-top:auto;padding:8px 10px;font-size:.75rem;color:#94A3B8}
-        .main{padding:22px 28px 40px;max-width:1280px}
+        .side-foot{margin-top:auto;padding:8px 10px;font-size:.75rem;color:#94A3B8;white-space:nowrap}
+        .main{padding:22px 28px 40px;max-width:1280px;overflow-x:hidden}
         .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
         .topbar h1{font-size:1.2rem;margin:0;font-weight:700}
         .topbar-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -68,11 +75,14 @@
         .empty{text-align:center;padding:36px 16px;color:var(--muted)}
         .scroll-x,.table-wrap{overflow-x:auto}
         .menu-toggle{display:none}
+        .sidebar-collapse-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#94A3B8;cursor:pointer;transition:.15s;margin-left:auto}
+        .sidebar-collapse-btn:hover{background:rgba(255,255,255,.08);color:#fff}
         @media(max-width:920px){
             .shell{grid-template-columns:1fr}
             .side{position:fixed;inset:0 auto 0 0;width:min(84vw,280px);transform:translateX(-105%);transition:transform .2s ease;z-index:40;height:100dvh}
             .side.is-open{transform:translateX(0)}
             .menu-toggle{display:inline-flex}
+            .sidebar-collapse-btn{display:none}
             .rfq-row{grid-template-columns:1fr}
             .main{padding:16px}
         }
@@ -88,9 +98,13 @@
         <div class="brand">
             <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M9 22V10l14 12V10" stroke="#f9bd2c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span>NeoGiga<small>{{ $portal['name'] }}</small></span>
+            <button type="button" class="sidebar-collapse-btn" id="sidebar-collapse-toggle" aria-label="Collapse sidebar" title="Collapse sidebar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+            </button>
         </div>
         <nav aria-label="{{ $portal['name'] }} navigation">
-            @php $seenGroups = []; @endphp
             @foreach($portal['nav'] as $item)
                 <x-sidebar-nav-item
                     :icon="$item['icon']"
@@ -99,7 +113,8 @@
                     :active="request()->is($item['pattern'])"
                     :group="$item['group'] ?? null"
                     :method="$item['method'] ?? 'GET'"
-                    :loop="$loop"
+                    :isFirstInGroup="$item['isFirstInGroup'] ?? false"
+                    :isLastInGroup="$item['isLastInGroup'] ?? false"
                     :portal="$portal"
                 />
             @endforeach
@@ -129,9 +144,82 @@
     </main>
 </div>
 <script nonce="{{ $csp_nonce ?? '' }}">
-document.getElementById('portal-menu-toggle')?.addEventListener('click', function () {
-    document.getElementById('portal-side')?.classList.toggle('is-open');
-});
+// Sidebar collapse functionality for desktop
+(function() {
+    const sidebar = document.getElementById('portal-side');
+    const collapseBtn = document.getElementById('sidebar-collapse-toggle');
+    const menuToggle = document.getElementById('portal-menu-toggle');
+    
+    if (!sidebar) return;
+    
+    // Desktop collapse/expand
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('is-collapsed');
+            const isCollapsed = sidebar.classList.contains('is-collapsed');
+            localStorage.setItem('seller-sidebar-collapsed', isCollapsed ? '1' : '0');
+            
+            // Update button icon
+            const svg = this.querySelector('svg path');
+            if (svg) {
+                svg.setAttribute('d', isCollapsed ? 'M9 18l6-6-6-6' : 'M15 18l-6-6 6-6');
+            }
+        });
+        
+        // Restore state from localStorage
+        const savedState = localStorage.getItem('seller-sidebar-collapsed');
+        if (savedState === '1') {
+            sidebar.classList.add('is-collapsed');
+            const svg = collapseBtn.querySelector('svg path');
+            if (svg) svg.setAttribute('d', 'M9 18l6-6-6-6');
+        }
+    }
+    
+    // Mobile menu toggle
+    if (menuToggle) {
+        menuToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('is-open');
+        });
+    }
+    
+    // Close mobile menu on navigation click
+    sidebar.addEventListener('click', function(e) {
+        if (window.innerWidth <= 920 && e.target.closest('a[href]')) {
+            sidebar.classList.remove('is-open');
+        }
+    });
+    
+    // Close mobile menu on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('is-open')) {
+            sidebar.classList.remove('is-open');
+        }
+    });
+    
+    // Overlay for mobile
+    let overlay = document.getElementById('sidebar-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'sidebar-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30;display:none';
+        document.body.appendChild(overlay);
+    }
+    
+    // Show/hide overlay on mobile
+    const observer = new MutationObserver(function() {
+        if (window.innerWidth <= 920) {
+            overlay.style.display = sidebar.classList.contains('is-open') ? 'block' : 'none';
+        } else {
+            overlay.style.display = 'none';
+        }
+    });
+    observer.observe(sidebar.classList, { attributes: true, attributeFilter: ['class'] });
+    
+    // Close on overlay click
+    overlay.addEventListener('click', function() {
+        sidebar.classList.remove('is-open');
+    });
+})();
 </script>
 </body>
 </html>
