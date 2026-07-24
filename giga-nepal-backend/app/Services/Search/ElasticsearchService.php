@@ -262,33 +262,29 @@ class ElasticsearchService
         $offset = 0;
 
         do {
-            $products = DB::table('products as p')
-                ->leftJoin('product_brands as b', 'b.id', '=', 'p.brand_id')
-                ->leftJoin('product_categories as c', 'c.id', '=', 'p.category_id')
-                ->leftJoin('inventory_stocks as s', 's.product_id', '=', 'p.id')
+            $products = DB::table('products')
+                ->leftJoin('product_brands', 'product_brands.id', '=', 'products.brand_id')
+                ->leftJoin('product_categories', 'product_categories.id', '=', 'products.category_id')
                 ->select(
-                    'p.id as product_id',
-                    'p.name',
-                    'p.slug',
-                    'p.sku',
-                    'p.mpn',
-                    'p.manufacturer_name',
-                    'b.name as brand_name',
-                    'c.name as category_name',
-                    'p.description',
-                    'p.short_description',
-                    'p.base_price',
-                    'p.sale_price',
-                    DB::raw('COALESCE(SUM(s.quantity_available), 0) as stock_quantity'),
-                    'p.status',
-                    'p.approval_status',
-                    'p.visibility_status',
-                    'p.created_at',
-                    'p.updated_at'
+                    'products.id as product_id',
+                    'products.name',
+                    'products.slug',
+                    'products.sku',
+                    'products.mpn',
+                    'products.manufacturer_name',
+                    'product_brands.name as brand_name',
+                    'product_categories.name as category_name',
+                    'products.description',
+                    'products.short_description',
+                    'products.base_price',
+                    'products.sale_price',
+                    'products.stock_quantity',
+                    'products.status',
+                    'products.created_at',
+                    'products.updated_at'
                 )
-                ->where('p.status', 'active')
-                ->groupBy('p.id', 'p.name', 'p.slug', 'p.sku', 'p.mpn', 'p.manufacturer_name', 'b.name', 'c.name', 'p.description', 'p.short_description', 'p.base_price', 'p.sale_price', 'p.status', 'p.approval_status', 'p.visibility_status', 'p.created_at', 'p.updated_at')
-                ->orderBy('p.id')
+                ->where('products.status', 'active')
+                ->orderBy('products.id')
                 ->offset($offset)
                 ->limit($chunkSize)
                 ->get()
