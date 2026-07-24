@@ -17,9 +17,9 @@ class SensorKnowledge extends Model
 
     protected $casts = [
         'compatible_controllers' => 'array', 'compatible_libraries' => 'array',
-        'applications' => 'array', 'alternative_product_ids' => 'array',
-        'premium_product_ids' => 'array', 'budget_product_ids' => 'array',
-        'metadata' => 'array',
+        'applications' => 'array', 'limitations' => 'array',
+        'alternative_product_ids' => 'array', 'premium_product_ids' => 'array',
+        'budget_product_ids' => 'array', 'metadata' => 'array',
     ];
 
     public function scopeOfType($q, string $type) { return $q->where('sensor_type', $type); }

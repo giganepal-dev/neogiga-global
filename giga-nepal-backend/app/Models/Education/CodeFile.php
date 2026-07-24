@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CodeFile extends Model
 {
+    protected $table = 'education_project_code_files';
+
     protected $fillable = [
         'education_project_id', 'title', 'target_board', 'language', 'version',
         'dependencies', 'libraries', 'file_tree', 'source_code', 'build_instructions',

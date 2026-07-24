@@ -187,6 +187,11 @@ Route::prefix('seller')->group(function () {
     Route::get('intelligence/unmet', [\App\Http\Controllers\Web\SellerIntelligenceController::class, 'unmet'])->middleware(EnsureSellerWeb::class);
     Route::get('intelligence/my-products', [\App\Http\Controllers\Web\SellerIntelligenceController::class, 'myProducts'])->middleware(EnsureSellerWeb::class);
     Route::get('intelligence/opportunity/{mpn}', [\App\Http\Controllers\Web\SellerIntelligenceController::class, 'opportunityDetail'])->where('mpn', '.*')->middleware(EnsureSellerWeb::class);
+
+    // Analytics Dashboard
+    Route::get('analytics', [\App\Http\Controllers\Web\SupplierAnalyticsController::class, 'index'])->middleware(EnsureSellerWeb::class);
+    Route::get('analytics/products', [\App\Http\Controllers\Web\SupplierAnalyticsController::class, 'products'])->middleware(EnsureSellerWeb::class);
+    Route::get('analytics/engagement', [\App\Http\Controllers\Web\SupplierAnalyticsController::class, 'engagement'])->middleware(EnsureSellerWeb::class);
 });
 
 // Reseller web portal
@@ -439,6 +444,13 @@ Route::prefix('admin')->group(function () {
         Route::post('pos/rewards/systems/{id}/toggle', [AdminCommerce::class, 'toggleRewardSystem'])->whereNumber('id')->middleware('throttle:20,1');
         Route::get('pos/instalments', [PosAdminController::class, 'instalments'])->name('admin.pos.instalments');
         Route::post('pos/instalments/{id}/mark-paid', [AdminCommerce::class, 'markInstalmentPaid'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::get('pos/daily-report', [PosAdminController::class, 'dailyReport'])->name('admin.pos.daily-report');
+
+        // Batch & Serial Inventory
+        Route::get('inventory/batches', [\App\Http\Controllers\Admin\Inventory\BatchInventoryController::class, 'index'])->name('admin.inventory.batches');
+        Route::get('inventory/batches/{batch}', [\App\Http\Controllers\Admin\Inventory\BatchInventoryController::class, 'show'])->whereNumber('batch')->name('admin.inventory.batch-show');
+        Route::get('inventory/serials', [\App\Http\Controllers\Admin\Inventory\BatchInventoryController::class, 'serials'])->name('admin.inventory.serials');
+        Route::get('inventory/serials/{serial}', [\App\Http\Controllers\Admin\Inventory\BatchInventoryController::class, 'serialShow'])->whereNumber('serial')->name('admin.inventory.serial-show');
 
         Route::post('products/{product}/toggle', [AdminCommerce::class, 'deactivateProduct'])->whereNumber('product')->middleware('throttle:20,1');
         Route::post('products/{product}/stock', [AdminCommerce::class, 'adjustProductStock'])->whereNumber('product')->middleware('throttle:20,1');
@@ -564,6 +576,15 @@ Route::prefix('admin')->group(function () {
         Route::post('marketing/settings/email-provider/test-transactional', [AdminMarketing::class, 'testTransactionalProvider'])->middleware(['admin.web.permission:email.providers.manage', 'throttle:5,1']);
         Route::post('marketing/settings/senders/{sender}', [AdminMarketing::class, 'updateEmailSenderProfile'])->whereNumber('sender')->middleware(['admin.web.permission:email.providers.manage', 'throttle:10,1']);
 
+        // Campaign Contact Import (separate from customer import)
+        Route::get('marketing/campaign-contacts', [\App\Http\Controllers\Admin\CampaignContactImportController::class, 'index'])->middleware('admin.web.permission:campaigns.view');
+        Route::post('marketing/campaign-contacts/preview', [\App\Http\Controllers\Admin\CampaignContactImportController::class, 'preview'])->middleware(['admin.web.permission:campaigns.create', 'throttle:10,1']);
+        Route::post('marketing/campaign-contacts', [\App\Http\Controllers\Admin\CampaignContactImportController::class, 'execute'])->middleware(['admin.web.permission:campaigns.create', 'throttle:5,1']);
+        Route::get('marketing/campaign-contacts/{import}', [\App\Http\Controllers\Admin\CampaignContactImportController::class, 'show'])->whereNumber('import')->middleware('admin.web.permission:campaigns.view');
+        Route::get('marketing/campaign-contacts/conversion/{subscriber}', [\App\Http\Controllers\Admin\CampaignContactImportController::class, 'conversionStatus'])->whereNumber('subscriber')->middleware('admin.web.permission:campaigns.view');
+        Route::post('marketing/campaign-contacts/convert/{subscriber}', [\App\Http\Controllers\Admin\CampaignContactImportController::class, 'convertToCustomer'])->whereNumber('subscriber')->middleware(['admin.web.permission:customers.create', 'throttle:5,1']);
+        Route::post('marketing/campaign-contacts/invite/{subscriber}', [\App\Http\Controllers\Admin\CampaignContactImportController::class, 'sendInvitation'])->whereNumber('subscriber')->middleware(['admin.web.permission:customers.create', 'throttle:5,1']);
+
         // Commerce ops (adaptation modules) — read pages
         Route::get('affiliate', [AdminDash::class, 'affiliate']);
         Route::get('promotions', [AdminDash::class, 'promotions']);
@@ -592,6 +613,21 @@ Route::prefix('admin')->group(function () {
         Route::get('orders/{id}', [AdminDash::class, 'order'])->whereNumber('id');
         Route::get('orders/{id}/invoice', [AdminDash::class, 'invoice'])->whereNumber('id');
 
+        // Invoices — PDF with QR verification
+        Route::get('invoices', [\App\Http\Controllers\Admin\Invoice\InvoiceController::class, 'index'])->middleware('admin.web.permission:orders.view');
+        Route::get('invoices/{invoice}', [\App\Http\Controllers\Admin\Invoice\InvoiceController::class, 'show'])->whereNumber('invoice')->middleware('admin.web.permission:orders.view');
+        Route::post('invoices/generate', [\App\Http\Controllers\Admin\Invoice\InvoiceController::class, 'generateFromOrder'])->middleware(['admin.web.permission:orders.update', 'throttle:10,1']);
+        Route::get('invoices/{invoice}/pdf', [\App\Http\Controllers\Admin\Invoice\InvoiceController::class, 'pdf'])->whereNumber('invoice')->middleware('admin.web.permission:orders.view');
+        Route::get('invoices/{invoice}/stream', [\App\Http\Controllers\Admin\Invoice\InvoiceController::class, 'streamPdf'])->whereNumber('invoice')->middleware('admin.web.permission:orders.view');
+        Route::post('invoices/{invoice}/mark-paid', [\App\Http\Controllers\Admin\Invoice\InvoiceController::class, 'markPaid'])->whereNumber('invoice')->middleware(['admin.web.permission:orders.update', 'throttle:10,1']);
+        Route::post('invoices/{invoice}/mark-pending', [\App\Http\Controllers\Admin\Invoice\InvoiceController::class, 'markPending'])->whereNumber('invoice')->middleware(['admin.web.permission:orders.update', 'throttle:10,1']);
+        Route::post('invoices/{invoice}/cancel', [\App\Http\Controllers\Admin\Invoice\InvoiceController::class, 'cancel'])->whereNumber('invoice')->middleware(['admin.web.permission:orders.update', 'throttle:10,1']);
+        Route::post('invoices/{invoice}/credit-note', [\App\Http\Controllers\Admin\Invoice\InvoiceController::class, 'createCreditNote'])->whereNumber('invoice')->middleware(['admin.web.permission:orders.update', 'throttle:10,1']);
+        Route::post('invoices/{invoice}/email', [\App\Http\Controllers\Admin\Invoice\InvoiceController::class, 'email'])->whereNumber('invoice')->middleware(['admin.web.permission:orders.update', 'throttle:5,1']);
+
+        // Public invoice verification
+        Route::get('verify/invoice/{invoiceNumber}', [\App\Http\Controllers\InvoiceVerificationController::class, 'show'])->name('invoice.verify');
+
         // Commerce ops — guarded config actions (server-side; no live gateways)
         Route::post('payments/providers/{provider}/toggle', [AdminCommerce::class, 'toggleProvider'])->whereNumber('provider')->middleware('throttle:20,1');
         Route::post('payments/payouts/{payout}/approve', [AdminCommerce::class, 'approvePayout'])->whereNumber('payout')->middleware('throttle:20,1');
@@ -618,6 +654,21 @@ Route::prefix('admin')->group(function () {
         Route::post('support/tickets/{ticket}', [AdminCommerce::class, 'updateSupportTicket'])->whereNumber('ticket')->middleware('throttle:20,1');
         Route::post('support/tickets/{ticket}/escalate', [AdminCommerce::class, 'escalateSupportTicket'])->whereNumber('ticket')->middleware('throttle:20,1');
         Route::post('support/tickets/{ticket}/messages', [AdminCommerce::class, 'storeSupportTicketMessage'])->whereNumber('ticket')->middleware('throttle:20,1');
+
+        // Notification Templates
+        Route::get('notification/templates', [\App\Http\Controllers\Admin\Notification\NotificationTemplateController::class, 'index'])->middleware('admin.web.permission:email.templates.manage');
+        Route::get('notification/templates/{template}', [\App\Http\Controllers\Admin\Notification\NotificationTemplateController::class, 'show'])->middleware('admin.web.permission:email.templates.manage');
+        Route::get('notification/templates/{template}/edit', [\App\Http\Controllers\Admin\Notification\NotificationTemplateController::class, 'edit'])->middleware('admin.web.permission:email.templates.manage');
+        Route::put('notification/templates/{template}', [\App\Http\Controllers\Admin\Notification\NotificationTemplateController::class, 'update'])->middleware(['admin.web.permission:email.templates.manage', 'throttle:10,1']);
+        Route::get('notification/templates/{template}/preview', [\App\Http\Controllers\Admin\Notification\NotificationTemplateController::class, 'preview'])->middleware('admin.web.permission:email.templates.manage');
+
+        // AI Commerce Admin
+        Route::get('ai-commerce', [\App\Http\Controllers\Admin\AiCommerce\AiCommerceAdminController::class, 'index'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-commerce/sessions', [\App\Http\Controllers\Admin\AiCommerce\AiCommerceAdminController::class, 'sessions'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-commerce/sessions/{sessionId}', [\App\Http\Controllers\Admin\AiCommerce\AiCommerceAdminController::class, 'sessionDetail'])->middleware('admin.web.permission:campaigns.view');
+        Route::post('ai-commerce/sessions/{sessionId}/terminate', [\App\Http\Controllers\Admin\AiCommerce\AiCommerceAdminController::class, 'terminateSession'])->middleware(['admin.web.permission:campaigns.create', 'throttle:10,1']);
+        Route::get('ai-commerce/bom-builds', [\App\Http\Controllers\Admin\AiCommerce\AiCommerceAdminController::class, 'bomBuilds'])->middleware('admin.web.permission:campaigns.view');
+        Route::get('ai-commerce/settings', [\App\Http\Controllers\Admin\AiCommerce\AiCommerceAdminController::class, 'settings'])->middleware('admin.web.permission:campaigns.view');
 
         // Email Campaign Manager
         require __DIR__.'/../routes/email.php';

@@ -62,6 +62,11 @@ $portal = [
         ['group' => 'INTELLIGENCE', 'icon' => 'demand', 'label' => 'Fast-Selling Categories', 'href' => '/seller/intelligence/categories', 'pattern' => 'seller/intelligence/categories*'],
         ['group' => 'INTELLIGENCE', 'icon' => 'search', 'label' => 'Unmet Demand', 'href' => '/seller/intelligence/unmet', 'pattern' => 'seller/intelligence/unmet*'],
         ['group' => 'INTELLIGENCE', 'icon' => 'stock', 'label' => 'My Product Performance', 'href' => '/seller/intelligence/my-products', 'pattern' => 'seller/intelligence/my-products*'],
+
+        // ANALYTICS
+        ['group' => 'ANALYTICS', 'icon' => 'dashboard', 'label' => 'Analytics Dashboard', 'href' => '/seller/analytics', 'pattern' => 'seller/analytics'],
+        ['group' => 'ANALYTICS', 'icon' => 'products', 'label' => 'Product Analytics', 'href' => '/seller/analytics/products', 'pattern' => 'seller/analytics/products*'],
+        ['group' => 'ANALYTICS', 'icon' => 'engagement', 'label' => 'Customer Engagement', 'href' => '/seller/analytics/engagement', 'pattern' => 'seller/analytics/engagement*'],
         
         // ACCOUNT
         ['group' => 'ACCOUNT', 'icon' => 'profile', 'label' => 'Business Profile', 'href' => '/seller/profile', 'pattern' => 'seller/profile*'],

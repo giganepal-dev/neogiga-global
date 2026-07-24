@@ -77,19 +77,12 @@ class EmailSubscriber extends Model
     ];
 
     public const TYPES = [
-        'personal_customer',
-        'institutional_customer',
-        'reseller',
-        'distributor',
-        'manufacturer',
-        'supplier',
-        'educational_institution',
-        'government_buyer',
-        'industry',
-        'engineer',
-        'maker',
         'newsletter_subscriber',
         'lead',
+        'engineer',
+        'maker',
+        'educational_institution',
+        'industry',
         'other',
     ];
 

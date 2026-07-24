@@ -74,8 +74,13 @@ class TransactionalCommunicationService
         return match (true) {
             in_array($event, ['registration_received', 'email_verification', 'account_activation', 'welcome'], true) => 'mail.transactional.welcome',
             in_array($event, ['order_placed', 'order_confirmed'], true) => 'mail.transactional.order-confirmation',
-            str_starts_with($event, 'order_') => 'mail.transactional.order-status',
-            str_starts_with($event, 'shipment_'), str_starts_with($event, 'payment_'), str_starts_with($event, 'refund_') => 'mail.transactional.order-status',
+            str_starts_with($event, 'order_'), str_starts_with($event, 'payment_'), str_starts_with($event, 'refund_') => 'mail.transactional.order-status',
+            in_array($event, ['password_reset', 'email_changed', 'password_changed'], true) => 'mail.transactional.password-reset',
+            in_array($event, ['rfq_received', 'rfq_assigned', 'rfq_clarification_requested'], true) => 'mail.transactional.rfq-received',
+            in_array($event, ['quotation_ready', 'quotation_expiring', 'quotation_accepted', 'quotation_rejected'], true) => 'mail.transactional.quotation-ready',
+            str_starts_with($event, 'support_') => 'mail.transactional.support-updated',
+            in_array($event, ['invoice_generated', 'invoice_updated'], true) => 'mail.transactional.invoice-generated',
+            in_array($event, ['suspicious_login', 'two_factor_code', 'account_locked', 'account_reactivated'], true) => 'mail.transactional.password-reset',
             default => null,
         };
     }

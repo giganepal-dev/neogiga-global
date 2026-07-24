@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BomLine extends Model
 {
+    protected $table = 'education_project_bom_lines';
+
     protected $fillable = [
         'education_project_id', 'line_no', 'component_role', 'product_category',
         'preferred_manufacturer', 'preferred_mpn', 'neogiga_sku', 'quantity',

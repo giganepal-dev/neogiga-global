@@ -30,15 +30,12 @@ class EducationProjectController extends Controller
         $categories = $this->projectService->getCategories();
 
         return view('frontend.education.index', [
-            'projects' => new \Illuminate\Pipelines\Pipeline(
-                app(),
-                [new \Illuminate\Pagination\LengthAwarePaginator(
-                    $result['projects'],
-                    $result['total'],
-                    18,
-                    $request->input('page', 1),
-                    ['path' => $request->url(), 'query' => $request->query()]
-                )]
+            'projects' => new \Illuminate\Pagination\LengthAwarePaginator(
+                $result['projects'],
+                $result['total'],
+                18,
+                $request->input('page', 1),
+                ['path' => $request->url(), 'query' => $request->query()]
             ),
             'categories' => $categories,
             'title' => 'STEM Education Projects - NeoGiga',
