@@ -7,5 +7,5 @@ use Illuminate\Database\Eloquent\Model;
 class PosRewardSystem extends Model
 {
     protected $table = 'pos_reward_systems';
-    protected $guarded = [];
+    protected $guarded = ['id', 'created_at', 'updated_at'];
 }

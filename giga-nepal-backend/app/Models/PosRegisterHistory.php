@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PosRegisterHistory extends Model
 {
     protected $table = 'pos_register_history';
-    protected $guarded = [];
+    protected $guarded = ['id', 'created_at', 'updated_at'];
 
     public function register(): BelongsTo { return $this->belongsTo(PosRegister::class, 'register_id'); }
     public function shift(): BelongsTo { return $this->belongsTo(PosShift::class, 'shift_id'); }

@@ -13,12 +13,10 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Host-header allow-list guard against host-header spoofing (codex §6).
  *
- * FLAG-GATED OFF by default (config marketplace.host_guard_enabled) and
- * FAIL-OPEN: any internal error, or the flag being off, lets the request
- * through untouched — a bug in this guard can never take the site down. Only
- * when an operator explicitly enables it (after verifying the allow-list) does
- * a request whose normalized Host is not in the data-driven allow-list get a
- * 404. The allow-list is built from every marketplace domain plus the
+ * ENABLED by default (config marketplace.host_guard_enabled).
+ * FAIL-OPEN on internal errors only (database down, etc.) to prevent
+ * site-wide outage. Invalid hosts are blocked when the guard is enabled.
+ * The allow-list is built from every marketplace domain plus the
  * configured hosts, and is cached for 5 minutes.
  */
 class EnsureAllowedHost
@@ -26,16 +24,17 @@ class EnsureAllowedHost
     public function handle(Request $request, Closure $next): Response
     {
         $blocked = false;
+        $guardEnabled = true;
 
-        // Decide inside the try so any error fails OPEN. The abort() is
-        // deliberately OUTSIDE the try — otherwise its HttpException (a
-        // Throwable) would be swallowed and the guard would never block.
         try {
-            if (config('marketplace.host_guard_enabled', false)) {
+            $guardEnabled = config('marketplace.host_guard_enabled', true);
+            if ($guardEnabled) {
                 $host = $this->normalize($request->getHost());
                 $blocked = $host !== '' && ! in_array($host, $this->allowList(), true);
             }
         } catch (\Throwable) {
+            // Fail-OPEN only on internal errors (DB down, cache failure)
+            // to prevent taking the entire site down.
             $blocked = false;
         }
 

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PosZReport extends Model
 {
     protected $table = 'pos_z_reports';
-    protected $guarded = [];
+    protected $guarded = ['id', 'created_at', 'updated_at'];
     protected $casts = ['report_date' => 'datetime', 'payment_breakdown' => 'array'];
 
     public function register(): BelongsTo { return $this->belongsTo(PosRegister::class, 'register_id'); }

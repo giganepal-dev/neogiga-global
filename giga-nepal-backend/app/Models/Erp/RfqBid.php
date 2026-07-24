@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RfqBid extends Model
 {
-    protected $guarded = [];
+    protected $guarded = ['id', 'created_at', 'updated_at'];
 
     protected $casts = [
         'terms' => 'array',

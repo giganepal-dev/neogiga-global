@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ConversationParticipant extends Model
 {
-    protected $guarded = [];
+    protected $guarded = ['id', 'created_at', 'updated_at'];
 
     protected $casts = [
         'last_read_at' => 'datetime',

@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 abstract class LmsModel extends Model
 {
-    protected $guarded = [];
+    /**
+     * Protect primary key and timestamps from mass assignment.
+     * Child models should define $fillable for their specific fields.
+     */
+    protected $guarded = ['id', 'created_at', 'updated_at'];
 
     protected $casts = [
         'metadata' => 'array',

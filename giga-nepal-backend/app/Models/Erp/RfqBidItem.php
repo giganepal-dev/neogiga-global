@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RfqBidItem extends Model
 {
-    protected $guarded = [];
+    protected $guarded = ['id', 'created_at', 'updated_at'];
 
     public function bid(): BelongsTo
     {

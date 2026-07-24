@@ -11,7 +11,7 @@ class Conversation extends Model
 {
     use SoftDeletes;
 
-    protected $guarded = [];
+    protected $guarded = ['id', 'created_at', 'updated_at'];
 
     protected $casts = [
         'last_message_at' => 'datetime',

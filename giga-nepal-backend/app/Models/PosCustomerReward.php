@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PosCustomerReward extends Model
 {
     protected $table = 'pos_customer_rewards';
-    protected $guarded = [];
+    protected $guarded = ['id', 'created_at', 'updated_at'];
 
     public function customer() { return $this->belongsTo(User::class, 'customer_id'); }
     public function rewardSystem() { return $this->belongsTo(PosRewardSystem::class, 'reward_system_id'); }

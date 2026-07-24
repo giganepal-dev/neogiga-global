@@ -13,7 +13,7 @@ class RegionStockVisibilityPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->hasAnyPermission(['inventory.view', 'inventory.manage', 'admin.access']);
     }
 
     /**
@@ -21,7 +21,7 @@ class RegionStockVisibilityPolicy
      */
     public function view(User $user, RegionStockVisibility $regionStockVisibility): bool
     {
-        return false;
+        return $user->hasAnyPermission(['inventory.view', 'inventory.manage', 'admin.access']);
     }
 
     /**
@@ -29,7 +29,7 @@ class RegionStockVisibilityPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->hasAnyPermission(['inventory.manage', 'admin.access']);
     }
 
     /**
@@ -37,7 +37,7 @@ class RegionStockVisibilityPolicy
      */
     public function update(User $user, RegionStockVisibility $regionStockVisibility): bool
     {
-        return false;
+        return $user->hasAnyPermission(['inventory.manage', 'admin.access']);
     }
 
     /**
@@ -45,7 +45,7 @@ class RegionStockVisibilityPolicy
      */
     public function delete(User $user, RegionStockVisibility $regionStockVisibility): bool
     {
-        return false;
+        return $user->hasAnyPermission(['inventory.manage', 'admin.access']);
     }
 
     /**
@@ -53,7 +53,7 @@ class RegionStockVisibilityPolicy
      */
     public function restore(User $user, RegionStockVisibility $regionStockVisibility): bool
     {
-        return false;
+        return $user->hasPermissionTo('admin.access');
     }
 
     /**
@@ -61,6 +61,6 @@ class RegionStockVisibilityPolicy
      */
     public function forceDelete(User $user, RegionStockVisibility $regionStockVisibility): bool
     {
-        return false;
+        return $user->hasPermissionTo('admin.access');
     }
 }
