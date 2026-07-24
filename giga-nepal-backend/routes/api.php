@@ -560,6 +560,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/pricing/simulate', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'simulate'])->middleware('throttle:writes');
             Route::get('/pricing/floors', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'floors']);
             Route::get('/pricing/stats', [\App\Http\Controllers\Api\Admin\PricingRuleAdminController::class, 'stats']);
+
+            // Admin Messaging API
+            Route::get('/messaging/conversations', [\App\Http\Controllers\Api\Messaging\MessagingController::class, 'adminIndex']);
+            Route::get('/messaging/conversations/{id}', [\App\Http\Controllers\Api\Messaging\MessagingController::class, 'adminShow'])->whereNumber('id');
+            Route::post('/messaging/conversations/{id}/reply', [\App\Http\Controllers\Api\Messaging\MessagingController::class, 'adminReply'])->whereNumber('id')->middleware('throttle:writes');
         });
     });
 });
